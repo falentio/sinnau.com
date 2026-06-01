@@ -1,9 +1,9 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
-
-	let { children } = $props();
+	import type { LayoutProps } from './$types';
+	import { setInitialUser } from '$lib/hooks/auth.svelte';
+	const { children, data } = $props() as LayoutProps;
+	setInitialUser(() => data.user);
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
 {@render children()}
