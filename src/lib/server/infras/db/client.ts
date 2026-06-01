@@ -1,15 +1,19 @@
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { env } from '../env.ts';
 import * as authSchema from './schema/auth-schema.ts';
 
-mkdirSync(dirname(env.DB_FILE_NAME), { recursive: true });
+export function createDb(options: { fileName: string }) {
+	const { fileName } = options;
+	const sqlite = new Database(fileName);
+	sqlite.pragma('journal_mode = WAL');
+	sqlite.pragma('foreign_keys = ON');
+	const db = drizzle({ client: sqlite, schema: authSchema });
+	migrate(db, { migrationsFolder: './drizzle' });
+	return db;
+}
 
-const sqlite = new Database(env.DB_FILE_NAME);
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('foreign_keys = ON');
+export type DB = ReturnType<typeof createDb>;
 
-export const db = drizzle({ client: sqlite, schema: { ...authSchema } });
-export type DB = typeof db;
+export const db = createDb({ fileName: env.DB_FILE_NAME });
