@@ -24,3 +24,7 @@ Thumbs.db
 # Vite timestamp artifacts
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Per-skill isolated worktrees
+.worktrees/
+worktrees/
