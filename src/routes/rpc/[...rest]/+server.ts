@@ -1,0 +1,24 @@
+import { RPCHandler } from '@orpc/server/fetch';
+import type { RequestHandler } from './$types';
+import { router } from '$lib/server/api';
+
+const handler = new RPCHandler(router);
+
+const handle: RequestHandler = async ({ request, locals }) => {
+	const { response } = await handler.handle(request, {
+		prefix: '/rpc',
+		context: {
+			headers: request.headers,
+			session: locals.session,
+			user: locals.user
+		}
+	});
+
+	return response ?? new Response('Not Found', { status: 404 });
+};
+
+export const GET = handle;
+export const POST = handle;
+export const PUT = handle;
+export const PATCH = handle;
+export const DELETE = handle;
