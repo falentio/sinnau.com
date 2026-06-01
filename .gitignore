@@ -1,26 +1,26 @@
 node_modules
 
 # Local database
-.data/
+.data/*
+!.data/.gitkeep
 
-# Output
-.output
-.vercel
-.netlify
-.wrangler
-/.svelte-kit
-/build
+# Test coverage
+coverage
 
-# OS
-.DS_Store
-Thumbs.db
+# SvelteKit
+.svelte-kit
+dist
 
-# Env
+# Env (keep .env.example / .env.test tracked)
 .env
 .env.*
 !.env.example
 !.env.test
 
-# Vite
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Vite timestamp artifacts
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
