@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { admin } from 'better-auth/plugins';
 import { db } from '../db/client.ts';
 import { env } from '../env.ts';
 
@@ -11,7 +12,8 @@ export const auth = betterAuth({
 	baseURL: env.BETTER_AUTH_URL,
 	emailAndPassword: {
 		enabled: true
-	}
+	},
+	plugins: [admin()]
 });
 
 export type Auth = typeof auth;
