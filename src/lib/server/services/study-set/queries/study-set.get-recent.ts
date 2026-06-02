@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { authorizedProcedure } from '$lib/server/api/base';
 import { getRecentStudySetsInputSchema, studySetSchema } from '$lib/schemas/study-set';
-import { studySetService } from '../study-set.service';
+import { studySetService } from '../index';
 
 export const studySetGetRecent = authorizedProcedure
 	.input(getRecentStudySetsInputSchema)

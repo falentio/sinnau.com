@@ -3,7 +3,7 @@ import {
 	refreshStudySetVisitInputSchema,
 	studySetRefreshVisitOutputSchema
 } from '$lib/schemas/study-set';
-import { studySetService } from '../study-set.service';
+import { studySetService } from '../index';
 
 const ERRORS = {
 	NOT_FOUND: { message: 'Study set not found' }

@@ -1,6 +1,6 @@
 import { authorizedProcedure } from '$lib/server/api/base';
 import { deleteStudySetInputSchema, studySetDeleteOutputSchema } from '$lib/schemas/study-set';
-import { studySetService } from '../study-set.service';
+import { studySetService } from '../index';
 
 const ERRORS = {
 	NOT_FOUND: { message: 'Study set not found' }

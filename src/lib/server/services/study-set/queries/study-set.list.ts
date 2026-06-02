@@ -1,6 +1,6 @@
 import { authorizedProcedure } from '$lib/server/api/base';
 import { getStudySetsInputSchema, studySetListResultSchema } from '$lib/schemas/study-set';
-import { studySetService } from '../study-set.service';
+import { studySetService } from '../index';
 
 export const studySetList = authorizedProcedure
 	.input(getStudySetsInputSchema)
