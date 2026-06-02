@@ -155,5 +155,3 @@ export class StudySetDrizzleRepository implements StudySetRepository {
 		return rows as StudySet[];
 	}
 }
-
-export const studySetDrizzleRepository = new StudySetDrizzleRepository();
