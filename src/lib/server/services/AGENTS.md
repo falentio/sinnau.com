@@ -8,12 +8,13 @@ The `src/lib/server/services/<domain>/` package is the source of truth for a ser
 src/lib/server/services/<domain>/
 ├── SPECS.md                          # domain specs, entity, field rules, error codes
 ├── <domain>.constant.ts              # SCREAMING_SNAKE constants
-├── <domain>.service.ts               # <Domain>Service class + default instance
+├── index.ts                          # wires default repo + guard + service instances (singleton entrypoint)
+├── <domain>.service.ts               # <Domain>Service class (no singleton, no default constructor)
 ├── <domain>.service.test.ts          # service tests with mocked repo + guard
-├── <domain>.guard.ts                 # <Domain>Guard class + default instance
+├── <domain>.guard.ts                 # <Domain>Guard class (no singleton, no default constructor)
 ├── <domain>.guard.test.ts            # guard tests with mocked repo
 ├── <domain>.repository.ts            # <Domain>Repository interface + shared result types
-├── <domain>.repository.drizzle.ts    # <Domain>DrizzleRepository implementation + default instance
+├── <domain>.repository.drizzle.ts    # <Domain>DrizzleRepository implementation (no singleton)
 ├── <domain>.repository.drizzle.test.ts  # integration tests against a real (in-memory) DB
 ├── <domain>.testing.ts               # mock factories, fixtures, <Domain>TestEnv
 ├── <domain>.router.ts                # composes commands + queries into a router object
@@ -54,24 +55,54 @@ router (commands/, queries/)  →  service  →  guard + repository
 
 The service is the only place that decides which guard checks to run and which repository calls to make. The guard and repository are unaware of each other.
 
+## Singleton Wiring
+
+The default `*Guard` and `*Service` instances are constructed in `<domain>/index.ts`, NOT in the class files. The class files (`<domain>.service.ts`, `<domain>.guard.ts`, `<domain>.repository.drizzle.ts`) export classes only — no singletons, no `export const <domain>...` lines. Class constructors do NOT have default parameter values for the repo or guard; the wiring in `index.ts` always passes them explicitly. Cross-domain imports (e.g. `quiz` depending on `chapterGuard`) go through sibling `index.ts` files, not through the guard class files.
+
+```ts
+// <domain>/index.ts
+import { <Domain>DrizzleRepository } from './<domain>.repository.drizzle.ts';
+import { <Domain>Guard } from './<domain>.guard.ts';
+import { <Domain>Service } from './<domain>.service.ts';
+
+const <domain>Repo = new <Domain>DrizzleRepository();
+export const <domain>Guard = new <Domain>Guard(<domain>Repo);
+export const <domain>Service = new <Domain>Service(<domain>Repo, <domain>Guard);
+```
+
+For domains that depend on other domain guards, the dependent guard is passed through the same `index.ts` entrypoint:
+
+```ts
+// chapter/index.ts
+import { <Domain>DrizzleRepository } from './<domain>.repository.drizzle.ts';
+import { <Domain>Guard } from './<domain>.guard.ts';
+import { <Domain>Service } from './<domain>.service.ts';
+import { studySetGuard } from '../study-set/index.ts';
+
+const <domain>Repo = new <Domain>DrizzleRepository();
+export const <domain>Guard = new <Domain>Guard(<domain>Repo, studySetGuard);
+export const <domain>Service = new <Domain>Service(<domain>Repo, <domain>Guard);
+```
+
+Consumer files (commands, queries) import the service from `'../index'`, never from `'../<domain>.service'`.
+
 ## Naming
 
-| Kind                        | Pattern                       | Example                                        |
-| --------------------------- | ----------------------------- | ---------------------------------------------- |
-| Service class               | `<Domain>Service`             | `StudySetService`                              |
-| Default service instance    | `<domain>Service` (camelCase) | `studySetService`                              |
-| Guard class                 | `<Domain>Guard`               | `StudySetGuard`                                |
-| Default guard instance      | `<domain>Guard`               | `studySetGuard`                                |
-| Repository interface        | `<Domain>Repository`          | `StudySetRepository`                           |
-| Drizzle impl                | `<Domain>DrizzleRepository`   | `StudySetDrizzleRepository`                    |
-| Default repository instance | `<domain>DrizzleRepository`   | `studySetDrizzleRepository`                    |
-| Router object               | `<domain>Router`              | `studySetRouter`                               |
-| Router type                 | `typeof <domain>Router`       | `StudySetRouter`                               |
-| Command                     | `<domain><Action>`            | `studySetCreate`, `studySetAdminCleanupVisits` |
-| Query                       | `<domain><Action>`            | `studySetGet`, `studySetGetRecent`             |
-| Constant                    | `<DOMAIN>_*`                  | `STUDY_SET_TITLE_MIN_LENGTH`                   |
-| Valibot schema              | `camelCase...Schema`          | `createStudySetInputSchema`, `studySetSchema`  |
-| Inferred input type         | `<Action><Domain>Input`       | `CreateStudySetInput`                          |
+| Kind                     | Pattern                       | Example                                        |
+| ------------------------ | ----------------------------- | ---------------------------------------------- |
+| Service class            | `<Domain>Service`             | `StudySetService`                              |
+| Default service instance | `<domain>Service` (camelCase) | `studySetService`                              |
+| Guard class              | `<Domain>Guard`               | `StudySetGuard`                                |
+| Default guard instance   | `<domain>Guard`               | `studySetGuard`                                |
+| Repository interface     | `<Domain>Repository`          | `StudySetRepository`                           |
+| Drizzle impl             | `<Domain>DrizzleRepository`   | `StudySetDrizzleRepository`                    |
+| Router object            | `<domain>Router`              | `studySetRouter`                               |
+| Router type              | `typeof <domain>Router`       | `StudySetRouter`                               |
+| Command                  | `<domain><Action>`            | `studySetCreate`, `studySetAdminCleanupVisits` |
+| Query                    | `<domain><Action>`            | `studySetGet`, `studySetGetRecent`             |
+| Constant                 | `<DOMAIN>_*`                  | `STUDY_SET_TITLE_MIN_LENGTH`                   |
+| Valibot schema           | `camelCase...Schema`          | `createStudySetInputSchema`, `studySetSchema`  |
+| Inferred input type      | `<Action><Domain>Input`       | `CreateStudySetInput`                          |
 
 ## Service Class
 
@@ -87,9 +118,8 @@ import type {
     Update<Domain>Input
 } from '../../../schemas/<domain>.ts';
 import { <DOMAIN>_DEFAULT_VISIBILITY } from './<domain>.constant.ts';
-import { <domain>DrizzleRepository } from './<domain>.repository.drizzle.ts';
 import type { <Domain>ListResult, <Domain>Repository } from './<domain>.repository.ts';
-import { <Domain>Guard } from './<domain>.guard.ts';
+import type { <Domain>Guard } from './<domain>.guard.ts';
 
 export type { <Domain> };
 
@@ -97,8 +127,8 @@ export class <Domain>Service {
     private readonly guard: <Domain>Guard;
 
     constructor(
-        private readonly repo: <Domain>Repository = <domain>DrizzleRepository,
-        guard: <Domain>Guard = new <Domain>Guard(repo)
+        private readonly repo: <Domain>Repository,
+        guard: <Domain>Guard
     ) {
         this.guard = guard;
     }
@@ -110,28 +140,25 @@ export class <Domain>Service {
     }
     // ...other methods
 }
-
-export const <domain>Service = new <Domain>Service();
 ```
 
 Rules:
 
-- The class accepts `repo` and `guard` as constructor parameters with the Drizzle impl and a real `new <Domain>Guard(repo)` as defaults. This is what makes the service unit-testable with mocks.
+- The class accepts `repo` and `guard` as constructor parameters. Defaults are not provided — the singleton wiring in `index.ts` always passes them explicitly. Tests construct with mocks via `new <Domain>Service(mockRepo, mockGuard)`.
 - Every public method takes the auth subject (`ownerId` / `userId`) as its **last** argument, typed `string | null | undefined`. The service does not read from `context`; the router passes it in.
 - Public methods return the domain entity (or a small `{ count, visitedAt, success }` shape). Never the repository row when they differ.
 - Throws `ORPCError` for domain errors. Never throws raw `Error` from a service method (use guard/repository abstractions).
-- Default instance is exported as a const after the class (`export const <domain>Service = new <Domain>Service()`).
+- The default instance is exported from `./index.ts`, NOT from this file. Do not add `export const <domain>Service` here.
 
 ## Guard
 
 ```ts
 // <domain>.guard.ts
 import { ORPCError } from '@orpc/server';
-import { <domain>DrizzleRepository } from './<domain>.repository.drizzle.ts';
 import type { <Domain>Repository } from './<domain>.repository.ts';
 
 export class <Domain>Guard {
-    constructor(private readonly repo: <Domain>Repository = <domain>DrizzleRepository) {}
+    constructor(private readonly repo: <Domain>Repository) {}
 
     requireOwner(ownerId: string | null | undefined): string {
         if (!ownerId) throw new ORPCError('UNAUTHORIZED', { message: 'Authentication is required' });
@@ -151,13 +178,32 @@ export class <Domain>Guard {
 }
 ```
 
+For cross-domain guards, the dependent guard is a required constructor parameter (no default):
+
+```ts
+// <domain>.guard.ts (for a guard that depends on a sibling domain)
+import { ORPCError } from '@orpc/server';
+import type { <Domain>Repository } from './<domain>.repository.ts';
+import type <SiblingDomain>Guard from '../<sibling-domain>/<sibling-domain>.guard.ts';
+
+export class <Domain>Guard {
+    constructor(
+        private readonly repo: <Domain>Repository,
+        private readonly <siblingDomain>Guard: <SiblingDomain>Guard
+    ) {}
+
+    // ... methods
+}
+```
+
 Rules:
 
 - All `require*` methods take `string | null | undefined` and throw `UNAUTHORIZED` when falsy. They return the narrowed `string` so the service can use it without a re-check.
 - `assert*OrForbidden` and `assert*OrNotFound` return the fetched row. The service reuses it instead of refetching.
 - Visibility checks return `NOT_FOUND` (not `FORBIDDEN`) when the caller is not allowed to see the row — prevents leaking existence.
 - `canView(set, userId)` is exposed as a plain boolean for places (typically the repository) that need to filter without throwing.
-- Guard depends only on the repository interface, never on the Drizzle impl directly when it's imported as a type. Default the constructor to the Drizzle impl.
+- Guard depends only on the repository interface, never on the Drizzle impl directly. The constructor takes the repo (and any sibling-domain guards it needs) as required parameters — no defaults. Singleton wiring in `index.ts` provides them.
+- The default instance is exported from `./index.ts`, NOT from this file. Do not add `export const <domain>Guard` here.
 
 ## Repository
 
@@ -210,8 +256,6 @@ export class <Domain>DrizzleRepository implements <Domain>Repository {
     }
     // ...other methods
 }
-
-export const <domain>DrizzleRepository = new <Domain>DrizzleRepository();
 ```
 
 Rules:
@@ -219,8 +263,9 @@ Rules:
 - The interface is the source of truth for what the service can ask for. Add a method here first, then implement it in the Drizzle class.
 - Methods that "find by unique key" return `Promise<T | null>`. Methods that "mutate a known id" return `Promise<T | null>` for updates and `Promise<boolean>` for deletes so the service can map `null`/`false` to `NOT_FOUND`.
 - Mutating methods that need to enforce ownership take `ownerId` as a parameter and include it in the `WHERE` clause. The service is the only caller, and it always passes the already-authorized id.
-- Drizzle impl constructor takes a `DB` and defaults to the module-level `db`. `static withDatabase(db)` is a convenience for tests.
+- Drizzle impl constructor takes a `DB` and defaults to the module-level `db`. `static withDatabase(db)` is a convenience for tests. (`dbInstance = defaultDb` is infrastructure, not domain wiring, so it stays.)
 - The Drizzle impl never throws `ORPCError`; if `returning()` is empty after an `insert`, throw a plain `Error` — that case is a bug, not a domain error.
+- No singleton is exported from this file. The default instance is constructed in `./index.ts` (and stays as a non-exported local `const` there).
 
 ## Constants
 
@@ -296,7 +341,7 @@ The router is a plain object that maps to oRPC procedure names. Each command and
 // commands/<domain>.create.ts
 import { authorizedProcedure } from '$lib/server/api/base';
 import { create<Domain>InputSchema, <domain>Schema } from '$lib/schemas/<domain>';
-import { <domain>Service } from '../<domain>.service';
+import { <domain>Service } from '../index';
 
 const ERRORS = {
     <DOMAIN>_SLUG_CONFLICT: { message: 'Failed to generate a unique slug after maximum retries' }
@@ -313,7 +358,7 @@ export const <domain>Create = authorizedProcedure
 // queries/<domain>.get.ts
 import { authorizedProcedure } from '$lib/server/api/base';
 import { get<Domain>InputSchema, <domain>Schema } from '$lib/schemas/<domain>';
-import { <domain>Service } from '../<domain>.service';
+import { <domain>Service } from '../index';
 
 const ERRORS = { NOT_FOUND: { message: '<Domain> not found' } } as const;
 
@@ -345,6 +390,7 @@ export type <Domain>Router = typeof <domain>Router;
 
 Rules:
 
+- Commands and queries import `<domain>Service` from `'../index'`, NOT from `'../<domain>.service'`. The class file does not export a singleton.
 - Pick the procedure base on intent: `publicProcedure` (rare), `authorizedProcedure` (default for any caller), or `adminProcedure` (role-gated). The base lives in `$lib/server/api/base`.
 - Always declare `.errors(ERRORS)` when the handler can throw an `ORPCError` with a non-default code. The keys in `ERRORS` are the codes; the messages become the default `ORPCError` message.
 - The handler signature is always `({ input, context }) => <domain>Service.<method>(input, context.user.id)`. No try/catch, no logging, no transformation — the service already returns the exact output type.
@@ -405,11 +451,12 @@ Patterns:
 3. Add `src/lib/schemas/<domain>.ts` with input/output schemas, sharing constants with the service.
 4. Add `<domain>.constant.ts` for limits, picklists, defaults, and any TTLs.
 5. Define `<domain>.repository.ts` (interface + shared result types).
-6. Implement `<domain>.repository.drizzle.ts`.
-7. Add `<domain>.guard.ts` with `require*` / `assert*OrForbidden` / `assert*OrNotFound`.
-8. Add `<domain>.service.ts` orchestrating the above, plus a default instance export.
-9. Add `<domain>.testing.ts` with mock factories, fixture(s), `captureError`, and `<Domain>TestEnv`.
-10. Add one command file per `commands/` action and one query file per `queries/` action, each declaring its `ERRORS` map and delegating to the service.
-11. Compose them into `<domain>.router.ts` (and nested objects for sub-resources / admin).
-12. Write `*.test.ts` for the service, guard, and Drizzle repository.
-13. Run the project's lint and typecheck commands; do not commit until both pass.
+6. Implement `<domain>.repository.drizzle.ts` (no singleton export).
+7. Add `<domain>.guard.ts` with `require*` / `assert*OrForbidden` / `assert*OrNotFound` (no singleton export, no default constructor values).
+8. Add `<domain>.service.ts` orchestrating the above (no singleton export, no default constructor values).
+9. **Create `<domain>/index.ts`** that constructs the default repo + guard + service singletons and exports the guard and service. This is the only place the wiring lives.
+10. Add `<domain>.testing.ts` with mock factories, fixture(s), `captureError`, and `<Domain>TestEnv`.
+11. Add one command file per `commands/` action and one query file per `queries/` action, each declaring its `ERRORS` map, importing the service from `'../index'`, and delegating to the service.
+12. Compose them into `<domain>.router.ts` (and nested objects for sub-resources / admin).
+13. Write `*.test.ts` for the service, guard, and Drizzle repository.
+14. Run the project's lint and typecheck commands; do not commit until both pass.
