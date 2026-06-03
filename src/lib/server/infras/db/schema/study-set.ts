@@ -4,6 +4,7 @@ import { user } from './auth-schema.ts';
 import { chapter } from './chapter.ts';
 import { flashcard } from './flashcard.ts';
 import { quiz } from './quiz.ts';
+import { studySetContent } from './study-set-content.ts';
 
 export const STUDY_SET_VISIBILITIES = ['PUBLIC', 'PRIVATE'] as const;
 export type StudySetVisibility = (typeof STUDY_SET_VISIBILITIES)[number];
@@ -43,7 +44,8 @@ export const studySetRelations = relations(studySet, ({ one, many }) => ({
 	visits: many(studySetVisit),
 	chapters: many(chapter),
 	flashcards: many(flashcard),
-	quizzes: many(quiz)
+	quizzes: many(quiz),
+	contents: many(studySetContent)
 }));
 
 export const studySetVisit = sqliteTable(

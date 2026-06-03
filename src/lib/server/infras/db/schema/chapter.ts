@@ -4,6 +4,7 @@ import { user } from './auth-schema.ts';
 import { studySet } from './study-set.ts';
 import { flashcard } from './flashcard.ts';
 import { quiz } from './quiz.ts';
+import { studySetContentToChapter } from './study-set-content.ts';
 
 export const chapter = sqliteTable(
 	'chapter',
@@ -43,7 +44,8 @@ export const chapterRelations = relations(chapter, ({ one, many }) => ({
 		references: [studySet.id]
 	}),
 	flashcards: many(flashcard),
-	quizzes: many(quiz)
+	quizzes: many(quiz),
+	contentJunctions: many(studySetContentToChapter)
 }));
 
 export type Chapter = typeof chapter.$inferSelect;
