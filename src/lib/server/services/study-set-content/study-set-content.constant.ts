@@ -1,0 +1,3 @@
+export const STUDY_SET_CONTENT_ID_PREFIX = 'ssc';
+
+export const STUDY_SET_CONTENT_MAX_LENGTH = 50_000;
