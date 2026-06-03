@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { Calendar as CalendarPrimitive } from "bits-ui";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
+	import { Calendar as CalendarPrimitive } from 'bits-ui';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowLeftIcon } from '@hugeicons/core-free-icons';
-	import { buttonVariants, type ButtonVariant } from "$lib/components/ui/button/index.js";
-	import { cn } from "$lib/utils.js";
+	import { buttonVariants, type ButtonVariant } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
 		class: className,
 		children,
-		variant = "ghost",
+		variant = 'ghost',
 		...restProps
 	}: CalendarPrimitive.PrevButtonProps & {
 		variant?: ButtonVariant;
@@ -17,14 +17,14 @@
 </script>
 
 {#snippet Fallback()}
-	<HugeiconsIcon icon={ArrowLeftIcon} strokeWidth={2} class={cn("size-4", className)} />
+	<HugeiconsIcon icon={ArrowLeftIcon} strokeWidth={2} class={cn('size-4', className)} />
 {/snippet}
 
 <CalendarPrimitive.PrevButton
 	bind:ref
 	class={cn(
 		buttonVariants({ variant }),
-		"size-(--cell-size) bg-transparent p-0 select-none disabled:opacity-50 rtl:rotate-180",
+		'size-(--cell-size) bg-transparent p-0 select-none disabled:opacity-50 rtl:rotate-180',
 		className
 	)}
 	{...restProps}

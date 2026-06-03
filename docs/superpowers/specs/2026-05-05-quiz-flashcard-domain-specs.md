@@ -10,6 +10,7 @@ Purpose: CQRS-based API data model and business logic specification
 ## Architecture Overview
 
 **CQRS Pattern** with SvelteKit Remote Functions:
+
 - **Commands**: `command` from `$app/server` — mutate state
 - **Queries**: `query` from `$app/server` — read state
 - **Validation**: Valibot schemas (Standard Schema)
@@ -55,6 +56,7 @@ src/lib/services/
 ```
 
 **Key Patterns:**
+
 - **Repository**: Class with constructor accepting narrow dependencies (e.g., Drizzle instance, auth context)
 - **Guard**: Authorization and validation logic not handled by Valibot (ownership checks, visibility rules)
 - **Command/Query**: One file per procedure, using SvelteKit remote functions
@@ -75,31 +77,35 @@ Previous specs used HTTP REST patterns (GET/POST/PATCH/DELETE with endpoints). T
 
 ## Entities
 
-| Entity | Description |
-|--------|-------------|
-| StudySet | Top-level container grouping chapters, flashcards, and quizzes |
-| Chapter | Organizational unit within a StudySet (no sub-chapters) |
-| Flashcard | Question-answer pair with optional hint |
-| Quiz | Assessment with question text and options |
-| QuizOption | Answer option for quizzes |
+| Entity     | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| StudySet   | Top-level container grouping chapters, flashcards, and quizzes |
+| Chapter    | Organizational unit within a StudySet (no sub-chapters)        |
+| Flashcard  | Question-answer pair with optional hint                        |
+| Quiz       | Assessment with question text and options                      |
+| QuizOption | Answer option for quizzes                                      |
 
 ---
 
 ## Data Types
 
 ### UUID
+
 - Auto-generated using `crypto.randomUUID()`
 - Displayed as 36-character lowercase string: `"550e8400-e29b-41d4-a716-446655440000"`
 
 ### Timestamp
+
 - Unix timestamp in milliseconds (number)
 - Example: `1704364200000`
 
 ### Visibility Enum
+
 - `"PUBLIC"` | `"PRIVATE"`
 - Default: `"PUBLIC"`
 
 ### QuizType Enum
+
 - `"MULTIPLE_CHOICE"` | `"MULTIPLE_SELECT"` | `"FILL_IN_THE_BLANK"`
 
 ---
@@ -108,18 +114,19 @@ Previous specs used HTTP REST patterns (GET/POST/PATCH/DELETE with endpoints). T
 
 ```typescript
 interface StudySet {
-  id: UUID;
-  slug: string;           // auto-generated: transliterated + entropy
-  title: string;          // 5-50 chars, non-empty, trimmed
-  description?: string;   // max 2000 chars
-  visibility: Visibility;
-  ownerId: UUID;          // from auth context
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+	id: UUID;
+	slug: string; // auto-generated: transliterated + entropy
+	title: string; // 5-50 chars, non-empty, trimmed
+	description?: string; // max 2000 chars
+	visibility: Visibility;
+	ownerId: UUID; // from auth context
+	createdAt: Timestamp;
+	updatedAt: Timestamp;
 }
 ```
 
 **Slug Generation:**
+
 1. Transliterate title to ASCII (remove accents)
 2. Sanitize: lowercase, replace spaces with hyphens, remove special chars
 3. If result < 5 chars: use 12 random base32 chars (no hyphen)
@@ -135,14 +142,14 @@ interface StudySet {
 
 ```typescript
 interface Chapter {
-  id: UUID;
-  slug: string;           // auto-generated, same rules as StudySet
-  title: string;         // 5-50 chars, non-empty, trimmed
-  description?: string;   // max 1000 chars
-  studySetId: UUID;      // required
-  ownerId: UUID;         // from auth context
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+	id: UUID;
+	slug: string; // auto-generated, same rules as StudySet
+	title: string; // 5-50 chars, non-empty, trimmed
+	description?: string; // max 1000 chars
+	studySetId: UUID; // required
+	ownerId: UUID; // from auth context
+	createdAt: Timestamp;
+	updatedAt: Timestamp;
 }
 ```
 
@@ -156,16 +163,16 @@ interface Chapter {
 
 ```typescript
 interface Flashcard {
-  id: UUID;
-  chapterId: UUID;       // required, must exist
-  studySetId: UUID;      // required
-  front: string;         // non-empty, max ~4 sentences, plain text
-  back: string;          // non-empty, max ~4 sentences, plain text
-  hint?: string;         // max 500 chars, plain text
-  importance: number;    // integer >= 0, default 0
-  ownerId: UUID;         // from auth context
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+	id: UUID;
+	chapterId: UUID; // required, must exist
+	studySetId: UUID; // required
+	front: string; // non-empty, max ~4 sentences, plain text
+	back: string; // non-empty, max ~4 sentences, plain text
+	hint?: string; // max 500 chars, plain text
+	importance: number; // integer >= 0, default 0
+	ownerId: UUID; // from auth context
+	createdAt: Timestamp;
+	updatedAt: Timestamp;
 }
 ```
 
@@ -181,21 +188,22 @@ interface Flashcard {
 
 ```typescript
 interface Quiz {
-  id: UUID;
-  chapterId: UUID;       // required
-  studySetId: UUID;      // required
-  type: QuizType;       // immutable after creation
-  questionText: string;  // non-empty, plain text
-  options: QuizOption[];// embedded in response, empty array if none
-  ownerId: UUID;         // from auth context
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+	id: UUID;
+	chapterId: UUID; // required
+	studySetId: UUID; // required
+	type: QuizType; // immutable after creation
+	questionText: string; // non-empty, plain text
+	options: QuizOption[]; // embedded in response, empty array if none
+	ownerId: UUID; // from auth context
+	createdAt: Timestamp;
+	updatedAt: Timestamp;
 }
 ```
 
 **No title field.** Quiz identified by ID only.
 
 **Type Rules:**
+
 - `MULTIPLE_CHOICE`: 2-6 options, exactly 1 with `is_correct=true`
 - `MULTIPLE_SELECT`: 2-10 options, 1+ with `is_correct=true`
 - `FILL_IN_THE_BLANK`: exactly 1 option with `is_correct=true`
@@ -210,19 +218,20 @@ interface Quiz {
 
 ```typescript
 interface QuizOption {
-  id: UUID;
-  quizId: UUID;         // required
-  optionText: string;    // non-empty, max ~4 sentences
-  isCorrect: boolean;
-  explanation?: string; // optional
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+	id: UUID;
+	quizId: UUID; // required
+	optionText: string; // non-empty, max ~4 sentences
+	isCorrect: boolean;
+	explanation?: string; // optional
+	createdAt: Timestamp;
+	updatedAt: Timestamp;
 }
 ```
 
 **Option Text Max:** ~4 sentences (same as Flashcard front/back)
 
 **QuizType Constraints:**
+
 - For `MULTIPLE_CHOICE`: Cannot add second correct option (error: `MC_ALREADY_HAS_CORRECT`)
 - For `MULTIPLE_SELECT`: No limit on correct count
 - For `FILL_IN_THE_BLANK`: Cannot add second option (error: `FITB_MULTIPLE_OPTIONS`)
@@ -238,6 +247,7 @@ interface QuizOption {
 Commands are operations that mutate state. Use `command` from `$app/server`.
 
 ### Command Pattern
+
 ```typescript
 import { command } from '$app/server';
 import { error } from '@sveltejs/kit';
@@ -245,20 +255,22 @@ import { guard } from '../guard';
 import type { Repository } from '../quiz.repository.drizzle';
 
 export function createQuiz(repo: Repository) {
-  return command(QuizSchema, async (data) => {
-    // Guard checks
-    guard.isAuthenticated();
-    guard.canCreateQuiz(data);
+	return command(QuizSchema, async (data) => {
+		// Guard checks
+		guard.isAuthenticated();
+		guard.canCreateQuiz(data);
 
-    // Create
-    const quiz = await repo.createQuiz(data);
-    return quiz;
-  });
+		// Create
+		const quiz = await repo.createQuiz(data);
+		return quiz;
+	});
 }
 ```
 
 ### Error Handling
+
 Use `error()` from `@sveltejs/kit`:
+
 ```typescript
 error(400, { code: 'VALIDATION_FAILED', message: '...' });
 error(403, { code: 'FORBIDDEN', message: '...' });
@@ -267,60 +279,68 @@ error(409, { code: 'CHAPTER_NOT_EMPTY', message: '...' });
 ```
 
 ### Guard Pattern
+
 Guards handle authorization and complex validation not covered by Valibot:
+
 ```typescript
 // guard.ts
 export const guard = {
-  isAuthenticated() {
-    const event = getRequestEvent();
-    if (!event.locals.user) {
-      error(401, { code: 'UNAUTHORIZED', message: '...' });
-    }
-  },
+	isAuthenticated() {
+		const event = getRequestEvent();
+		if (!event.locals.user) {
+			error(401, { code: 'UNAUTHORIZED', message: '...' });
+		}
+	},
 
-  isOwner(ownerId: UUID) {
-    const event = getRequestEvent();
-    if (event.locals.user.id !== ownerId) {
-      error(403, { code: 'FORBIDDEN', message: '...' });
-    }
-  },
+	isOwner(ownerId: UUID) {
+		const event = getRequestEvent();
+		if (event.locals.user.id !== ownerId) {
+			error(403, { code: 'FORBIDDEN', message: '...' });
+		}
+	},
 
-  chapterExists(chapterId: UUID) {
-    // Check chapter exists and user has access
-  }
+	chapterExists(chapterId: UUID) {
+		// Check chapter exists and user has access
+	}
 };
 ```
 
 ### StudySet Commands
 
 **CreateStudySet**
+
 ```typescript
 interface CreateStudySetCommand {
-  title: string;         // 5-50 chars
-  description?: string;
-  visibility?: Visibility; // default: PUBLIC
+	title: string; // 5-50 chars
+	description?: string;
+	visibility?: Visibility; // default: PUBLIC
 }
 ```
+
 Returns: `{ success: true, data: StudySet }` with auto-generated slug
 
 **UpdateStudySet**
+
 ```typescript
 interface UpdateStudySetCommand {
-  id: UUID;
-  title?: string;
-  description?: string;
-  visibility?: Visibility;
+	id: UUID;
+	title?: string;
+	description?: string;
+	visibility?: Visibility;
 }
 ```
+
 Updatable fields: `title`, `description`, `visibility`
 Returns: `{ success: true, data: StudySet }`
 
 **DeleteStudySet**
+
 ```typescript
 interface DeleteStudySetCommand {
-  id: UUID;
+	id: UUID;
 }
 ```
+
 Cascade deletes: Chapters → Flashcards → Quizzes → QuizOptions
 Returns: `{ success: true }`
 
@@ -329,31 +349,37 @@ Returns: `{ success: true }`
 ### Chapter Commands
 
 **CreateChapter**
+
 ```typescript
 interface CreateChapterCommand {
-  studySetId: UUID;
-  title: string;       // 5-50 chars
-  description?: string;
+	studySetId: UUID;
+	title: string; // 5-50 chars
+	description?: string;
 }
 ```
+
 Returns: `{ success: true, data: Chapter }`
 
 **UpdateChapter**
+
 ```typescript
 interface UpdateChapterCommand {
-  id: UUID;
-  title?: string;
-  description?: string;
+	id: UUID;
+	title?: string;
+	description?: string;
 }
 ```
+
 Returns: `{ success: true, data: Chapter }`
 
 **DeleteChapter**
+
 ```typescript
 interface DeleteChapterCommand {
-  id: UUID;
+	id: UUID;
 }
 ```
+
 Blocked if has Flashcards or Quizzes (error: `CHAPTER_NOT_EMPTY`)
 Returns: `{ success: true }`
 
@@ -362,38 +388,44 @@ Returns: `{ success: true }`
 ### Flashcard Commands
 
 **CreateFlashcards**
+
 ```typescript
 interface CreateFlashcardsCommand {
-  flashcards: Array<{
-    chapterId: UUID;
-    front: string;
-    back: string;
-    hint?: string;
-    importance?: number; // default: 0
-  }>;
+	flashcards: Array<{
+		chapterId: UUID;
+		front: string;
+		back: string;
+		hint?: string;
+		importance?: number; // default: 0
+	}>;
 }
 ```
+
 Batch operation - all-or-nothing transaction
 Returns: `{ success: true, data: Flashcard[] }`
 
 **UpdateFlashcard**
+
 ```typescript
 interface UpdateFlashcardCommand {
-  id: UUID;
-  front: string;        // required (replace semantics)
-  back: string;         // required (replace semantics)
-  hint?: string;
+	id: UUID;
+	front: string; // required (replace semantics)
+	back: string; // required (replace semantics)
+	hint?: string;
 }
 ```
+
 Replace semantics - all fields must be provided
 Returns: `{ success: true, data: Flashcard }`
 
 **DeleteFlashcards**
+
 ```typescript
 interface DeleteFlashcardsCommand {
-  ids: UUID[];
+	ids: UUID[];
 }
 ```
+
 All-or-nothing: checks ownership of all before deleting any
 Returns: `{ success: true }` with 204 No Content
 
@@ -402,38 +434,44 @@ Returns: `{ success: true }` with 204 No Content
 ### Quiz Commands
 
 **CreateQuiz**
+
 ```typescript
 interface CreateQuizCommand {
-  chapterId: UUID;
-  type: QuizType;
-  questionText: string;
-  options?: Array<{
-    optionText: string;
-    isCorrect: boolean;
-    explanation?: string;
-  }>;
+	chapterId: UUID;
+	type: QuizType;
+	questionText: string;
+	options?: Array<{
+		optionText: string;
+		isCorrect: boolean;
+		explanation?: string;
+	}>;
 }
 ```
+
 Options embedded in quiz creation (one-step)
 Validation on option count per type
 Returns: `{ success: true, data: Quiz }` with embedded options
 
 **UpdateQuiz**
+
 ```typescript
 interface UpdateQuizCommand {
-  id: UUID;
-  questionText: string; // required
+	id: UUID;
+	questionText: string; // required
 }
 ```
+
 Only `questionText` is updatable (type is immutable)
 Returns: `{ success: true, data: Quiz }`
 
 **DeleteQuizzes**
+
 ```typescript
 interface DeleteQuizzesCommand {
-  ids: UUID[];
+	ids: UUID[];
 }
 ```
+
 Cascade deletes QuizOptions
 All-or-nothing
 Returns: `{ success: true }` with 204 No Content
@@ -443,39 +481,45 @@ Returns: `{ success: true }` with 204 No Content
 ### QuizOption Commands
 
 **CreateQuizOptions**
+
 ```typescript
 interface CreateQuizOptionsCommand {
-  options: Array<{
-    quizId: UUID;
-    optionText: string;
-    isCorrect: boolean;
-    explanation?: string;
-  }>;
+	options: Array<{
+		quizId: UUID;
+		optionText: string;
+		isCorrect: boolean;
+		explanation?: string;
+	}>;
 }
 ```
+
 Batch operation
 Validation per quiz type rules
 Returns: `{ success: true, data: QuizOption[] }`
 
 **UpdateQuizOption**
+
 ```typescript
 interface UpdateQuizOptionCommand {
-  id: UUID;
-  optionText?: string;
-  isCorrect?: boolean;
-  explanation?: string;
+	id: UUID;
+	optionText?: string;
+	isCorrect?: boolean;
+	explanation?: string;
 }
 ```
+
 Partial update - only provided fields updated
 For MC: must uncheck previous correct before checking new
 Returns: `{ success: true, data: QuizOption }`
 
 **DeleteQuizOptions**
+
 ```typescript
 interface DeleteQuizOptionsCommand {
-  ids: UUID[];
+	ids: UUID[];
 }
 ```
+
 All-or-nothing
 Blocked if would leave MC quiz with 0 correct options
 Returns: `{ success: true }` with 204 No Content
@@ -488,33 +532,37 @@ Queries are operations that read state. They return a `QueryResult`.
 
 ```typescript
 interface QueryResult<T> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-  };
+	success: boolean;
+	data?: T;
+	error?: {
+		code: string;
+		message: string;
+	};
 }
 ```
 
 ### StudySet Queries
 
 **GetStudySets**
+
 ```typescript
 interface GetStudySetsQuery {
-  // No filters - returns all user's study sets
-  // Implicitly filtered by auth context (owner) + public visibility
+	// No filters - returns all user's study sets
+	// Implicitly filtered by auth context (owner) + public visibility
 }
 ```
+
 Returns: `{ success: true, data: StudySet[] }`
 Order: by `createdAt` DESC
 
 **GetStudySet**
+
 ```typescript
 interface GetStudySetQuery {
-  id: UUID;
+	id: UUID;
 }
 ```
+
 Or by slug: `{ slug: string }`
 Returns: `{ success: true, data: StudySet }`
 
@@ -523,20 +571,24 @@ Returns: `{ success: true, data: StudySet }`
 ### Chapter Queries
 
 **GetChapters**
+
 ```typescript
 interface GetChaptersQuery {
-  // No filters - returns all chapters for accessible study sets
+	// No filters - returns all chapters for accessible study sets
 }
 ```
+
 Order: by `createdAt` DESC
 Returns: `{ success: true, data: Chapter[] }`
 
 **GetChapter**
+
 ```typescript
 interface GetChapterQuery {
-  id: UUID;
+	id: UUID;
 }
 ```
+
 Returns: `{ success: true, data: Chapter }`
 
 ---
@@ -544,20 +596,24 @@ Returns: `{ success: true, data: Chapter }`
 ### Flashcard Queries
 
 **GetFlashcards**
+
 ```typescript
 interface GetFlashcardsQuery {
-  // No filters - returns all flashcards
+	// No filters - returns all flashcards
 }
 ```
+
 Order: by `createdAt` DESC
 Returns: `{ success: true, data: Flashcard[] }`
 
 **GetFlashcard**
+
 ```typescript
 interface GetFlashcardQuery {
-  id: UUID;
+	id: UUID;
 }
 ```
+
 Returns: `{ success: true, data: Flashcard }`
 
 ---
@@ -565,20 +621,24 @@ Returns: `{ success: true, data: Flashcard }`
 ### Quiz Queries
 
 **GetQuizzes**
+
 ```typescript
 interface GetQuizzesQuery {
-  // No filters - returns all quizzes
+	// No filters - returns all quizzes
 }
 ```
+
 Order: by `createdAt` DESC
 Returns: `{ success: true, data: Quiz[] }` with embedded options
 
 **GetQuiz**
+
 ```typescript
 interface GetQuizQuery {
-  id: UUID;
+	id: UUID;
 }
 ```
+
 Returns: `{ success: true, data: Quiz }` with embedded options
 
 ---
@@ -595,42 +655,42 @@ Returns: `{ success: true, data: Quiz }` with embedded options
 
 ## Error Codes
 
-| Code | HTTP Equivalent | Description |
-|------|-----------------|-------------|
-| `VALIDATION_FAILED` | 400 | Input validation failed |
-| `NOT_FOUND` | 404 | Resource not found |
-| `FORBIDDEN` | 403 | Not owner / no access |
-| `CHAPTER_NOT_EMPTY` | 409 | Cannot delete chapter with children |
-| `SLUG_CONFLICT` | 409 | Slug already in use |
-| `MC_ALREADY_HAS_CORRECT` | 409 | MC quiz already has correct option |
-| `FITB_MULTIPLE_OPTIONS` | 409 | FITB quiz cannot have multiple options |
-| `CANNOT_DELETE_LAST_CORRECT` | 409 | Cannot delete last correct option |
-| `BATCH_VALIDATION_FAILED` | 400 | Batch create failed (all-or-nothing) |
-| `PARTIAL_FORBIDDEN` | 403 | Some IDs not owned in batch |
+| Code                         | HTTP Equivalent | Description                            |
+| ---------------------------- | --------------- | -------------------------------------- |
+| `VALIDATION_FAILED`          | 400             | Input validation failed                |
+| `NOT_FOUND`                  | 404             | Resource not found                     |
+| `FORBIDDEN`                  | 403             | Not owner / no access                  |
+| `CHAPTER_NOT_EMPTY`          | 409             | Cannot delete chapter with children    |
+| `SLUG_CONFLICT`              | 409             | Slug already in use                    |
+| `MC_ALREADY_HAS_CORRECT`     | 409             | MC quiz already has correct option     |
+| `FITB_MULTIPLE_OPTIONS`      | 409             | FITB quiz cannot have multiple options |
+| `CANNOT_DELETE_LAST_CORRECT` | 409             | Cannot delete last correct option      |
+| `BATCH_VALIDATION_FAILED`    | 400             | Batch create failed (all-or-nothing)   |
+| `PARTIAL_FORBIDDEN`          | 403             | Some IDs not owned in batch            |
 
 ---
 
 ## Validation Rules Summary
 
-| Entity | Field | Rule |
-|--------|-------|------|
-| StudySet | title | 5-50 chars, trimmed, non-empty after trim |
-| StudySet | visibility | PUBLIC or PRIVATE, default PUBLIC |
-| Chapter | title | 5-50 chars, trimmed, non-empty |
-| Chapter | slug | auto-generated only |
-| Flashcard | front | non-empty, max ~4 sentences |
-| Flashcard | back | non-empty, max ~4 sentences |
-| Flashcard | hint | max 500 chars |
-| Flashcard | importance | integer >= 0 |
-| Flashcard | chapterId | must exist |
-| Quiz | questionText | non-empty |
-| Quiz | type | immutable after creation |
-| Quiz | type=MULTIPLE_CHOICE | options count 2-6 |
-| Quiz | type=MULTIPLE_SELECT | options count 2-10 |
-| Quiz | type=FILL_IN_THE_BLANK | options count exactly 1 |
-| QuizOption | optionText | non-empty, max ~4 sentences |
-| QuizOption | isCorrect | required |
-| QuizOption | explanation | optional |
+| Entity     | Field                  | Rule                                      |
+| ---------- | ---------------------- | ----------------------------------------- |
+| StudySet   | title                  | 5-50 chars, trimmed, non-empty after trim |
+| StudySet   | visibility             | PUBLIC or PRIVATE, default PUBLIC         |
+| Chapter    | title                  | 5-50 chars, trimmed, non-empty            |
+| Chapter    | slug                   | auto-generated only                       |
+| Flashcard  | front                  | non-empty, max ~4 sentences               |
+| Flashcard  | back                   | non-empty, max ~4 sentences               |
+| Flashcard  | hint                   | max 500 chars                             |
+| Flashcard  | importance             | integer >= 0                              |
+| Flashcard  | chapterId              | must exist                                |
+| Quiz       | questionText           | non-empty                                 |
+| Quiz       | type                   | immutable after creation                  |
+| Quiz       | type=MULTIPLE_CHOICE   | options count 2-6                         |
+| Quiz       | type=MULTIPLE_SELECT   | options count 2-10                        |
+| Quiz       | type=FILL_IN_THE_BLANK | options count exactly 1                   |
+| QuizOption | optionText             | non-empty, max ~4 sentences               |
+| QuizOption | isCorrect              | required                                  |
+| QuizOption | explanation            | optional                                  |
 
 ---
 

@@ -71,8 +71,6 @@ Choose **Approach B**. Keep structured local fields plus selected Midtrans field
 
 Approach B
 
-
-
 ---
 
 ### 2. What exact columns should `subscription_period` store?
@@ -106,7 +104,6 @@ Choose **Approach B**. `subscription_period` should reference the order that gra
 #### Answer
 
 Approach B, without replacedByPeriodId
-
 
 ---
 
@@ -142,7 +139,6 @@ Choose **Approach B** if the project's prefixed ID helpers are ready; otherwise 
 
 Approach B, use 3 chars prefix
 
-
 ---
 
 ### 4. Should Midtrans `order_id` exactly equal local `subscription_order.id`?
@@ -176,8 +172,6 @@ Choose **Approach B** if sandbox and production can share operational dashboards
 #### Answer
 
 Approach A
-
-
 
 ---
 
@@ -343,8 +337,6 @@ Choose **Approach B**. Local expiry should stop showing/reusing stale checkout, 
 
 Approach B, we also need to set snap expiration to 1 hour
 
-
-
 ---
 
 ### 10. Should successful order processing be transactional with period creation?
@@ -444,8 +436,6 @@ Choose **Approach B** if referral rewards are part of first-version scope. It gi
 
 Approach B
 
-
-
 ---
 
 ### 13. What should happen if referral reward processing fails after subscription activation?
@@ -543,7 +533,6 @@ Choose **Approach B**. Keep provider-specific dispute handling out of scope, but
 
 Approach B
 
-
 ---
 
 ### 16. Should admin be able to manually grant or revoke subscription periods?
@@ -576,8 +565,6 @@ Choose **Approach A** for initial launch unless support workflows already requir
 #### Answer
 
 Approach B
-
-
 
 ---
 
@@ -645,7 +632,6 @@ Choose **Approach B** for the first version. Use authenticated user fields when 
 
 Approach B
 
-
 ---
 
 ### 19. Should plan checkout be available to unauthenticated users?
@@ -676,7 +662,6 @@ Subscription access is tied to a user ID, and Rate Limiter reads the authenticat
 Choose **Approach A**. Subscription checkout should require authentication because paid access is user-scoped.
 
 #### Answer
-
 
 Approach A
 
@@ -712,7 +697,6 @@ Choose **Approach A**. Backend checkout creation should enforce plan-transition 
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -782,9 +766,8 @@ Choose **Approach B**. Store the immutable terms needed to validate and fulfill 
 
 #### Answer
 
-Approach B, without currency 
+Approach B, without currency
 currency always IDR
-
 
 ---
 
@@ -884,7 +867,6 @@ Choose **Approach A**. Current-plan lookup should be a pure read; admin cleanup 
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -1017,7 +999,6 @@ Choose **Approach A**. Duplicate valid notifications should be processed as idem
 
 Approach A
 
-
 ---
 
 ### 30. Should unknown Midtrans statuses fail closed or be stored as pending?
@@ -1051,7 +1032,6 @@ Choose **Approach B**. Store the raw unknown status, keep local order pending or
 
 Approach B
 
-
 ---
 
 ### 31. Should payment status conflicts have a dedicated order status?
@@ -1084,7 +1064,6 @@ Choose **Approach B**. Add a local `CONFLICT` or `REVIEW_REQUIRED` order status 
 #### Answer
 
 Approach B
-
 
 ---
 
@@ -1152,7 +1131,6 @@ Choose **Approach B**. Store provider message for diagnostics, but UI should dis
 
 Approach A
 
-
 ---
 
 ### 34. Should subscription commands use shared result envelopes or throw on expected failures?
@@ -1185,7 +1163,6 @@ Choose the existing project service pattern. If no single pattern is enforced, c
 #### Answer
 
 Use existing pattern from other service
-
 
 ---
 
@@ -1220,7 +1197,6 @@ Choose **Approach A**. Store all subscription timestamps as UTC instants and let
 
 UTC only approach A
 
-
 ---
 
 ### 36. Should subscription expose a cleanup command for pending orders separately from period expiry cleanup?
@@ -1254,7 +1230,6 @@ Choose **Approach A** if the command returns separate counts for orders and peri
 
 Approach A
 
-
 ---
 
 ### 37. Should plan precedence be encoded as numeric rank or hardcoded comparison helper?
@@ -1287,7 +1262,6 @@ Choose **Approach B**. A typed rank map makes highest-plan selection straightfor
 #### Answer
 
 Use the price to decide, expensive one will prioritized
-
 
 ---
 
@@ -1354,7 +1328,6 @@ Choose **Approach A**. Upgrades should create a new higher-plan period starting 
 
 Approach A
 
-
 ---
 
 ### 40. Should subscription support promotional or referral discounts in the first version?
@@ -1387,7 +1360,6 @@ Choose **Approach A**. Do not support discounts or referral-point redemption in 
 #### Answer
 
 Approach A
-
 
 ---
 

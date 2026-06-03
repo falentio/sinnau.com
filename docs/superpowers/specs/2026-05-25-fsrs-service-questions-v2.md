@@ -181,6 +181,7 @@ You are correct
 **ANswer**
 
 Available mean:
+
 - card ever reviewed
 - card waiting to be reviewed again
 - exclude the card that never reviewed

@@ -28,6 +28,7 @@ const formSchema = v.object({
 ### 1. Files Field (`name="files"`)
 
 **Two file inputs side by side:**
+
 - PDF input: accepts `.pdf` files only
 - DOCX input: accepts `.docx` files only
 - Button style: outline variant with upload icon
@@ -39,6 +40,7 @@ const formSchema = v.object({
 ### 2. Advanced Mode Toggle
 
 **Toggle button that shows/hides additional options:**
+
 - Label: "Mode Lanjutan"
 - Icon: `ArrowDown01Icon` when collapsed, `ArrowUp01Icon` when expanded
 - Collapsed by default
@@ -47,31 +49,34 @@ const formSchema = v.object({
 ### 3. Additional Instructions Field (`name="instructions"`)
 
 **Only visible when advanced mode is enabled:**
+
 - Textarea input
 - Character counter showing current/max (0/1000)
 - Placeholder: "Tambahkan instruksi khusus untuk AI..."
 
 ## Component Inventory
 
-| Component | Type | Notes |
-|-----------|------|-------|
-| Button | shadcn | File upload buttons, submit, cancel |
-| Form.Field | shadcn/formsnap | Wrapper for form fields |
-| Form.Label | shadcn/formsnap | Field labels |
-| Form.Description | shadcn/formsnap | Helper text |
-| Form.FieldErrors | shadcn/formsnap | Validation errors |
-| Input | shadcn | File inputs (type="file") |
-| Textarea | shadcn | Additional instructions |
-| HugeiconsIcon | @hugeicons/svelte | Icons throughout |
+| Component        | Type              | Notes                               |
+| ---------------- | ----------------- | ----------------------------------- |
+| Button           | shadcn            | File upload buttons, submit, cancel |
+| Form.Field       | shadcn/formsnap   | Wrapper for form fields             |
+| Form.Label       | shadcn/formsnap   | Field labels                        |
+| Form.Description | shadcn/formsnap   | Helper text                         |
+| Form.FieldErrors | shadcn/formsnap   | Validation errors                   |
+| Input            | shadcn            | File inputs (type="file")           |
+| Textarea         | shadcn            | Additional instructions             |
+| HugeiconsIcon    | @hugeicons/svelte | Icons throughout                    |
 
 ## States
 
 ### Submitting State
+
 - All form controls disabled
 - Submit button shows "Membuat..." with loading indicator
 - Cancel button also disabled
 
 ### Error States
+
 - Field-level validation errors shown via `Form.FieldErrors`
 - Server error banner at top of form (if applicable)
 

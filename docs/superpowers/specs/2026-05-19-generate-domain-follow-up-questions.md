@@ -48,8 +48,7 @@ Choose **Approach A** for the first version. Keep failed Generate history, delet
 
 #### Answer
 
-Approach A
----
+## Approach A
 
 ### 2. When exactly should `opts.onNewContent` run after moving it out of tool execution?
 
@@ -248,4 +247,3 @@ Choose **Approach B**. Poll with `createdAt >= lastPollingDate`, return stable e
 
 delivery to clienat are atLeastOnceDelivery and we deduplicate content on client
 approach B are correct
-

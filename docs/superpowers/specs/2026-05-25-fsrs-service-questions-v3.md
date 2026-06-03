@@ -62,6 +62,7 @@ Approach B
 **Answer**
 
 GetStudySetsWithAvailableCards would return:
+
 - 10 latest (order by last reviewed at) entries
 - each entry would contain studySet: StudySet, and session: Session, card need to be reviewed
 
@@ -138,7 +139,6 @@ Metadata only, remove totalCards, remove remainingCards, remove newCardsCount
 - **C. Grouped by phase.** Returns `{ newCards: [...], dueCards: [...] }` as two separate arrays. Helps the client render a divider or different UI for the two phases.
 
 **Recommendation:** Approach A with optional approach C grouping. Return all cards in a flat array ordered by phase (new first, then due). Include `newCardCount` and `dueCardCount` so the client knows where the boundary is. For very large study sets, the response size is bounded by the study set's flashcard count, which is already limited by the flashcard create limits.
-
 
 **ANswer**
 
@@ -280,7 +280,7 @@ shape: { studySet: StudySet, session: Session }
 
 **Recommendation:** Approach C. Unique constraint on `(userId, flashcardId, sessionId)`. If the same card is reviewed again in the same session, upsert the review log and recalculate `flashcard_state`. This handles the edge case where a user changes their rating or the client retries.
 
-**Answer** 
+**Answer**
 
 Appproach C
 

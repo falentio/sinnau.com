@@ -9,7 +9,8 @@ import type {
 	NewQuizRow,
 	QuizOptionUpdatePatch,
 	QuizRepository,
-	QuizUpdatePatch
+	QuizUpdatePatch,
+	QuizWithOptions
 } from './quiz.repository.ts';
 
 export class QuizDrizzleRepository implements QuizRepository {
@@ -68,11 +69,36 @@ export class QuizDrizzleRepository implements QuizRepository {
 		return row ?? null;
 	}
 
-	async findQuizzesByStudySetId(studySetId: string): Promise<Quiz[]> {
+	async findQuizzesByStudySetId(studySetId: string): Promise<QuizWithOptions[]> {
 		const rows = await this.dbInstance
 			.select()
 			.from(quiz)
+			.leftJoin(quizOption, eq(quiz.id, quizOption.quizId))
 			.where(eq(quiz.studySetId, studySetId))
+			.orderBy(desc(quiz.createdAt), asc(quiz.id), asc(quizOption.createdAt), asc(quizOption.id));
+
+		const byId = new Map<string, QuizWithOptions>();
+		for (const row of rows) {
+			const q = row.quiz;
+			const opt = row.quiz_option;
+			let entry = byId.get(q.id);
+			if (!entry) {
+				entry = { ...q, options: [] };
+				byId.set(q.id, entry);
+			}
+			if (opt) {
+				entry.options.push(opt);
+			}
+		}
+		return Array.from(byId.values());
+	}
+
+	async findQuizzesByIds(ids: string[]): Promise<Quiz[]> {
+		if (ids.length === 0) return [];
+		const rows = await this.dbInstance
+			.select()
+			.from(quiz)
+			.where(inArray(quiz.id, ids))
 			.orderBy(desc(quiz.createdAt), asc(quiz.id));
 		return rows;
 	}
@@ -80,15 +106,6 @@ export class QuizDrizzleRepository implements QuizRepository {
 	async findChapterById(id: string): Promise<Chapter | null> {
 		const [row] = await this.dbInstance.select().from(chapter).where(eq(chapter.id, id)).limit(1);
 		return row ?? null;
-	}
-
-	async findOptionsByQuizId(quizId: string): Promise<QuizOption[]> {
-		const rows = await this.dbInstance
-			.select()
-			.from(quizOption)
-			.where(eq(quizOption.quizId, quizId))
-			.orderBy(asc(quizOption.createdAt), asc(quizOption.id));
-		return rows;
 	}
 
 	async findOptionsByQuizIds(quizIds: string[]): Promise<QuizOption[]> {

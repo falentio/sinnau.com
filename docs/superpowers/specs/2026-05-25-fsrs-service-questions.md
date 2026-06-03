@@ -54,7 +54,6 @@ Lazy, cuz we also permit the user to start flashcard session from other user stu
 
 **Recommendation:** Approach A for MVP. An implicit session provides the core value (review cards, get next due dates) without the overhead. An explicit session can be layered on later if analytics or streaks become a requirement. The queries and review command are session-agnostic by design.
 
-
 **Answer**
 
 Approach B, cardRemaining are card never reviewed (not card need to be reviewed again). propose reasonable and useful column for session
@@ -190,11 +189,9 @@ we will use full ts-fsrs scheduling
 
 **Recommendation:** Approach A for MVP. The default parameters are research-backed and work well. If and when users ask for retention tuning, we can add per-user parameters later — the review command would read parameters before constructing the `fsrs()` instance.
 
-
 **Answer**
 
 Per user parameters, but for now we dont need to give the ability to tune the parameter, this is future feature
-
 
 ---
 
@@ -216,7 +213,6 @@ Per user parameters, but for now we dont need to give the ability to tune the pa
 
 cascade
 we support cascade https://developers.cloudflare.com/d1/sql-api/foreign-keys/
-
 
 ---
 

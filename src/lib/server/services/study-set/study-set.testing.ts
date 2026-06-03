@@ -31,10 +31,10 @@ export type MockedStudySetGuard = {
 
 export function createMockGuard(): MockedStudySetGuard {
 	return {
-		requireOwner: vi.fn(),
-		requireUser: vi.fn(),
 		assertOwnerOrForbidden: vi.fn(),
+		assertStudySetOwnerOrForbidden: vi.fn(),
 		assertVisibleByIdOrNotFound: vi.fn(),
+		assertStudySetVisibleByIdOrNotFound: vi.fn(),
 		assertVisibleBySlugOrNotFound: vi.fn(),
 		canView: vi.fn()
 	};

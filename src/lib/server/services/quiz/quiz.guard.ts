@@ -69,18 +69,24 @@ export class QuizGuard {
 	}
 
 	async assertQuizOwnerBatchOrPartialForbidden(ids: string[], ownerId: string): Promise<Quiz[]> {
-		const rows = await Promise.all(ids.map((id) => this.repo.findQuizById(id)));
+		const rows = await this.repo.findQuizzesByIds(ids);
+		const foundIds = new Set(rows.map((row) => row.id));
 		const blockedIds: string[] = [];
-		rows.forEach((row, idx) => {
-			if (!row || row.ownerId !== ownerId) blockedIds.push(ids[idx]!);
-		});
+		for (const id of ids) {
+			if (!foundIds.has(id)) {
+				blockedIds.push(id);
+				continue;
+			}
+			const row = rows.find((r) => r.id === id)!;
+			if (row.ownerId !== ownerId) blockedIds.push(id);
+		}
 		if (blockedIds.length > 0) {
 			throw new ORPCError('PARTIAL_FORBIDDEN', {
 				message: 'Some ids cannot be modified by this user',
 				data: { ids: blockedIds }
 			});
 		}
-		return rows as Quiz[];
+		return rows;
 	}
 
 	async assertQuizOptionOwnerBatchOrPartialForbidden(

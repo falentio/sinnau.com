@@ -1,47 +1,127 @@
+<script lang="ts" module>
+	import * as v from 'valibot';
+
+	const formSchema = v.object({
+		email: v.pipe(
+			v.string(),
+			v.trim(),
+			v.email('Email tidak valid.'),
+			v.maxLength(255, 'Email maksimal 255 karakter.')
+		),
+		password: v.pipe(v.string(), v.minLength(1, 'Kata sandi wajib diisi.'))
+	});
+
+	type LoginForm = v.InferOutput<typeof formSchema>;
+</script>
+
 <script lang="ts">
-	import Button from '$lib/components/ui/button/button.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import * as Form from '$lib/components/ui/form/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import * as Label from '$lib/components/ui/label/index.js';
+	import { authClient } from '$lib/hooks/auth.svelte';
+	import { defaults, superForm } from 'sveltekit-superforms';
+	import { valibotClient } from 'sveltekit-superforms/adapters';
 
-	let email = $state('');
-	let password = $state('');
+	let serverError = $state('');
 	let pending = $state(false);
-	let error = $state('');
 
-	function handleSubmit(e: SubmitEvent) {
-		e.preventDefault();
-		error = 'Login belum tersedia. Backend belum diimplementasikan.';
+	const form = superForm(
+		defaults<LoginForm>(
+			{
+				email: '',
+				password: ''
+			},
+			valibotClient(formSchema)
+		),
+		{
+			SPA: true,
+			validators: valibotClient(formSchema),
+			resetForm: false,
+			onUpdate: async ({ form: submittedForm }) => {
+				serverError = '';
+				if (!submittedForm.valid) return;
+				await signIn(submittedForm.data);
+			}
+		}
+	);
+
+	const { form: formData, enhance, submitting } = form;
+
+	function getErrorMessage(error: { message?: string } | null | undefined) {
+		if (error?.message) return error.message;
+		return 'Tidak bisa masuk. Periksa email dan kata sandi.';
+	}
+
+	async function signIn(data: LoginForm) {
+		pending = true;
+		try {
+			const { error } = await authClient.signIn.email({
+				email: data.email,
+				password: data.password
+			});
+			if (error) {
+				serverError = getErrorMessage(error);
+				return;
+			}
+			await goto(resolve('/(app)/home'));
+		} catch (error) {
+			serverError = getErrorMessage(error as { message?: string });
+		} finally {
+			pending = false;
+		}
 	}
 </script>
 
-<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
+<form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
 	<div class="flex flex-col gap-2 text-center">
 		<h1 class="text-2xl font-semibold tracking-tight">Masuk</h1>
 		<p class="text-sm text-muted-foreground">Masukkan email untuk masuk ke akun Anda</p>
 	</div>
 
-	{#if error}
+	{#if serverError}
 		<div class="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-			{error}
+			{serverError}
 		</div>
 	{/if}
 
-	<div class="grid gap-2">
-		<Label.Root for="email">Email</Label.Root>
-		<Input id="email" type="email" placeholder="m@example.com" required bind:value={email} />
-	</div>
+	<Form.Field {form} name="email">
+		<Form.Control>
+			{#snippet children({ props })}
+				<Form.Label>Email</Form.Label>
+				<Input
+					{...props}
+					type="email"
+					placeholder="m@example.com"
+					bind:value={$formData.email}
+					disabled={$submitting || pending}
+				/>
+			{/snippet}
+		</Form.Control>
+		<Form.FieldErrors />
+	</Form.Field>
 
-	<div class="grid gap-2">
-		<Label.Root for="password">Kata Sandi</Label.Root>
-		<Input id="password" type="password" required bind:value={password} />
-	</div>
+	<Form.Field {form} name="password">
+		<Form.Control>
+			{#snippet children({ props })}
+				<Form.Label>Kata Sandi</Form.Label>
+				<Input
+					{...props}
+					type="password"
+					bind:value={$formData.password}
+					disabled={$submitting || pending}
+				/>
+			{/snippet}
+		</Form.Control>
+		<Form.FieldErrors />
+	</Form.Field>
 
-	<Button type="submit" class="w-full" disabled={pending}>
-		{pending ? 'Memproses...' : 'Masuk'}
-	</Button>
+	<Form.Button class="w-full" disabled={$submitting || pending}>
+		{$submitting || pending ? 'Memproses...' : 'Masuk'}
+	</Form.Button>
 
 	<div class="text-center text-sm">
 		Belum punya akun?
-		<a href="/sign-up" class="underline underline-offset-4">Daftar</a>
+		<a href={resolve('/(auth)/sign-up')} class="underline underline-offset-4">Daftar</a>
 	</div>
 </form>

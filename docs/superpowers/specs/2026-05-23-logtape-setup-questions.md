@@ -45,7 +45,7 @@ core plus redaction
 
 **Answer**
 
-export initalization function (setupLogging) only that  
+export initalization function (setupLogging) only that
 
 ### 3. Where should LogTape be initialized?
 
@@ -153,7 +153,6 @@ Production: info
 Development: debug
 
 decide using sveltekit production variable
-
 
 ### 9. Should invalid `LOG_LEVEL` values fail startup or fall back?
 
@@ -412,7 +411,6 @@ defer logging implementations later
 
 Skip if building is true
 
-
 ### 23. Should setup include shutdown or flushing behavior?
 
 **Question:** Do we need explicit log flushing or disposal support in the first setup?
@@ -467,7 +465,7 @@ Lets defer this, just create TODO comments for this, no global metadata yet
 
 Your recomendations are correct
 without minimal test
-add request lifecycle logging and async local storage context to plan 
+add request lifecycle logging and async local storage context to plan
 
 ## Final Setup Preferences
 

@@ -17,11 +17,9 @@ import {
 	MS_OPTION_MAX
 } from './quiz.constant.ts';
 import type { QuizGuard } from './quiz.guard.ts';
-import type { QuizRepository } from './quiz.repository.ts';
+import type { QuizRepository, QuizWithOptions } from './quiz.repository.ts';
 
 export type { Quiz, QuizOption, QuizType };
-
-export type QuizWithOptions = Quiz & { options: QuizOption[] };
 
 export class QuizService {
 	private readonly guard: QuizGuard;
@@ -63,6 +61,7 @@ export class QuizService {
 		}
 
 		const id = crypto.randomUUID();
+		const now = new Date();
 		const optionRows = options.map((opt) => ({
 			id: opt.id,
 			quizId: id,
@@ -70,7 +69,7 @@ export class QuizService {
 			isCorrect: opt.isCorrect,
 			explanation: opt.explanation
 		}));
-		await this.repo.insertQuiz(
+		const created = await this.repo.insertQuiz(
 			{
 				id,
 				chapterId: input.chapterId ?? null,
@@ -82,16 +81,10 @@ export class QuizService {
 			optionRows
 		);
 
-		return this.hydrateQuiz({
-			id,
-			chapterId: input.chapterId ?? null,
-			studySetId: input.studySetId,
-			type: input.type,
-			questionText: input.questionText,
-			ownerId: ownerId,
-			createdAt: new Date(),
-			updatedAt: new Date()
-		});
+		return {
+			...created,
+			options: optionRows.map((row) => ({ ...row, createdAt: now, updatedAt: now }))
+		};
 	}
 
 	async updateQuiz(input: UpdateQuizInput, ownerId: string): Promise<QuizWithOptions> {
@@ -122,9 +115,17 @@ export class QuizService {
 			quizIds.map((id) => this.guard.assertQuizOwnerOrForbidden(id, ownerId))
 		);
 
+		const existingOptions = await this.repo.findOptionsByQuizIds(quizIds);
+		const existingByQuiz = new Map<string, QuizOption[]>();
+		for (const opt of existingOptions) {
+			const list = existingByQuiz.get(opt.quizId) ?? [];
+			list.push(opt);
+			existingByQuiz.set(opt.quizId, list);
+		}
+
 		for (const quizRow of quizzes) {
 			const newOptions = input.options.filter((o) => o.quizId === quizRow.id);
-			const existing = await this.repo.findOptionsByQuizId(quizRow.id);
+			const existing = existingByQuiz.get(quizRow.id) ?? [];
 			const merged = [...existing, ...newOptions];
 			this.validateMergedOptionsForType(quizRow.type, merged);
 		}
@@ -164,7 +165,7 @@ export class QuizService {
 			isCorrect: nextIsCorrect
 		};
 
-		const allOptions = await this.repo.findOptionsByQuizId(existing.quizId);
+		const allOptions = await this.repo.findOptionsByQuizIds([existing.quizId]);
 		const others = allOptions.filter((o) => o.id !== existing.id);
 		const merged = [...others, projected];
 		this.validateMergedOptionsForType(quizRow.type, merged);
@@ -194,14 +195,27 @@ export class QuizService {
 			groupedByQuiz.set(opt.quizId, list);
 		}
 
+		const quizIds = Array.from(groupedByQuiz.keys());
+		const [quizzes, allOptions] = await Promise.all([
+			this.repo.findQuizzesByIds(quizIds),
+			this.repo.findOptionsByQuizIds(quizIds)
+		]);
+		const quizzesById = new Map(quizzes.map((q) => [q.id, q]));
+		const optionsByQuiz = new Map<string, QuizOption[]>();
+		for (const opt of allOptions) {
+			const list = optionsByQuiz.get(opt.quizId) ?? [];
+			list.push(opt);
+			optionsByQuiz.set(opt.quizId, list);
+		}
+
 		for (const [quizId, optionsToDelete] of groupedByQuiz) {
-			const quizRow = await this.repo.findQuizById(quizId);
+			const quizRow = quizzesById.get(quizId);
 			if (!quizRow) {
 				throw new ORPCError('NOT_FOUND', { message: 'Quiz not found' });
 			}
-			const allOptions = await this.repo.findOptionsByQuizId(quizId);
-			const remaining = allOptions.filter((o) => !optionsToDelete.some((d) => d.id === o.id));
-			this.assertRemainingOptionsValid(quizRow.type, allOptions, remaining);
+			const allForQuiz = optionsByQuiz.get(quizId) ?? [];
+			const remaining = allForQuiz.filter((o) => !optionsToDelete.some((d) => d.id === o.id));
+			this.assertRemainingOptionsValid(quizRow.type, allForQuiz, remaining);
 			this.validateMergedOptionsForType(quizRow.type, remaining);
 		}
 
@@ -213,20 +227,7 @@ export class QuizService {
 
 	async getQuizzes(input: GetQuizzesInput, userId: string): Promise<QuizWithOptions[]> {
 		await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, userId);
-
-		const quizzes = await this.repo.findQuizzesByStudySetId(input.studySetId);
-		if (quizzes.length === 0) return [];
-
-		const quizIds = quizzes.map((q) => q.id);
-		const allOptions = await this.repo.findOptionsByQuizIds(quizIds);
-		const byQuiz = new Map<string, QuizOption[]>();
-		for (const opt of allOptions) {
-			const list = byQuiz.get(opt.quizId) ?? [];
-			list.push(opt);
-			byQuiz.set(opt.quizId, list);
-		}
-
-		return quizzes.map((q) => ({ ...q, options: byQuiz.get(q.id) ?? [] }));
+		return this.repo.findQuizzesByStudySetId(input.studySetId);
 	}
 
 	async getQuiz(input: GetQuizInput, userId: string): Promise<QuizWithOptions> {
@@ -235,7 +236,7 @@ export class QuizService {
 	}
 
 	private async hydrateQuiz(quiz: Quiz): Promise<QuizWithOptions> {
-		const options = await this.repo.findOptionsByQuizId(quiz.id);
+		const options = await this.repo.findOptionsByQuizIds([quiz.id]);
 		return { ...quiz, options };
 	}
 

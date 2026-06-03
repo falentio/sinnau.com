@@ -15,6 +15,20 @@
       "when": 1780325829941,
       "tag": "0001_cheerful_war_machine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780375489131,
+      "tag": "0002_lush_maestro",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780386817429,
+      "tag": "0003_dapper_thanos",
+      "breakpoints": true
     }
   ]
 }

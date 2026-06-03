@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { RadioGroup as RadioGroupPrimitive } from "bits-ui";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
+	import { RadioGroup as RadioGroupPrimitive } from 'bits-ui';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { CircleIcon } from '@hugeicons/core-free-icons';
-	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -15,7 +15,7 @@
 	bind:ref
 	data-slot="radio-group-item"
 	class={cn(
-		"bg-input/90 data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary aria-invalid:border-destructive focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:aria-invalid:border-destructive/50 flex size-4 rounded-full border border-transparent focus-visible:ring-3 aria-invalid:ring-3 group/radio-group-item peer relative aspect-square shrink-0 border outline-none after:absolute after:-inset-x-3 after:-inset-y-2 disabled:cursor-not-allowed disabled:opacity-50",
+		'group/radio-group-item peer relative flex aspect-square size-4 shrink-0 rounded-full border border border-transparent bg-input/90 outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary',
 		className
 	)}
 	{...restProps}
@@ -23,7 +23,11 @@
 	{#snippet children({ checked })}
 		<div data-slot="radio-group-indicator" class="flex size-4 items-center justify-center">
 			{#if checked}
-				<HugeiconsIcon icon={CircleIcon} strokeWidth={2} class="bg-primary-foreground absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full dark:size-2.5" />
+				<HugeiconsIcon
+					icon={CircleIcon}
+					strokeWidth={2}
+					class="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-foreground dark:size-2.5"
+				/>
 			{/if}
 		</div>
 	{/snippet}

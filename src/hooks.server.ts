@@ -14,19 +14,19 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
 };
 
 const guardedRoutes: Array<(routeId: string) => boolean> = [
-	routeId => routeId.includes("/(app)/")
-]
+	(routeId) => routeId.includes('/(app)/')
+];
 
 const authGuardHandle: Handle = async ({ event, resolve }) => {
-	const routeId = event.route?.id ?? "";
-	const requiresAuth = guardedRoutes.some(guard => guard(routeId));
+	const routeId = event.route?.id ?? '';
+	const requiresAuth = guardedRoutes.some((guard) => guard(routeId));
 	const loggedIn = !!event.locals.session;
 
 	if (requiresAuth && !loggedIn) {
-		redirect(302, "/login");
+		redirect(302, '/login');
 	}
 
-	return resolve(event)
-}
+	return resolve(event);
+};
 
 export const handle = sequence(betterAuthHandle, authGuardHandle);

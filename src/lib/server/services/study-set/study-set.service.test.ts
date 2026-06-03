@@ -40,8 +40,6 @@ function setupService() {
 	repo.findRecentVisits.mockResolvedValue([]);
 
 	// Guard defaults: happy-path passthrough so tests only configure failures explicitly.
-	guard.requireOwner.mockImplementation((id) => id as string);
-	guard.requireUser.mockImplementation((id) => id as string);
 	guard.assertOwnerOrForbidden.mockResolvedValue(createStudySetFixture());
 	guard.assertVisibleByIdOrNotFound.mockResolvedValue(createStudySetFixture());
 	guard.assertVisibleBySlugOrNotFound.mockResolvedValue(createStudySetFixture());
@@ -49,10 +47,6 @@ function setupService() {
 
 	const service = new StudySetService(repo, guard as unknown as StudySetGuard);
 	return { repo, guard, service };
-}
-
-function throwUnauthorized(): never {
-	throw new ORPCError('UNAUTHORIZED', { message: 'Authentication is required' });
 }
 
 function throwForbidden(): never {
@@ -65,22 +59,11 @@ function throwNotFound(): never {
 
 describe.concurrent('StudySetService', () => {
 	describe('createStudySet', () => {
-		it('propagates UNAUTHORIZED from guard.requireOwner', async ({ expect }) => {
-			const { repo, guard, service } = setupService();
-			guard.requireOwner.mockImplementation(throwUnauthorized);
-			const err = await captureError(service.createStudySet({ title: 'Biology 101' }, null));
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(guard.requireOwner).toHaveBeenCalledWith(null);
-			expect(repo.insertStudySet).not.toHaveBeenCalled();
-		});
-
 		it('creates a study set with generated slug, default visibility, and empty files', async ({
 			expect
 		}) => {
-			const { repo, guard, service } = setupService();
+			const { repo, service } = setupService();
 			const result = await service.createStudySet({ title: 'Biology 101' }, 'owner-1');
-			expect(guard.requireOwner).toHaveBeenCalledWith('owner-1');
 			expect(repo.isSlugTaken).toHaveBeenCalled();
 			expect(repo.insertStudySet).toHaveBeenCalledOnce();
 			expect(repo.insertStudySet).toHaveBeenCalledWith(
@@ -139,18 +122,6 @@ describe.concurrent('StudySetService', () => {
 	});
 
 	describe('updateStudySet', () => {
-		it('propagates UNAUTHORIZED from guard.requireOwner', async ({ expect }) => {
-			const { repo, guard, service } = setupService();
-			guard.requireOwner.mockImplementation(throwUnauthorized);
-			const err = await captureError(
-				service.updateStudySet({ id: crypto.randomUUID(), title: 'X' }, null)
-			);
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(guard.assertOwnerOrForbidden).not.toHaveBeenCalled();
-			expect(repo.updateStudySet).not.toHaveBeenCalled();
-		});
-
 		it('propagates FORBIDDEN from guard.assertOwnerOrForbidden', async ({ expect }) => {
 			const { repo, guard, service } = setupService();
 			guard.assertOwnerOrForbidden.mockImplementation(throwForbidden);
@@ -257,15 +228,6 @@ describe.concurrent('StudySetService', () => {
 	});
 
 	describe('deleteStudySet', () => {
-		it('propagates UNAUTHORIZED from guard.requireOwner', async ({ expect }) => {
-			const { repo, guard, service } = setupService();
-			guard.requireOwner.mockImplementation(throwUnauthorized);
-			const err = await captureError(service.deleteStudySet({ id: crypto.randomUUID() }, null));
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(repo.deleteStudySet).not.toHaveBeenCalled();
-		});
-
 		it('throws NOT_FOUND when repo reports nothing was deleted', async ({ expect }) => {
 			const { service } = setupService();
 			const err = await captureError(
@@ -284,15 +246,6 @@ describe.concurrent('StudySetService', () => {
 	});
 
 	describe('getStudySets', () => {
-		it('propagates UNAUTHORIZED from guard.requireOwner', async ({ expect }) => {
-			const { repo, guard, service } = setupService();
-			guard.requireOwner.mockImplementation(throwUnauthorized);
-			const err = await captureError(service.getStudySets({}, null));
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(repo.findOwnedStudySets).not.toHaveBeenCalled();
-		});
-
 		it('forwards default pagination (orderBy=createdAt, orderDirection=desc, page=1)', async ({
 			expect
 		}) => {
@@ -312,16 +265,6 @@ describe.concurrent('StudySetService', () => {
 	});
 
 	describe('getStudySet', () => {
-		it('propagates UNAUTHORIZED from guard.requireUser', async ({ expect }) => {
-			const { guard, service } = setupService();
-			guard.requireUser.mockImplementation(throwUnauthorized);
-			const err = await captureError(service.getStudySet({ id: crypto.randomUUID() }, null));
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(guard.assertVisibleByIdOrNotFound).not.toHaveBeenCalled();
-			expect(guard.assertVisibleBySlugOrNotFound).not.toHaveBeenCalled();
-		});
-
 		it('delegates to guard.assertVisibleByIdOrNotFound when input has an id', async ({
 			expect
 		}) => {
@@ -366,18 +309,6 @@ describe.concurrent('StudySetService', () => {
 	});
 
 	describe('refreshStudySetVisit', () => {
-		it('propagates UNAUTHORIZED from guard.requireUser', async ({ expect }) => {
-			const { repo, guard, service } = setupService();
-			guard.requireUser.mockImplementation(throwUnauthorized);
-			const err = await captureError(
-				service.refreshStudySetVisit({ studySetId: crypto.randomUUID() }, null)
-			);
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(guard.assertVisibleByIdOrNotFound).not.toHaveBeenCalled();
-			expect(repo.upsertVisit).not.toHaveBeenCalled();
-		});
-
 		it('upserts the visit with the current timestamp and returns it', async ({ expect }) => {
 			const { repo, guard, service } = setupService();
 			guard.assertVisibleByIdOrNotFound.mockResolvedValue(
@@ -410,15 +341,6 @@ describe.concurrent('StudySetService', () => {
 	});
 
 	describe('getRecentStudySets', () => {
-		it('propagates UNAUTHORIZED from guard.requireUser', async ({ expect }) => {
-			const { repo, guard, service } = setupService();
-			guard.requireUser.mockImplementation(throwUnauthorized);
-			const err = await captureError(service.getRecentStudySets({ count: 5 }, null));
-			expect(err).toBeInstanceOf(ORPCError);
-			expect(err).toMatchObject({ code: 'UNAUTHORIZED' });
-			expect(repo.findRecentVisits).not.toHaveBeenCalled();
-		});
-
 		it('forwards user and count to the repo and returns its result', async ({ expect }) => {
 			const { repo, service } = setupService();
 			const sets = [createStudySetFixture({ id: 'set-1' })];

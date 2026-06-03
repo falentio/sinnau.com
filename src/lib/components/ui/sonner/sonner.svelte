@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Toaster as Sonner, type ToasterProps as SonnerProps } from "svelte-sonner";
-	import { mode } from "mode-watcher";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
+	import { Toaster as Sonner, type ToasterProps as SonnerProps } from 'svelte-sonner';
+	import { mode } from 'mode-watcher';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Loading03Icon } from '@hugeicons/core-free-icons';
 	import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
 	import { MultiplicationSignCircleIcon } from '@hugeicons/core-free-icons';

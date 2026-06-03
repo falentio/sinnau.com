@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import { cn } from "$lib/utils.js";
-	import { buttonVariants } from "$lib/components/ui/button/index.js";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import { cn } from '$lib/utils.js';
+	import { buttonVariants } from '$lib/components/ui/button/index.js';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 
 	let {
@@ -15,11 +15,7 @@
 <PaginationPrimitive.PrevButton
 	bind:ref
 	aria-label="Go to previous page"
-	class={cn(
-		buttonVariants({ variant: "ghost", size: "default" }),
-		"pl-2!",
-		className
-	)}
+	class={cn(buttonVariants({ variant: 'ghost', size: 'default' }), 'pl-2!', className)}
 	{...restProps}
 >
 	<HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />

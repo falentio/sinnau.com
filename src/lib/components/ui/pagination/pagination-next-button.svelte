@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from "bits-ui";
-	import { HugeiconsIcon } from "@hugeicons/svelte"
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowRightIcon } from '@hugeicons/core-free-icons';
-	import { cn } from "$lib/utils.js";
-	import { buttonVariants } from "../button/index.js";
+	import { cn } from '$lib/utils.js';
+	import { buttonVariants } from '../button/index.js';
 
 	let {
 		ref = $bindable(null),
@@ -15,13 +15,13 @@
 
 {#snippet Fallback()}
 	<span>Next</span>
-	<HugeiconsIcon icon={ArrowRightIcon} strokeWidth={2} class={cn("size-4", className)} />
+	<HugeiconsIcon icon={ArrowRightIcon} strokeWidth={2} class={cn('size-4', className)} />
 {/snippet}
 
 <PaginationPrimitive.NextButton
 	bind:ref
 	aria-label="Go to next page"
-	class={cn(buttonVariants({ variant: "ghost" }), "pr-2!", className)}
+	class={cn(buttonVariants({ variant: 'ghost' }), 'pr-2!', className)}
 	{...restProps}
 >
 	{#if children}

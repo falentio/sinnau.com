@@ -1,6 +1,9 @@
 import { relations, sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema.ts';
+import { chapter } from './chapter.ts';
+import { flashcard } from './flashcard.ts';
+import { quiz } from './quiz.ts';
 
 export const STUDY_SET_VISIBILITIES = ['PUBLIC', 'PRIVATE'] as const;
 export type StudySetVisibility = (typeof STUDY_SET_VISIBILITIES)[number];
@@ -37,7 +40,10 @@ export const studySetRelations = relations(studySet, ({ one, many }) => ({
 		fields: [studySet.ownerId],
 		references: [user.id]
 	}),
-	visits: many(studySetVisit)
+	visits: many(studySetVisit),
+	chapters: many(chapter),
+	flashcards: many(flashcard),
+	quizzes: many(quiz)
 }));
 
 export const studySetVisit = sqliteTable(

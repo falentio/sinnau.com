@@ -141,11 +141,11 @@ interface DeleteStudySetCommand {
 
 ```typescript
 interface GetStudySetsQuery {
-  pagination?: {
-    orderBy?: 'createdAt' | 'updatedAt';
-    orderDirection?: 'asc' | 'desc';
-    page?: number;
-  };
+	pagination?: {
+		orderBy?: 'createdAt' | 'updatedAt';
+		orderDirection?: 'asc' | 'desc';
+		page?: number;
+	};
 }
 ```
 

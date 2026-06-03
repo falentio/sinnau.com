@@ -158,7 +158,6 @@ Choose **Approach C**. Implement the multiplier as `12/18`, but document/display
 
 Approach A
 
-
 ---
 
 ### 5. How should discounted amounts be rounded to IDR integers?
@@ -191,7 +190,6 @@ Choose **Approach C** for hardcoded first-version plans if current prices produc
 #### Answer
 
 Approach B
-
 
 ---
 
@@ -257,7 +255,6 @@ Choose **Approach A**. Apply the same duration options and discount multipliers 
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -357,7 +354,6 @@ Choose **Approach A**. Same-plan renewal should extend from the later of local p
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -492,7 +488,6 @@ Choose **Approach B**. Display the final charged amount and duration. Monthly eq
 Approach A as (-11%)
 but we dont need to work with the ui yet.
 
-
 ---
 
 ### 15. Should UI show percentage discount?
@@ -527,7 +522,6 @@ Choose **Approach C**. "Save RpX" is less ambiguous than displaying fractional p
 
 Approach B, but we dont need to touch the UI yet
 
-
 ---
 
 ### 16. Should API input accept `durationKey` or month count?
@@ -560,8 +554,6 @@ Choose **Approach A**. The server should validate `durationKey` against a hardco
 #### Answer
 
 Approach A
-
-
 
 ---
 
@@ -629,7 +621,6 @@ Choose **Approach B**. Settlement should compare provider amount to the order sn
 
 Approach B
 
-
 ---
 
 ### 19. Should referral rewards vary by purchase duration?
@@ -695,8 +686,6 @@ Choose **Approach A** for consistency if admin grant is implemented in the same 
 #### Answer
 
 Approach A
-
-
 
 ---
 

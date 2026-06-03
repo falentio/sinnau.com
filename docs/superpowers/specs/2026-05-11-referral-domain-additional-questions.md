@@ -88,7 +88,6 @@ Choose **Approach A** for the first version. Store lowercase sanitized slugs and
 
 Approach A
 
-
 ---
 
 ### 3. How many slug collision retries should profile creation attempt?
@@ -205,8 +204,7 @@ Choose **Approach B**. Add a compact referred-subscription event table keyed by 
 
 #### Your Answer
 
-Approach B
----
+## Approach B
 
 ### 6. What idempotency key shape should point-affecting commands require?
 

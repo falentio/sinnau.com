@@ -25,7 +25,6 @@ interface ReviewSession {
 	newCardsRemaining: number;
 	dueCardsRemaining: number;
 }
-
 ```
 
 If the UI needs a total, compute it as `newCardsRemaining + dueCardsRemaining` in the response layer.
@@ -38,7 +37,7 @@ The aggregate `remainingCards` field became ambiguous. Sometimes it meant never-
 
 Use `newCardsRemaining` and `dueCardsRemaining` as stored columns. Do not store `totalCards` and do not store aggregate `remainingCards`.
 
-### Answer 
+### Answer
 
 Accepted
 
@@ -66,7 +65,7 @@ This gives stable session behavior without storing every session-card membership
 
 Do not add `review_session_card` for the MVP. Use `startedAt` as the snapshot boundary and document this rule clearly in `GetSessionCards`.
 
-### Answer 
+### Answer
 
 Accept
 
@@ -102,9 +101,9 @@ ResetSession(studySetId);
 
 Reuses the same session row, sets `status = 'active'`, refreshes `startedAt`, clears `completedAt`, recomputes `newCardsRemaining` and `dueCardsRemaining`, and allows the user to study again.
 
-### Answer 
+### Answer
 
-Accepted 
+Accepted
 
 ---
 
@@ -132,7 +131,7 @@ getStudySetsWithDueCards();
 
 It returns the 10 latest user-specific study-set/session entries with due cards, ordered by session activity and due count.
 
-### Answer 
+### Answer
 
 Accepted
 
@@ -166,7 +165,7 @@ interface StudySetWithDueCards {
 
 Limit to 10 entries. Order by `session.lastReviewedAt` descending first, then `dueCardsCount` descending. If `lastReviewedAt` is null, fall back to `session.startedAt`.
 
-### Answer 
+### Answer
 
 Accept
 
@@ -207,7 +206,7 @@ interface ReviewSession {
 
 No `totalCards`, no `remainingCards`, and no `currentBatchIndex`.
 
-### Answer 
+### Answer
 
 Accept
 
@@ -242,7 +241,7 @@ interface SessionCard {
 
 Order cards by `kind` first (`NEW` before `DUE`), then by due date ascending for due cards, then by flashcard creation date for new cards.
 
-### Answer 
+### Answer
 
 Accept
 
@@ -282,7 +281,7 @@ interface ReviewLog {
 
 Make `id` the primary key. If retry protection is needed, add a unique index on `(userId, idempotencyKey)` where `idempotencyKey` is present. Do not make `(userId, flashcardId, sessionId)` unique.
 
-### Answer 
+### Answer
 
 Keep review log as append only
 
@@ -310,10 +309,9 @@ Use this rule:
 `flashcard_state` is the operational source of truth for current scheduling and due-card queries. `review_log` is append-only history used for audit, analytics, and future rescheduling. Review commands write both in the same transaction.
 ```
 
-### Answer 
+### Answer
 
 Accept
-
 
 ---
 
@@ -335,7 +333,7 @@ If parameters become per-user later, historical logs need to know which paramete
 
 Do not add a full `fsrs_user_config` table unless implementation needs it now. Add `parametersVersion` to `review_log` and optionally `flashcard_state`, defaulting to a constant such as `default-v1`.
 
-### Answer 
+### Answer
 
 I think the version should be stored in the session
 but instead of version, we should call it "preset"
@@ -367,7 +365,7 @@ type FsrsRating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY';
 
 Map these to ts-fsrs `State` and `Rating` enums inside the FSRS service only.
 
-### Answer 
+### Answer
 
 Accepted, with additional mapper function
 
@@ -399,7 +397,7 @@ REVIEW_LOG: 'frl';
 
 Use the final names consistently in schema validators and service specs.
 
-### Answer 
+### Answer
 
 Use prefixed UUID
 
@@ -433,7 +431,7 @@ A partial write would corrupt learning state. For example, if `flashcard_state` 
 
 If any step fails, none of the writes persist.
 
-### Answer 
+### Answer
 
 Accept
 
@@ -466,7 +464,7 @@ if (session.newCardsRemaining === 0 && session.dueCardsRemaining === 0) {
 
 `CompleteSession(sessionId)` may still complete early by explicit user action, even when counters are not zero.
 
-### Answer 
+### Answer
 
 Accepted
 
@@ -494,7 +492,7 @@ Document this rule:
 FSRS dashboard queries list user-specific sessions and due states. Public study sets owned by other users are included only when the authenticated user has created their own session/state for that study set.
 ```
 
-### Answer 
+### Answer
 
 FSRS state are per user only, no other user can view other user fsrs state
 
@@ -522,7 +520,7 @@ Document the boundary:
 FSRS returns flashcard IDs, FSRS state, preview state, session state, and due counts. Flashcard content remains owned by the Flashcard service and is fetched separately by consumers.
 ```
 
-### Answer 
+### Answer
 
 Yes add document
 

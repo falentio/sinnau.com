@@ -88,7 +88,6 @@ Choose **Approach B**. Store subscription periods as durable history and add ind
 
 Approach B
 
-
 ---
 
 ### 3. What billing period should paid plans grant?
@@ -121,7 +120,6 @@ Choose **Approach A** for the first version. A settled payment grants 30 days of
 #### Answer
 
 Fixed 30-day period time from settlement time
-
 
 ---
 
@@ -158,7 +156,6 @@ Choose **Approach C** for billing code, even if UI continues to display shortene
 
 Approach B
 
-
 ---
 
 ### 5. Should `FREE` be represented as a subscription record?
@@ -191,7 +188,6 @@ Choose **Approach A**. Treat missing active paid subscription as `FREE`. This ma
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -226,7 +222,6 @@ Choose **Approach B**. Same-plan purchases should extend from the later of curre
 
 Approach B
 
-
 ---
 
 ### 7. What should happen to rate-limit usage when a plan changes?
@@ -255,11 +250,9 @@ Rate Limiter already applies current plan limits immediately. Subscription needs
 
 Choose **Approach A**. Subscription should only change the current plan; Rate Limiter should compare existing daily/weekly usage against the new current limits. This preserves the existing rate-limiter design and avoids cross-domain counter mutation.
 
-
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -294,7 +287,6 @@ Choose **Approach B**. Persist a local pending subscription order first, use its
 
 Approach B
 
-
 ---
 
 ### 9. Which Midtrans events should activate or reject subscription access?
@@ -324,11 +316,9 @@ Midtrans transaction status has several values. Subscription must define which s
 
 Choose **Approach B**. Activate on `settlement`, and activate on `capture` only when `fraud_status` is `accept`. Keep `pending` as pending, mark `expire`, `cancel`, and `deny` as failed, and handle `refund` or `partial_refund` explicitly.
 
-
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -361,8 +351,7 @@ Choose **Approach C**. Use Midtrans notifications/webhooks as the primary source
 
 #### Answer
 
-Approach C, manual status reconcillation can be called by user that owned transaction or admin 
-
+Approach C, manual status reconcillation can be called by user that owned transaction or admin
 
 ---
 
@@ -397,7 +386,6 @@ Choose **Approach B**. Use the local subscription order ID as the primary idempo
 
 Approach B
 
-
 ---
 
 ### 12. When should referral points be awarded for a subscription?
@@ -427,12 +415,9 @@ Referral stores subscription reward events but does not decide when to call them
 
 Choose **Approach A** for domain alignment. On first successful activation of each paid order, Subscription should call Referral with a stable idempotency key. If different point values per plan are desired, define them as subscription reward policy constants.
 
-
 #### Answer
 
 Approach A
-
-
 
 ---
 
@@ -463,12 +448,9 @@ If a paid period ends without renewal, Rate Limiter needs to see `FREE`. The ser
 
 Choose **Approach A** for correctness, optionally with **Approach B** for hygiene. Current-plan lookup should always require `status = ACTIVE` and `endsAt > now`; a scheduled cleanup can later mark old rows as `EXPIRED` for clarity.
 
-
 #### Answer
 
 Approach A, and also add cleanup admin only command
-
-
 
 ---
 
@@ -538,7 +520,6 @@ Choose **Approach A** for full refunds: mark the paid period as `REFUNDED` and e
 
 Approach A
 
-
 ---
 
 ### 16. Should subscription plan configuration remain hardcoded or move to the database?
@@ -569,12 +550,9 @@ Rate Limiter currently uses hardcoded plan keys, limits, features, descriptions,
 
 Choose **Approach A** for the first version. Keep plan keys hardcoded and type-safe, but create subscription-specific billing constants so payment amounts are explicit. Revisit database-managed plans only when product/admin requirements demand it.
 
-
 #### Answer
 
 Approach A
-
-
 
 ---
 
@@ -645,7 +623,6 @@ Choose **Approach B**. Store a local order status for domain behavior and store 
 
 Approach B
 
-
 ---
 
 ### 19. Should checkout creation reuse an existing pending order?
@@ -678,7 +655,6 @@ Choose **Approach C**. If a user creates a new checkout for a plan, expire or ma
 #### Answer
 
 Approach A, we handle this on frontend to prevent spammy click
-
 
 ---
 
@@ -746,7 +722,6 @@ Choose **Approach B**, with **Approach C** available for suspicious or manual re
 
 Approach B verify signature
 
-
 ---
 
 ### 22. Should webhook processing be synchronous or deferred with `waitUntil`?
@@ -779,7 +754,6 @@ Choose **Approach A** initially unless processing becomes slow. Keep the mutatio
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -848,7 +822,6 @@ Choose **Approach B**. On payment success, compare Midtrans `gross_amount` to th
 
 Approach B
 
-
 ---
 
 ### 25. Which timestamp should determine subscription `startsAt`?
@@ -882,7 +855,6 @@ Choose **Approach B**. Use Midtrans settlement time when available; otherwise us
 
 approach A
 
-
 ---
 
 ### 26. How should subscription choose the current plan when multiple active periods overlap?
@@ -915,7 +887,6 @@ Choose **Approach B** if overlap is possible. Define plan precedence as `PREMIUM
 #### Answer
 
 Approach B
-
 
 ---
 
@@ -983,8 +954,6 @@ Choose **Approach A** for the first version. Preserve periods as purchased and l
 
 Approach A
 
-
-
 ---
 
 ### 29. What should `GetMySubscriptionStatus` return to the UI?
@@ -1017,8 +986,6 @@ Choose **Approach B**. Return a view model with `planKey`, active paid period if
 #### Answer
 
 Approach B
-
-
 
 ---
 
@@ -1053,8 +1020,6 @@ Choose **Approach A** for the first version. Do not implement user cancellation 
 
 Approach A
 
-
-
 ---
 
 ### 31. Is this a one-time purchase model or a recurring subscription model?
@@ -1086,9 +1051,7 @@ Choose **Approach C** with first-version behavior as **Approach A**. Implement o
 
 #### Answer
 
-
 Aprroach A
-
 
 ---
 
@@ -1122,7 +1085,6 @@ Choose **Approach A**. Authenticated users may refresh only their own subscripti
 #### Answer
 
 Approach A
-
 
 ---
 
@@ -1190,7 +1152,6 @@ Choose **Approach B**. Admin cleanup should mark active periods with `endsAt <= 
 
 Approach B
 
-
 ---
 
 ### 35. Should Subscription emit logs for payment and lifecycle transitions?
@@ -1224,7 +1185,6 @@ Choose **Approach B**. Use a category such as `['sinnau', 'service', 'subscripti
 
 Approach B
 
-
 ---
 
 ### 36. How should tests cover payment lifecycle behavior?
@@ -1257,7 +1217,6 @@ Choose **Approach B**. Add repository tests for orders/periods and command tests
 #### Answer
 
 Approach B
-
 
 ---
 

@@ -6,6 +6,7 @@
 Before designing the data model and implementation, we need to understand the core use case this feature serves. The answer affects storage strategy, query patterns, and UX.
 
 **Common approaches:**
+
 - **A) Recent activity sidebar** - Show recently visited study sets in a sidebar or dashboard (simple, low-frequency updates)
 - **B) Smart sorting** - Sort study sets by last visited instead of creation date (requires efficient sorting)
 - **C) Resume learning** - Allow users to pick up where they left off in a study set (may need additional state like position/chapter)
@@ -16,6 +17,7 @@ Start with **Option A (Recent activity sidebar)** for simplicity. If other needs
 
 **Answer**
 Option A
+
 ---
 
 ## Q2: Should last visited be stored on the StudySet entity or a separate join table?
@@ -24,6 +26,7 @@ Option A
 A study set can be visited by many users. Storing last visited on StudySet itself only tracks ONE visitor (the most recent). A separate table is needed to track per-user visit history.
 
 **Common approaches:**
+
 - **A) Separate `user_study_set_visit` table** - `userId`, `studySetId`, `visitedAt`. Allows unlimited history per user, supports "recently visited" lists with multiple items.
 - **B) Add `lastVisitedAt` to StudySet** - Only tracks the single most recent visit across all users. Loses individual user data, not suitable for per-user "recent" lists.
 
@@ -32,6 +35,7 @@ A study set can be visited by many users. Storing last visited on StudySet itsel
 
 **ASnswer**
 Option A
+
 ---
 
 ## Q3: How many recent visits should be stored per user?
@@ -40,6 +44,7 @@ Option A
 Unlimited storage grows indefinitely. We need to define a practical bound. Also impacts whether we store as array or individual rows.
 
 **Common approaches:**
+
 - **A) Store last N visits per user** (e.g., last 20) - Use a join table with userId+visitedAt, prune old entries periodically
 - **B) Store only the most recent visit per study set** (1:1 mapping) - Simpler, but loses history if user visits many different study sets
 - **C) Unbounded with periodic cleanup job** - More complex, requires background jobs
@@ -61,6 +66,7 @@ we will have command, admin only, that delete all last visited at > 90 days back
 Users can view public study sets they don't own. Should this count as a "visit" for their recent activity? Affects authorization and data ownership.
 
 **Common approaches:**
+
 - **A) Yes, any study set access updates last visited** - Even non-owned public study sets appear in recent list
 - **B) No, only owned study sets are tracked** - Only your own study sets appear in recent list
 - **C) Configurable/conditional** - Depends on future UX needs
@@ -70,6 +76,7 @@ Users can view public study sets they don't own. Should this count as a "visit" 
 
 **Answer**
 Lets handle this manually, we only need the command, and query first, about how we act on user for refresh is deferred
+
 ---
 
 ## Q5: Should last visited update on every page view or only on specific actions?
@@ -78,6 +85,7 @@ Lets handle this manually, we only need the command, and query first, about how 
 Frequent writes to a shared table can be a performance concern. We need to define what counts as a "visit" worth recording.
 
 **Common approaches:**
+
 - **A) Every page load of the study set detail** - Maximum accuracy, higher write frequency
 - **B) Only on "start studying" action** - Lower write frequency, but may miss casual browsing
 - **C) Throttled/batched** - Update once per session or once per N minutes per user-study-set pair
@@ -96,6 +104,7 @@ Option B, but we dont need to wire it up yet
 StudySet list queries are already defined in SPECS. Adding last visited to the existing query may complicate the response shape or require versioning.
 
 **Common approaches:**
+
 - **A) Extend GetStudySets response** - Add `lastVisitedAt` field to each item in the list. Simple for UI but may be wasteful if only one page needs it.
 - **B) Separate query/endpoint** - `GetRecentStudySets` returns visited study sets with timestamps. Keeps existing API clean.
 - **C) Include conditionally via query param** - `GetStudySets?includeVisited=true` adds the field only when needed
@@ -116,6 +125,7 @@ that fetch exactly N count, maximum 100
 SPECS.md specifies default ordering is `createdAt` descending. Introducing last visited may create desire for "recently visited first" sorting option.
 
 **Common approaches:**
+
 - **A) Keep existing `createdAt` ordering only** - No change to GetStudySets ordering. Provide separate "recent" query instead.
 - **B) Add optional `sortBy` parameter** - `GetStudySets?sortBy=lastVisitedAt`. Adds complexity to query handling.
 - **C) New dedicated endpoint for recent study sets** - `GetRecentStudySets` with its own ordering. Clean separation.
@@ -134,6 +144,7 @@ Option C
 If a user has visit history for a study set that gets deleted (by owner), what happens to those visit records? Cascade delete would remove history; preserving it requires special handling.
 
 **Common approaches:**
+
 - **A) Cascade delete visit history** - When study set is deleted, all visitor records are deleted. No orphan data.
 - **B) Preserve visit history, mark as deleted** - Keep records for analytics/auditing but mark as orphaned (studySetId points to deleted item)
 - **C) Soft delete study set** - Never actually delete, just mark as deleted. Visit history preserved naturally.
@@ -153,6 +164,7 @@ Cascade delete
 Storage format affects querying, display, and potential timezone-based features.
 
 **Common approaches:**
+
 - **A) UTC timestamp in milliseconds** - Consistent with existing `createdAt`/`updatedAt` pattern. Simple, sortable.
 - **B) ISO 8601 string with timezone** - More human-readable but larger storage size
 - **C) Unix epoch seconds** - Smaller but less precise than milliseconds
@@ -171,6 +183,7 @@ approach a
 If a user visits the same study set multiple times, should we create multiple records or update the existing one? Affects data volume and query complexity.
 
 **Common approaches:**
+
 - **A) Upsert on each visit** - Update `visitedAt` on existing row if user-study-set pair exists, otherwise insert. One row per user-study-set.
 - **B) Create new row on each visit** - Append new record. Allows tracking full history but grows unbounded.
 - **C) Create new row with periodic cleanup** - Append but prune to last N per user
@@ -180,8 +193,7 @@ If a user visits the same study set multiple times, should we create multiple re
 
 **Answer**
 
-Option A
----
+## Option A
 
 ## Q11: How does last visited interact with study set visibility (PUBLIC/PRIVATE)?
 
@@ -189,6 +201,7 @@ Option A
 If a private study set becomes public (or vice versa), should the visit history be affected? Can you see visit history for study sets you don't own?
 
 **Common approaches:**
+
 - **A) Visit history is user-private** - Each user only sees their own visit history. No visibility issue.
 - **B) Only show visits for study sets user can currently access** - If study set becomes private, visits for that set are hidden from "recent" list
 - **C) Preserve all visit history regardless of current access** - Shows past visits even if study set is now private (may show broken links)
@@ -208,6 +221,7 @@ Option B
 Beyond per-user recent lists, there may be desire to see which study sets are most visited overall.
 
 **Common approaches:**
+
 - **A) Not in scope for MVP** - Only per-user recent visit tracking
 - **B) Separate analytics table/endpoint** - Aggregated stats computed separately from visit records
 - **C) Query visit table with GROUP BY** - `SELECT studySetId, COUNT(*) FROM visits GROUP BY studySetId` for owner insights
@@ -226,6 +240,7 @@ Option A
 There may be distinction between "I visited this study set" and "I saw the latest version of this study set". Current approach would not update visit on content edit.
 
 **Common approaches:**
+
 - **A) No, only explicit user actions update visit** - Content updates don't affect visit timestamps
 - **B) Yes, any content update marks as visited for subscribers** - Users who have access see "new content" indicator
 - **C) Separate "last seen content version" tracking** - Different from visit timestamp, tracks content awareness
@@ -241,6 +256,7 @@ There may be distinction between "I visited this study set" and "I saw the lates
 To prevent unbounded table growth, we need a retention policy. This also affects how we query for "recent" visits.
 
 **Common approaches:**
+
 - **A) Fixed limit per user (e.g., 50 records)** - Simple, predictable storage. Prune on insert if over limit.
 - **B) Time-based retention (e.g., last 30 days)** - Keeps records relevant, deletes old ones automatically
 - **C) Study set count-based (e.g., last 20 unique study sets)** - Most relevant for "recent" use case

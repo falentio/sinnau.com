@@ -185,7 +185,7 @@ Choose **Approach A**. Keep `generate` small and queryable, append polling event
 
 #### Answer
 
-APPROACH A, with additional per chunk table 
+APPROACH A, with additional per chunk table
 
 ---
 
@@ -353,7 +353,6 @@ Approach A
 
 ---
 
-
 ### 9. What should happen when generation fails after the StudySet and Generate record exist?
 
 #### Question
@@ -472,7 +471,6 @@ Choose **Approach B** unless there is an explicit product requirement to retain 
 Approach C
 
 ---
-
 
 ### 12. How should duplicate polling delivery be handled?
 
@@ -624,7 +622,6 @@ The current decision explicitly defers consumption logic. However, the Generate 
 #### Recommended Approach
 
 Choose **Approach B** for implementation, but document the future insertion point in the Generate spec: quota will be checked/consumed before generation starts and refunded or finalized according to the rate-limiter domain rules. Do not add runtime no-op quota code yet.
-
 
 #### Answer
 
