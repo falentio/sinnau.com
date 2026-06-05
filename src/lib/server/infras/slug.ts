@@ -1,4 +1,4 @@
-const BASE32_ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
+import { tsNanoid } from '../utils/nanoid.ts';
 
 export class SlugConflictError extends Error {
 	constructor() {
@@ -7,18 +7,7 @@ export class SlugConflictError extends Error {
 	}
 }
 
-function randomBase32(length: number): string {
-	let out = '';
-	const bytes = new Uint8Array(length);
-	crypto.getRandomValues(bytes);
-	for (let i = 0; i < length; i++) {
-		const byte = bytes[i] ?? 0;
-		out += BASE32_ALPHABET[byte % BASE32_ALPHABET.length];
-	}
-	return out;
-}
-
-function sanitize(title: string): string {
+export function sanitize(title: string): string {
 	const normalized = title.normalize('NFKD').replace(/\p{M}+/gu, '');
 	return normalized
 		.toLowerCase()
@@ -36,10 +25,12 @@ export async function generateSlug(
 ): Promise<string> {
 	const sanitized = sanitize(title);
 	const base = sanitized.length >= 5 ? `${sanitized}-` : '';
-	const maxEntropy = sanitized.length >= 5 ? 6 : 12;
+	let entropyLength = 12 - base.length;
+	entropyLength = Math.max(8, entropyLength);
+	entropyLength = Math.min(12, entropyLength);
 
 	for (let attempt = 0; attempt < SLUG_MAX_RETRIES; attempt++) {
-		const candidate = `${base}${randomBase32(maxEntropy)}`;
+		const candidate = `${base}${tsNanoid(entropyLength)}`;
 		if (!(await exists(candidate.toLowerCase()))) {
 			return candidate;
 		}

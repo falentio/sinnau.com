@@ -1,8 +1,8 @@
 import { relations, sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema.ts';
-import { studySet } from './study-set.ts';
 import { chapter } from './chapter.ts';
+import { studySet } from './study-set.ts';
 
 export const flashcard = sqliteTable(
 	'flashcard',

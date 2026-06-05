@@ -1,10 +1,10 @@
 import { relations, sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema.ts';
-import { studySet } from './study-set.ts';
 import { flashcard } from './flashcard.ts';
 import { quiz } from './quiz.ts';
 import { studySetContentToChapter } from './study-set-content.ts';
+import { studySet } from './study-set.ts';
 
 export const chapter = sqliteTable(
 	'chapter',

@@ -1,7 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { studySet } from './study-set.ts';
 import { chapter } from './chapter.ts';
+import { studySet } from './study-set.ts';
 
 export const studySetContent = sqliteTable(
 	'study_set_content',
