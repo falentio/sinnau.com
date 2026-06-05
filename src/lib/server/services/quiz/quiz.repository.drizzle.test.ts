@@ -506,7 +506,7 @@ describe.concurrent('QuizDrizzleRepository (schema constraints)', () => {
 	describe('foreign keys', () => {
 		it('rejects inserting a quiz for a non-existent study set', async ({ expect }) => {
 			await using env = new QuizTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertQuiz(
 					{
 						id: 'orphan-quiz',
@@ -524,7 +524,7 @@ describe.concurrent('QuizDrizzleRepository (schema constraints)', () => {
 		it('rejects inserting a quiz for a non-existent owner', async ({ expect }) => {
 			await using env = new QuizTestEnv();
 			const studySet = await env.seedStudySet({ ownerId: env.ownerId });
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertQuiz(
 					{
 						id: 'orphan-owner',
@@ -541,7 +541,7 @@ describe.concurrent('QuizDrizzleRepository (schema constraints)', () => {
 
 		it('rejects inserting an option for a non-existent quiz', async ({ expect }) => {
 			await using env = new QuizTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertQuizOptions([
 					{
 						id: 'orphan-option',

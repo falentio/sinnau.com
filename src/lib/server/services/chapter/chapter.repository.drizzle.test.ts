@@ -296,7 +296,7 @@ describe.concurrent('ChapterDrizzleRepository (schema constraints)', () => {
 				ownerId: env.ownerId,
 				slug: 'same-slug'
 			});
-			const insertDuplicate = () =>
+			const insertDuplicate = async () =>
 				env.repo.insertChapter({
 					id: 'second',
 					slug: 'SAME-SLUG',
@@ -335,7 +335,7 @@ describe.concurrent('ChapterDrizzleRepository (schema constraints)', () => {
 	describe('foreign keys', () => {
 		it('rejects inserting a chapter for a non-existent study set', async ({ expect }) => {
 			await using env = new ChapterTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertChapter({
 					id: 'orphan',
 					slug: 'orphan-slug',
@@ -349,7 +349,7 @@ describe.concurrent('ChapterDrizzleRepository (schema constraints)', () => {
 
 		it('rejects inserting a chapter for a non-existent owner', async ({ expect }) => {
 			await using env = new ChapterTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertChapter({
 					id: 'orphan',
 					slug: 'orphan-slug',

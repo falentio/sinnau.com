@@ -118,7 +118,7 @@ export class QuizService {
 	async createQuizOptions(input: CreateQuizOptionsInput, ownerId: string): Promise<QuizOption[]> {
 		const quizIds = Array.from(new Set(input.options.map((o) => o.quizId)));
 		const quizzes = await Promise.all(
-			quizIds.map((id) => this.guard.assertQuizOwnerOrForbidden(id, ownerId))
+			quizIds.map(async (id) => this.guard.assertQuizOwnerOrForbidden(id, ownerId))
 		);
 
 		const existingOptions = await this.repo.findOptionsByQuizIds(quizIds);

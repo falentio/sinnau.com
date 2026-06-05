@@ -197,7 +197,7 @@ export class StudySetContentTestEnv implements AsyncDisposable {
 		});
 	}
 
-	[Symbol.asyncDispose](): Promise<void> {
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
 		return Promise.resolve();
 	}

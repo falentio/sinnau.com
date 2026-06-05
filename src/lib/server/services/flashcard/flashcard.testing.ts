@@ -211,7 +211,7 @@ export class FlashcardTestEnv implements AsyncDisposable {
 		return id;
 	}
 
-	[Symbol.asyncDispose](): Promise<void> {
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
 		return Promise.resolve();
 	}

@@ -382,7 +382,7 @@ describe.concurrent('StudySetDrizzleRepository (schema constraints)', () => {
 		it('rejects inserting two rows with the same slug (case-insensitive)', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
 			await env.seedStudySet({ id: 'a', ownerId: env.ownerId, slug: 'same-slug' });
-			const insertDuplicate = () =>
+			const insertDuplicate = async () =>
 				env.repo.insertStudySet({
 					id: 'b',
 					slug: 'SAME-SLUG',
@@ -399,7 +399,7 @@ describe.concurrent('StudySetDrizzleRepository (schema constraints)', () => {
 	describe('foreign keys', () => {
 		it('rejects inserting a study set for a non-existent owner', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertStudySet({
 					id: 'orphan',
 					slug: 'orphan-slug',

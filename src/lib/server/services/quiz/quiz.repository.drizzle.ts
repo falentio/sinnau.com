@@ -21,7 +21,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 		return new QuizDrizzleRepository(db);
 	}
 
-	insertQuiz(row: NewQuizRow, options: NewQuizOptionRow[]): Promise<Quiz> {
+	async insertQuiz(row: NewQuizRow, options: NewQuizOptionRow[]): Promise<Quiz> {
 		try {
 			const inserted = this.dbInstance.transaction((tx) => {
 				const rowsReturned = tx.insert(quiz).values(row).returning().all();
@@ -62,7 +62,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 		}
 	}
 
-	deleteQuizzes(ids: string[], ownerId: string): Promise<boolean> {
+	async deleteQuizzes(ids: string[], ownerId: string): Promise<boolean> {
 		if (ids.length === 0) return Promise.resolve(false);
 		try {
 			this.dbInstance.transaction((tx) => {

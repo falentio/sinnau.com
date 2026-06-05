@@ -213,7 +213,7 @@ export class QuizTestEnv implements AsyncDisposable {
 		return row;
 	}
 
-	[Symbol.asyncDispose](): Promise<void> {
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
 		return Promise.resolve();
 	}

@@ -49,7 +49,7 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
 		}
 	}
 
-	deleteFlashcards(ids: string[], ownerId: string): Promise<boolean> {
+	async deleteFlashcards(ids: string[], ownerId: string): Promise<boolean> {
 		if (ids.length === 0) return Promise.resolve(false);
 		try {
 			this.dbInstance.transaction((tx) => {

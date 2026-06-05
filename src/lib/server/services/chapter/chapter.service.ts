@@ -28,7 +28,7 @@ export class ChapterService {
 	async createChapter(input: CreateChapterInput, ownerId: string): Promise<Chapter> {
 		await this.guard.assertStudySetOwnerOrForbidden(input.studySetId, ownerId);
 
-		const isSlugTakenInStudySet = (candidate: string) =>
+		const isSlugTakenInStudySet = async (candidate: string) =>
 			this.repo.isSlugTakenInStudySet(input.studySetId, candidate);
 
 		const slug = await generateSlug(input.title, isSlugTakenInStudySet).catch((err) => {
