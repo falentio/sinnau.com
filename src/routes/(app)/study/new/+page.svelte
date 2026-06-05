@@ -23,34 +23,6 @@
 		{ value: 'PUBLIC', label: 'Publik' }
 	];
 
-	const form = superForm(
-		defaults<CreateStudySetInput>(
-			{
-				title: '',
-				description: '',
-				visibility: 'PRIVATE'
-			},
-			valibotClient(createStudySetInputSchema)
-		),
-		{
-			SPA: true,
-			validators: valibotClient(createStudySetInputSchema),
-			resetForm: false,
-			onUpdate: async ({ form: submittedForm }) => {
-				if (!submittedForm.valid) return;
-				await submitStudySet(submittedForm.data);
-			}
-		}
-	);
-
-	const { form: formData, enhance, submitting } = form;
-	const selectedVisibilityLabel = $derived(
-		visibilityItems.find((item) => item.value === $formData.visibility)?.label ??
-			'Pilih visibilitas'
-	);
-	const titleCount = $derived($formData.title.trim().length);
-	const descriptionCount = $derived(($formData.description ?? '').length);
-
 	async function submitStudySet(data: CreateStudySetInput) {
 		try {
 			const studySet = await client.studySet.create(data);
@@ -78,6 +50,34 @@
 			}
 		}
 	}
+
+	const form = superForm(
+		defaults<CreateStudySetInput>(
+			{
+				title: '',
+				description: '',
+				visibility: 'PRIVATE'
+			},
+			valibotClient(createStudySetInputSchema)
+		),
+		{
+			SPA: true,
+			validators: valibotClient(createStudySetInputSchema),
+			resetForm: false,
+			onUpdate: async ({ form: submittedForm }) => {
+				if (!submittedForm.valid) return;
+				await submitStudySet(submittedForm.data);
+			}
+		}
+	);
+
+	const { form: formData, enhance, submitting } = form;
+	const selectedVisibilityLabel = $derived(
+		visibilityItems.find((item) => item.value === $formData.visibility)?.label ??
+			'Pilih visibilitas'
+	);
+	const titleCount = $derived($formData.title.trim().length);
+	const descriptionCount = $derived(($formData.description ?? '').length);
 </script>
 
 <svelte:head>

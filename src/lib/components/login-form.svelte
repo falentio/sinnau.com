@@ -26,28 +26,6 @@
 	let serverError = $state('');
 	let pending = $state(false);
 
-	const form = superForm(
-		defaults<LoginForm>(
-			{
-				email: '',
-				password: ''
-			},
-			valibotClient(formSchema)
-		),
-		{
-			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: false,
-			onUpdate: async ({ form: submittedForm }) => {
-				serverError = '';
-				if (!submittedForm.valid) return;
-				await signIn(submittedForm.data);
-			}
-		}
-	);
-
-	const { form: formData, enhance, submitting } = form;
-
 	function getErrorMessage(error: { message?: string } | null | undefined) {
 		if (error?.message) return error.message;
 		return 'Tidak bisa masuk. Periksa email dan kata sandi.';
@@ -71,6 +49,28 @@
 			pending = false;
 		}
 	}
+
+	const form = superForm(
+		defaults<LoginForm>(
+			{
+				email: '',
+				password: ''
+			},
+			valibotClient(formSchema)
+		),
+		{
+			SPA: true,
+			validators: valibotClient(formSchema),
+			resetForm: false,
+			onUpdate: async ({ form: submittedForm }) => {
+				serverError = '';
+				if (!submittedForm.valid) return;
+				await signIn(submittedForm.data);
+			}
+		}
+	);
+
+	const { form: formData, enhance, submitting } = form;
 </script>
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>

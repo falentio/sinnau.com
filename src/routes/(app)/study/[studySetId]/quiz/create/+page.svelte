@@ -96,66 +96,6 @@
 		serverError = '';
 	}
 
-	const form = superForm(
-		defaults<QuizForm>(
-			{
-				type: 'MULTIPLE_CHOICE',
-				questionText: '',
-				options: [emptyOption(true), emptyOption(), emptyOption(), emptyOption()]
-			},
-			valibotClient(formSchema)
-		),
-		{
-			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: false,
-			dataType: 'json',
-			onUpdate: async ({ form: submittedForm }) => {
-				serverError = '';
-				if (!submittedForm.valid) return;
-				await submitQuiz(submittedForm.data);
-			}
-		}
-	);
-
-	const { form: formData, enhance, submitting, errors } = form;
-	const selectedTypeLabel = $derived(
-		quizTypeItems.find((item) => item.value === $formData.type)?.label ?? 'Pilih tipe'
-	);
-	const optionBounds = $derived(getOptionBounds($formData.type));
-	const isFillInTheBlank = $derived($formData.type === 'FILL_IN_THE_BLANK');
-	const canAddOption = $derived(!isFillInTheBlank && $formData.options.length < optionBounds.max);
-	const canRemoveOption = $derived(
-		!isFillInTheBlank && $formData.options.length > optionBounds.min
-	);
-
-	function addOption() {
-		if (!canAddOption) return;
-		$formData.options = [...$formData.options, emptyOption()];
-	}
-
-	function removeOption(index: number) {
-		if (!canRemoveOption) return;
-		$formData.options = normalizeOptions(
-			$formData.type,
-			$formData.options.filter((_, i) => i !== index)
-		);
-	}
-
-	function toggleCorrectOption(index: number) {
-		if ($formData.type === 'MULTIPLE_SELECT') {
-			const option = $formData.options[index];
-			if (!option) return;
-			option.isCorrect = !option.isCorrect;
-			return;
-		}
-
-		$formData.options = $formData.options.map((opt, i) => ({
-			...opt,
-			isCorrect: i === index
-		}));
-	}
-
 	function validateOptions(type: FormQuizType, options: QuizOptionForm[]) {
 		const correctCount = options.filter((option) => option.isCorrect).length;
 
@@ -220,6 +160,66 @@
 		} finally {
 			pending = false;
 		}
+	}
+
+	const form = superForm(
+		defaults<QuizForm>(
+			{
+				type: 'MULTIPLE_CHOICE',
+				questionText: '',
+				options: [emptyOption(true), emptyOption(), emptyOption(), emptyOption()]
+			},
+			valibotClient(formSchema)
+		),
+		{
+			SPA: true,
+			validators: valibotClient(formSchema),
+			resetForm: false,
+			dataType: 'json',
+			onUpdate: async ({ form: submittedForm }) => {
+				serverError = '';
+				if (!submittedForm.valid) return;
+				await submitQuiz(submittedForm.data);
+			}
+		}
+	);
+
+	const { form: formData, enhance, submitting, errors } = form;
+	const selectedTypeLabel = $derived(
+		quizTypeItems.find((item) => item.value === $formData.type)?.label ?? 'Pilih tipe'
+	);
+	const optionBounds = $derived(getOptionBounds($formData.type));
+	const isFillInTheBlank = $derived($formData.type === 'FILL_IN_THE_BLANK');
+	const canAddOption = $derived(!isFillInTheBlank && $formData.options.length < optionBounds.max);
+	const canRemoveOption = $derived(
+		!isFillInTheBlank && $formData.options.length > optionBounds.min
+	);
+
+	function addOption() {
+		if (!canAddOption) return;
+		$formData.options = [...$formData.options, emptyOption()];
+	}
+
+	function removeOption(index: number) {
+		if (!canRemoveOption) return;
+		$formData.options = normalizeOptions(
+			$formData.type,
+			$formData.options.filter((_, i) => i !== index)
+		);
+	}
+
+	function toggleCorrectOption(index: number) {
+		if ($formData.type === 'MULTIPLE_SELECT') {
+			const option = $formData.options[index];
+			if (!option) return;
+			option.isCorrect = !option.isCorrect;
+			return;
+		}
+
+		$formData.options = $formData.options.map((opt, i) => ({
+			...opt,
+			isCorrect: i === index
+		}));
 	}
 </script>
 

@@ -21,17 +21,22 @@
 	// svelte-ignore state_referenced_locally
 	let carouselState = $state<EmblaContext>({
 		api: undefined,
+		// oxlint-disable-next-line no-use-before-define
 		scrollPrev,
+		// oxlint-disable-next-line no-use-before-define
 		scrollNext,
 		orientation,
 		canScrollNext: false,
 		canScrollPrev: false,
+		// oxlint-disable-next-line no-use-before-define
 		handleKeyDown,
 		options: opts,
 		plugins,
+		// oxlint-disable-next-line no-use-before-define
 		onInit,
 		scrollSnaps: [],
 		selectedIndex: 0,
+		// oxlint-disable-next-line no-use-before-define
 		scrollTo
 	});
 

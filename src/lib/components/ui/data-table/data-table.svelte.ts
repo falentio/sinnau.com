@@ -7,6 +7,72 @@ import {
 	createTable
 } from '@tanstack/table-core';
 
+type MaybeThunk<T extends object> = T | (() => T | null | undefined);
+type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer R]
+	? H & Intersection<R>
+	: unknown) & {};
+
+/**
+ * Lazily merges several objects (or thunks) while preserving
+ * getter semantics from every source.
+ *
+ * Proxy-based to avoid known WebKit recursion issue.
+ */
+// oxlint-disable-next-line no-explicit-any
+export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
+	...sources: Sources
+): Intersection<{ [K in keyof Sources]: Sources[K] }> {
+	// oxlint-disable-next-line no-unsafe-assignment
+	const resolve = <T extends object>(src: MaybeThunk<T>): T | undefined =>
+		typeof src === 'function' ? (src() ?? undefined) : src;
+
+	// oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+	const findSourceWithKey = (key: PropertyKey) => {
+		for (let i = sources.length - 1; i >= 0; i--) {
+			const obj = resolve(sources[i]);
+			if (obj && key in obj) return obj;
+		}
+		return undefined;
+	};
+
+	return new Proxy(Object.create(null), {
+		get(_, key) {
+			const src = findSourceWithKey(key);
+			return src?.[key as never];
+		},
+
+		has(_, key) {
+			return !!findSourceWithKey(key);
+		},
+
+		ownKeys(): (string | symbol)[] {
+			const all = new Set<string | symbol>();
+			for (const s of sources) {
+				const obj = resolve(s);
+				if (obj) {
+					for (const k of Reflect.ownKeys(obj) as (string | symbol)[]) {
+						all.add(k);
+					}
+				}
+			}
+			return [...all];
+		},
+
+		getOwnPropertyDescriptor(_, key) {
+			const src = findSourceWithKey(key);
+			if (!src) return undefined;
+			return {
+				configurable: true,
+				enumerable: true,
+				// oxlint-disable-next-line no-explicit-any
+				value: (src as any)[key],
+				writable: true
+			};
+		}
+	}) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
+	// oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+}
+
 /**
  * Creates a reactive TanStack table object for Svelte.
  * @param options Table options to create the table with.
@@ -74,70 +140,4 @@ export function createSvelteTable<TData extends RowData>(options: TableOptions<T
 	});
 
 	return table;
-}
-
-type MaybeThunk<T extends object> = T | (() => T | null | undefined);
-type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer R]
-	? H & Intersection<R>
-	: unknown) & {};
-
-/**
- * Lazily merges several objects (or thunks) while preserving
- * getter semantics from every source.
- *
- * Proxy-based to avoid known WebKit recursion issue.
- */
-// oxlint-disable-next-line no-explicit-any
-export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
-	...sources: Sources
-): Intersection<{ [K in keyof Sources]: Sources[K] }> {
-	// oxlint-disable-next-line no-unsafe-assignment
-	const resolve = <T extends object>(src: MaybeThunk<T>): T | undefined =>
-		typeof src === 'function' ? (src() ?? undefined) : src;
-
-	// oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
-	const findSourceWithKey = (key: PropertyKey) => {
-		for (let i = sources.length - 1; i >= 0; i--) {
-			const obj = resolve(sources[i]);
-			if (obj && key in obj) return obj;
-		}
-		return undefined;
-	};
-
-	return new Proxy(Object.create(null), {
-		get(_, key) {
-			const src = findSourceWithKey(key);
-			return src?.[key as never];
-		},
-
-		has(_, key) {
-			return !!findSourceWithKey(key);
-		},
-
-		ownKeys(): (string | symbol)[] {
-			const all = new Set<string | symbol>();
-			for (const s of sources) {
-				const obj = resolve(s);
-				if (obj) {
-					for (const k of Reflect.ownKeys(obj) as (string | symbol)[]) {
-						all.add(k);
-					}
-				}
-			}
-			return [...all];
-		},
-
-		getOwnPropertyDescriptor(_, key) {
-			const src = findSourceWithKey(key);
-			if (!src) return undefined;
-			return {
-				configurable: true,
-				enumerable: true,
-				// oxlint-disable-next-line no-explicit-any
-				value: (src as any)[key],
-				writable: true
-			};
-		}
-	}) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
-	// oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
 }
