@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { RadioGroup as RadioGroupPrimitive } from 'bits-ui';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { CircleIcon } from '@hugeicons/core-free-icons';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { CircleIcon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { RadioGroup as RadioGroupPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),

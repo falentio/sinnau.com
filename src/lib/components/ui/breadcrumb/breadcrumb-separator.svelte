@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { cn, type WithElementRef } from '$lib/utils.js';
-	import type { HTMLLiAttributes } from 'svelte/elements';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import type { HTMLLiAttributes } from 'svelte/elements';
 
 	let {
 		ref = $bindable(null),

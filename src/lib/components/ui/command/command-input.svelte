@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'bits-ui';
-	import { cn } from '$lib/utils.js';
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { cn } from '$lib/utils.js';
 	import { SearchIcon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Command as CommandPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),

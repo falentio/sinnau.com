@@ -8,9 +8,9 @@
 </script>
 
 <script lang="ts">
-	import { NavigationMenu as NavigationMenuPrimitive } from 'bits-ui';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { NavigationMenu as NavigationMenuPrimitive } from 'bits-ui';
 	let {
 		ref = $bindable(null),
 		class: className,

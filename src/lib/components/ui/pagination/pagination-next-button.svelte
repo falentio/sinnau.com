@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Pagination as PaginationPrimitive } from 'bits-ui';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowRightIcon } from '@hugeicons/core-free-icons';
 	import { cn } from '$lib/utils.js';
+	import { ArrowRightIcon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Pagination as PaginationPrimitive } from 'bits-ui';
 	import { buttonVariants } from '../button/index.js';
 
 	let {

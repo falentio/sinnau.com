@@ -87,13 +87,15 @@ type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer 
  *
  * Proxy-based to avoid known WebKit recursion issue.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// oxlint-disable-next-line no-explicit-any
 export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
 	...sources: Sources
 ): Intersection<{ [K in keyof Sources]: Sources[K] }> {
+	// oxlint-disable-next-line no-unsafe-assignment
 	const resolve = <T extends object>(src: MaybeThunk<T>): T | undefined =>
 		typeof src === 'function' ? (src() ?? undefined) : src;
 
+	// oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
 	const findSourceWithKey = (key: PropertyKey) => {
 		for (let i = sources.length - 1; i >= 0; i--) {
 			const obj = resolve(sources[i]);
@@ -105,7 +107,6 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
 	return new Proxy(Object.create(null), {
 		get(_, key) {
 			const src = findSourceWithKey(key);
-
 			return src?.[key as never];
 		},
 
@@ -114,7 +115,6 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
 		},
 
 		ownKeys(): (string | symbol)[] {
-			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const all = new Set<string | symbol>();
 			for (const s of sources) {
 				const obj = resolve(s);
@@ -133,10 +133,11 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
 			return {
 				configurable: true,
 				enumerable: true,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// oxlint-disable-next-line no-explicit-any
 				value: (src as any)[key],
 				writable: true
 			};
 		}
 	}) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
+	// oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
 }

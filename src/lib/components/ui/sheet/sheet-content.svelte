@@ -3,15 +3,15 @@
 </script>
 
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { Cancel01Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Dialog as SheetPrimitive } from 'bits-ui';
 	import type { Snippet } from 'svelte';
-	import SheetPortal from './sheet-portal.svelte';
-	import SheetOverlay from './sheet-overlay.svelte';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { Cancel01Icon } from '@hugeicons/core-free-icons';
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { ComponentProps } from 'svelte';
+	import SheetOverlay from './sheet-overlay.svelte';
+	import SheetPortal from './sheet-portal.svelte';
 
 	let {
 		ref = $bindable(null),

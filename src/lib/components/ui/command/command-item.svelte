@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Command as CommandPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Tick02Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Command as CommandPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),

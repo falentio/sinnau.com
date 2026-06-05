@@ -22,15 +22,10 @@ export function getPayloadConfigFromPayload(
 	config: ChartConfig,
 	payload: TooltipPayload,
 	key: string,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// oxlint-disable-next-line no-explicit-any
 	data?: Record<string, any> | null
 ) {
-	if (typeof payload !== 'object' || payload === null) return undefined;
-
-	const payloadConfig =
-		'config' in payload && typeof payload.config === 'object' && payload.config !== null
-			? payload.config
-			: undefined;
+	const payloadConfig = 'config' in payload ? payload.config : undefined;
 
 	let configLabelKey: string = key;
 

@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { Button, type Props } from '$lib/components/ui/button/index.js';
+	import { cn } from '$lib/utils.js';
+	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { WithoutChildren } from 'bits-ui';
 	import { getEmblaContext } from './context.js';
-	import { cn } from '$lib/utils.js';
-	import { Button, type Props } from '$lib/components/ui/button/index.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 
 	let {
 		ref = $bindable(null),

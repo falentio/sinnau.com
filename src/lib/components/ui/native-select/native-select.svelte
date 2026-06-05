@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { cn, type WithElementRef } from '$lib/utils.js';
-	import type { HTMLSelectAttributes } from 'svelte/elements';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import type { HTMLSelectAttributes } from 'svelte/elements';
 
 	type NativeSelectProps = Omit<WithElementRef<HTMLSelectAttributes>, 'size'> & {
 		size?: 'sm' | 'default';

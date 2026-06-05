@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Menubar as MenubarPrimitive } from 'bits-ui';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
-	import type { Snippet } from 'svelte';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { MinusSignIcon } from '@hugeicons/core-free-icons';
 	import { Tick02Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Menubar as MenubarPrimitive } from 'bits-ui';
+	import type { Snippet } from 'svelte';
 
 	let {
 		ref = $bindable(null),

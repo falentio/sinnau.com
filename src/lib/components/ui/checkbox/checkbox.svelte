@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Checkbox as CheckboxPrimitive } from 'bits-ui';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Tick02Icon } from '@hugeicons/core-free-icons';
 	import { MinusSignIcon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Checkbox as CheckboxPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),

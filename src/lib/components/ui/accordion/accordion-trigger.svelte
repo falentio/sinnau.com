@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Accordion as AccordionPrimitive } from 'bits-ui';
 	import { cn, type WithoutChild } from '$lib/utils.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 	import { ArrowUp01Icon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Accordion as AccordionPrimitive } from 'bits-ui';
 
 	let {
 		ref = $bindable(null),
