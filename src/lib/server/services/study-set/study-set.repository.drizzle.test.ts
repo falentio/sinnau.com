@@ -165,6 +165,7 @@ describe.concurrent('StudySetDrizzleRepository', () => {
 		it('paginates with a fixed limit of 10', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
 			for (let i = 0; i < 12; i++) {
+				// oxlint-disable-next-line no-await-in-loop -- test seeding requires sequential inserts for FK order
 				await env.seedStudySet({ id: `set-${i}`, ownerId: env.ownerId });
 			}
 
@@ -329,7 +330,9 @@ describe.concurrent('StudySetDrizzleRepository', () => {
 		it('limits the result to the requested count', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
 			for (let i = 0; i < 5; i++) {
+				// oxlint-disable-next-line no-await-in-loop -- test seeding requires sequential inserts for FK order
 				const s = await env.seedStudySet({ id: `s-${i}`, ownerId: env.ownerId });
+				// oxlint-disable-next-line no-await-in-loop -- dependent on newly seeded study set, must run sequentially
 				await env.repo.upsertVisit(env.otherId, s.id, Date.now() + i);
 			}
 			const recent = await env.repo.findRecentVisits(env.otherId, 3);
