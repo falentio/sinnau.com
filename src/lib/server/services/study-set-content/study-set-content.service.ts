@@ -1,9 +1,5 @@
+import { STUDY_SET_CONTENT_ID_PREFIX } from '$lib/schemas/study-set-content.constant';
 import { ORPCError } from '@orpc/server';
-import { generateId } from '../../utils/nanoid.ts';
-import type {
-	StudySetContent,
-	StudySetContentWithChapters
-} from '../../infras/db/schema/study-set-content.ts';
 import type {
 	CreateStudySetContentInput,
 	UpdateStudySetContentInput,
@@ -15,9 +11,13 @@ import type {
 	UnlinkChapterFromContentInput,
 	SetContentChaptersInput
 } from '../../../schemas/study-set-content.ts';
-import { STUDY_SET_CONTENT_ID_PREFIX } from './study-set-content.constant.ts';
-import type { StudySetContentRepository } from './study-set-content.repository.ts';
+import type {
+	StudySetContent,
+	StudySetContentWithChapters
+} from '../../infras/db/schema/study-set-content.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { StudySetContentGuard } from './study-set-content.guard.ts';
+import type { StudySetContentRepository } from './study-set-content.repository.ts';
 
 export type { StudySetContent, StudySetContentWithChapters };
 

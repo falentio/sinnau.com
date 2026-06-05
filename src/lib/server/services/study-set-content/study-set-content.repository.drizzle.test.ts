@@ -1,11 +1,11 @@
-import { eq } from 'drizzle-orm';
-import { describe, it } from 'vitest';
+import { chapter } from '$lib/server/infras/db/schema/chapter';
+import { studySet } from '$lib/server/infras/db/schema/study-set';
 import {
 	studySetContent,
 	studySetContentToChapter
 } from '$lib/server/infras/db/schema/study-set-content';
-import { chapter } from '$lib/server/infras/db/schema/chapter';
-import { studySet } from '$lib/server/infras/db/schema/study-set';
+import { eq } from 'drizzle-orm';
+import { describe, it } from 'vitest';
 import { StudySetContentTestEnv } from './study-set-content.testing';
 
 describe.concurrent('StudySetContentDrizzleRepository', () => {
@@ -55,7 +55,7 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 				content: 'Updated content'
 			});
 			expect(updated).not.toBeNull();
-			expect(updated!.content).toBe('Updated content');
+			expect(updated).toHaveProperty('content', 'Updated content');
 		});
 
 		it('returns null when the id does not exist', async ({ expect }) => {
@@ -142,9 +142,9 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 			await env.seedContent({ id: 'ssc-1', content: 'No chapters' });
 			const result = await env.repo.findContentByIdWithChapters('ssc-1');
 			expect(result).not.toBeNull();
-			expect(result!.id).toBe('ssc-1');
-			expect(result!.content).toBe('No chapters');
-			expect(result!.chapterIds).toEqual([]);
+			expect(result).toHaveProperty('id', 'ssc-1');
+			expect(result).toHaveProperty('content', 'No chapters');
+			expect(result).toHaveProperty('chapterIds', []);
 		});
 
 		it('returns content with chapterIds when links exist', async ({ expect }) => {
@@ -157,9 +157,8 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 
 			const result = await env.repo.findContentByIdWithChapters('ssc-1');
 			expect(result).not.toBeNull();
-			expect(result!.chapterIds).toContain('ch-1');
-			expect(result!.chapterIds).toContain('ch-2');
-			expect(result!.chapterIds).toHaveLength(2);
+			expect(result).toHaveProperty('chapterIds', expect.arrayContaining(['ch-1', 'ch-2']));
+			expect(result?.chapterIds).toHaveLength(2);
 		});
 
 		it('returns null when content does not exist', async ({ expect }) => {
@@ -209,7 +208,7 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 
 			const results = await env.repo.findContentsByChapter('ch-1');
 			expect(results).toHaveLength(1);
-			expect(results[0]!.id).toBe('ssc-1');
+			expect(results[0]).toHaveProperty('id', 'ssc-1');
 		});
 
 		it('returns empty array when chapter has no content', async ({ expect }) => {
@@ -233,8 +232,8 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 			await env.seedContent({ id: 'ssc-1' });
 			const result = await env.repo.linkChapter('ssc-1', 'ch-1');
 			expect(result).not.toBeNull();
-			expect(result!.contentId).toBe('ssc-1');
-			expect(result!.chapterId).toBe('ch-1');
+			expect(result).toHaveProperty('contentId', 'ssc-1');
+			expect(result).toHaveProperty('chapterId', 'ch-1');
 		});
 
 		it('returns null on duplicate (composite PK violation)', async ({ expect }) => {
@@ -282,7 +281,7 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 			await env.repo.setChapters('ssc-1', ['ch-3']);
 
 			const result = await env.repo.findContentByIdWithChapters('ssc-1');
-			expect(result!.chapterIds).toEqual(['ch-3']);
+			expect(result).toHaveProperty('chapterIds', ['ch-3']);
 		});
 
 		it('sets empty array to clear all links', async ({ expect }) => {
@@ -294,7 +293,7 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 			await env.repo.setChapters('ssc-1', []);
 
 			const result = await env.repo.findContentByIdWithChapters('ssc-1');
-			expect(result!.chapterIds).toEqual([]);
+			expect(result).toHaveProperty('chapterIds', []);
 		});
 
 		it('creates links when content had none before', async ({ expect }) => {
@@ -306,7 +305,8 @@ describe.concurrent('StudySetContentDrizzleRepository', () => {
 			await env.repo.setChapters('ssc-1', ['ch-1', 'ch-2']);
 
 			const result = await env.repo.findContentByIdWithChapters('ssc-1');
-			expect(result!.chapterIds).toHaveLength(2);
+			expect(result).toHaveProperty('chapterIds', expect.arrayContaining(['ch-1', 'ch-2']));
+			expect(result?.chapterIds).toHaveLength(2);
 		});
 	});
 });

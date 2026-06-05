@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import type { StudySetContent } from '../../infras/db/schema/study-set-content.ts';
-import type { StudySetContentRepository } from './study-set-content.repository.ts';
 import type { StudySetGuard } from '../study-set/study-set.guard.ts';
+import type { StudySetContentRepository } from './study-set-content.repository.ts';
 
 export class StudySetContentGuard {
 	private readonly resolvedStudySetGuard: StudySetGuard;

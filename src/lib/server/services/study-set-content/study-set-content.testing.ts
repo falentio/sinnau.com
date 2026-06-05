@@ -1,22 +1,22 @@
-import { eq } from 'drizzle-orm';
-import { type MockedFunction, vi } from 'vitest';
-import { getTestingDb } from '$lib/server/infras/db/testing';
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
+import { STUDY_SET_CONTENT_ID_PREFIX } from '$lib/schemas/study-set-content.constant';
 import { user } from '$lib/server/infras/db/schema/auth-schema';
 import { studySet } from '$lib/server/infras/db/schema/study-set';
+import { getTestingDb } from '$lib/server/infras/db/testing';
+import { eq } from 'drizzle-orm';
+import { type MockedFunction, vi } from 'vitest';
 import { chapter } from '../../infras/db/schema/chapter.ts';
 import type {
 	StudySetContent,
 	StudySetContentWithChapters
 } from '../../infras/db/schema/study-set-content.ts';
 import type { StudySetVisibility } from '../../infras/db/schema/study-set.ts';
-import { StudySetDrizzleRepository } from '../study-set/study-set.repository.drizzle.ts';
-import { ChapterDrizzleRepository } from '../chapter/chapter.repository.drizzle.ts';
-import { StudySetContentDrizzleRepository } from './study-set-content.repository.drizzle.ts';
-import type { StudySetContentGuard } from './study-set-content.guard.ts';
-import type { StudySetContentRepository } from './study-set-content.repository.ts';
 import { generateId } from '../../utils/nanoid.ts';
-import { STUDY_SET_CONTENT_ID_PREFIX } from './study-set-content.constant.ts';
-import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
+import { ChapterDrizzleRepository } from '../chapter/chapter.repository.drizzle.ts';
+import { StudySetDrizzleRepository } from '../study-set/study-set.repository.drizzle.ts';
+import type { StudySetContentGuard } from './study-set-content.guard.ts';
+import { StudySetContentDrizzleRepository } from './study-set-content.repository.drizzle.ts';
+import type { StudySetContentRepository } from './study-set-content.repository.ts';
 
 export type MockedStudySetContentRepository = {
 	[K in keyof StudySetContentRepository]: MockedFunction<StudySetContentRepository[K]>;
@@ -197,7 +197,8 @@ export class StudySetContentTestEnv implements AsyncDisposable {
 		});
 	}
 
-	async [Symbol.asyncDispose](): Promise<void> {
+	[Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
+		return Promise.resolve();
 	}
 }
