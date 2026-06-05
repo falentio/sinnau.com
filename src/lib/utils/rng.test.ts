@@ -70,10 +70,10 @@ describe('Rng', () => {
 
 		it('throws on invalid n', () => {
 			const r = new Rng('range');
-			expect(() => r.intn(0)).toThrow();
-			expect(() => r.intn(-1)).toThrow();
-			expect(() => r.intn(1.5)).toThrow();
-			expect(() => r.intn(0x100000001)).toThrow();
+			expect(() => r.intn(0)).toThrow('intn: argument must be an integer in [1, 2^32]');
+			expect(() => r.intn(-1)).toThrow('intn: argument must be an integer in [1, 2^32]');
+			expect(() => r.intn(1.5)).toThrow('intn: argument must be an integer in [1, 2^32]');
+			expect(() => r.intn(0x100000001)).toThrow('intn: argument must be an integer in [1, 2^32]');
 		});
 
 		it('approximates uniform distribution', () => {
@@ -124,14 +124,14 @@ describe('Rng', () => {
 
 		it('throws when max <= min', () => {
 			const r = new Rng('range-test');
-			expect(() => r.range(5, 5)).toThrow();
-			expect(() => r.range(3, 5)).toThrow();
+			expect(() => r.range(5, 5)).toThrow('range: max must be greater than min');
+			expect(() => r.range(3, 5)).toThrow('range: max must be greater than min');
 		});
 
 		it('throws on non-integer arguments', () => {
 			const r = new Rng('range-test');
-			expect(() => r.range(1.5)).toThrow();
-			expect(() => r.range(10, 0.5)).toThrow();
+			expect(() => r.range(1.5)).toThrow('range: arguments must be integers');
+			expect(() => r.range(10, 0.5)).toThrow('range: arguments must be integers');
 		});
 	});
 
