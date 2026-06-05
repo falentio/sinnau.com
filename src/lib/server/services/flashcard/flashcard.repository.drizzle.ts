@@ -52,7 +52,7 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
 	async deleteFlashcards(ids: string[], ownerId: string): Promise<boolean> {
 		if (ids.length === 0) return Promise.resolve(false);
 		try {
-			this.dbInstance.transaction((tx) => {
+			await this.dbInstance.transaction((tx) => {
 				const deleted = tx
 					.delete(flashcard)
 					.where(and(inArray(flashcard.id, ids), eq(flashcard.ownerId, ownerId)))
@@ -62,7 +62,7 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
 					throw new Error('FLASHCARD_DELETE_PARTIAL_FORBIDDEN');
 				}
 			});
-			return Promise.resolve(true);
+			return true;
 		} catch (err) {
 			if (err instanceof Error && err.message === 'FLASHCARD_DELETE_PARTIAL_FORBIDDEN') {
 				return Promise.resolve(false);

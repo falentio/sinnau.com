@@ -217,7 +217,7 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
 
 	async setChapters(contentId: string, chapterIds: string[]): Promise<void> {
 		try {
-			this.dbInstance.transaction((tx) => {
+			await this.dbInstance.transaction((tx) => {
 				tx.delete(studySetContentToChapter)
 					.where(eq(studySetContentToChapter.contentId, contentId))
 					.run();
@@ -228,7 +228,7 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
 						.run();
 				}
 			});
-			return Promise.resolve();
+			return;
 		} catch (err) {
 			if (err instanceof ORPCError) return Promise.reject(err);
 			return Promise.reject(

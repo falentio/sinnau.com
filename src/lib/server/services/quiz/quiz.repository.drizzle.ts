@@ -23,7 +23,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 
 	async insertQuiz(row: NewQuizRow, options: NewQuizOptionRow[]): Promise<Quiz> {
 		try {
-			const inserted = this.dbInstance.transaction((tx) => {
+			const inserted = await this.dbInstance.transaction((tx) => {
 				const rowsReturned = tx.insert(quiz).values(row).returning().all();
 				const [created] = rowsReturned;
 				if (!created)
@@ -35,7 +35,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 				}
 				return created;
 			});
-			return Promise.resolve(inserted);
+			return inserted;
 		} catch (err) {
 			if (err instanceof ORPCError) return Promise.reject(err);
 			return Promise.reject(
@@ -65,7 +65,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 	async deleteQuizzes(ids: string[], ownerId: string): Promise<boolean> {
 		if (ids.length === 0) return Promise.resolve(false);
 		try {
-			this.dbInstance.transaction((tx) => {
+			await this.dbInstance.transaction((tx) => {
 				const deleted = tx
 					.delete(quiz)
 					.where(and(inArray(quiz.id, ids), eq(quiz.ownerId, ownerId)))
@@ -75,7 +75,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 					throw new Error('QUIZ_DELETE_PARTIAL_FORBIDDEN');
 				}
 			});
-			return Promise.resolve(true);
+			return true;
 		} catch (err) {
 			if (err instanceof Error && err.message === 'QUIZ_DELETE_PARTIAL_FORBIDDEN') {
 				return Promise.resolve(false);
