@@ -31,6 +31,7 @@ export async function generateSlug(
 
 	for (let attempt = 0; attempt < SLUG_MAX_RETRIES; attempt++) {
 		const candidate = `${base}${tsNanoid(entropyLength)}`;
+		// oxlint-disable-next-line no-await-in-loop -- slug uniqueness retries are inherently sequential
 		if (!(await exists(candidate.toLowerCase()))) {
 			return candidate;
 		}
