@@ -183,6 +183,12 @@
 			}
 		},
 		{
+			"files": ["src/lib/components/ui/**"],
+			"rules": {
+				"import/no-cycle": "off"
+			}
+		},
+		{
 			"files": ["*.svelte", "**/*.svelte"],
 			"rules": {
 				"no-inner-declarations": "off",
