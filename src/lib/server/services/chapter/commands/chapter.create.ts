@@ -1,5 +1,5 @@
-import { authorizedProcedure } from '$lib/server/api/base';
 import { chapterSchema, createChapterInputSchema } from '$lib/schemas/chapter';
+import { authorizedProcedure } from '$lib/server/api/base';
 import { chapterService } from '../index';
 
 const ERRORS = {

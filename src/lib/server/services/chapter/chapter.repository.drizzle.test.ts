@@ -1,8 +1,10 @@
-import { eq } from 'drizzle-orm';
-import { describe, it } from 'vitest';
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
 import { chapter } from '$lib/server/infras/db/schema/chapter';
 import { flashcard } from '$lib/server/infras/db/schema/flashcard';
 import { studySet } from '$lib/server/infras/db/schema/study-set';
+import { generateId } from '$lib/server/utils/nanoid';
+import { eq } from 'drizzle-orm';
+import { describe, it } from 'vitest';
 import { ChapterTestEnv } from './chapter.testing';
 
 describe.concurrent('ChapterDrizzleRepository', () => {
@@ -47,9 +49,9 @@ describe.concurrent('ChapterDrizzleRepository', () => {
 				description: 'New description'
 			});
 			expect(updated).not.toBeNull();
-			expect(updated!.title).toBe('Renamed');
-			expect(updated!.description).toBe('New description');
-			expect(updated!.createdAt.getTime()).toBe(created.createdAt.getTime());
+			expect(updated).toHaveProperty('title', 'Renamed');
+			expect(updated).toHaveProperty('description', 'New description');
+			expect(updated).toHaveProperty('createdAt', created.createdAt);
 		});
 
 		it('returns null when the id does not exist', async ({ expect }) => {
@@ -115,8 +117,10 @@ describe.concurrent('ChapterDrizzleRepository', () => {
 		});
 	});
 
-	describe('findChaptersVisibleTo', () => {
-		it('returns chapters in study sets the user owns (private or public)', async ({ expect }) => {
+	describe('findChaptersByStudySet', () => {
+		it('returns chapters in the given study set that the user owns (private or public)', async ({
+			expect
+		}) => {
 			await using env = new ChapterTestEnv();
 			await env.seedChapter({ id: 'public-ch', ownerId: env.ownerId });
 			const privateSet = await env.seedStudySet({
@@ -131,9 +135,10 @@ describe.concurrent('ChapterDrizzleRepository', () => {
 				studySetId: privateSet.id
 			});
 
-			const result = await env.repo.findChaptersVisibleTo(env.ownerId);
-			const ids = result.map((c) => c.id).sort();
-			expect(ids).toEqual(['private-ch', 'public-ch']);
+			const result = await env.repo.findChaptersByStudySet(env.ownerId, env.studySetId);
+			const ids = result.map((c) => c.id);
+			expect(ids).toEqual(['public-ch']);
+			expect(ids).not.toContain('private-ch');
 		});
 
 		it('returns chapters from public study sets owned by other users', async ({ expect }) => {
@@ -150,7 +155,7 @@ describe.concurrent('ChapterDrizzleRepository', () => {
 				studySetId: otherSet.id
 			});
 
-			const result = await env.repo.findChaptersVisibleTo(env.ownerId);
+			const result = await env.repo.findChaptersByStudySet(env.ownerId, otherSet.id);
 			expect(result.map((c) => c.id)).toContain('other-public-ch');
 		});
 
@@ -168,8 +173,29 @@ describe.concurrent('ChapterDrizzleRepository', () => {
 				studySetId: otherSet.id
 			});
 
-			const result = await env.repo.findChaptersVisibleTo(env.ownerId);
+			const result = await env.repo.findChaptersByStudySet(env.ownerId, otherSet.id);
 			expect(result.map((c) => c.id)).not.toContain('other-private-ch');
+		});
+
+		it('returns only chapters from the specified study set', async ({ expect }) => {
+			await using env = new ChapterTestEnv();
+			const otherSet = await env.seedStudySet({
+				id: generateId(STUDY_SET_ID_PREFIX),
+				slug: 'other-set',
+				ownerId: env.ownerId,
+				visibility: 'PUBLIC'
+			});
+			await env.seedChapter({
+				id: 'ch-in-first',
+				ownerId: env.ownerId,
+				studySetId: env.studySetId
+			});
+			await env.seedChapter({ id: 'ch-in-second', ownerId: env.ownerId, studySetId: otherSet.id });
+
+			const result = await env.repo.findChaptersByStudySet(env.ownerId, env.studySetId);
+			const ids = result.map((c) => c.id);
+			expect(ids).toContain('ch-in-first');
+			expect(ids).not.toContain('ch-in-second');
 		});
 
 		it('orders by createdAt desc', async ({ expect }) => {
@@ -178,7 +204,7 @@ describe.concurrent('ChapterDrizzleRepository', () => {
 			await new Promise((r) => setTimeout(r, 5));
 			const second = await env.seedChapter({ id: 'second', ownerId: env.ownerId });
 
-			const result = await env.repo.findChaptersVisibleTo(env.ownerId);
+			const result = await env.repo.findChaptersByStudySet(env.ownerId, env.studySetId);
 			const idxFirst = result.findIndex((c) => c.id === first.id);
 			const idxSecond = result.findIndex((c) => c.id === second.id);
 			expect(idxFirst).toBeGreaterThan(idxSecond);

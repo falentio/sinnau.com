@@ -1,10 +1,10 @@
 import { ORPCError } from '@orpc/server';
 import { describe, it } from 'vitest';
+import { StudySetGuard } from '../study-set/study-set.guard.ts';
 import {
 	createStudySetFixture,
 	createMockRepository as createMockStudySetRepo
 } from '../study-set/study-set.testing.ts';
-import { StudySetGuard } from '../study-set/study-set.guard.ts';
 import { ChapterGuard } from './chapter.guard.ts';
 import { createChapterFixture, createMockRepository } from './chapter.testing.ts';
 

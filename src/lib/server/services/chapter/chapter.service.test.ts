@@ -18,7 +18,7 @@ function setupService() {
 	repo.updateChapter.mockResolvedValue(null);
 	repo.deleteChapter.mockResolvedValue(false);
 	repo.findChapterById.mockResolvedValue(null);
-	repo.findChaptersVisibleTo.mockResolvedValue(EMPTY_CHAPTER_LIST);
+	repo.findChaptersByStudySet.mockResolvedValue(EMPTY_CHAPTER_LIST);
 	repo.isSlugTakenInStudySet.mockResolvedValue(false);
 	repo.countChildren.mockResolvedValue(0);
 
@@ -76,7 +76,7 @@ describe.concurrent('ChapterService', () => {
 				studySetId: sampleStudySetId,
 				ownerId: 'owner-1'
 			});
-			expect(inserted?.slug).toMatch(/^biology-101-[a-z2-7]{6}$/);
+			expect(inserted?.slug).toMatch(/^biology-101-[0-9A-Za-z]{8}$/);
 			expect(result.title).toBe('Biology 101');
 			expect(result.ownerId).toBe('owner-1');
 		});
@@ -85,7 +85,7 @@ describe.concurrent('ChapterService', () => {
 			const { repo, service } = setupService();
 			await service.createChapter({ studySetId: sampleStudySetId, title: 'ab' }, 'owner-1');
 			const inserted = repo.insertChapter.mock.calls[0]?.[0];
-			expect(inserted?.slug).toMatch(/^[a-z2-7]{12}$/);
+			expect(inserted?.slug).toMatch(/^[0-9A-Za-z]{12}$/);
 		});
 
 		it('consults the repo via isSlugTakenInStudySet with the studySetId for each candidate', async ({
@@ -100,7 +100,7 @@ describe.concurrent('ChapterService', () => {
 			expect(calls.length).toBeGreaterThan(0);
 			for (const [studySetId, candidate] of calls) {
 				expect(studySetId).toBe(sampleStudySetId);
-				expect(candidate).toMatch(/^biology-101-[a-z2-7]{6}$/);
+				expect(candidate).toMatch(/^biology-101-[0-9A-Za-z]{8}$/);
 			}
 		});
 
@@ -265,13 +265,16 @@ describe.concurrent('ChapterService', () => {
 		});
 	});
 
-	describe('getChapters', () => {
-		it('forwards the user id to the repo and returns its result', async ({ expect }) => {
+	describe('getChaptersByStudySet', () => {
+		it('forwards the user id and studySetId to the repo and returns its result', async ({
+			expect
+		}) => {
 			const { repo, service } = setupService();
 			const list = [createChapterFixture({ id: 'ch-1' })];
-			repo.findChaptersVisibleTo.mockResolvedValue(list);
-			const result = await service.getChapters({}, 'user-1');
-			expect(repo.findChaptersVisibleTo).toHaveBeenCalledWith('user-1');
+			repo.findChaptersByStudySet.mockResolvedValue(list);
+			const studySetId = '11111111-1111-1111-1111-111111111111';
+			const result = await service.getChaptersByStudySet({ studySetId }, 'user-1');
+			expect(repo.findChaptersByStudySet).toHaveBeenCalledWith('user-1', studySetId);
 			expect(result).toBe(list);
 		});
 	});

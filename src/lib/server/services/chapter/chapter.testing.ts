@@ -1,14 +1,18 @@
+import { CHAPTER_ID_PREFIX } from '$lib/schemas/chapter';
+import { FLASHCARD_ID_PREFIX } from '$lib/schemas/flashcard';
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
+import { user } from '$lib/server/infras/db/schema/auth-schema';
+import { getTestingDb } from '$lib/server/infras/db/testing';
 import { eq } from 'drizzle-orm';
 import { type MockedFunction, vi } from 'vitest';
-import { getTestingDb } from '$lib/server/infras/db/testing';
-import { user } from '$lib/server/infras/db/schema/auth-schema';
+import type { Chapter } from '../../infras/db/schema/chapter.ts';
 import { flashcard } from '../../infras/db/schema/flashcard.ts';
 import { studySet } from '../../infras/db/schema/study-set.ts';
-import type { Chapter } from '../../infras/db/schema/chapter.ts';
 import type { StudySetVisibility } from '../../infras/db/schema/study-set.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import { StudySetDrizzleRepository } from '../study-set/study-set.repository.drizzle';
-import { ChapterDrizzleRepository } from './chapter.repository.drizzle';
 import type { ChapterGuard } from './chapter.guard.ts';
+import { ChapterDrizzleRepository } from './chapter.repository.drizzle';
 import type { ChapterRepository } from './chapter.repository.ts';
 
 export type MockedChapterRepository = {
@@ -21,7 +25,7 @@ export function createMockRepository(): MockedChapterRepository {
 		updateChapter: vi.fn(),
 		deleteChapter: vi.fn(),
 		findChapterById: vi.fn(),
-		findChaptersVisibleTo: vi.fn(),
+		findChaptersByStudySet: vi.fn(),
 		isSlugTakenInStudySet: vi.fn(),
 		countChildren: vi.fn()
 	};
@@ -41,7 +45,7 @@ export function createMockGuard(): MockedChapterGuard {
 
 export function createChapterFixture(overrides: Partial<Chapter> = {}): Chapter {
 	return {
-		id: crypto.randomUUID(),
+		id: generateId(CHAPTER_ID_PREFIX),
 		slug: 'chapter-slug-abc123',
 		title: 'Chapter Title',
 		description: null,
@@ -101,8 +105,8 @@ export class ChapterTestEnv implements AsyncDisposable {
 		this.studySetRepo = new StudySetDrizzleRepository(this.db);
 		this.ownerId = this.seedUser({ name: 'Owner' });
 		this.otherId = this.seedUser({ name: 'Other' });
-		this.studySetId = crypto.randomUUID();
-		this.otherStudySetId = crypto.randomUUID();
+		this.studySetId = generateId(STUDY_SET_ID_PREFIX);
+		this.otherStudySetId = generateId(STUDY_SET_ID_PREFIX);
 		this.insertStudySetSync(this.studySetId, this.ownerId, 'PUBLIC');
 		this.insertStudySetSync(this.otherStudySetId, this.otherId, 'PRIVATE');
 	}
@@ -126,6 +130,9 @@ export class ChapterTestEnv implements AsyncDisposable {
 		const id = options.id ?? crypto.randomUUID();
 		this.db
 			.insert(user)
+
+			// User IDs are auth domain (not prefixed with project prefix)
+
 			.values({
 				id,
 				email: options.email ?? `${id}@test.local`,
@@ -141,7 +148,7 @@ export class ChapterTestEnv implements AsyncDisposable {
 		slug: string;
 		visibility: StudySetVisibility;
 	}> {
-		const id = options.id ?? crypto.randomUUID();
+		const id = options.id ?? generateId(STUDY_SET_ID_PREFIX);
 		const slug = options.slug ?? `slug-${id.slice(0, 8)}`;
 		const visibility: StudySetVisibility = options.visibility ?? 'PUBLIC';
 		this.db.delete(studySet).where(eq(studySet.id, id)).run();
@@ -158,7 +165,7 @@ export class ChapterTestEnv implements AsyncDisposable {
 	}
 
 	async seedChapter(overrides: SeedChapterOptions = {}): Promise<Chapter> {
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(CHAPTER_ID_PREFIX);
 		const chapter = await this.repo.insertChapter({
 			id,
 			slug: overrides.slug ?? `chapter-${id.slice(0, 8)}`,
@@ -175,7 +182,7 @@ export class ChapterTestEnv implements AsyncDisposable {
 		ownerId: string = this.ownerId,
 		studySetId: string = this.studySetId
 	): string {
-		const id = crypto.randomUUID();
+		const id = generateId(FLASHCARD_ID_PREFIX);
 		this.db
 			.insert(flashcard)
 			.values({
@@ -192,7 +199,8 @@ export class ChapterTestEnv implements AsyncDisposable {
 		return id;
 	}
 
-	async [Symbol.asyncDispose](): Promise<void> {
+	[Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
+		return Promise.resolve();
 	}
 }

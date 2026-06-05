@@ -1,6 +1,5 @@
+import { CHAPTER_ID_PREFIX } from '$lib/schemas/chapter';
 import { ORPCError } from '@orpc/server';
-import { generateSlug, SlugConflictError } from '../../infras/slug.ts';
-import type { Chapter } from '../../infras/db/schema/chapter.ts';
 import type {
 	CreateChapterInput,
 	DeleteChapterInput,
@@ -8,8 +7,11 @@ import type {
 	GetChaptersInput,
 	UpdateChapterInput
 } from '../../../schemas/chapter.ts';
-import type { ChapterRepository } from './chapter.repository.ts';
+import type { Chapter } from '../../infras/db/schema/chapter.ts';
+import { generateSlug, SlugConflictError } from '../../infras/slug.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { ChapterGuard } from './chapter.guard.ts';
+import type { ChapterRepository } from './chapter.repository.ts';
 
 export type { Chapter };
 
@@ -37,7 +39,7 @@ export class ChapterService {
 		});
 
 		return this.repo.insertChapter({
-			id: crypto.randomUUID(),
+			id: generateId(CHAPTER_ID_PREFIX),
 			slug,
 			title: input.title,
 			description: input.description ?? null,
@@ -81,8 +83,8 @@ export class ChapterService {
 		}
 	}
 
-	async getChapters(_input: GetChaptersInput, userId: string): Promise<Chapter[]> {
-		return this.repo.findChaptersVisibleTo(userId);
+	async getChaptersByStudySet(input: GetChaptersInput, userId: string): Promise<Chapter[]> {
+		return this.repo.findChaptersByStudySet(userId, input.studySetId);
 	}
 
 	async getChapter(input: GetChapterInput, userId: string): Promise<Chapter> {

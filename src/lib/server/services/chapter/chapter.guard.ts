@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server';
 import type { Chapter } from '../../infras/db/schema/chapter.ts';
-import type { ChapterRepository } from './chapter.repository.ts';
 import type { StudySetGuard } from '../study-set/study-set.guard.ts';
+import type { ChapterRepository } from './chapter.repository.ts';
 
 export class ChapterGuard {
 	private readonly resolvedStudySetGuard: StudySetGuard;

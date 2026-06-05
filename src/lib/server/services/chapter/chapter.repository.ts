@@ -7,7 +7,7 @@ export interface ChapterRepository {
 	updateChapter(id: string, ownerId: string, patch: ChapterUpdatePatch): Promise<Chapter | null>;
 	deleteChapter(id: string, ownerId: string): Promise<boolean>;
 	findChapterById(id: string): Promise<Chapter | null>;
-	findChaptersVisibleTo(userId: string): Promise<Chapter[]>;
+	findChaptersByStudySet(userId: string, studySetId: string): Promise<Chapter[]>;
 	isSlugTakenInStudySet(studySetId: string, slug: string): Promise<boolean>;
 	countChildren(chapterId: string): Promise<number>;
 }
