@@ -14,16 +14,16 @@ export type MockedStudySetRepository = {
 
 export function createMockRepository(): MockedStudySetRepository {
 	return {
-		insertStudySet: vi.fn(),
-		updateStudySet: vi.fn(),
-		deleteStudySet: vi.fn(),
-		findStudySetById: vi.fn(),
-		findStudySetBySlug: vi.fn(),
-		findOwnedStudySets: vi.fn(),
-		isSlugTaken: vi.fn(),
-		upsertVisit: vi.fn(),
-		deleteOldVisits: vi.fn(),
-		findRecentVisits: vi.fn()
+		insertStudySet: vi.fn<StudySetRepository['insertStudySet']>(),
+		updateStudySet: vi.fn<StudySetRepository['updateStudySet']>(),
+		deleteStudySet: vi.fn<StudySetRepository['deleteStudySet']>(),
+		findStudySetById: vi.fn<StudySetRepository['findStudySetById']>(),
+		findStudySetBySlug: vi.fn<StudySetRepository['findStudySetBySlug']>(),
+		findOwnedStudySets: vi.fn<StudySetRepository['findOwnedStudySets']>(),
+		isSlugTaken: vi.fn<StudySetRepository['isSlugTaken']>(),
+		upsertVisit: vi.fn<StudySetRepository['upsertVisit']>(),
+		deleteOldVisits: vi.fn<StudySetRepository['deleteOldVisits']>(),
+		findRecentVisits: vi.fn<StudySetRepository['findRecentVisits']>()
 	};
 }
 
@@ -33,12 +33,12 @@ export type MockedStudySetGuard = {
 
 export function createMockGuard(): MockedStudySetGuard {
 	return {
-		assertOwnerOrForbidden: vi.fn(),
-		assertStudySetOwnerOrForbidden: vi.fn(),
-		assertVisibleByIdOrNotFound: vi.fn(),
-		assertStudySetVisibleByIdOrNotFound: vi.fn(),
-		assertVisibleBySlugOrNotFound: vi.fn(),
-		canView: vi.fn()
+		assertOwnerOrForbidden: vi.fn<StudySetGuard['assertOwnerOrForbidden']>(),
+		assertStudySetOwnerOrForbidden: vi.fn<StudySetGuard['assertStudySetOwnerOrForbidden']>(),
+		assertVisibleByIdOrNotFound: vi.fn<StudySetGuard['assertVisibleByIdOrNotFound']>(),
+		assertStudySetVisibleByIdOrNotFound: vi.fn<StudySetGuard['assertStudySetVisibleByIdOrNotFound']>(),
+		assertVisibleBySlugOrNotFound: vi.fn<StudySetGuard['assertVisibleBySlugOrNotFound']>(),
+		canView: vi.fn<StudySetGuard['canView']>()
 	};
 }
 

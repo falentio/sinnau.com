@@ -19,13 +19,13 @@ export type MockedFlashcardRepository = {
 
 export function createMockRepository(): MockedFlashcardRepository {
 	return {
-		insertFlashcards: vi.fn(),
-		updateFlashcard: vi.fn(),
-		deleteFlashcards: vi.fn(),
-		findFlashcardById: vi.fn(),
-		findFlashcardsByIds: vi.fn(),
-		findFlashcardsByStudySet: vi.fn(),
-		findChapter: vi.fn()
+		insertFlashcards: vi.fn<FlashcardRepository['insertFlashcards']>(),
+		updateFlashcard: vi.fn<FlashcardRepository['updateFlashcard']>(),
+		deleteFlashcards: vi.fn<FlashcardRepository['deleteFlashcards']>(),
+		findFlashcardById: vi.fn<FlashcardRepository['findFlashcardById']>(),
+		findFlashcardsByIds: vi.fn<FlashcardRepository['findFlashcardsByIds']>(),
+		findFlashcardsByStudySet: vi.fn<FlashcardRepository['findFlashcardsByStudySet']>(),
+		findChapter: vi.fn<FlashcardRepository['findChapter']>()
 	};
 }
 
@@ -35,12 +35,12 @@ export type MockedFlashcardGuard = {
 
 export function createMockGuard(): MockedFlashcardGuard {
 	return {
-		assertStudySetOwnerOrForbidden: vi.fn(),
-		assertStudySetVisibleOrNotFound: vi.fn(),
-		assertChapterOwnerInStudySetOrForbidden: vi.fn(),
-		assertFlashcardOwnerOrForbidden: vi.fn(),
-		assertFlashcardVisibleOrNotFound: vi.fn(),
-		assertFlashcardsAllOwnedOrThrow: vi.fn()
+		assertStudySetOwnerOrForbidden: vi.fn<FlashcardGuard['assertStudySetOwnerOrForbidden']>(),
+		assertStudySetVisibleOrNotFound: vi.fn<FlashcardGuard['assertStudySetVisibleOrNotFound']>(),
+		assertChapterOwnerInStudySetOrForbidden: vi.fn<FlashcardGuard['assertChapterOwnerInStudySetOrForbidden']>(),
+		assertFlashcardOwnerOrForbidden: vi.fn<FlashcardGuard['assertFlashcardOwnerOrForbidden']>(),
+		assertFlashcardVisibleOrNotFound: vi.fn<FlashcardGuard['assertFlashcardVisibleOrNotFound']>(),
+		assertFlashcardsAllOwnedOrThrow: vi.fn<FlashcardGuard['assertFlashcardsAllOwnedOrThrow']>()
 	};
 }
 
@@ -50,12 +50,12 @@ export type MockedStudySetGuard = {
 
 export function createMockStudySetGuard(): MockedStudySetGuard {
 	return {
-		assertOwnerOrForbidden: vi.fn(),
-		assertStudySetOwnerOrForbidden: vi.fn(),
-		assertVisibleByIdOrNotFound: vi.fn(),
-		assertStudySetVisibleByIdOrNotFound: vi.fn(),
-		assertVisibleBySlugOrNotFound: vi.fn(),
-		canView: vi.fn()
+		assertOwnerOrForbidden: vi.fn<StudySetGuard['assertOwnerOrForbidden']>(),
+		assertStudySetOwnerOrForbidden: vi.fn<StudySetGuard['assertStudySetOwnerOrForbidden']>(),
+		assertVisibleByIdOrNotFound: vi.fn<StudySetGuard['assertVisibleByIdOrNotFound']>(),
+		assertStudySetVisibleByIdOrNotFound: vi.fn<StudySetGuard['assertStudySetVisibleByIdOrNotFound']>(),
+		assertVisibleBySlugOrNotFound: vi.fn<StudySetGuard['assertVisibleBySlugOrNotFound']>(),
+		canView: vi.fn<StudySetGuard['canView']>()
 	};
 }
 
