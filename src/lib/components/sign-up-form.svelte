@@ -47,30 +47,6 @@
 	let serverError = $state('');
 	let pending = $state(false);
 
-	const form = superForm(
-		defaults<SignUpForm>(
-			{
-				name: '',
-				email: '',
-				password: '',
-				confirmPassword: ''
-			},
-			valibotClient(formSchema)
-		),
-		{
-			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: false,
-			onUpdate: async ({ form: submittedForm }) => {
-				serverError = '';
-				if (!submittedForm.valid) return;
-				await signUp(submittedForm.data);
-			}
-		}
-	);
-
-	const { form: formData, enhance, submitting } = form;
-
 	function getErrorMessage(error: { message?: string } | null | undefined) {
 		if (error?.message) return error.message;
 		return 'Tidak bisa mendaftar. Coba lagi sebentar.';
@@ -95,6 +71,30 @@
 			pending = false;
 		}
 	}
+
+	const form = superForm(
+		defaults<SignUpForm>(
+			{
+				name: '',
+				email: '',
+				password: '',
+				confirmPassword: ''
+			},
+			valibotClient(formSchema)
+		),
+		{
+			SPA: true,
+			validators: valibotClient(formSchema),
+			resetForm: false,
+			onUpdate: async ({ form: submittedForm }) => {
+				serverError = '';
+				if (!submittedForm.valid) return;
+				await signUp(submittedForm.data);
+			}
+		}
+	);
+
+	const { form: formData, enhance, submitting } = form;
 </script>
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>

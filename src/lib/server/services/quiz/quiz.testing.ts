@@ -21,19 +21,19 @@ export type MockedQuizRepository = {
 
 export function createMockRepository(): MockedQuizRepository {
 	return {
-		insertQuiz: vi.fn(),
-		updateQuiz: vi.fn(),
-		deleteQuizzes: vi.fn(),
-		findQuizById: vi.fn(),
-		findQuizzesByIds: vi.fn(),
-		findQuizzesByStudySetId: vi.fn(),
-		findChapterById: vi.fn(),
-		findOptionsByQuizIds: vi.fn(),
-		findOptionsByIdsForOwner: vi.fn(),
-		findOptionByIdForOwner: vi.fn(),
-		insertQuizOptions: vi.fn(),
-		updateQuizOption: vi.fn(),
-		deleteQuizOptions: vi.fn()
+		insertQuiz: vi.fn<QuizRepository['insertQuiz']>(),
+		updateQuiz: vi.fn<QuizRepository['updateQuiz']>(),
+		deleteQuizzes: vi.fn<QuizRepository['deleteQuizzes']>(),
+		findQuizById: vi.fn<QuizRepository['findQuizById']>(),
+		findQuizzesByIds: vi.fn<QuizRepository['findQuizzesByIds']>(),
+		findQuizzesByStudySetId: vi.fn<QuizRepository['findQuizzesByStudySetId']>(),
+		findChapterById: vi.fn<QuizRepository['findChapterById']>(),
+		findOptionsByQuizIds: vi.fn<QuizRepository['findOptionsByQuizIds']>(),
+		findOptionsByIdsForOwner: vi.fn<QuizRepository['findOptionsByIdsForOwner']>(),
+		findOptionByIdForOwner: vi.fn<QuizRepository['findOptionByIdForOwner']>(),
+		insertQuizOptions: vi.fn<QuizRepository['insertQuizOptions']>(),
+		updateQuizOption: vi.fn<QuizRepository['updateQuizOption']>(),
+		deleteQuizOptions: vi.fn<QuizRepository['deleteQuizOptions']>()
 	};
 }
 
@@ -43,14 +43,14 @@ export type MockedQuizGuard = {
 
 export function createMockGuard(): MockedQuizGuard {
 	return {
-		assertStudySetOwnerOrForbidden: vi.fn(),
-		assertStudySetVisibleOrNotFound: vi.fn(),
-		assertChapterOwnerOrForbidden: vi.fn(),
-		assertChapterInStudySetOrForbidden: vi.fn(),
-		assertQuizOwnerOrForbidden: vi.fn(),
-		assertQuizOwnerBatchOrPartialForbidden: vi.fn(),
-		assertQuizOptionOwnerBatchOrPartialForbidden: vi.fn(),
-		assertQuizVisibleByIdOrNotFound: vi.fn()
+		assertStudySetOwnerOrForbidden: vi.fn<QuizGuard['assertStudySetOwnerOrForbidden']>(),
+		assertStudySetVisibleOrNotFound: vi.fn<QuizGuard['assertStudySetVisibleOrNotFound']>(),
+		assertChapterOwnerOrForbidden: vi.fn<QuizGuard['assertChapterOwnerOrForbidden']>(),
+		assertChapterInStudySetOrForbidden: vi.fn<QuizGuard['assertChapterInStudySetOrForbidden']>(),
+		assertQuizOwnerOrForbidden: vi.fn<QuizGuard['assertQuizOwnerOrForbidden']>(),
+		assertQuizOwnerBatchOrPartialForbidden: vi.fn<QuizGuard['assertQuizOwnerBatchOrPartialForbidden']>(),
+		assertQuizOptionOwnerBatchOrPartialForbidden: vi.fn<QuizGuard['assertQuizOptionOwnerBatchOrPartialForbidden']>(),
+		assertQuizVisibleByIdOrNotFound: vi.fn<QuizGuard['assertQuizVisibleByIdOrNotFound']>()
 	};
 }
 
@@ -213,7 +213,7 @@ export class QuizTestEnv implements AsyncDisposable {
 		return row;
 	}
 
-	[Symbol.asyncDispose](): Promise<void> {
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
 		return Promise.resolve();
 	}

@@ -32,6 +32,7 @@ export class FlashcardService {
 			new Set(input.flashcards.map((f) => f.chapterId).filter((v): v is string => !!v))
 		);
 		for (const chapterId of chapterIds) {
+			// oxlint-disable-next-line no-await-in-loop -- guard checks must abort on first mismatch sequentially
 			await this.guard.assertChapterOwnerInStudySetOrForbidden(
 				chapterId,
 				ownerId,

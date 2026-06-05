@@ -142,7 +142,7 @@ describe.concurrent('FlashcardDrizzleRepository', () => {
 			await env.seedFlashcard({ id: 'b' });
 			await env.seedFlashcard({ id: 'c' });
 			const result = await env.repo.findFlashcardsByIds(['a', 'c']);
-			expect(result.map((r) => r.id).sort()).toEqual(['a', 'c']);
+			expect(result.map((r) => r.id).toSorted()).toEqual(['a', 'c']);
 		});
 
 		it('returns an empty array for an empty list', async ({ expect }) => {
@@ -198,7 +198,7 @@ describe.concurrent('FlashcardDrizzleRepository (schema constraints)', () => {
 	describe('foreign keys', () => {
 		it('rejects inserting a flashcard for a non-existent study set', async ({ expect }) => {
 			await using env = new FlashcardTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertFlashcards([
 					{
 						id: 'orphan',
@@ -217,7 +217,7 @@ describe.concurrent('FlashcardDrizzleRepository (schema constraints)', () => {
 		it('rejects inserting a flashcard for a non-existent owner', async ({ expect }) => {
 			await using env = new FlashcardTestEnv();
 			await env.seedOwnedStudySet();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertFlashcards([
 					{
 						id: 'orphan',
@@ -236,7 +236,7 @@ describe.concurrent('FlashcardDrizzleRepository (schema constraints)', () => {
 		it('rejects inserting a flashcard for a non-existent chapter', async ({ expect }) => {
 			await using env = new FlashcardTestEnv();
 			await env.seedOwnedStudySet();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertFlashcards([
 					{
 						id: 'orphan',

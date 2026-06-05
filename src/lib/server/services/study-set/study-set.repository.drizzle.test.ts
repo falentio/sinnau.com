@@ -159,12 +159,13 @@ describe.concurrent('StudySetDrizzleRepository', () => {
 			await env.seedStudySet({ id: 'c', ownerId: env.otherId });
 
 			const result = await env.repo.findOwnedStudySets(env.ownerId, 'createdAt', 'desc', 1);
-			expect(result.data.map((s) => s.id).sort()).toEqual(['a', 'b']);
+			expect(result.data.map((s) => s.id).toSorted()).toEqual(['a', 'b']);
 		});
 
 		it('paginates with a fixed limit of 10', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
 			for (let i = 0; i < 12; i++) {
+				// oxlint-disable-next-line no-await-in-loop -- test seeding requires sequential inserts for FK order
 				await env.seedStudySet({ id: `set-${i}`, ownerId: env.ownerId });
 			}
 
@@ -329,7 +330,9 @@ describe.concurrent('StudySetDrizzleRepository', () => {
 		it('limits the result to the requested count', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
 			for (let i = 0; i < 5; i++) {
+				// oxlint-disable-next-line no-await-in-loop -- test seeding requires sequential inserts for FK order
 				const s = await env.seedStudySet({ id: `s-${i}`, ownerId: env.ownerId });
+				// oxlint-disable-next-line no-await-in-loop -- dependent on newly seeded study set, must run sequentially
 				await env.repo.upsertVisit(env.otherId, s.id, Date.now() + i);
 			}
 			const recent = await env.repo.findRecentVisits(env.otherId, 3);
@@ -382,7 +385,7 @@ describe.concurrent('StudySetDrizzleRepository (schema constraints)', () => {
 		it('rejects inserting two rows with the same slug (case-insensitive)', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
 			await env.seedStudySet({ id: 'a', ownerId: env.ownerId, slug: 'same-slug' });
-			const insertDuplicate = () =>
+			const insertDuplicate = async () =>
 				env.repo.insertStudySet({
 					id: 'b',
 					slug: 'SAME-SLUG',
@@ -399,7 +402,7 @@ describe.concurrent('StudySetDrizzleRepository (schema constraints)', () => {
 	describe('foreign keys', () => {
 		it('rejects inserting a study set for a non-existent owner', async ({ expect }) => {
 			await using env = new StudySetTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertStudySet({
 					id: 'orphan',
 					slug: 'orphan-slug',

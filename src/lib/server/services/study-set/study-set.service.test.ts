@@ -30,7 +30,7 @@ function setupService() {
 	repo.findStudySetBySlug.mockResolvedValue(null);
 	repo.findOwnedStudySets.mockResolvedValue(EMPTY_STUDY_SET_LIST);
 	repo.upsertVisit.mockImplementation(
-		(userId, studySetId, visitedAt) =>
+		async (userId, studySetId, visitedAt) =>
 			Promise.resolve({
 				id: generateId(STUDY_SET_VISIT_ID_PREFIX),
 				userId,

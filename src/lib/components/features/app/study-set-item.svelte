@@ -11,13 +11,15 @@
 
 	let { studySet }: { studySet: StudySet } = $props();
 	const rng = $derived(createRng(studySet.id));
-	const color = $derived(getColor(rng));
+
 	function getColor(rng: Rng) {
 		const step = 30;
 		const n = 360 / step;
 		const hue = rng.range(n) * step;
 		return `oklch(63.7% 0.237 ${hue})`;
 	}
+
+	const color = $derived(getColor(rng));
 </script>
 
 <a

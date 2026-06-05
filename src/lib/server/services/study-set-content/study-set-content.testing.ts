@@ -24,17 +24,17 @@ export type MockedStudySetContentRepository = {
 
 export function createMockRepository(): MockedStudySetContentRepository {
 	return {
-		insertContent: vi.fn(),
-		updateContent: vi.fn(),
-		deleteContent: vi.fn(),
-		findContentById: vi.fn(),
-		findContentByIdWithChapters: vi.fn(),
-		findContentsByStudySet: vi.fn(),
-		findContentsByChapter: vi.fn(),
-		linkChapter: vi.fn(),
-		unlinkChapter: vi.fn(),
-		setChapters: vi.fn(),
-		findChapterById: vi.fn()
+		insertContent: vi.fn<StudySetContentRepository['insertContent']>(),
+		updateContent: vi.fn<StudySetContentRepository['updateContent']>(),
+		deleteContent: vi.fn<StudySetContentRepository['deleteContent']>(),
+		findContentById: vi.fn<StudySetContentRepository['findContentById']>(),
+		findContentByIdWithChapters: vi.fn<StudySetContentRepository['findContentByIdWithChapters']>(),
+		findContentsByStudySet: vi.fn<StudySetContentRepository['findContentsByStudySet']>(),
+		findContentsByChapter: vi.fn<StudySetContentRepository['findContentsByChapter']>(),
+		linkChapter: vi.fn<StudySetContentRepository['linkChapter']>(),
+		unlinkChapter: vi.fn<StudySetContentRepository['unlinkChapter']>(),
+		setChapters: vi.fn<StudySetContentRepository['setChapters']>(),
+		findChapterById: vi.fn<StudySetContentRepository['findChapterById']>()
 	};
 }
 
@@ -44,10 +44,10 @@ export type MockedStudySetContentGuard = {
 
 export function createMockGuard(): MockedStudySetContentGuard {
 	return {
-		assertContentOwnerOrForbidden: vi.fn(),
-		assertContentVisibleByIdOrNotFound: vi.fn(),
-		assertStudySetOwnerOrForbidden: vi.fn(),
-		assertStudySetVisibleByIdOrNotFound: vi.fn()
+		assertContentOwnerOrForbidden: vi.fn<StudySetContentGuard['assertContentOwnerOrForbidden']>(),
+		assertContentVisibleByIdOrNotFound: vi.fn<StudySetContentGuard['assertContentVisibleByIdOrNotFound']>(),
+		assertStudySetOwnerOrForbidden: vi.fn<StudySetContentGuard['assertStudySetOwnerOrForbidden']>(),
+		assertStudySetVisibleByIdOrNotFound: vi.fn<StudySetContentGuard['assertStudySetVisibleByIdOrNotFound']>()
 	};
 }
 
@@ -197,7 +197,7 @@ export class StudySetContentTestEnv implements AsyncDisposable {
 		});
 	}
 
-	[Symbol.asyncDispose](): Promise<void> {
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
 		return Promise.resolve();
 	}

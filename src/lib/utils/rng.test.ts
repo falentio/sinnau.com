@@ -70,17 +70,17 @@ describe('Rng', () => {
 
 		it('throws on invalid n', () => {
 			const r = new Rng('range');
-			expect(() => r.intn(0)).toThrow();
-			expect(() => r.intn(-1)).toThrow();
-			expect(() => r.intn(1.5)).toThrow();
-			expect(() => r.intn(0x100000001)).toThrow();
+			expect(() => r.intn(0)).toThrow('intn: argument must be an integer in [1, 2^32]');
+			expect(() => r.intn(-1)).toThrow('intn: argument must be an integer in [1, 2^32]');
+			expect(() => r.intn(1.5)).toThrow('intn: argument must be an integer in [1, 2^32]');
+			expect(() => r.intn(0x100000001)).toThrow('intn: argument must be an integer in [1, 2^32]');
 		});
 
 		it('approximates uniform distribution', () => {
 			const r = new Rng('uniformity');
 			const n = 10;
 			const trials = 100000;
-			const counts = new Array<number>(n).fill(0);
+			const counts = Array.from({ length: n }, () => 0);
 			for (let i = 0; i < trials; i++) {
 				const idx = r.intn(n);
 				counts[idx] = (counts[idx] ?? 0) + 1;
@@ -124,14 +124,14 @@ describe('Rng', () => {
 
 		it('throws when max <= min', () => {
 			const r = new Rng('range-test');
-			expect(() => r.range(5, 5)).toThrow();
-			expect(() => r.range(3, 5)).toThrow();
+			expect(() => r.range(5, 5)).toThrow('range: max must be greater than min');
+			expect(() => r.range(3, 5)).toThrow('range: max must be greater than min');
 		});
 
 		it('throws on non-integer arguments', () => {
 			const r = new Rng('range-test');
-			expect(() => r.range(1.5)).toThrow();
-			expect(() => r.range(10, 0.5)).toThrow();
+			expect(() => r.range(1.5)).toThrow('range: arguments must be integers');
+			expect(() => r.range(10, 0.5)).toThrow('range: arguments must be integers');
 		});
 	});
 
@@ -161,13 +161,13 @@ describe('Rng', () => {
 			const input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 			const out = r.shuffle(input);
 			expect(out).toHaveLength(input.length);
-			expect([...out].sort((a, b) => a - b)).toEqual(input);
+			expect([...out].toSorted((a, b) => a - b)).toEqual(input);
 		});
 
 		it('works with strings', () => {
 			const r = new Rng('shuffle');
 			const out = r.shuffle(['a', 'b', 'c', 'd']);
-			expect([...out].sort()).toEqual(['a', 'b', 'c', 'd']);
+			expect([...out].toSorted()).toEqual(['a', 'b', 'c', 'd']);
 		});
 
 		it('handles empty array', () => {

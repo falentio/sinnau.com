@@ -139,6 +139,7 @@ export class StudySetContentService {
 		const content = await this.guard.assertContentOwnerOrForbidden(input.contentId, ownerId);
 
 		for (const chapterId of input.chapterIds) {
+			// oxlint-disable-next-line no-await-in-loop -- independent read per chapter, no FK constraint between them
 			const chapter = await this.repo.findChapterById(chapterId);
 			if (!chapter) throw new ORPCError('NOT_FOUND', { message: `Chapter ${chapterId} not found` });
 			if (chapter.studySetId !== content.studySetId) {

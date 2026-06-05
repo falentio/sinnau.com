@@ -315,7 +315,7 @@ describe.concurrent('StudySetContentDrizzleRepository (schema constraints)', () 
 	describe('foreign keys', () => {
 		it('rejects inserting content for a non-existent study set', async ({ expect }) => {
 			await using env = new StudySetContentTestEnv();
-			const insertOrphan = () =>
+			const insertOrphan = async () =>
 				env.repo.insertContent({
 					id: 'ssc-orphan',
 					studySetId: 'does-not-exist',

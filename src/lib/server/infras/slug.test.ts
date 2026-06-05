@@ -47,7 +47,7 @@ describe.concurrent('generateSlug', () => {
 	it('generates a slug with base prefix when title has >= 5 chars after sanitize', async ({
 		expect
 	}) => {
-		const exists = vi.fn().mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(false);
 		const slug = await generateSlug('Biology 101', exists);
 
 		expect(slug).toMatch(/^biology-101-[0-9A-Za-z]{8}$/);
@@ -57,7 +57,7 @@ describe.concurrent('generateSlug', () => {
 	it('generates a slug without base prefix when title has < 5 chars after sanitize', async ({
 		expect
 	}) => {
-		const exists = vi.fn().mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(false);
 		const slug = await generateSlug('ab', exists);
 
 		expect(slug).toMatch(/^[0-9A-Za-z]{12}$/);
@@ -65,7 +65,7 @@ describe.concurrent('generateSlug', () => {
 	});
 
 	it('retries when first candidate conflicts, succeeds on second', async ({ expect }) => {
-		const exists = vi.fn().mockResolvedValueOnce(true).mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValueOnce(true).mockResolvedValue(false);
 
 		const slug = await generateSlug('Biology 101', exists);
 
@@ -74,14 +74,14 @@ describe.concurrent('generateSlug', () => {
 	});
 
 	it('throws SlugConflictError after max retries', async ({ expect }) => {
-		const exists = vi.fn().mockResolvedValue(true);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(true);
 
 		await expect(generateSlug('Biology 101', exists)).rejects.toThrow(SlugConflictError);
 		expect(exists).toHaveBeenCalledTimes(5);
 	});
 
 	it('calls exists with lowercased candidate', async ({ expect }) => {
-		const exists = vi.fn().mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(false);
 		await generateSlug('BIOLOGY 101', exists);
 
 		const candidate = exists.mock.calls[0]?.[0] as string;
@@ -89,7 +89,7 @@ describe.concurrent('generateSlug', () => {
 	});
 
 	it('generates different slugs on successive calls', async ({ expect }) => {
-		const exists = vi.fn().mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(false);
 		const slug1 = await generateSlug('Biology 101', exists);
 		const slug2 = await generateSlug('Biology 101', exists);
 
@@ -97,14 +97,14 @@ describe.concurrent('generateSlug', () => {
 	});
 
 	it('handles title that sanitizes to empty string', async ({ expect }) => {
-		const exists = vi.fn().mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(false);
 		const slug = await generateSlug('!@#$%', exists);
 
 		expect(slug).toMatch(/^[0-9A-Za-z]{12}$/);
 	});
 
 	it('slug total length is at least 12 for long titles', async ({ expect }) => {
-		const exists = vi.fn().mockResolvedValue(false);
+		const exists = vi.fn<(slug: string) => Promise<boolean>>().mockResolvedValue(false);
 		const slug = await generateSlug('Hello', exists);
 
 		expect(slug.length).toBeGreaterThanOrEqual(12);

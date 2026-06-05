@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { describe, it, vi } from 'vitest';
+import { describe, it, vi, type MockedFunction } from 'vitest';
 import type { Chapter } from '../../infras/db/schema/chapter.ts';
 import type { StudySet } from '../../infras/db/schema/study-set.ts';
 import type { ChapterGuard } from '../chapter/chapter.guard.ts';
@@ -9,28 +9,28 @@ import { createMockRepository, createQuizFixture } from './quiz.testing.ts';
 
 function createMockStudySetGuard(): MockedStudySetGuard {
 	return {
-		assertOwnerOrForbidden: vi.fn(),
-		assertStudySetOwnerOrForbidden: vi.fn(),
-		assertVisibleByIdOrNotFound: vi.fn(),
-		assertStudySetVisibleByIdOrNotFound: vi.fn(),
-		assertVisibleBySlugOrNotFound: vi.fn(),
-		canView: vi.fn()
+		assertOwnerOrForbidden: vi.fn<StudySetGuard['assertOwnerOrForbidden']>(),
+		assertStudySetOwnerOrForbidden: vi.fn<StudySetGuard['assertStudySetOwnerOrForbidden']>(),
+		assertVisibleByIdOrNotFound: vi.fn<StudySetGuard['assertVisibleByIdOrNotFound']>(),
+		assertStudySetVisibleByIdOrNotFound: vi.fn<StudySetGuard['assertStudySetVisibleByIdOrNotFound']>(),
+		assertVisibleBySlugOrNotFound: vi.fn<StudySetGuard['assertVisibleBySlugOrNotFound']>(),
+		canView: vi.fn<StudySetGuard['canView']>()
 	};
 }
 
 function createMockChapterGuard(): MockedChapterGuard {
 	return {
-		assertOwnerOrForbidden: vi.fn(),
-		assertVisibleByIdOrNotFound: vi.fn(),
-		assertStudySetOwnerOrForbidden: vi.fn()
+		assertOwnerOrForbidden: vi.fn<ChapterGuard['assertOwnerOrForbidden']>(),
+		assertVisibleByIdOrNotFound: vi.fn<ChapterGuard['assertVisibleByIdOrNotFound']>(),
+		assertStudySetOwnerOrForbidden: vi.fn<ChapterGuard['assertStudySetOwnerOrForbidden']>()
 	};
 }
 
 type MockedStudySetGuard = {
-	[K in keyof StudySetGuard]: ReturnType<typeof vi.fn>;
+	[K in keyof StudySetGuard]: MockedFunction<StudySetGuard[K]>;
 };
 type MockedChapterGuard = {
-	[K in keyof ChapterGuard]: ReturnType<typeof vi.fn>;
+	[K in keyof ChapterGuard]: MockedFunction<ChapterGuard[K]>;
 };
 
 function setupGuard() {

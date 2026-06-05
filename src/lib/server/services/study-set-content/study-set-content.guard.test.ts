@@ -8,6 +8,15 @@ import {
 import { StudySetContentGuard } from './study-set-content.guard.ts';
 import { createStudySetContentFixture, createMockRepository } from './study-set-content.testing.ts';
 
+async function captureError(promise: Promise<unknown>): Promise<unknown> {
+	try {
+		await promise;
+		return null;
+	} catch (err) {
+		return err;
+	}
+}
+
 function setupGuard() {
 	const contentRepo = createMockRepository();
 	contentRepo.findContentById.mockResolvedValue(null);
@@ -186,11 +195,3 @@ describe.concurrent('StudySetContentGuard', () => {
 	});
 });
 
-async function captureError(promise: Promise<unknown>): Promise<unknown> {
-	try {
-		await promise;
-		return null;
-	} catch (err) {
-		return err;
-	}
-}

@@ -8,6 +8,15 @@ import {
 import { ChapterGuard } from './chapter.guard.ts';
 import { createChapterFixture, createMockRepository } from './chapter.testing.ts';
 
+async function captureError(promise: Promise<unknown>): Promise<unknown> {
+	try {
+		await promise;
+		return null;
+	} catch (err) {
+		return err;
+	}
+}
+
 function setupGuard() {
 	const chapterRepo = createMockRepository();
 	chapterRepo.findChapterById.mockResolvedValue(null);
@@ -152,11 +161,3 @@ describe.concurrent('ChapterGuard', () => {
 	});
 });
 
-async function captureError(promise: Promise<unknown>): Promise<unknown> {
-	try {
-		await promise;
-		return null;
-	} catch (err) {
-		return err;
-	}
-}

@@ -7,75 +7,6 @@ import {
 	createTable
 } from '@tanstack/table-core';
 
-/**
- * Creates a reactive TanStack table object for Svelte.
- * @param options Table options to create the table with.
- * @returns A reactive table object.
- * @example
- * ```svelte
- * <script>
- *   const table = createSvelteTable({ ... })
- * </script>
- *
- * <table>
- *   <thead>
- *     {#each table.getHeaderGroups() as headerGroup}
- *       <tr>
- *         {#each headerGroup.headers as header}
- *           <th colspan={header.colSpan}>
- *         	   <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
- *         	 </th>
- *         {/each}
- *       </tr>
- *     {/each}
- *   </thead>
- * 	 <!-- ... -->
- * </table>
- * ```
- */
-export function createSvelteTable<TData extends RowData>(options: TableOptions<TData>) {
-	const resolvedOptions: TableOptionsResolved<TData> = mergeObjects(
-		{
-			state: {},
-			onStateChange() {},
-			renderFallbackValue: null,
-			mergeOptions: (
-				defaultOptions: TableOptions<TData>,
-				options: Partial<TableOptions<TData>>
-			) => {
-				return mergeObjects(defaultOptions, options);
-			}
-		},
-		options
-	);
-
-	const table = createTable(resolvedOptions);
-	let state = $state<TableState>(table.initialState);
-
-	function updateOptions() {
-		table.setOptions(() => {
-			return mergeObjects(resolvedOptions, options, {
-				state: mergeObjects(state, options.state || {}),
-
-				onStateChange: (updater: Updater<TableState>) => {
-					if (updater instanceof Function) state = updater(state);
-					else state = mergeObjects(state, updater);
-
-					options.onStateChange?.(updater);
-				}
-			});
-		});
-	}
-
-	updateOptions();
-
-	$effect.pre(() => {
-		updateOptions();
-	});
-
-	return table;
-}
-
 type MaybeThunk<T extends object> = T | (() => T | null | undefined);
 type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer R]
 	? H & Intersection<R>
@@ -140,4 +71,73 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
 		}
 	}) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
 	// oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+}
+
+/**
+ * Creates a reactive TanStack table object for Svelte.
+ * @param options Table options to create the table with.
+ * @returns A reactive table object.
+ * @example
+ * ```svelte
+ * <script>
+ *   const table = createSvelteTable({ ... })
+ * </script>
+ *
+ * <table>
+ *   <thead>
+ *     {#each table.getHeaderGroups() as headerGroup}
+ *       <tr>
+ *         {#each headerGroup.headers as header}
+ *           <th colspan={header.colSpan}>
+ *         	   <FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+ *         	 </th>
+ *         {/each}
+ *       </tr>
+ *     {/each}
+ *   </thead>
+ * 	 <!-- ... -->
+ * </table>
+ * ```
+ */
+export function createSvelteTable<TData extends RowData>(options: TableOptions<TData>) {
+	const resolvedOptions: TableOptionsResolved<TData> = mergeObjects(
+		{
+			state: {},
+			onStateChange() {},
+			renderFallbackValue: null,
+			mergeOptions: (
+				defaultOptions: TableOptions<TData>,
+				options: Partial<TableOptions<TData>>
+			) => {
+				return mergeObjects(defaultOptions, options);
+			}
+		},
+		options
+	);
+
+	const table = createTable(resolvedOptions);
+	let state = $state<TableState>(table.initialState);
+
+	function updateOptions() {
+		table.setOptions(() => {
+			return mergeObjects(resolvedOptions, options, {
+				state: mergeObjects(state, options.state || {}),
+
+				onStateChange: (updater: Updater<TableState>) => {
+					if (typeof updater === 'function') state = updater(state);
+					else state = mergeObjects(state, updater);
+
+					options.onStateChange?.(updater);
+				}
+			});
+		});
+	}
+
+	updateOptions();
+
+	$effect.pre(() => {
+		updateOptions();
+	});
+
+	return table;
 }

@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { chapter } from './chapter.ts';
 import { studySet } from './study-set.ts';
@@ -22,14 +22,6 @@ export const studySetContent = sqliteTable(
 	(table) => [index('study_set_content_studySetId_idx').on(table.studySetId)]
 );
 
-export const studySetContentRelations = relations(studySetContent, ({ one, many }) => ({
-	studySet: one(studySet, {
-		fields: [studySetContent.studySetId],
-		references: [studySet.id]
-	}),
-	chapterJunctions: many(studySetContentToChapter)
-}));
-
 export const studySetContentToChapter = sqliteTable(
 	'study_set_content_to_chapter',
 	{
@@ -45,17 +37,6 @@ export const studySetContentToChapter = sqliteTable(
 		index('ssc_to_chapter_chapterId_idx').on(table.chapterId)
 	]
 );
-
-export const studySetContentToChapterRelations = relations(studySetContentToChapter, ({ one }) => ({
-	content: one(studySetContent, {
-		fields: [studySetContentToChapter.contentId],
-		references: [studySetContent.id]
-	}),
-	chapter: one(chapter, {
-		fields: [studySetContentToChapter.chapterId],
-		references: [chapter.id]
-	})
-}));
 
 export type StudySetContent = typeof studySetContent.$inferSelect;
 export type NewStudySetContent = typeof studySetContent.$inferInsert;

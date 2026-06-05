@@ -21,13 +21,13 @@ export type MockedChapterRepository = {
 
 export function createMockRepository(): MockedChapterRepository {
 	return {
-		insertChapter: vi.fn(),
-		updateChapter: vi.fn(),
-		deleteChapter: vi.fn(),
-		findChapterById: vi.fn(),
-		findChaptersByStudySet: vi.fn(),
-		isSlugTakenInStudySet: vi.fn(),
-		countChildren: vi.fn()
+		insertChapter: vi.fn<ChapterRepository['insertChapter']>(),
+		updateChapter: vi.fn<ChapterRepository['updateChapter']>(),
+		deleteChapter: vi.fn<ChapterRepository['deleteChapter']>(),
+		findChapterById: vi.fn<ChapterRepository['findChapterById']>(),
+		findChaptersByStudySet: vi.fn<ChapterRepository['findChaptersByStudySet']>(),
+		isSlugTakenInStudySet: vi.fn<ChapterRepository['isSlugTakenInStudySet']>(),
+		countChildren: vi.fn<ChapterRepository['countChildren']>()
 	};
 }
 
@@ -37,9 +37,9 @@ export type MockedChapterGuard = {
 
 export function createMockGuard(): MockedChapterGuard {
 	return {
-		assertOwnerOrForbidden: vi.fn(),
-		assertVisibleByIdOrNotFound: vi.fn(),
-		assertStudySetOwnerOrForbidden: vi.fn()
+		assertOwnerOrForbidden: vi.fn<ChapterGuard['assertOwnerOrForbidden']>(),
+		assertVisibleByIdOrNotFound: vi.fn<ChapterGuard['assertVisibleByIdOrNotFound']>(),
+		assertStudySetOwnerOrForbidden: vi.fn<ChapterGuard['assertStudySetOwnerOrForbidden']>()
 	};
 }
 
@@ -199,7 +199,7 @@ export class ChapterTestEnv implements AsyncDisposable {
 		return id;
 	}
 
-	[Symbol.asyncDispose](): Promise<void> {
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
 		return Promise.resolve();
 	}

@@ -31,35 +31,10 @@
 
 	type FlashcardForm = v.InferOutput<typeof formSchema>;
 
-	const form = superForm(
-		defaults<FlashcardForm>(
-			{
-				front: '',
-				back: '',
-				hint: ''
-			},
-			valibotClient(formSchema)
-		),
-		{
-			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: true,
-			onUpdate: async ({ form: submittedForm }) => {
-				if (!submittedForm.valid) return;
-				await submitFlashcard(submittedForm.data);
-			}
-		}
-	);
-
-	const { form: formData, enhance, submitting } = form;
-
 	const studySetId = $derived(page.params.studySetId ?? '');
 	const flashcardListHref = $derived(
 		resolve('/(app)/study/[studySetId]/flashcard', { studySetId })
 	);
-	const frontCount = $derived(($formData.front ?? '').trim().length);
-	const backCount = $derived(($formData.back ?? '').trim().length);
-	const hintCount = $derived(($formData.hint ?? '').length);
 
 	async function submitFlashcard(data: FlashcardForm) {
 		try {
@@ -85,6 +60,32 @@
 			}
 		}
 	}
+
+	const form = superForm(
+		defaults<FlashcardForm>(
+			{
+				front: '',
+				back: '',
+				hint: ''
+			},
+			valibotClient(formSchema)
+		),
+		{
+			SPA: true,
+			validators: valibotClient(formSchema),
+			resetForm: true,
+			onUpdate: async ({ form: submittedForm }) => {
+				if (!submittedForm.valid) return;
+				await submitFlashcard(submittedForm.data);
+			}
+		}
+	);
+
+	const { form: formData, enhance, submitting } = form;
+
+	const frontCount = $derived(($formData.front ?? '').trim().length);
+	const backCount = $derived(($formData.back ?? '').trim().length);
+	const hintCount = $derived(($formData.hint ?? '').length);
 </script>
 
 <svelte:head>
