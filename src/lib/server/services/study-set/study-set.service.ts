@@ -34,7 +34,7 @@ export class StudySetService {
 	async createStudySet(input: CreateStudySetInput, ownerId: string): Promise<StudySet> {
 		const slug = await generateSlug(input.title, async (candidate) =>
 			this.repo.isSlugTaken(candidate)
-		).catch((err) => {
+		).catch((err: unknown) => {
 			if (err instanceof SlugConflictError) {
 				throw new ORPCError('STUDY_SET_SLUG_CONFLICT', { message: err.message });
 			}

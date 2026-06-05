@@ -31,7 +31,7 @@ export class ChapterService {
 		const isSlugTakenInStudySet = async (candidate: string) =>
 			this.repo.isSlugTakenInStudySet(input.studySetId, candidate);
 
-		const slug = await generateSlug(input.title, isSlugTakenInStudySet).catch((err) => {
+		const slug = await generateSlug(input.title, isSlugTakenInStudySet).catch((err: unknown) => {
 			if (err instanceof SlugConflictError) {
 				throw new ORPCError('CHAPTER_SLUG_CONFLICT', { message: err.message });
 			}
