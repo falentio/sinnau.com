@@ -7,7 +7,6 @@ The `src/lib/server/services/<domain>/` package is the source of truth for a ser
 ```
 src/lib/server/services/<domain>/
 ├── SPECS.md                          # domain specs, entity, field rules, error codes
-├── <domain>.constant.ts              # SCREAMING_SNAKE constants
 ├── index.ts                          # wires default repo + guard + service instances (singleton entrypoint)
 ├── <domain>.service.ts               # <Domain>Service class (no singleton, no default constructor)
 ├── <domain>.service.test.ts          # service tests with mocked repo + guard
@@ -24,6 +23,14 @@ src/lib/server/services/<domain>/
 └── queries/
     ├── <domain>.<action>.ts          # one file per query (get, list, get-recent, ...)
     └── ...
+```
+
+SCREAMING_SNAKE constants live next to the schemas (shared between server and client):
+
+```
+src/lib/schemas/
+├── <domain>.ts                       # input/output schemas + inferred types
+└── <domain>.constant.ts              # SCREAMING_SNAKE constants
 ```
 
 Schemas live next to the SvelteKit routes types, not inside the service:
@@ -117,7 +124,7 @@ import type {
     Get<Domain>sInput,
     Update<Domain>Input
 } from '../../../schemas/<domain>.ts';
-import { <DOMAIN>_DEFAULT_VISIBILITY } from './<domain>.constant.ts';
+import { <DOMAIN>_DEFAULT_VISIBILITY } from '$lib/schemas/<domain>.constant';
 import type { <Domain>ListResult, <Domain>Repository } from './<domain>.repository.ts';
 import type { <Domain>Guard } from './<domain>.guard.ts';
 
@@ -239,7 +246,7 @@ export interface <Domain>Repository {
 import { db as defaultDb, type DB } from '../../infras/db/client.ts';
 import { <domain> } from '../../infras/db/schema/<domain>.ts';
 import type { <Domain> } from '../../infras/db/schema/<domain>.ts';
-import { <DOMAIN>_PAGE_LIMIT } from './<domain>.constant.ts';
+import { <DOMAIN>_PAGE_LIMIT } from '$lib/schemas/<domain>.constant';
 import type { <Domain>ListResult, <Domain>Repository } from './<domain>.repository.ts';
 
 export class <Domain>DrizzleRepository implements <Domain>Repository {
@@ -270,7 +277,7 @@ Rules:
 ## Constants
 
 ```ts
-// <domain>.constant.ts
+// <domain>.constant.ts  →  moved to src/lib/schemas/<domain>.constant.ts
 export const <DOMAIN>_TITLE_MIN_LENGTH = 5;
 export const <DOMAIN>_TITLE_MAX_LENGTH = 50;
 export const <DOMAIN>_PAGE_LIMIT = 10;
@@ -280,10 +287,12 @@ export const <DOMAIN>_DEFAULT_VISIBILITY = 'PUBLIC' as const;
 
 Rules:
 
+- Constants live in `src/lib/schemas/<domain>.constant.ts` (next to the schema file), NOT inside the service. The schemas package is shared between server and client, so constants must be importable from client-side code.
 - One file per domain. No default exports.
 - Naming: `<DOMAIN>_*` (the domain prefix is the same `<DOMAIN>` as the service, uppercased).
 - `as const` on every array and literal so schemas can derive picklists from them.
 - Anything that is also a schema constraint (lengths, limits, picklists) lives here and is imported by `src/lib/schemas/<domain>.ts`. Service and schemas share the same numbers.
+- Services, repositories, and tests import constants via the `$lib/schemas/<domain>.constant` alias.
 
 ## Schemas
 
@@ -295,7 +304,7 @@ import {
     <DOMAIN>_TITLE_MAX_LENGTH,
     <DOMAIN>_TITLE_MIN_LENGTH,
     <DOMAIN>_VISIBILITIES
-} from '../server/services/<domain>/<domain>.constant.ts';
+} from './<domain>.constant.ts';
 
 const trimmedTitleSchema = v.pipe(
     v.string(),
@@ -449,7 +458,7 @@ Patterns:
 1. Write `SPECS.md` from the source spec(s) — entity, field rules, error codes, command/query contracts.
 2. Add the Drizzle schema in `src/lib/server/infras/db/schema/<domain>.ts` and export the inferred types.
 3. Add `src/lib/schemas/<domain>.ts` with input/output schemas, sharing constants with the service.
-4. Add `<domain>.constant.ts` for limits, picklists, defaults, and any TTLs.
+4. Add `src/lib/schemas/<domain>.constant.ts` for limits, picklists, defaults, and any TTLs.
 5. Define `<domain>.repository.ts` (interface + shared result types).
 6. Implement `<domain>.repository.drizzle.ts` (no singleton export).
 7. Add `<domain>.guard.ts` with `require*` / `assert*OrForbidden` / `assert*OrNotFound` (no singleton export, no default constructor values).

@@ -124,11 +124,13 @@ interface DeleteChapterCommand {
 ### GetChapters
 
 ```typescript
-interface GetChaptersQuery {}
+interface GetChaptersQuery {
+	studySetId: UUID;
+}
 ```
 
-- Returns chapters in StudySets the authenticated user owns or can view.
-- No filters are supported.
+- Returns chapters in the given StudySet that the authenticated user owns or can view.
+- `studySetId` is required.
 - Empty result returns `[]`.
 - Default order is `createdAt` descending.
 - Returns `{ success: true, data: Chapter[] }`.
