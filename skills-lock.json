@@ -1,11 +1,23 @@
 {
 	"version": 1,
 	"skills": {
+		"better-auth-best-practices": {
+			"source": "better-auth/skills",
+			"sourceType": "github",
+			"skillPath": "better-auth/best-practices/SKILL.md",
+			"computedHash": "a4c830509e85557b59339d8d93a4e243e9e59c686e7678854d39230e12c2a6dc"
+		},
 		"brainstorming": {
 			"source": "obra/superpowers",
 			"sourceType": "github",
 			"skillPath": "skills/brainstorming/SKILL.md",
 			"computedHash": "8df9b47092524833138b58682d03f2e153a242e550d1693657afdbee0cc9cdb0"
+		},
+		"create-auth-skill": {
+			"source": "better-auth/skills",
+			"sourceType": "github",
+			"skillPath": "better-auth/create-auth/SKILL.md",
+			"computedHash": "31c027d02dbf1faa37f58191f574b9443143042fb2b684fe32df53ab0270487c"
 		},
 		"dispatching-parallel-agents": {
 			"source": "obra/superpowers",
@@ -25,6 +37,24 @@
 			"skillPath": "skills/finishing-a-development-branch/SKILL.md",
 			"computedHash": "932d23af11a3eb2b758f5b1d9aec7b6d28ddd26658328414f87f34dff7179d19"
 		},
+		"migrate-oxfmt": {
+			"source": "oxc-project/oxc",
+			"sourceType": "github",
+			"skillPath": ".agents/skills/migrate-oxfmt/SKILL.md",
+			"computedHash": "b313a891bc4173aac0bd948d5e8c40f5dd921fe67eb5f51184c364e2b869f0e7"
+		},
+		"migrate-oxlint": {
+			"source": "oxc-project/oxc",
+			"sourceType": "github",
+			"skillPath": ".agents/skills/migrate-oxlint/SKILL.md",
+			"computedHash": "7bc6dccdcc557cdb7d887fc16c6632e685b13860d202b9c9ce5da7504f0dbe18"
+		},
+		"pnpm": {
+			"source": "antfu/skills",
+			"sourceType": "github",
+			"skillPath": "skills/pnpm/SKILL.md",
+			"computedHash": "318f9fca2441a3e06fedc336e195dd18be5dbe901064e4fa71b76b40b096ab3a"
+		},
 		"receiving-code-review": {
 			"source": "obra/superpowers",
 			"sourceType": "github",
@@ -42,6 +72,18 @@
 			"sourceType": "github",
 			"skillPath": "skills/subagent-driven-development/SKILL.md",
 			"computedHash": "b38be2f3a092d758127f6d47e77c2493885aebf38aae359e4c786df2c343b837"
+		},
+		"svelte-code-writer": {
+			"source": "sveltejs/ai-tools",
+			"sourceType": "github",
+			"skillPath": "plugins/claude/svelte/skills/svelte-code-writer/SKILL.md",
+			"computedHash": "c0e2cce9855f8e312cbb0a05aef164b4659c672d7723e4e598ffa6bc94890542"
+		},
+		"svelte-core-bestpractices": {
+			"source": "sveltejs/ai-tools",
+			"sourceType": "github",
+			"skillPath": "plugins/claude/svelte/skills/svelte-core-bestpractices/SKILL.md",
+			"computedHash": "bec11e369679027edf9d4acbe6d9788f8da33dc14b48b874f231d3ba13705324"
 		},
 		"systematic-debugging": {
 			"source": "obra/superpowers",
@@ -67,11 +109,29 @@
 			"skillPath": "skills/using-superpowers/SKILL.md",
 			"computedHash": "de10fd3ff46d797acc92b9df6b3ea456a5cd1d095b73c90bc921e83cce4c5bb9"
 		},
+		"valibot": {
+			"source": "open-circle/agent-skills",
+			"sourceType": "github",
+			"skillPath": "skills/valibot/SKILL.md",
+			"computedHash": "6798b923c1bbe9b07cb8c40470ada09c377d666045caefda90d95577e16e8744"
+		},
 		"verification-before-completion": {
 			"source": "obra/superpowers",
 			"sourceType": "github",
 			"skillPath": "skills/verification-before-completion/SKILL.md",
 			"computedHash": "9b446f0c7fe1cfb560b1d34439523b1a76d5f177290007b2c053a1c749a4a8ba"
+		},
+		"vite": {
+			"source": "antfu/skills",
+			"sourceType": "github",
+			"skillPath": "skills/vite/SKILL.md",
+			"computedHash": "867ff66238f3152e9c494339ad08dc432dd0df5bcf5cc7a00b61a72b580eb908"
+		},
+		"vitest": {
+			"source": "antfu/skills",
+			"sourceType": "github",
+			"skillPath": "skills/vitest/SKILL.md",
+			"computedHash": "669c7275f7e1379b06b2bcfa593603aead4c983b951c7e8edbc09640aa38d0a1"
 		},
 		"writing-plans": {
 			"source": "obra/superpowers",
