@@ -1,10 +1,6 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema.ts';
-import { chapter } from './chapter.ts';
-import { flashcard } from './flashcard.ts';
-import { quiz } from './quiz.ts';
-import { studySetContent } from './study-set-content.ts';
 
 export const STUDY_SET_VISIBILITIES = ['PUBLIC', 'PRIVATE'] as const;
 export type StudySetVisibility = (typeof STUDY_SET_VISIBILITIES)[number];
@@ -36,18 +32,6 @@ export const studySet = sqliteTable(
 	]
 );
 
-export const studySetRelations = relations(studySet, ({ one, many }) => ({
-	owner: one(user, {
-		fields: [studySet.ownerId],
-		references: [user.id]
-	}),
-	visits: many(studySetVisit),
-	chapters: many(chapter),
-	flashcards: many(flashcard),
-	quizzes: many(quiz),
-	contents: many(studySetContent)
-}));
-
 export const studySetVisit = sqliteTable(
 	'study_set_visit',
 	{
@@ -69,17 +53,6 @@ export const studySetVisit = sqliteTable(
 		index('study_set_visit_visitedAt_idx').on(table.visitedAt)
 	]
 );
-
-export const studySetVisitRelations = relations(studySetVisit, ({ one }) => ({
-	user: one(user, {
-		fields: [studySetVisit.userId],
-		references: [user.id]
-	}),
-	studySet: one(studySet, {
-		fields: [studySetVisit.studySetId],
-		references: [studySet.id]
-	})
-}));
 
 export type StudySet = typeof studySet.$inferSelect;
 export type NewStudySet = typeof studySet.$inferInsert;

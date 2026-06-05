@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema.ts';
 import { chapter } from './chapter.ts';
@@ -55,29 +55,6 @@ export const quizOption = sqliteTable(
 	},
 	(table) => [index('quiz_option_quizId_idx').on(table.quizId)]
 );
-
-export const quizRelations = relations(quiz, ({ one, many }) => ({
-	owner: one(user, {
-		fields: [quiz.ownerId],
-		references: [user.id]
-	}),
-	studySet: one(studySet, {
-		fields: [quiz.studySetId],
-		references: [studySet.id]
-	}),
-	chapter: one(chapter, {
-		fields: [quiz.chapterId],
-		references: [chapter.id]
-	}),
-	options: many(quizOption)
-}));
-
-export const quizOptionRelations = relations(quizOption, ({ one }) => ({
-	quiz: one(quiz, {
-		fields: [quizOption.quizId],
-		references: [quiz.id]
-	})
-}));
 
 export type Quiz = typeof quiz.$inferSelect;
 export type NewQuiz = typeof quiz.$inferInsert;

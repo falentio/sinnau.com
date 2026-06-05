@@ -1,9 +1,6 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema.ts';
-import { flashcard } from './flashcard.ts';
-import { quiz } from './quiz.ts';
-import { studySetContentToChapter } from './study-set-content.ts';
 import { studySet } from './study-set.ts';
 
 export const chapter = sqliteTable(
@@ -33,20 +30,6 @@ export const chapter = sqliteTable(
 		index('chapter_ownerId_idx').on(table.ownerId)
 	]
 );
-
-export const chapterRelations = relations(chapter, ({ one, many }) => ({
-	owner: one(user, {
-		fields: [chapter.ownerId],
-		references: [user.id]
-	}),
-	studySet: one(studySet, {
-		fields: [chapter.studySetId],
-		references: [studySet.id]
-	}),
-	flashcards: many(flashcard),
-	quizzes: many(quiz),
-	contentJunctions: many(studySetContentToChapter)
-}));
 
 export type Chapter = typeof chapter.$inferSelect;
 export type NewChapter = typeof chapter.$inferInsert;
