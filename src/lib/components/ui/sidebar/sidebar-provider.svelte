@@ -3,8 +3,6 @@
 	import { cn, type WithElementRef } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import {
-		SIDEBAR_COOKIE_MAX_AGE,
-		SIDEBAR_COOKIE_NAME,
 		SIDEBAR_WIDTH,
 		SIDEBAR_WIDTH_ICON
 	} from './constants.js';
@@ -30,7 +28,7 @@
 			onOpenChange(value);
 
 			// This sets the cookie to keep the sidebar state.
-			document.cookie = `${SIDEBAR_COOKIE_NAME}=${open}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+			localStorage.setItem('sidebar:state', String(open));
 		}
 	});
 </script>
