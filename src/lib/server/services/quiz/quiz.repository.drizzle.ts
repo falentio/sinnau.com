@@ -23,7 +23,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 
 	async insertQuiz(row: NewQuizRow, options: NewQuizOptionRow[]): Promise<Quiz> {
 		try {
-			const inserted = await this.dbInstance.transaction((tx) => {
+			const inserted = this.dbInstance.transaction((tx) => {
 				const rowsReturned = tx.insert(quiz).values(row).returning().all();
 				const [created] = rowsReturned;
 				if (!created)
@@ -65,7 +65,7 @@ export class QuizDrizzleRepository implements QuizRepository {
 	async deleteQuizzes(ids: string[], ownerId: string): Promise<boolean> {
 		if (ids.length === 0) return Promise.resolve(false);
 		try {
-			await this.dbInstance.transaction((tx) => {
+			this.dbInstance.transaction((tx) => {
 				const deleted = tx
 					.delete(quiz)
 					.where(and(inArray(quiz.id, ids), eq(quiz.ownerId, ownerId)))

@@ -217,7 +217,7 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
 
 	async setChapters(contentId: string, chapterIds: string[]): Promise<void> {
 		try {
-			await this.dbInstance.transaction((tx) => {
+			this.dbInstance.transaction((tx) => {
 				tx.delete(studySetContentToChapter)
 					.where(eq(studySetContentToChapter.contentId, contentId))
 					.run();
