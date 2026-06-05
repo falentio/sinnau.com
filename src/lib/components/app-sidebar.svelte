@@ -1,6 +1,9 @@
 <script lang="ts">
+	import AvatarFallback from '$lib/components/ui/avatar/avatar-fallback.svelte';
+	import AvatarImage from '$lib/components/ui/avatar/avatar-image.svelte';
+	import Avatar from '$lib/components/ui/avatar/avatar.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { getUser } from '$lib/hooks/auth.svelte';
 	import {
 		AiBeautifyIcon,
 		Book03Icon,
@@ -8,15 +11,12 @@
 		Home01Icon,
 		Search02Icon
 	} from '@hugeicons/core-free-icons';
-	import { getUser } from '$lib/hooks/auth.svelte';
-	import Avatar from '$lib/components/ui/avatar/avatar.svelte';
-	import AvatarFallback from '$lib/components/ui/avatar/avatar-fallback.svelte';
-	import AvatarImage from '$lib/components/ui/avatar/avatar-image.svelte';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 
 	const user = getUser;
 </script>
 
-<Sidebar.Root>
+<Sidebar.Root variant="inset">
 	<Sidebar.Header>
 		<a href="/home" class="flex items-center gap-2 px-2 py-1.5 font-medium">
 			<div

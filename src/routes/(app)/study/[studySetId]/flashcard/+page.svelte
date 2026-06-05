@@ -1,53 +1,33 @@
 <script lang="ts">
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import PaginationContent from '$lib/components/ui/pagination/pagination-content.svelte';
-	import PaginationEllipsis from '$lib/components/ui/pagination/pagination-ellipsis.svelte';
-	import PaginationItem from '$lib/components/ui/pagination/pagination-item.svelte';
-	import PaginationLink from '$lib/components/ui/pagination/pagination-link.svelte';
-	import Pagination from '$lib/components/ui/pagination/pagination.svelte';
+	import * as Pagination from '$lib/components/ui/pagination/index.js';
 
+	import { goto } from '$app/navigation';
+	import { page as pageStore } from '$app/state';
+	import FlashcardFilterBar from '$lib/components/features/flashcard/flashcard-filter-bar.svelte';
 	import { PlusSignIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import type { PageData } from './$types';
 
-	type FlashcardStub = {
-		id: string;
-		front: string;
-		back: string;
-		hint?: string;
-	};
+	const { data }: { data: PageData } = $props();
 
-	const flashcards: FlashcardStub[] = [
-		{
-			id: 'flc_000000000000000001',
-			front: 'Apa itu vektor?',
-			back: 'Objek yang memiliki besar dan arah dalam ruang.',
-			hint: 'Bayangkan panah pada bidang koordinat.'
-		},
-		{
-			id: 'flc_000000000000000002',
-			front: 'Apa itu matriks identitas?',
-			back: 'Matriks diagonal dengan nilai 1 pada diagonal utama.'
-		},
-		{
-			id: 'flc_000000000000000003',
-			front: 'Apa itu determinan?',
-			back: 'Nilai skalar yang menunjukkan sifat matriks bujur sangkar.',
-			hint: 'Bernilai 0 ketika matriks singular.'
-		},
-		{
-			id: 'flc_000000000000000004',
-			front: 'Apa itu transpose?',
-			back: 'Operasi menukar baris menjadi kolom pada sebuah matriks.'
-		},
-		{
-			id: 'flc_000000000000000005',
-			front: 'Apa itu rank matriks?',
-			back: 'Jumlah maksimum baris atau kolom yang bebas linear.'
-		}
-	];
+	const flashcards = $derived(data.flashcards);
+	const currentFilter = $derived(data.filter ?? null);
 
-	let pageIndex = $state(1);
+	const pageIndex = $derived(Number(pageStore.url.searchParams.get('page')) || 1);
+
+	const displayedFlashcards = $derived(flashcards.slice((pageIndex - 1) * 10, pageIndex * 10));
+
+	function handlePageChange(p: number) {
+		const params = new SvelteURLSearchParams();
+		if (p > 1) params.set('page', String(p));
+		if (currentFilter) params.set('filter', currentFilter);
+		const query = params.toString();
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		goto(`.?${query}`, { replaceState: true, noScroll: true });
+	}
 </script>
 
 <div class="flex items-center justify-between">
@@ -58,16 +38,11 @@
 		</Button>
 	</div>
 </div>
-<div class="flex w-min gap-1 rounded-full bg-card p-1 text-card-foreground shadow-2xs">
-	<Button variant="outline">Terbaru</Button>
-	<Button variant="ghost">Terlama</Button>
-	<Button variant="ghost">Target Hari Ini</Button>
-	<Button variant="ghost">Penting</Button>
-</div>
+<FlashcardFilterBar {currentFilter} />
 
 <div class="rounded-4xl bg-card text-card-foreground">
-	{#each flashcards.slice((pageIndex - 1) * 10, pageIndex * 10) as flashcard, i (flashcard.id)}
-		<div class="border-b p-6">
+	{#each displayedFlashcards as flashcard, i (flashcard.id)}
+		<div class="border-b p-6 last:border-b-0">
 			<div class="flex items-center gap-2">
 				<h3 class="font-semibold">{flashcard.front}</h3>
 				{#if i % 5 === 0}
@@ -84,23 +59,34 @@
 </div>
 
 <div>
-	<Pagination count={flashcards.length} bind:page={pageIndex} perPage={10}>
+	<Pagination.Root
+		count={flashcards.length}
+		page={pageIndex}
+		onPageChange={handlePageChange}
+		perPage={10}
+	>
 		{#snippet children({ currentPage, pages })}
-			<PaginationContent>
+			<Pagination.Content>
+				<Pagination.Item class="max-md:hidden">
+					<Pagination.PrevButton />
+				</Pagination.Item>
 				{#each pages as page (page.key)}
 					{#if page.type === 'ellipsis'}
-						<PaginationItem>
-							<PaginationEllipsis />
-						</PaginationItem>
+						<Pagination.Item>
+							<Pagination.Ellipsis />
+						</Pagination.Item>
 					{:else}
-						<PaginationItem>
-							<PaginationLink isActive={page.value === currentPage} {page}
-								>{page.value}</PaginationLink
+						<Pagination.Item>
+							<Pagination.Link isActive={page.value === currentPage} {page}
+								>{page.value}</Pagination.Link
 							>
-						</PaginationItem>
+						</Pagination.Item>
 					{/if}
 				{/each}
-			</PaginationContent>
+				<Pagination.Item class="max-md:hidden">
+					<Pagination.NextButton />
+				</Pagination.Item>
+			</Pagination.Content>
 		{/snippet}
-	</Pagination>
+	</Pagination.Root>
 </div>

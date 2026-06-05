@@ -14,7 +14,6 @@
 	import * as Form from '$lib/components/ui/form/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		ArrowLeft01Icon,
 		ArrowDown01Icon,
@@ -22,6 +21,7 @@
 		FileUploadIcon,
 		DeleteIcon
 	} from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { defaults, superForm } from 'sveltekit-superforms';
 	import { valibotClient } from 'sveltekit-superforms/adapters';
 

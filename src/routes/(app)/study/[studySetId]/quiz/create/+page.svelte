@@ -26,14 +26,14 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Form from '$lib/components/ui/form/index.js';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import { PlusSignIcon, DeleteIcon } from '@hugeicons/core-free-icons';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { tick } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import { defaults, superForm } from 'sveltekit-superforms';
 	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { toast } from 'svelte-sonner';
 
 	type FormQuizType = QuizForm['type'];
 
@@ -144,7 +144,9 @@
 
 	function toggleCorrectOption(index: number) {
 		if ($formData.type === 'MULTIPLE_SELECT') {
-			$formData.options[index].isCorrect = !$formData.options[index].isCorrect;
+			const option = $formData.options[index];
+			if (!option) return;
+			option.isCorrect = !option.isCorrect;
 			return;
 		}
 
@@ -293,7 +295,7 @@
 		{/if}
 	</div>
 
-	{#each $formData.options, i (i)}
+	{#each $formData.options as option, i (i)}
 		<div class="flex items-start gap-3 rounded-2xl border bg-background/50 p-3">
 			<div
 				class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold"
@@ -309,7 +311,7 @@
 							{/if}
 							<Input
 								{...props}
-								bind:value={$formData.options[i].optionText}
+								bind:value={option.optionText}
 								placeholder={isFillInTheBlank
 									? 'Tulis jawaban yang benar...'
 									: `Opsi ${String.fromCharCode(65 + i)}`}
@@ -326,13 +328,12 @@
 						<button
 							type="button"
 							onclick={() => toggleCorrectOption(i)}
-							class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {$formData
-								.options[i].isCorrect
+							class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {option.isCorrect
 								? 'border-primary bg-primary/10 text-primary'
 								: 'border-input text-muted-foreground hover:bg-accent'}"
 							disabled={$submitting || pending}
 						>
-							{$formData.options[i].isCorrect ? '✓ Jawaban Benar' : 'Jawaban Benar'}
+							{option.isCorrect ? '✓ Jawaban Benar' : 'Jawaban Benar'}
 						</button>
 						{#if canRemoveOption}
 							<button
@@ -353,7 +354,7 @@
 							{#snippet children({ props })}
 								<Input
 									{...props}
-									bind:value={$formData.options[i].explanation}
+									bind:value={option.explanation}
 									placeholder="Penjelasan (opsional)"
 									disabled={$submitting || pending}
 								/>

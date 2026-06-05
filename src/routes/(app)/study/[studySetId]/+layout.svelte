@@ -1,75 +1,58 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { page } from '$app/state';
+	import DevCreateChapterDialog from '$lib/components/features/dev/dev-create-chapter-dialog.svelte';
+	import DevCreateFlashcardDialog from '$lib/components/features/dev/dev-create-flashcard-dialog.svelte';
+	import DevCreateQuizDialog from '$lib/components/features/dev/dev-create-quiz-dialog.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import {
+		Add01Icon,
 		AiChat02Icon,
 		ArrowLeft01Icon,
 		Book03Icon,
+		BookOpen01Icon,
 		Cards02Icon,
-		Quiz02Icon
+		Delete01Icon,
+		Edit01Icon,
+		Quiz01Icon,
+		Quiz02Icon,
+		Settings02Icon,
+		Share01Icon
 	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import type { Snippet } from 'svelte';
+	import { untrack, type Snippet } from 'svelte';
+	import type { LayoutData } from './$types';
 
 	type Props = {
 		children: Snippet;
+		data: LayoutData;
 	};
 
-	const { children } = $props() as Props;
-
-	type ChapterStub = {
-		id: string;
-		title: string;
-		description: string;
-	};
+	const { children, data } = $props() as Props;
 
 	const stubTimestamp = new Date('2026-05-10T00:00:00.000Z');
 	const stubStudySetId = 'sst_000000000000000001';
 
-	const chaptersStub: ChapterStub[] = [
-		{
-			id: 'chp_000000000000000001',
-			title: 'Vektor Dasar',
-			description: 'Mengenal besaran, arah, dan operasi vektor sederhana.'
-		},
-		{
-			id: 'chp_000000000000000002',
-			title: 'Matriks dan Operasi',
-			description: 'Baris, kolom, penjumlahan, dan perkalian matriks.'
-		},
-		{
-			id: 'chp_000000000000000003',
-			title: 'Determinan dan Invers',
-			description: 'Mengukur sifat matriks bujur sangkar dan kebalikannya.'
-		},
-		{
-			id: 'chp_000000000000000004',
-			title: 'Sistem Persamaan Linear',
-			description: 'Penyelesaian SPL dengan eliminasi dan substitusi.'
-		},
-		{
-			id: 'chp_000000000000000005',
-			title: 'Ruang Vektor dan Basis',
-			description: 'Span, bebas linear, basis, dan dimensi ruang.'
-		},
-		{
-			id: 'chp_000000000000000006',
-			title: 'Eigenvalue dan Eigenvector',
-			description: 'Nilai khas dan vektor khas dari transformasi linear.'
-		}
-	];
+	const chapterItems = $derived(
+		data.chapters.map((chapter) => ({
+			value: chapter.id,
+			label: chapter.title
+		}))
+	);
 
-	const chapterItems = chaptersStub.map((chapter) => ({
-		value: chapter.id,
-		label: chapter.title
-	}));
-
-	let selectedChapterId = $state(chaptersStub[0]?.id ?? '');
+	let selectedChapterId = $state(untrack(() => data.chapters[0]?.id ?? ''));
 
 	const selectedChapter = $derived(
-		chaptersStub.find((chapter) => chapter.id === selectedChapterId)
+		data.chapters.find((chapter) => chapter.id === selectedChapterId)
 	);
+
+	const studySetId = $derived(page.params.studySetId ?? '');
+
+	let flashcardDialogOpen = $state(false);
+	let chapterDialogOpen = $state(false);
+	let quizDialogOpen = $state(false);
 </script>
 
 <div
@@ -77,11 +60,56 @@
 	data-hidden={page.route.id?.includes('waiting-room')}
 >
 	<div class="mx-auto flex w-full max-w-2xl flex-col gap-3 px-6 py-3">
-		<div class="-ml-3 w-min transition-all hover:ml-0">
-			<Button variant="ghost" href="/home/">
-				<HugeiconsIcon icon={ArrowLeft01Icon} />
-				Kembali
-			</Button>
+		<div class="flex w-full justify-between">
+			<div class="-ml-3 w-min transition-all hover:ml-0">
+				<Button variant="ghost" href="/home/">
+					<HugeiconsIcon icon={ArrowLeft01Icon} />
+					Kembali
+				</Button>
+			</div>
+			<div>
+				<DropdownMenu.Root>
+					<DropdownMenu.Trigger>
+						{#snippet child({ props })}
+							<Button {...props} variant="ghost" size="icon">
+								<HugeiconsIcon icon={Settings02Icon} />
+							</Button>
+						{/snippet}
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content>
+						<DropdownMenu.Item>
+							<HugeiconsIcon icon={Edit01Icon} />
+							Edit set
+						</DropdownMenu.Item>
+						<DropdownMenu.Item>
+							<HugeiconsIcon icon={Delete01Icon} />
+							Hapus set
+						</DropdownMenu.Item>
+						<DropdownMenu.Item>
+							<HugeiconsIcon icon={Share01Icon} />
+							Bagikan
+						</DropdownMenu.Item>
+						{#if dev}
+							<DropdownMenu.Separator />
+							<DropdownMenu.Item onSelect={() => (flashcardDialogOpen = true)}>
+								<HugeiconsIcon icon={Add01Icon} />
+								Dev: Buat flashcard
+							</DropdownMenu.Item>
+							<DropdownMenu.Item onSelect={() => (quizDialogOpen = true)}>
+								<HugeiconsIcon icon={Quiz01Icon} />
+								Dev: Buat quiz
+							</DropdownMenu.Item>
+							<DropdownMenu.Item onSelect={() => (chapterDialogOpen = true)}>
+								<HugeiconsIcon icon={BookOpen01Icon} />
+								Dev: Buat chapter
+							</DropdownMenu.Item>
+						{/if}
+					</DropdownMenu.Content>
+				</DropdownMenu.Root>
+				<DevCreateFlashcardDialog bind:open={flashcardDialogOpen} {studySetId} />
+				<DevCreateChapterDialog bind:open={chapterDialogOpen} {studySetId} />
+				<DevCreateQuizDialog bind:open={quizDialogOpen} {studySetId} />
+			</div>
 		</div>
 		<div>
 			<div class="w-min rounded-lg bg-primary/10 p-3 text-primary">
@@ -104,7 +132,7 @@
 			<Select.Content class="max-h-72">
 				<Select.Group>
 					<Select.Label>Chapter</Select.Label>
-					{#each chaptersStub as chapter (chapter.id)}
+					{#each data.chapters as chapter (chapter.id)}
 						<Select.Item value={chapter.id} label={chapter.title}>
 							{chapter.title}
 						</Select.Item>

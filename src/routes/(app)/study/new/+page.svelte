@@ -1,20 +1,3 @@
-<script lang="ts" module>
-	import * as v from 'valibot';
-
-	const formSchema = v.object({
-		title: v.pipe(
-			v.string(),
-			v.trim(),
-			v.minLength(5, 'Judul minimal 5 karakter.'),
-			v.maxLength(50, 'Judul maksimal 50 karakter.')
-		),
-		description: v.pipe(v.string(), v.maxLength(2000, 'Deskripsi maksimal 2000 karakter.')),
-		visibility: v.picklist(['PRIVATE', 'PUBLIC'] as const)
-	});
-
-	type StudySetForm = v.InferOutput<typeof formSchema>;
-</script>
-
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -23,11 +6,15 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+	import { client } from '$lib/orpc';
+	import type { CreateStudySetInput } from '$lib/schemas/study-set';
+	import { createStudySetInputSchema } from '$lib/schemas/study-set';
+	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { ORPCError } from '@orpc/client';
+	import { toast } from 'svelte-sonner';
 	import { defaults, superForm } from 'sveltekit-superforms';
 	import { valibotClient } from 'sveltekit-superforms/adapters';
-	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
-	import { toast } from 'svelte-sonner';
 
 	type Visibility = 'PUBLIC' | 'PRIVATE';
 
@@ -36,24 +23,20 @@
 		{ value: 'PUBLIC', label: 'Publik' }
 	];
 
-	let serverError = $state('');
-	let pending = $state(false);
-
 	const form = superForm(
-		defaults<StudySetForm>(
+		defaults<CreateStudySetInput>(
 			{
 				title: '',
 				description: '',
 				visibility: 'PRIVATE'
 			},
-			valibotClient(formSchema)
+			valibotClient(createStudySetInputSchema)
 		),
 		{
 			SPA: true,
-			validators: valibotClient(formSchema),
+			validators: valibotClient(createStudySetInputSchema),
 			resetForm: false,
 			onUpdate: async ({ form: submittedForm }) => {
-				serverError = '';
 				if (!submittedForm.valid) return;
 				await submitStudySet(submittedForm.data);
 			}
@@ -66,23 +49,33 @@
 			'Pilih visibilitas'
 	);
 	const titleCount = $derived($formData.title.trim().length);
-	const descriptionCount = $derived($formData.description.length);
+	const descriptionCount = $derived(($formData.description ?? '').length);
 
-	function getErrorMessage(error: unknown) {
-		if (error instanceof Error && error.message) return error.message;
-		return 'Modul belajar belum bisa dibuat. Coba lagi sebentar.';
-	}
-
-	async function submitStudySet(_data: StudySetForm) {
-		pending = true;
-
+	async function submitStudySet(data: CreateStudySetInput) {
 		try {
-			serverError = 'Pembuatan modul belum tersedia. Backend belum diimplementasikan.';
-			toast.error('Backend belum diimplementasikan.');
+			const studySet = await client.studySet.create(data);
+			toast.success('Modul belajar berhasil dibuat.', { position: 'top-right' });
+			await goto(resolve('/(app)/study/[studySetId]/flashcard', { studySetId: studySet.id }));
 		} catch (error) {
-			serverError = getErrorMessage(error);
-		} finally {
-			pending = false;
+			if (error instanceof ORPCError) {
+				if (error.code === 'UNAUTHORIZED') {
+					await goto(resolve('/(auth)/login'));
+					return;
+				}
+				if (error.code === 'STUDY_SET_SLUG_CONFLICT') {
+					toast.error('Gagal membuat tautan unik. Coba lagi dengan judul berbeda.', {
+						position: 'top-right'
+					});
+					return;
+				}
+				toast.error(error.message, { position: 'top-right' });
+			} else if (error instanceof Error) {
+				toast.error(error.message, { position: 'top-right' });
+			} else {
+				toast.error('Modul belajar belum bisa dibuat. Coba lagi sebentar.', {
+					position: 'top-right'
+				});
+			}
 		}
 	}
 </script>
@@ -100,15 +93,10 @@
 
 <form
 	method="POST"
-	class="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-5 px-6 py-6"
+	class="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-5 px-6 py-6"
 	novalidate
+	use:enhance
 >
-	{#if serverError}
-		<div class="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-			{serverError}
-		</div>
-	{/if}
-
 	<Form.Field {form} name="title">
 		<Form.Control>
 			{#snippet children({ props })}
@@ -120,7 +108,7 @@
 					{...props}
 					bind:value={$formData.title}
 					placeholder="Contoh: Aljabar Linear Dasar"
-					disabled={$submitting || pending}
+					disabled={$submitting}
 				/>
 			{/snippet}
 		</Form.Control>
@@ -139,7 +127,7 @@
 					{...props}
 					bind:value={$formData.description}
 					placeholder="Ringkas isi modul, tujuan belajar, atau topik yang akan dibahas."
-					disabled={$submitting || pending}
+					disabled={$submitting}
 				/>
 			{/snippet}
 		</Form.Control>
@@ -156,7 +144,7 @@
 					name="visibility"
 					items={visibilityItems}
 					bind:value={$formData.visibility}
-					disabled={$submitting || pending}
+					disabled={$submitting}
 				>
 					<Select.Trigger {...props} class="w-full" aria-label="Pilih visibilitas">
 						<span class="min-w-0 flex-1 truncate text-left">{selectedVisibilityLabel}</span>
@@ -181,16 +169,11 @@
 	</Form.Field>
 
 	<div class="mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end">
-		<Button
-			class="w-full sm:w-auto"
-			variant="outline"
-			href="/home"
-			disabled={$submitting || pending}
-		>
+		<Button class="w-full sm:w-auto" variant="outline" href="/home" disabled={$submitting}>
 			Batal
 		</Button>
-		<Form.Button class="w-full sm:w-auto" disabled={$submitting || pending}>
-			{$submitting || pending ? 'Membuat...' : 'Buat Modul'}
+		<Form.Button class="w-full sm:w-auto" disabled={$submitting}>
+			{$submitting ? 'Membuat...' : 'Buat Modul'}
 		</Form.Button>
 	</div>
 </form>
