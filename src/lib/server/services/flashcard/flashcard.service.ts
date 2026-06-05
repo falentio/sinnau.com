@@ -31,13 +31,15 @@ export class FlashcardService {
 		const chapterIds = Array.from(
 			new Set(input.flashcards.map((f) => f.chapterId).filter((v): v is string => !!v))
 		);
-		for (const chapterId of chapterIds) {
-			await this.guard.assertChapterOwnerInStudySetOrForbidden(
-				chapterId,
-				ownerId,
-				input.studySetId
-			);
-		}
+		await Promise.all(
+			chapterIds.map((chapterId) =>
+				this.guard.assertChapterOwnerInStudySetOrForbidden(
+					chapterId,
+					ownerId,
+					input.studySetId
+				)
+			)
+		);
 
 		const rows: Omit<Flashcard, 'createdAt' | 'updatedAt'>[] = input.flashcards.map((item) => ({
 			id: generateId(FLASHCARD_ID_PREFIX),
