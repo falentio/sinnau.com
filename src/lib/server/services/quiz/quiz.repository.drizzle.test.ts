@@ -291,7 +291,7 @@ describe.concurrent('QuizDrizzleRepository', () => {
 			]);
 
 			const result = await env.repo.findOptionsByQuizIds([q1.id, q2.id]);
-			expect(result.map((o) => o.id).sort()).toEqual(['opt-1', 'opt-2']);
+			expect(result.map((o) => o.id).toSorted()).toEqual(['opt-1', 'opt-2']);
 		});
 
 		it('returns an empty array when the input is empty', async ({ expect }) => {

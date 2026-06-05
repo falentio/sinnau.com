@@ -159,7 +159,7 @@ describe.concurrent('StudySetDrizzleRepository', () => {
 			await env.seedStudySet({ id: 'c', ownerId: env.otherId });
 
 			const result = await env.repo.findOwnedStudySets(env.ownerId, 'createdAt', 'desc', 1);
-			expect(result.data.map((s) => s.id).sort()).toEqual(['a', 'b']);
+			expect(result.data.map((s) => s.id).toSorted()).toEqual(['a', 'b']);
 		});
 
 		it('paginates with a fixed limit of 10', async ({ expect }) => {
