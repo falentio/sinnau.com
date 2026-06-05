@@ -1,5 +1,5 @@
-import { authorizedProcedure } from '$lib/server/api/base';
 import { createQuizInputSchema, quizSchema } from '$lib/schemas/quiz';
+import { authorizedProcedure } from '$lib/server/api/base';
 import { quizService } from '../index';
 
 const ERRORS = {

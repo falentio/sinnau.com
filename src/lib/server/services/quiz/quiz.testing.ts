@@ -1,12 +1,16 @@
-import { type MockedFunction, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
-import { getTestingDb } from '$lib/server/infras/db/testing';
+import { CHAPTER_ID_PREFIX } from '$lib/schemas/chapter';
+import { QUIZ_ID_PREFIX, QUIZ_OPTION_ID_PREFIX } from '$lib/schemas/quiz';
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
 import { user } from '$lib/server/infras/db/schema/auth-schema';
-import { studySet } from '$lib/server/infras/db/schema/study-set';
 import { chapter } from '$lib/server/infras/db/schema/chapter';
+import { studySet } from '$lib/server/infras/db/schema/study-set';
+import { getTestingDb } from '$lib/server/infras/db/testing';
+import { eq } from 'drizzle-orm';
+import { type MockedFunction, vi } from 'vitest';
 import type { Chapter } from '../../infras/db/schema/chapter.ts';
-import type { StudySet } from '../../infras/db/schema/study-set.ts';
 import type { Quiz, QuizOption } from '../../infras/db/schema/quiz.ts';
+import type { StudySet } from '../../infras/db/schema/study-set.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { QuizGuard } from './quiz.guard.ts';
 import { QuizDrizzleRepository } from './quiz.repository.drizzle';
 import type { QuizRepository } from './quiz.repository.ts';
@@ -52,9 +56,9 @@ export function createMockGuard(): MockedQuizGuard {
 
 export function createQuizFixture(overrides: Partial<Quiz> = {}): Quiz {
 	return {
-		id: crypto.randomUUID(),
+		id: generateId(QUIZ_ID_PREFIX),
 		chapterId: null,
-		studySetId: crypto.randomUUID(),
+		studySetId: generateId(STUDY_SET_ID_PREFIX),
 		type: 'MULTIPLE_CHOICE',
 		questionText: 'What is 2 + 2?',
 		ownerId: 'owner-1',
@@ -66,8 +70,8 @@ export function createQuizFixture(overrides: Partial<Quiz> = {}): Quiz {
 
 export function createQuizOptionFixture(overrides: Partial<QuizOption> = {}): QuizOption {
 	return {
-		id: crypto.randomUUID(),
-		quizId: crypto.randomUUID(),
+		id: generateId(QUIZ_OPTION_ID_PREFIX),
+		quizId: generateId(QUIZ_ID_PREFIX),
 		optionText: 'Option text',
 		isCorrect: false,
 		explanation: null,
@@ -127,6 +131,9 @@ export class QuizTestEnv implements AsyncDisposable {
 			.insert(user)
 			.values({
 				id,
+
+				// User IDs are auth domain (not prefixed with project prefix)
+
 				email: options.email ?? `${id}@test.local`,
 				name: options.name ?? 'Test User',
 				emailVerified: true
@@ -136,7 +143,7 @@ export class QuizTestEnv implements AsyncDisposable {
 	}
 
 	async seedStudySet(overrides: SeedStudySetOptions = {}): Promise<StudySet> {
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(STUDY_SET_ID_PREFIX);
 		this.db
 			.insert(studySet)
 			.values({
@@ -155,7 +162,7 @@ export class QuizTestEnv implements AsyncDisposable {
 	}
 
 	async seedChapter(overrides: SeedChapterOptions = {}): Promise<Chapter> {
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(CHAPTER_ID_PREFIX);
 		this.db
 			.insert(chapter)
 			.values({
@@ -175,7 +182,7 @@ export class QuizTestEnv implements AsyncDisposable {
 	async seedQuiz(overrides: Partial<Quiz> = {}): Promise<Quiz> {
 		const studySetId =
 			overrides.studySetId ?? (await this.seedStudySet({ ownerId: overrides.ownerId })).id;
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(QUIZ_ID_PREFIX);
 		return this.repo.insertQuiz(
 			{
 				id,
@@ -191,7 +198,7 @@ export class QuizTestEnv implements AsyncDisposable {
 
 	async seedQuizOption(overrides: Partial<QuizOption> = {}): Promise<QuizOption> {
 		const quizId = overrides.quizId ?? (await this.seedQuiz()).id;
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(QUIZ_OPTION_ID_PREFIX);
 		const rows = await this.repo.insertQuizOptions([
 			{
 				id,
@@ -201,10 +208,13 @@ export class QuizTestEnv implements AsyncDisposable {
 				explanation: overrides.explanation ?? null
 			}
 		]);
-		return rows[0]!;
+		const [row] = rows;
+		if (!row) throw new Error('Expected seeded quiz option to be inserted');
+		return row;
 	}
 
-	async [Symbol.asyncDispose](): Promise<void> {
+	[Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
+		return Promise.resolve();
 	}
 }

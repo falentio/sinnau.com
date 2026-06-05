@@ -1,8 +1,8 @@
 import { ORPCError } from '@orpc/server';
 import { describe, it } from 'vitest';
-import type { StudySet } from '../../infras/db/schema/study-set.ts';
 import type { Chapter } from '../../infras/db/schema/chapter.ts';
 import type { Quiz, QuizOption } from '../../infras/db/schema/quiz.ts';
+import type { StudySet } from '../../infras/db/schema/study-set.ts';
 import type { QuizGuard } from './quiz.guard.ts';
 import { QuizService } from './quiz.service.ts';
 import {
@@ -165,13 +165,15 @@ describe.concurrent('QuizService', () => {
 				{ studySetId: STUDY_SET_ID, type: 'MULTIPLE_CHOICE', questionText: 'Q?' },
 				'owner-1'
 			);
-			expect(repo.insertQuiz).toHaveBeenCalledOnce();
-			const [row, options] = repo.insertQuiz.mock.calls[0]!;
-			expect(row.studySetId).toBe(STUDY_SET_ID);
-			expect(row.type).toBe('MULTIPLE_CHOICE');
-			expect(row.questionText).toBe('Q?');
-			expect(row.ownerId).toBe('owner-1');
-			expect(options).toEqual([]);
+			expect(repo.insertQuiz).toHaveBeenCalledWith(
+				expect.objectContaining({
+					studySetId: STUDY_SET_ID,
+					type: 'MULTIPLE_CHOICE',
+					questionText: 'Q?',
+					ownerId: 'owner-1'
+				}),
+				[]
+			);
 			expect(result.options).toEqual([]);
 		});
 

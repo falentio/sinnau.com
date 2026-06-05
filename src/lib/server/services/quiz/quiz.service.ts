@@ -1,5 +1,10 @@
+import {
+	FITB_OPTION_EXACT,
+	MCQ_OPTION_MAX,
+	MCQ_OPTION_MIN,
+	MS_OPTION_MAX
+} from '$lib/schemas/quiz.constant';
 import { ORPCError } from '@orpc/server';
-import type { Quiz, QuizOption, QuizType } from '../../infras/db/schema/quiz.ts';
 import type {
 	CreateQuizInput,
 	CreateQuizOptionsInput,
@@ -10,12 +15,7 @@ import type {
 	UpdateQuizInput,
 	UpdateQuizOptionInput
 } from '../../../schemas/quiz.ts';
-import {
-	FITB_OPTION_EXACT,
-	MCQ_OPTION_MAX,
-	MCQ_OPTION_MIN,
-	MS_OPTION_MAX
-} from './quiz.constant.ts';
+import type { Quiz, QuizOption, QuizType } from '../../infras/db/schema/quiz.ts';
 import type { QuizGuard } from './quiz.guard.ts';
 import type { QuizRepository, QuizWithOptions } from './quiz.repository.ts';
 
@@ -83,7 +83,11 @@ export class QuizService {
 
 		return {
 			...created,
-			options: optionRows.map((row) => ({ ...row, createdAt: now, updatedAt: now }))
+			options: optionRows.map((row) => ({
+				...row,
+				createdAt: now,
+				updatedAt: now
+			}))
 		};
 	}
 
@@ -105,7 +109,9 @@ export class QuizService {
 
 		const ok = await this.repo.deleteQuizzes(input.ids, ownerId);
 		if (!ok) {
-			throw new ORPCError('NOT_FOUND', { message: 'Some quizzes could not be deleted' });
+			throw new ORPCError('NOT_FOUND', {
+				message: 'Some quizzes could not be deleted'
+			});
 		}
 	}
 
@@ -170,7 +176,11 @@ export class QuizService {
 		const merged = [...others, projected];
 		this.validateMergedOptionsForType(quizRow.type, merged);
 
-		const patch: { optionText?: string; isCorrect?: boolean; explanation?: string | null } = {};
+		const patch: {
+			optionText?: string;
+			isCorrect?: boolean;
+			explanation?: string | null;
+		} = {};
 		if (input.optionText !== undefined) patch.optionText = input.optionText;
 		if (input.isCorrect !== undefined) patch.isCorrect = input.isCorrect;
 		if (input.explanation !== undefined) {
@@ -221,7 +231,9 @@ export class QuizService {
 
 		const ok = await this.repo.deleteQuizOptions(input.ids, ownerId);
 		if (!ok) {
-			throw new ORPCError('NOT_FOUND', { message: 'Some quiz options could not be deleted' });
+			throw new ORPCError('NOT_FOUND', {
+				message: 'Some quiz options could not be deleted'
+			});
 		}
 	}
 
@@ -244,44 +256,51 @@ export class QuizService {
 		type: QuizType,
 		options: Array<{ isCorrect: boolean }>
 	): void {
-		if (type === 'MULTIPLE_CHOICE') {
-			if (options.length > MCQ_OPTION_MAX) {
-				throw new ORPCError('VALIDATION_FAILED', {
-					message: `Multiple choice quizzes allow at most ${MCQ_OPTION_MAX} options`
-				});
-			}
-			if (options.length >= MCQ_OPTION_MIN) {
-				const correct = options.filter((o) => o.isCorrect);
-				if (correct.length !== 1) {
-					throw new ORPCError('MC_ALREADY_HAS_CORRECT', {
-						message: 'Multiple choice quizzes must have exactly one correct option'
-					});
-				}
-			}
-		} else if (type === 'MULTIPLE_SELECT') {
-			if (options.length > MS_OPTION_MAX) {
-				throw new ORPCError('VALIDATION_FAILED', {
-					message: `Multiple select quizzes allow at most ${MS_OPTION_MAX} options`
-				});
-			}
-			if (options.length > 0) {
-				const correct = options.filter((o) => o.isCorrect);
-				if (correct.length === 0) {
+		switch (type) {
+			case 'MULTIPLE_CHOICE': {
+				if (options.length > MCQ_OPTION_MAX) {
 					throw new ORPCError('VALIDATION_FAILED', {
-						message: 'Multiple select quizzes must have at least one correct option'
+						message: `Multiple choice quizzes allow at most ${MCQ_OPTION_MAX} options`
 					});
 				}
+				if (options.length >= MCQ_OPTION_MIN) {
+					const correct = options.filter((o) => o.isCorrect);
+					if (correct.length !== 1) {
+						throw new ORPCError('MC_ALREADY_HAS_CORRECT', {
+							message: 'Multiple choice quizzes must have exactly one correct option'
+						});
+					}
+				}
+				return;
 			}
-		} else if (type === 'FILL_IN_THE_BLANK') {
-			if (options.length > FITB_OPTION_EXACT) {
-				throw new ORPCError('FITB_MULTIPLE_OPTIONS', {
-					message: 'Fill-in-the-blank quizzes allow exactly one option'
-				});
+			case 'MULTIPLE_SELECT': {
+				if (options.length > MS_OPTION_MAX) {
+					throw new ORPCError('VALIDATION_FAILED', {
+						message: `Multiple select quizzes allow at most ${MS_OPTION_MAX} options`
+					});
+				}
+				if (options.length > 0) {
+					const correct = options.filter((o) => o.isCorrect);
+					if (correct.length === 0) {
+						throw new ORPCError('VALIDATION_FAILED', {
+							message: 'Multiple select quizzes must have at least one correct option'
+						});
+					}
+				}
+				return;
 			}
-			if (options.length === 1 && !options[0]!.isCorrect) {
-				throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
-					message: 'Fill-in-the-blank option must be correct'
-				});
+			case 'FILL_IN_THE_BLANK': {
+				if (options.length > FITB_OPTION_EXACT) {
+					throw new ORPCError('FITB_MULTIPLE_OPTIONS', {
+						message: 'Fill-in-the-blank quizzes allow exactly one option'
+					});
+				}
+				if (options.length === 1 && !options.find((o) => o.isCorrect)) {
+					throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
+						message: 'Fill-in-the-blank option must be correct'
+					});
+				}
+				return;
 			}
 		}
 	}
@@ -293,27 +312,30 @@ export class QuizService {
 	): void {
 		const hadCorrect = previousOptions.some((o) => o.isCorrect);
 		const hasCorrect = remainingOptions.some((o) => o.isCorrect);
-		if (type === 'FILL_IN_THE_BLANK') {
-			if (remainingOptions.length === 0 && previousOptions.length > 0) {
-				throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
-					message: 'Cannot delete the only fill-in-the-blank option'
-				});
+		switch (type) {
+			case 'FILL_IN_THE_BLANK': {
+				if (remainingOptions.length === 0 && previousOptions.length > 0) {
+					throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
+						message: 'Cannot delete the only fill-in-the-blank option'
+					});
+				}
+				return;
 			}
-			return;
-		}
-		if (type === 'MULTIPLE_CHOICE') {
-			if (hadCorrect && !hasCorrect) {
-				throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
-					message: 'Cannot delete the last correct option from a multiple choice quiz'
-				});
+			case 'MULTIPLE_CHOICE': {
+				if (hadCorrect && !hasCorrect) {
+					throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
+						message: 'Cannot delete the last correct option from a multiple choice quiz'
+					});
+				}
+				return;
 			}
-			return;
-		}
-		if (type === 'MULTIPLE_SELECT') {
-			if (hadCorrect && !hasCorrect) {
-				throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
-					message: 'Cannot delete the last correct option from a multiple select quiz'
-				});
+			case 'MULTIPLE_SELECT': {
+				if (hadCorrect && !hasCorrect) {
+					throw new ORPCError('CANNOT_DELETE_LAST_CORRECT', {
+						message: 'Cannot delete the last correct option from a multiple select quiz'
+					});
+				}
+				return;
 			}
 		}
 	}

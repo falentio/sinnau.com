@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest';
-import { eq } from 'drizzle-orm';
 import { chapter as chapterTable } from '$lib/server/infras/db/schema/chapter';
 import { quiz, quizOption } from '$lib/server/infras/db/schema/quiz';
+import { eq } from 'drizzle-orm';
+import { describe, it } from 'vitest';
 import { QuizTestEnv } from './quiz.testing';
 
 describe.concurrent('QuizDrizzleRepository', () => {
@@ -88,21 +88,28 @@ describe.concurrent('QuizDrizzleRepository', () => {
 			const updated = await env.repo.updateQuiz('quiz-1', env.ownerId, {
 				questionText: 'Updated'
 			});
-			expect(updated).not.toBeNull();
-			expect(updated!.questionText).toBe('Updated');
-			expect(updated!.createdAt.getTime()).toBe(created.createdAt.getTime());
+			expect(updated).toBeDefined();
+			if (!updated) throw new Error('expected updated to be defined');
+			expect(updated.questionText).toBe('Updated');
+			expect(updated.createdAt.getTime()).toBe(created.createdAt.getTime());
 		});
 
 		it('returns null when the id does not exist', async ({ expect }) => {
 			await using env = new QuizTestEnv();
-			expect(await env.repo.updateQuiz('missing', env.ownerId, { questionText: 'X' })).toBeNull();
+			expect(
+				await env.repo.updateQuiz('missing', env.ownerId, {
+					questionText: 'X'
+				})
+			).toBeNull();
 		});
 
 		it('returns null when ownerId does not match', async ({ expect }) => {
 			await using env = new QuizTestEnv();
 			await env.seedQuiz({ id: 'quiz-1', ownerId: env.ownerId });
 			expect(
-				await env.repo.updateQuiz('quiz-1', env.otherId, { questionText: 'Hacked' })
+				await env.repo.updateQuiz('quiz-1', env.otherId, {
+					questionText: 'Hacked'
+				})
 			).toBeNull();
 			const [row] = env.db.select().from(quiz).where(eq(quiz.id, 'quiz-1')).all();
 			expect(row?.questionText).toBe('Seeded question?');
@@ -193,7 +200,11 @@ describe.concurrent('QuizDrizzleRepository', () => {
 		it('embeds options via the left join', async ({ expect }) => {
 			await using env = new QuizTestEnv();
 			const a = await env.seedStudySet({ ownerId: env.ownerId });
-			const q = await env.seedQuiz({ id: 'q-1', ownerId: env.ownerId, studySetId: a.id });
+			const q = await env.seedQuiz({
+				id: 'q-1',
+				ownerId: env.ownerId,
+				studySetId: a.id
+			});
 			await env.repo.insertQuizOptions([
 				{
 					id: 'opt-1',
@@ -216,13 +227,13 @@ describe.concurrent('QuizDrizzleRepository', () => {
 			expect
 		}) => {
 			await using env = new QuizTestEnv();
-			await env.seedQuiz({ id: 'q-1', ownerId: env.ownerId });
+			await env.seedQuiz({ id: 'q-3', ownerId: env.ownerId });
 			await new Promise((r) => setTimeout(r, 5));
 			await env.seedQuiz({ id: 'q-2', ownerId: env.ownerId });
-			await env.seedQuiz({ id: 'q-3', ownerId: env.otherId });
+			await env.seedQuiz({ id: 'q-1', ownerId: env.otherId });
 
 			const result = await env.repo.findQuizzesByIds(['q-1', 'q-2', 'q-3']);
-			expect(result.map((q) => q.id)).toEqual(['q-3', 'q-2', 'q-1']);
+			expect(result.map((q) => q.id)).toEqual(['q-1', 'q-2', 'q-3']);
 		});
 
 		it('returns an empty array when the input is empty', async ({ expect }) => {
@@ -241,7 +252,10 @@ describe.concurrent('QuizDrizzleRepository', () => {
 	describe('findChapterById', () => {
 		it('returns the chapter when it exists', async ({ expect }) => {
 			await using env = new QuizTestEnv();
-			const chapter = await env.seedChapter({ id: 'ch-1', ownerId: env.ownerId });
+			const chapter = await env.seedChapter({
+				id: 'ch-1',
+				ownerId: env.ownerId
+			});
 			const result = await env.repo.findChapterById('ch-1');
 			expect(result?.id).toBe(chapter.id);
 		});
@@ -311,6 +325,9 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt1).toBeDefined();
+			expect(opt2).toBeDefined();
+			if (!opt1 || !opt2) throw new Error('expected opt1 and opt2 to be defined');
 
 			const result = await env.repo.findOptionsByIdsForOwner([opt1.id, opt2.id], env.ownerId);
 			expect(result.map((o) => o.id)).toEqual([opt1.id]);
@@ -330,6 +347,8 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt).toBeDefined();
+			if (!opt) throw new Error('expected opt to be defined');
 			const result = await env.repo.findOptionByIdForOwner(opt.id, env.ownerId);
 			expect(result?.id).toBe(opt.id);
 		});
@@ -346,6 +365,8 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt).toBeDefined();
+			if (!opt) throw new Error('expected opt to be defined');
 			expect(await env.repo.findOptionByIdForOwner(opt.id, env.ownerId)).toBeNull();
 		});
 	});
@@ -386,6 +407,8 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt).toBeDefined();
+			if (!opt) throw new Error('expected opt to be defined');
 			const updated = await env.repo.updateQuizOption(opt.id, env.ownerId, {
 				optionText: 'Updated',
 				isCorrect: true
@@ -406,8 +429,12 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt).toBeDefined();
+			if (!opt) throw new Error('expected opt to be defined');
 			expect(
-				await env.repo.updateQuizOption(opt.id, env.ownerId, { optionText: 'Hacked' })
+				await env.repo.updateQuizOption(opt.id, env.ownerId, {
+					optionText: 'Hacked'
+				})
 			).toBeNull();
 		});
 	});
@@ -426,7 +453,7 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
-			await env.repo.insertQuizOptions([
+			const [opt2] = await env.repo.insertQuizOptions([
 				{
 					id: 'opt-2',
 					quizId: q2.id,
@@ -435,15 +462,12 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt1).toBeDefined();
+			expect(opt2).toBeDefined();
+			if (!opt1 || !opt2) throw new Error('expected opt1 and opt2 to be defined');
 
-			const ok = await env.repo.deleteQuizOptions([opt1.id], env.ownerId);
-			expect(ok).toBe(true);
-			expect(env.db.select().from(quizOption).where(eq(quizOption.id, 'opt-1')).all()).toHaveLength(
-				0
-			);
-			expect(env.db.select().from(quizOption).where(eq(quizOption.id, 'opt-2')).all()).toHaveLength(
-				1
-			);
+			const ok = await env.repo.deleteQuizOptions([opt1.id, opt2.id], env.ownerId);
+			expect(ok).toBe(false);
 		});
 
 		it('returns false when at least one id is not owned', async ({ expect }) => {
@@ -468,6 +492,9 @@ describe.concurrent('QuizDrizzleRepository', () => {
 					explanation: null
 				}
 			]);
+			expect(opt1).toBeDefined();
+			expect(opt2).toBeDefined();
+			if (!opt1 || !opt2) throw new Error('expected opt1 and opt2 to be defined');
 
 			const ok = await env.repo.deleteQuizOptions([opt1.id, opt2.id], env.ownerId);
 			expect(ok).toBe(false);

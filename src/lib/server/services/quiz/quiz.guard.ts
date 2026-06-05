@@ -1,9 +1,9 @@
 import { ORPCError } from '@orpc/server';
 import type { Chapter } from '../../infras/db/schema/chapter.ts';
-import type { StudySet } from '../../infras/db/schema/study-set.ts';
-import type { StudySetGuard } from '../study-set/study-set.guard.ts';
-import type { ChapterGuard } from '../chapter/chapter.guard.ts';
 import type { Quiz, QuizOption } from '../../infras/db/schema/quiz.ts';
+import type { StudySet } from '../../infras/db/schema/study-set.ts';
+import type { ChapterGuard } from '../chapter/chapter.guard.ts';
+import type { StudySetGuard } from '../study-set/study-set.guard.ts';
 import type { QuizRepository } from './quiz.repository.ts';
 
 export class QuizGuard {
@@ -77,7 +77,10 @@ export class QuizGuard {
 				blockedIds.push(id);
 				continue;
 			}
-			const row = rows.find((r) => r.id === id)!;
+			const row = rows.find((r) => r.id === id);
+			if (!row) {
+				throw new ORPCError('INTERNAL_SERVER_ERROR', { message: 'Internal server error' });
+			}
 			if (row.ownerId !== ownerId) blockedIds.push(id);
 		}
 		if (blockedIds.length > 0) {
