@@ -1,11 +1,11 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
-	"plugins": ["typescript", "unicorn", "import"],
+	"plugins": ["typescript", "unicorn", "import", "oxc", "promise", "node", "vitest"],
 	"options": {
 		"typeAware": true
 	},
 	"categories": {
-		"correctness": "off"
+		"correctness": "error"
 	},
 	"env": {
 		"builtin": true,
@@ -127,7 +127,34 @@
 		"typescript/restrict-plus-operands": "error",
 		"typescript/restrict-template-expressions": "error",
 		"typescript/return-await": "error",
-		"typescript/unbound-method": "error"
+		"typescript/unbound-method": "error",
+		"default-case": "error",
+		"no-await-in-loop": "error",
+		"no-document-cookie": "error",
+		"no-div-regex": "error",
+		"no-extend-native": "error",
+		"no-implicit-globals": "error",
+		"no-process-exit": "error",
+		"no-proto": "error",
+		"no-unmodified-loop-condition": "error",
+		"no-use-before-define": "error",
+		"import/no-cycle": "error",
+		"import/no-dynamic-require": "error",
+		"import/no-self-import": "error",
+		"node/handle-callback-err": "error",
+		"node/no-path-concat": "error",
+		"oxc/no-accumulating-spread": "error",
+		"typescript/no-confusing-non-null-assertion": "error",
+		"typescript/no-dynamic-delete": "error",
+		"typescript/no-non-null-asserted-nullish-coalescing": "error",
+		"typescript/promise-function-async": "error",
+		"typescript/use-unknown-in-catch-callback-variable": "error",
+		"unicorn/no-accessor-recursion": "error",
+		"unicorn/no-array-reverse": "error",
+		"unicorn/no-array-sort": "error",
+		"unicorn/no-instanceof-builtins": "error",
+		"unicorn/prefer-add-event-listener": "error",
+		"unicorn/require-post-message-target-origin": "error"
 	},
 	"overrides": [
 		{
@@ -166,7 +193,12 @@
 			"files": ["**/*.test.ts", "**/*.testing.ts"],
 			"rules": {
 				"typescript/require-await": "off",
-				"typescript/no-unnecessary-condition": "off"
+				"typescript/no-unnecessary-condition": "off",
+				"vitest/no-focused-tests": "error",
+				"vitest/no-disabled-tests": "error",
+				"vitest/no-conditional-expect": "error",
+				"vitest/expect-expect": "error",
+				"vitest/valid-expect": "error"
 			}
 		}
 	]
