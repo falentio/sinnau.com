@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import { createAuthClient } from 'better-auth/svelte';
 
 export const authClient = createAuthClient({
-	basePath: "/api/auth"
+	basePath: '/api/auth'
 });
 
 type _Session = (typeof authClient.$Infer)['Session'];

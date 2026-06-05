@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins';
@@ -13,7 +14,8 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true
 	},
-	plugins: [admin()]
+	plugins: [admin()],
+	trustedOrigins: () => (dev ? ['*://*'] : [])
 });
 
 export type Auth = typeof auth;
