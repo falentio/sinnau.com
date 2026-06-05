@@ -1,6 +1,6 @@
+import { router } from '$lib/server/api';
 import { RPCHandler } from '@orpc/server/fetch';
 import type { RequestHandler } from './$types';
-import { router } from '$lib/server/api';
 
 const handler = new RPCHandler(router);
 
