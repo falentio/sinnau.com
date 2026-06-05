@@ -111,3 +111,81 @@ narrow testing run would help to speed up our iterations, rather than waiting fo
 
 always use sqlite cli to debug the sqlite state if needed.
 assume the host machine have `sqlite` cli installed, if not prompt the user to install.
+
+---
+
+## Worktree Setup
+
+**Workflow rule.** Before creating a worktree, load the `using-git-worktrees` and `herdr` skills. After creating a worktree, also create a herdr workspace for that worktree directory (when `HERDR_ENV=1`):
+
+```sh
+herdr workspace create --cwd .worktrees/feat/implement-foo --label "feat/implement-foo"
+```
+
+Use git worktrees to develop on an isolated branch without disturbing the main checkout. Each worktree has its own working copy, `node_modules`, `.env`, and SQLite database.
+
+### Create a worktree
+
+Worktrees live at `./.worktrees/<branch-name>`. Slashes in the branch name become nested directories, so `feat/implement-foo` maps to `./.worktrees/feat/implement-foo`.
+
+```sh
+# New branch
+git worktree add .worktrees/feat/implement-foo -b feat/implement-foo
+
+# Existing local branch
+git worktree add .worktrees/feat/implement-foo feat/implement-foo
+
+# Existing remote branch
+git worktree add .worktrees/feat/implement-foo origin/feat/implement-foo
+```
+
+`.worktrees/` is already in `.gitignore`, so worktree contents are never committed.
+
+### Initialize the worktree
+
+`cd` into the new worktree and run the same setup the main checkout uses. Each step is scoped to the worktree.
+
+```sh
+cd .worktrees/feat/implement-foo
+
+# 1. Install dependencies (uses the repo's pnpm lockfile)
+pnpm install --frozen-lockfile
+
+# 2. Create a local .env from the example
+cp .env.example .env
+
+# 3. Generate a random BETTER_AUTH_SECRET and write it to .env
+SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$SECRET|" .env
+
+# 4. Apply database migrations. Do NOT use `pnpm db:push` here —
+#    the app also runs migrations on boot (see
+#    src/lib/server/infras/db/client.ts:13), so push would create
+#    tables the runtime migrations would then refuse to reapply.
+pnpm db:migrate
+```
+
+`svelte-kit sync` runs automatically via the `prepare` postinstall script, so it does not need to be invoked manually.
+
+### Develop
+
+```sh
+pnpm dev
+```
+
+Vite defaults to port 5173. Pass `--port` to use a specific one when running multiple worktrees at once.
+
+```sh
+pnpm dev --port 5174
+```
+
+### Tear down
+
+Run from the main checkout, not from inside the worktree.
+
+```sh
+git worktree remove --force .worktrees/feat/implement-foo
+git branch -D feat/implement-foo   # only if the branch should be deleted
+```
+
+`git worktree prune` cleans up stale admin records if a worktree directory is deleted by hand.
