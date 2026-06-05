@@ -1,27 +1,40 @@
 import * as v from 'valibot';
+import { CHAPTER_ID_PREFIX } from './chapter.ts';
 import {
 	FLASHCARD_BATCH_MAX,
 	FLASHCARD_HINT_MAX_LENGTH,
 	FLASHCARD_TEXT_MAX_LENGTH
-} from '../server/services/flashcard/flashcard.constant.ts';
+} from './flashcard.constant.ts';
+import { createPrefixedIdSchema } from './id-schema.ts';
+import { STUDY_SET_ID_PREFIX } from './study-set.ts';
 
-const uuidSchema = v.pipe(v.string(), v.uuid());
+export {
+	FLASHCARD_BATCH_MAX,
+	FLASHCARD_HINT_MAX_LENGTH,
+	FLASHCARD_TEXT_MAX_LENGTH
+} from './flashcard.constant.ts';
 
-const trimmedTextSchema = v.pipe(
+export const FLASHCARD_ID_PREFIX = 'fcd';
+
+const flashcardIdSchema = createPrefixedIdSchema(FLASHCARD_ID_PREFIX);
+const chapterIdSchema = createPrefixedIdSchema(CHAPTER_ID_PREFIX);
+const studySetIdSchema = createPrefixedIdSchema(STUDY_SET_ID_PREFIX);
+
+export const trimmedTextSchema = v.pipe(
 	v.string(),
 	v.trim(),
-	v.minLength(1, 'Must not be empty after trim'),
-	v.maxLength(FLASHCARD_TEXT_MAX_LENGTH, `Must be at most ${FLASHCARD_TEXT_MAX_LENGTH} characters`)
+	v.minLength(1, 'Tidak boleh kosong setelah dipangkas'),
+	v.maxLength(FLASHCARD_TEXT_MAX_LENGTH, `Maksimal ${FLASHCARD_TEXT_MAX_LENGTH} karakter`)
 );
 
-const hintSchema = v.optional(
+export const hintSchema = v.optional(
 	v.union([
 		v.pipe(
 			v.string(),
 			v.trim(),
 			v.maxLength(
 				FLASHCARD_HINT_MAX_LENGTH,
-				`Hint must be at most ${FLASHCARD_HINT_MAX_LENGTH} characters`
+				`Petunjuk maksimal ${FLASHCARD_HINT_MAX_LENGTH} karakter`
 			)
 		),
 		v.literal(''),
@@ -29,10 +42,10 @@ const hintSchema = v.optional(
 	])
 );
 
-const importanceSchema = v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)));
+export const importanceSchema = v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)));
 
 const flashcardInputItemSchema = v.object({
-	chapterId: v.optional(uuidSchema),
+	chapterId: v.optional(chapterIdSchema),
 	front: trimmedTextSchema,
 	back: trimmedTextSchema,
 	hint: hintSchema,
@@ -40,16 +53,16 @@ const flashcardInputItemSchema = v.object({
 });
 
 export const createFlashcardsInputSchema = v.object({
-	studySetId: uuidSchema,
+	studySetId: studySetIdSchema,
 	flashcards: v.pipe(
 		v.array(flashcardInputItemSchema),
-		v.minLength(1, 'At least one flashcard is required'),
-		v.maxLength(FLASHCARD_BATCH_MAX, `At most ${FLASHCARD_BATCH_MAX} flashcards per batch`)
+		v.minLength(1, 'Minimal satu flashcard diperlukan'),
+		v.maxLength(FLASHCARD_BATCH_MAX, `Maksimal ${FLASHCARD_BATCH_MAX} flashcard per batch`)
 	)
 });
 
 export const updateFlashcardInputSchema = v.object({
-	id: uuidSchema,
+	id: flashcardIdSchema,
 	front: trimmedTextSchema,
 	back: trimmedTextSchema,
 	hint: hintSchema,
@@ -58,18 +71,18 @@ export const updateFlashcardInputSchema = v.object({
 
 export const deleteFlashcardsInputSchema = v.object({
 	ids: v.pipe(
-		v.array(uuidSchema),
-		v.minLength(1, 'At least one id is required'),
-		v.maxLength(FLASHCARD_BATCH_MAX, `At most ${FLASHCARD_BATCH_MAX} ids per batch`)
+		v.array(flashcardIdSchema),
+		v.minLength(1, 'Minimal satu id diperlukan'),
+		v.maxLength(FLASHCARD_BATCH_MAX, `Maksimal ${FLASHCARD_BATCH_MAX} id per batch`)
 	)
 });
 
 export const getFlashcardsInputSchema = v.object({
-	studySetId: uuidSchema
+	studySetId: studySetIdSchema
 });
 
 export const getFlashcardInputSchema = v.object({
-	id: uuidSchema
+	id: flashcardIdSchema
 });
 
 export const flashcardSchema = v.object({

@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { createPrefixedIdSchema } from './id-schema.ts';
-import { STUDY_SET_CONTENT_ID_PREFIX } from '../server/services/study-set-content/study-set-content.constant.ts';
-import { STUDY_SET_CONTENT_MAX_LENGTH } from '../server/services/study-set-content/study-set-content.constant.ts';
-import { STUDY_SET_ID_PREFIX } from './study-set.ts';
 import { CHAPTER_ID_PREFIX } from './chapter.ts';
+import { createPrefixedIdSchema } from './id-schema.ts';
+import { STUDY_SET_CONTENT_ID_PREFIX } from './study-set-content.constant.ts';
+import { STUDY_SET_CONTENT_MAX_LENGTH } from './study-set-content.constant.ts';
+import { STUDY_SET_ID_PREFIX } from './study-set.ts';
 
 const contentIdSchema = createPrefixedIdSchema(STUDY_SET_CONTENT_ID_PREFIX);
 const studySetIdSchema = createPrefixedIdSchema(STUDY_SET_ID_PREFIX);
@@ -11,19 +11,17 @@ const chapterIdSchema = createPrefixedIdSchema(CHAPTER_ID_PREFIX);
 
 const contentStringSchema = v.pipe(
 	v.string(),
-	v.minLength(1, 'Content must not be empty'),
+	v.minLength(1, 'Konten tidak boleh kosong'),
 	v.maxLength(
 		STUDY_SET_CONTENT_MAX_LENGTH,
-		`Content must be at most ${STUDY_SET_CONTENT_MAX_LENGTH} characters`
+		`Konten maksimal ${STUDY_SET_CONTENT_MAX_LENGTH} karakter`
 	)
 );
 
 export const createStudySetContentInputSchema = v.object({
 	studySetId: studySetIdSchema,
 	content: contentStringSchema,
-	chapterIds: v.optional(
-		v.pipe(v.array(chapterIdSchema), v.maxLength(32, 'Maximum 32 chapter IDs'))
-	)
+	chapterIds: v.optional(v.pipe(v.array(chapterIdSchema), v.maxLength(32, 'Maksimal 32 ID bab')))
 });
 
 export const updateStudySetContentInputSchema = v.object({

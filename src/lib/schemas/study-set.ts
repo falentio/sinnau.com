@@ -1,41 +1,52 @@
 import * as v from 'valibot';
+import { createPrefixedIdSchema } from './id-schema.ts';
+
+export const STUDY_SET_ID_PREFIX = 'sts';
 
 const STUDY_SET_VISIBILITIES = ['PUBLIC', 'PRIVATE'] as const;
 
 const trimmedTitleSchema = v.pipe(
 	v.string(),
 	v.trim(),
-	v.minLength(5, 'Title must be at least 5 characters after trim'),
-	v.maxLength(50, 'Title must be at most 50 characters')
+	v.minLength(5, 'Judul minimal 5 karakter setelah dipangkas'),
+	v.maxLength(50, 'Judul maksimal 50 karakter')
 );
 
 const descriptionSchema = v.optional(
-	v.pipe(v.string(), v.maxLength(2000, 'Description must be at most 2000 characters'))
+	v.pipe(v.string(), v.maxLength(2000, 'Deskripsi maksimal 2000 karakter'))
 );
 
 const filenameSchema = v.pipe(
 	v.string(),
-	v.maxLength(255, 'Each filename must be at most 255 characters')
+	v.maxLength(255, 'Setiap nama file maksimal 255 karakter')
 );
 
 const filesSchema = v.optional(
-	v.pipe(v.array(filenameSchema), v.maxLength(32, 'At most 32 files per study set'))
+	v.pipe(v.array(filenameSchema), v.maxLength(32, 'Maksimal 32 file per study set'))
 );
 
-const uuidSchema = v.pipe(v.string(), v.uuid());
+const studySetIdSchema = createPrefixedIdSchema(STUDY_SET_ID_PREFIX);
 
 const slugSchema = v.pipe(
 	v.string(),
-	v.minLength(1, 'Slug is required'),
-	v.maxLength(255, 'Slug must be at most 255 characters'),
-	v.regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase alphanumeric characters and hyphens')
+	v.minLength(1, 'Slug diperlukan'),
+	v.maxLength(255, 'Slug maksimal 255 karakter'),
+	v.regex(/^[a-z0-9-]+$/, 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung')
+);
+
+const queryParamIntegerSchema = v.pipe(
+	v.union([v.string(), v.number()]),
+	v.transform((input) => (typeof input === 'string' ? Number(input) : input)),
+	v.check((input) => !Number.isNaN(input), 'Harus berupa angka yang valid'),
+	v.integer(),
+	v.minValue(1)
 );
 
 const paginationSchema = v.optional(
 	v.object({
 		orderBy: v.optional(v.picklist(['createdAt', 'updatedAt'])),
 		orderDirection: v.optional(v.picklist(['asc', 'desc'])),
-		page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)))
+		page: v.optional(queryParamIntegerSchema)
 	})
 );
 
@@ -49,7 +60,7 @@ export const createStudySetInputSchema = v.object({
 });
 
 export const updateStudySetInputSchema = v.object({
-	id: uuidSchema,
+	id: studySetIdSchema,
 	title: v.optional(trimmedTitleSchema),
 	description: v.optional(
 		v.union([v.pipe(v.string(), v.maxLength(2000)), v.literal(''), v.null()])
@@ -59,7 +70,7 @@ export const updateStudySetInputSchema = v.object({
 });
 
 export const deleteStudySetInputSchema = v.object({
-	id: uuidSchema
+	id: studySetIdSchema
 });
 
 export const getStudySetsInputSchema = v.object({
@@ -67,12 +78,12 @@ export const getStudySetsInputSchema = v.object({
 });
 
 export const getStudySetInputSchema = v.union([
-	v.object({ id: uuidSchema }),
+	v.object({ id: studySetIdSchema }),
 	v.object({ slug: slugSchema })
 ]);
 
 export const refreshStudySetVisitInputSchema = v.object({
-	studySetId: uuidSchema
+	studySetId: studySetIdSchema
 });
 
 export const getRecentStudySetsInputSchema = v.object({

@@ -3,19 +3,20 @@ import {
 	CHAPTER_DESCRIPTION_MAX_LENGTH,
 	CHAPTER_TITLE_MAX_LENGTH,
 	CHAPTER_TITLE_MIN_LENGTH
-} from '../server/services/chapter/chapter.constant.ts';
+} from './chapter.constant.ts';
+import { createPrefixedIdSchema } from './id-schema.ts';
+import { STUDY_SET_ID_PREFIX } from './study-set.ts';
+
+export const CHAPTER_ID_PREFIX = 'chp';
 
 const trimmedTitleSchema = v.pipe(
 	v.string(),
 	v.trim(),
 	v.minLength(
 		CHAPTER_TITLE_MIN_LENGTH,
-		`Title must be at least ${CHAPTER_TITLE_MIN_LENGTH} characters after trim`
+		`Judul minimal ${CHAPTER_TITLE_MIN_LENGTH} karakter setelah dipangkas`
 	),
-	v.maxLength(
-		CHAPTER_TITLE_MAX_LENGTH,
-		`Title must be at most ${CHAPTER_TITLE_MAX_LENGTH} characters`
-	)
+	v.maxLength(CHAPTER_TITLE_MAX_LENGTH, `Judul maksimal ${CHAPTER_TITLE_MAX_LENGTH} karakter`)
 );
 
 const descriptionSchema = v.optional(
@@ -23,21 +24,22 @@ const descriptionSchema = v.optional(
 		v.string(),
 		v.maxLength(
 			CHAPTER_DESCRIPTION_MAX_LENGTH,
-			`Description must be at most ${CHAPTER_DESCRIPTION_MAX_LENGTH} characters`
+			`Deskripsi maksimal ${CHAPTER_DESCRIPTION_MAX_LENGTH} karakter`
 		)
 	)
 );
 
-const uuidSchema = v.pipe(v.string(), v.uuid());
+const chapterIdSchema = createPrefixedIdSchema(CHAPTER_ID_PREFIX);
+const studySetIdSchema = createPrefixedIdSchema(STUDY_SET_ID_PREFIX);
 
 export const createChapterInputSchema = v.object({
-	studySetId: uuidSchema,
+	studySetId: studySetIdSchema,
 	title: trimmedTitleSchema,
 	description: descriptionSchema
 });
 
 export const updateChapterInputSchema = v.object({
-	id: uuidSchema,
+	id: chapterIdSchema,
 	title: v.optional(trimmedTitleSchema),
 	description: v.optional(
 		v.union([
@@ -45,7 +47,7 @@ export const updateChapterInputSchema = v.object({
 				v.string(),
 				v.maxLength(
 					CHAPTER_DESCRIPTION_MAX_LENGTH,
-					`Description must be at most ${CHAPTER_DESCRIPTION_MAX_LENGTH} characters`
+					`Deskripsi maksimal ${CHAPTER_DESCRIPTION_MAX_LENGTH} karakter`
 				)
 			),
 			v.literal(''),
@@ -55,13 +57,13 @@ export const updateChapterInputSchema = v.object({
 });
 
 export const deleteChapterInputSchema = v.object({
-	id: uuidSchema
+	id: chapterIdSchema
 });
 
-export const getChaptersInputSchema = v.object({});
+export const getChaptersInputSchema = v.object({ studySetId: studySetIdSchema });
 
 export const getChapterInputSchema = v.object({
-	id: uuidSchema
+	id: chapterIdSchema
 });
 
 export const chapterSchema = v.object({
