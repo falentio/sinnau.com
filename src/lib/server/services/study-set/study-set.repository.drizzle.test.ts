@@ -1,7 +1,7 @@
-import { describe, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { STUDY_SET_VISIT_TTL_MS } from '$lib/schemas/study-set.constant';
 import { studySet, studySetVisit } from '$lib/server/infras/db/schema/study-set';
-import { STUDY_SET_VISIT_TTL_MS } from './study-set.constant';
+import { eq } from 'drizzle-orm';
+import { describe, it } from 'vitest';
 import { StudySetTestEnv } from './study-set.testing';
 
 describe.concurrent('StudySetDrizzleRepository', () => {
@@ -47,10 +47,10 @@ describe.concurrent('StudySetDrizzleRepository', () => {
 				visibility: 'PRIVATE'
 			});
 			expect(updated).not.toBeNull();
-			expect(updated!.title).toBe('Renamed');
-			expect(updated!.visibility).toBe('PRIVATE');
-			expect(updated!.id).toBe('set-1');
-			expect(updated!.createdAt.getTime()).toBe(created.createdAt.getTime());
+			expect(updated).toHaveProperty('title', 'Renamed');
+			expect(updated).toHaveProperty('visibility', 'PRIVATE');
+			expect(updated).toHaveProperty('id', 'set-1');
+			expect(updated).toHaveProperty('createdAt', created.createdAt);
 		});
 
 		it('returns null when the id does not exist', async ({ expect }) => {

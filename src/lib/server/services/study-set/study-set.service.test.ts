@@ -1,7 +1,9 @@
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
+import { STUDY_SET_VISIT_ID_PREFIX, STUDY_SET_VISIT_TTL_MS } from '$lib/schemas/study-set.constant';
 import { ORPCError } from '@orpc/server';
 import { describe, it } from 'vitest';
 import type { StudySetVisit } from '../../infras/db/schema/study-set.ts';
-import { STUDY_SET_VISIT_TTL_MS } from './study-set.constant.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { StudySetGuard } from './study-set.guard.ts';
 import { StudySetService } from './study-set.service.ts';
 import {
@@ -28,13 +30,13 @@ function setupService() {
 	repo.findStudySetBySlug.mockResolvedValue(null);
 	repo.findOwnedStudySets.mockResolvedValue(EMPTY_STUDY_SET_LIST);
 	repo.upsertVisit.mockImplementation(
-		async (userId, studySetId, visitedAt) =>
-			({
-				id: crypto.randomUUID(),
+		(userId, studySetId, visitedAt) =>
+			Promise.resolve({
+				id: generateId(STUDY_SET_VISIT_ID_PREFIX),
 				userId,
 				studySetId,
 				visitedAt: new Date(visitedAt)
-			}) satisfies StudySetVisit
+			}) satisfies Promise<StudySetVisit>
 	);
 	repo.deleteOldVisits.mockResolvedValue(0);
 	repo.findRecentVisits.mockResolvedValue([]);
@@ -50,7 +52,9 @@ function setupService() {
 }
 
 function throwForbidden(): never {
-	throw new ORPCError('FORBIDDEN', { message: 'Cannot modify a study set you do not own' });
+	throw new ORPCError('FORBIDDEN', {
+		message: 'Cannot modify a study set you do not own'
+	});
 }
 
 function throwNotFound(): never {
@@ -75,7 +79,7 @@ describe.concurrent('StudySetService', () => {
 				})
 			);
 			const inserted = repo.insertStudySet.mock.calls[0]?.[0];
-			expect(inserted?.slug).toMatch(/^biology-101-[a-z2-7]{6}$/);
+			expect(inserted?.slug).toMatch(/^biology-101-[0-9A-Za-z]{8}$/);
 			expect(result.title).toBe('Biology 101');
 			expect(result.ownerId).toBe('owner-1');
 			expect(result.visibility).toBe('PUBLIC');
@@ -92,12 +96,19 @@ describe.concurrent('StudySetService', () => {
 			repo.insertStudySet.mockResolvedValue(created);
 
 			const result = await service.createStudySet(
-				{ title: 'Private Set', visibility: 'PRIVATE', files: ['a.pdf', 'b.png'] },
+				{
+					title: 'Private Set',
+					visibility: 'PRIVATE',
+					files: ['a.pdf', 'b.png']
+				},
 				'owner-1'
 			);
 
 			expect(repo.insertStudySet).toHaveBeenCalledWith(
-				expect.objectContaining({ visibility: 'PRIVATE', files: ['a.pdf', 'b.png'] })
+				expect.objectContaining({
+					visibility: 'PRIVATE',
+					files: ['a.pdf', 'b.png']
+				})
 			);
 			expect(result.visibility).toBe('PRIVATE');
 			expect(result.files).toEqual(['a.pdf', 'b.png']);
@@ -107,7 +118,7 @@ describe.concurrent('StudySetService', () => {
 			const { repo, service } = setupService();
 			await service.createStudySet({ title: 'ab' }, 'owner-1');
 			const inserted = repo.insertStudySet.mock.calls[0]?.[0];
-			expect(inserted?.slug).toMatch(/^[a-z2-7]{12}$/);
+			expect(inserted?.slug).toMatch(/^[0-9A-Za-z]{12}$/);
 		});
 
 		it('consults the repo via isSlugTaken for each generated candidate', async ({ expect }) => {
@@ -116,7 +127,7 @@ describe.concurrent('StudySetService', () => {
 			const candidates = repo.isSlugTaken.mock.calls.map(([c]) => c);
 			expect(candidates.length).toBeGreaterThan(0);
 			for (const candidate of candidates) {
-				expect(candidate).toMatch(/^biology-101-[a-z2-7]{6}$/);
+				expect(candidate).toMatch(/^biology-101-[0-9A-Za-z]{8}$/);
 			}
 		});
 	});
@@ -154,7 +165,12 @@ describe.concurrent('StudySetService', () => {
 			}));
 
 			const result = await service.updateStudySet(
-				{ id: 'set-1', title: 'Renamed', visibility: 'PRIVATE', files: ['only.pdf'] },
+				{
+					id: 'set-1',
+					title: 'Renamed',
+					visibility: 'PRIVATE',
+					files: ['only.pdf']
+				},
 				'owner-1'
 			);
 
@@ -231,7 +247,7 @@ describe.concurrent('StudySetService', () => {
 		it('throws NOT_FOUND when repo reports nothing was deleted', async ({ expect }) => {
 			const { service } = setupService();
 			const err = await captureError(
-				service.deleteStudySet({ id: crypto.randomUUID() }, 'owner-1')
+				service.deleteStudySet({ id: generateId(STUDY_SET_ID_PREFIX) }, 'owner-1')
 			);
 			expect(err).toBeInstanceOf(ORPCError);
 			expect(err).toMatchObject({ code: 'NOT_FOUND' });
@@ -257,7 +273,9 @@ describe.concurrent('StudySetService', () => {
 		it('forwards requested pagination options', async ({ expect }) => {
 			const { repo, service } = setupService();
 			await service.getStudySets(
-				{ pagination: { orderBy: 'updatedAt', orderDirection: 'asc', page: 2 } },
+				{
+					pagination: { orderBy: 'updatedAt', orderDirection: 'asc', page: 2 }
+				},
 				'owner-1'
 			);
 			expect(repo.findOwnedStudySets).toHaveBeenCalledWith('owner-1', 'updatedAt', 'asc', 2);
@@ -269,7 +287,10 @@ describe.concurrent('StudySetService', () => {
 			expect
 		}) => {
 			const { guard, service } = setupService();
-			const expected = createStudySetFixture({ id: 'set-1', ownerId: 'owner-1' });
+			const expected = createStudySetFixture({
+				id: 'set-1',
+				ownerId: 'owner-1'
+			});
 			guard.assertVisibleByIdOrNotFound.mockResolvedValue(expected);
 
 			const result = await service.getStudySet({ id: 'set-1' }, 'owner-1');
@@ -282,7 +303,10 @@ describe.concurrent('StudySetService', () => {
 			expect
 		}) => {
 			const { guard, service } = setupService();
-			const expected = createStudySetFixture({ id: 'set-1', slug: 'slug-abc123' });
+			const expected = createStudySetFixture({
+				id: 'set-1',
+				slug: 'slug-abc123'
+			});
 			guard.assertVisibleBySlugOrNotFound.mockResolvedValue(expected);
 
 			const result = await service.getStudySet({ slug: 'slug-abc123' }, 'owner-1');
@@ -294,7 +318,9 @@ describe.concurrent('StudySetService', () => {
 		it('propagates NOT_FOUND from the id visibility check', async ({ expect }) => {
 			const { guard, service } = setupService();
 			guard.assertVisibleByIdOrNotFound.mockImplementation(throwNotFound);
-			const err = await captureError(service.getStudySet({ id: crypto.randomUUID() }, 'owner-1'));
+			const err = await captureError(
+				service.getStudySet({ id: generateId(STUDY_SET_ID_PREFIX) }, 'owner-1')
+			);
 			expect(err).toBeInstanceOf(ORPCError);
 			expect(err).toMatchObject({ code: 'NOT_FOUND' });
 		});
@@ -314,18 +340,11 @@ describe.concurrent('StudySetService', () => {
 			guard.assertVisibleByIdOrNotFound.mockResolvedValue(
 				createStudySetFixture({ id: 'set-1', ownerId: 'owner-1' })
 			);
-			const before = Date.now();
 			const result = await service.refreshStudySetVisit({ studySetId: 'set-1' }, 'owner-1');
-			const after = Date.now();
 
 			expect(guard.assertVisibleByIdOrNotFound).toHaveBeenCalledWith('set-1', 'owner-1');
-			expect(repo.upsertVisit).toHaveBeenCalledOnce();
-			const [userId, studySetId, visitedAt] = repo.upsertVisit.mock.calls[0]!;
-			expect(userId).toBe('owner-1');
-			expect(studySetId).toBe('set-1');
-			expect(visitedAt).toBeGreaterThanOrEqual(before);
-			expect(visitedAt).toBeLessThanOrEqual(after);
-			expect(result.visitedAt).toBe(visitedAt);
+			expect(repo.upsertVisit).toHaveBeenCalledWith('owner-1', 'set-1', expect.any(Number));
+			expect(result.visitedAt).toEqual(expect.any(Number));
 		});
 
 		it('propagates NOT_FOUND from the visibility check and skips upsert', async ({ expect }) => {

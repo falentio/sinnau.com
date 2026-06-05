@@ -1,9 +1,11 @@
-import { type MockedFunction, vi } from 'vitest';
-import { getTestingDb } from '$lib/server/infras/db/testing';
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
 import { user } from '$lib/server/infras/db/schema/auth-schema';
-import { StudySetDrizzleRepository } from './study-set.repository.drizzle';
+import { getTestingDb } from '$lib/server/infras/db/testing';
+import { type MockedFunction, vi } from 'vitest';
 import type { StudySet } from '../../infras/db/schema/study-set.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { StudySetGuard } from './study-set.guard.ts';
+import { StudySetDrizzleRepository } from './study-set.repository.drizzle';
 import type { StudySetListResult, StudySetRepository } from './study-set.repository.ts';
 
 export type MockedStudySetRepository = {
@@ -42,7 +44,7 @@ export function createMockGuard(): MockedStudySetGuard {
 
 export function createStudySetFixture(overrides: Partial<StudySet> = {}): StudySet {
 	return {
-		id: crypto.randomUUID(),
+		id: generateId(STUDY_SET_ID_PREFIX),
 		slug: 'test-slug-abc123',
 		title: 'Test Set',
 		description: null,
@@ -94,6 +96,9 @@ export class StudySetTestEnv implements AsyncDisposable {
 			.insert(user)
 			.values({
 				id,
+
+				// User IDs are auth domain (not prefixed with project prefix)
+
 				email: options.email ?? `${id}@test.local`,
 				name: options.name ?? 'Test User',
 				emailVerified: true
@@ -103,7 +108,7 @@ export class StudySetTestEnv implements AsyncDisposable {
 	}
 
 	async seedStudySet(overrides: Partial<StudySet> = {}): Promise<StudySet> {
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(STUDY_SET_ID_PREFIX);
 		return this.repo.insertStudySet({
 			id,
 			slug: overrides.slug ?? `slug-${id.slice(0, 8)}`,
@@ -115,7 +120,8 @@ export class StudySetTestEnv implements AsyncDisposable {
 		});
 	}
 
-	async [Symbol.asyncDispose](): Promise<void> {
+	[Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
+		return Promise.resolve();
 	}
 }

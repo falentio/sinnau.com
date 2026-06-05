@@ -1,6 +1,9 @@
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
+import {
+	STUDY_SET_DEFAULT_VISIBILITY,
+	STUDY_SET_VISIT_TTL_MS
+} from '$lib/schemas/study-set.constant';
 import { ORPCError } from '@orpc/server';
-import { generateSlug, SlugConflictError } from '../../infras/slug.ts';
-import type { StudySet, StudySetVisibility } from '../../infras/db/schema/study-set.ts';
 import type {
 	CreateStudySetInput,
 	DeleteStudySetInput,
@@ -10,9 +13,11 @@ import type {
 	RefreshStudySetVisitInput,
 	UpdateStudySetInput
 } from '../../../schemas/study-set.ts';
-import { STUDY_SET_DEFAULT_VISIBILITY, STUDY_SET_VISIT_TTL_MS } from './study-set.constant.ts';
-import type { StudySetListResult, StudySetRepository } from './study-set.repository.ts';
+import type { StudySet, StudySetVisibility } from '../../infras/db/schema/study-set.ts';
+import { generateSlug, SlugConflictError } from '../../infras/slug.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { StudySetGuard } from './study-set.guard.ts';
+import type { StudySetListResult, StudySetRepository } from './study-set.repository.ts';
 
 export type { StudySet, StudySetVisibility };
 
@@ -37,7 +42,7 @@ export class StudySetService {
 		});
 
 		return this.repo.insertStudySet({
-			id: crypto.randomUUID(),
+			id: generateId(STUDY_SET_ID_PREFIX),
 			slug,
 			title: input.title,
 			description: input.description ?? null,

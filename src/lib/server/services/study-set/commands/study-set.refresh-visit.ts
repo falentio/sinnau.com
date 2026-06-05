@@ -1,8 +1,8 @@
-import { authorizedProcedure } from '$lib/server/api/base';
 import {
 	refreshStudySetVisitInputSchema,
 	studySetRefreshVisitOutputSchema
 } from '$lib/schemas/study-set';
+import { authorizedProcedure } from '$lib/server/api/base';
 import { studySetService } from '../index';
 
 const ERRORS = {
