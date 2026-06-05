@@ -302,6 +302,9 @@ export class QuizService {
 				}
 				return;
 			}
+			default: {
+				throw new ORPCError('INTERNAL_SERVER_ERROR', { message: 'Internal server error' });
+			}
 		}
 	}
 
@@ -336,6 +339,9 @@ export class QuizService {
 					});
 				}
 				return;
+			}
+			default: {
+				throw new ORPCError('INTERNAL_SERVER_ERROR', { message: 'Internal server error' });
 			}
 		}
 	}
