@@ -14,6 +14,7 @@
 	async function onSubmit(submitCount: number) {
 		if (!studySetId) throw new Error('Study set tidak ditemukan');
 		for (let i = 1; i <= submitCount; i++) {
+			// oxlint-disable-next-line no-await-in-loop -- dev-only seeding, not user-facing
 			await client.chapter.create({
 				studySetId,
 				title: `Bab stub ${i}`,
