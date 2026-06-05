@@ -1,8 +1,8 @@
-import { eq } from 'drizzle-orm';
-import { describe, it } from 'vitest';
 import { chapter } from '$lib/server/infras/db/schema/chapter';
 import { flashcard } from '$lib/server/infras/db/schema/flashcard';
 import { studySet } from '$lib/server/infras/db/schema/study-set';
+import { eq } from 'drizzle-orm';
+import { describe, it } from 'vitest';
 import { FlashcardTestEnv } from './flashcard.testing';
 
 describe.concurrent('FlashcardDrizzleRepository', () => {
@@ -61,9 +61,9 @@ describe.concurrent('FlashcardDrizzleRepository', () => {
 				importance: 10
 			});
 			expect(updated).not.toBeNull();
-			expect(updated!.front).toBe('NEW');
-			expect(updated!.importance).toBe(10);
-			expect(updated!.createdAt.getTime()).toBe(created.createdAt.getTime());
+			expect(updated).toHaveProperty('front', 'NEW');
+			expect(updated).toHaveProperty('importance', 10);
+			expect(updated).toHaveProperty('createdAt', created.createdAt);
 		});
 
 		it('returns null when the id does not exist', async ({ expect }) => {

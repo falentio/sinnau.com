@@ -1,5 +1,6 @@
+import { FLASHCARD_ID_PREFIX } from '$lib/schemas/flashcard';
+import { FLASHCARD_IMPORTANCE_DEFAULT } from '$lib/schemas/flashcard.constant';
 import { ORPCError } from '@orpc/server';
-import type { Flashcard } from '../../infras/db/schema/flashcard.ts';
 import type {
 	CreateFlashcardsInput,
 	DeleteFlashcardsInput,
@@ -7,9 +8,10 @@ import type {
 	GetFlashcardsInput,
 	UpdateFlashcardInput
 } from '../../../schemas/flashcard.ts';
-import { FLASHCARD_IMPORTANCE_DEFAULT } from './flashcard.constant.ts';
-import type { FlashcardRepository } from './flashcard.repository.ts';
+import type { Flashcard } from '../../infras/db/schema/flashcard.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { FlashcardGuard } from './flashcard.guard.ts';
+import type { FlashcardRepository } from './flashcard.repository.ts';
 
 export type { Flashcard };
 
@@ -38,7 +40,7 @@ export class FlashcardService {
 		}
 
 		const rows: Omit<Flashcard, 'createdAt' | 'updatedAt'>[] = input.flashcards.map((item) => ({
-			id: crypto.randomUUID(),
+			id: generateId(FLASHCARD_ID_PREFIX),
 			chapterId: item.chapterId ?? null,
 			studySetId: input.studySetId,
 			front: item.front,

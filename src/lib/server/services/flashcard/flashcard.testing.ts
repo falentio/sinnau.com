@@ -1,12 +1,16 @@
-import { type MockedFunction, vi } from 'vitest';
-import { getTestingDb } from '$lib/server/infras/db/testing';
+import { CHAPTER_ID_PREFIX } from '$lib/schemas/chapter';
+import { FLASHCARD_ID_PREFIX } from '$lib/schemas/flashcard';
+import { STUDY_SET_ID_PREFIX } from '$lib/schemas/study-set';
 import { user } from '$lib/server/infras/db/schema/auth-schema';
+import { getTestingDb } from '$lib/server/infras/db/testing';
+import { type MockedFunction, vi } from 'vitest';
 import { chapter } from '../../infras/db/schema/chapter.ts';
 import type { Flashcard } from '../../infras/db/schema/flashcard.ts';
+import { generateId } from '../../utils/nanoid.ts';
 import type { StudySetGuard } from '../study-set/study-set.guard.ts';
 import { StudySetDrizzleRepository } from '../study-set/study-set.repository.drizzle';
-import { FlashcardDrizzleRepository } from './flashcard.repository.drizzle';
 import type { FlashcardGuard } from './flashcard.guard.ts';
+import { FlashcardDrizzleRepository } from './flashcard.repository.drizzle';
 import type { FlashcardRepository } from './flashcard.repository.ts';
 
 export type MockedFlashcardRepository = {
@@ -57,7 +61,7 @@ export function createMockStudySetGuard(): MockedStudySetGuard {
 
 export function createFlashcardFixture(overrides: Partial<Flashcard> = {}): Flashcard {
 	return {
-		id: crypto.randomUUID(),
+		id: generateId(FLASHCARD_ID_PREFIX),
 		chapterId: null,
 		studySetId: 'set-1',
 		front: 'Front of card',
@@ -107,8 +111,8 @@ export class FlashcardTestEnv implements AsyncDisposable {
 		this.studySetRepo = new StudySetDrizzleRepository(this.db);
 		this.ownerId = this.seedUser({ name: 'Owner' });
 		this.otherId = this.seedUser({ name: 'Other' });
-		this.studySetId = crypto.randomUUID();
-		this.otherStudySetId = crypto.randomUUID();
+		this.studySetId = generateId(STUDY_SET_ID_PREFIX);
+		this.otherStudySetId = generateId(STUDY_SET_ID_PREFIX);
 	}
 
 	async seedOwnedStudySet(options: SeedStudySetOptions = {}): Promise<string> {
@@ -143,6 +147,9 @@ export class FlashcardTestEnv implements AsyncDisposable {
 			.insert(user)
 			.values({
 				id,
+
+				// User IDs are auth domain (not prefixed with project prefix)
+
 				email: options.email ?? `${id}@test.local`,
 				name: options.name ?? 'Test User',
 				emailVerified: true
@@ -170,7 +177,7 @@ export class FlashcardTestEnv implements AsyncDisposable {
 	}
 
 	async seedFlashcard(overrides: Partial<Flashcard> = {}): Promise<Flashcard> {
-		const id = overrides.id ?? crypto.randomUUID();
+		const id = overrides.id ?? generateId(FLASHCARD_ID_PREFIX);
 		const rows = await this.repo.insertFlashcards([
 			{
 				id,
@@ -183,11 +190,13 @@ export class FlashcardTestEnv implements AsyncDisposable {
 				ownerId: overrides.ownerId ?? this.ownerId
 			}
 		]);
-		return rows[0]!;
+		const [row] = rows;
+		if (!row) throw new Error('Expected seeded flashcard to be inserted');
+		return row;
 	}
 
 	seedChapter(options: { id?: string; studySetId?: string; ownerId?: string } = {}): string {
-		const id = options.id ?? crypto.randomUUID();
+		const id = options.id ?? generateId(CHAPTER_ID_PREFIX);
 		this.db
 			.insert(chapter)
 			.values({
@@ -202,7 +211,8 @@ export class FlashcardTestEnv implements AsyncDisposable {
 		return id;
 	}
 
-	async [Symbol.asyncDispose](): Promise<void> {
+	[Symbol.asyncDispose](): Promise<void> {
 		this.db.$client.close();
+		return Promise.resolve();
 	}
 }

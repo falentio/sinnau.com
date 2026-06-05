@@ -1,7 +1,7 @@
+import { FLASHCARD_IMPORTANCE_DEFAULT } from '$lib/schemas/flashcard.constant';
 import { ORPCError } from '@orpc/server';
 import { describe, it } from 'vitest';
 import type { StudySet } from '../../infras/db/schema/study-set.ts';
-import { FLASHCARD_IMPORTANCE_DEFAULT } from './flashcard.constant.ts';
 import type { FlashcardGuard } from './flashcard.guard.ts';
 import { FlashcardService } from './flashcard.service.ts';
 import {
@@ -115,7 +115,7 @@ describe.concurrent('FlashcardService', () => {
 				studySetId: sampleStudySetId,
 				ownerId: 'owner-1'
 			});
-			expect(rows[0]?.id).toMatch(/^[0-9a-f-]{36}$/);
+			expect(rows[0]?.id).toMatch(/^fcd_[a-z0-9]{2}[A-Za-z0-9]{16}$/);
 			expect(result).toHaveLength(1);
 			expect(result[0]?.front).toBe('Q1');
 		});

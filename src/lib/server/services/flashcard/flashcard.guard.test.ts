@@ -1,6 +1,6 @@
 import { ORPCError } from '@orpc/server';
-import type { StudySetGuard } from '../study-set/study-set.guard.ts';
 import { describe, it } from 'vitest';
+import type { StudySetGuard } from '../study-set/study-set.guard.ts';
 import { createStudySetFixture } from '../study-set/study-set.testing.ts';
 import { FlashcardGuard } from './flashcard.guard.ts';
 import {

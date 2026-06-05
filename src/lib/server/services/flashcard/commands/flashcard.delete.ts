@@ -1,9 +1,9 @@
-import { authorizedProcedure } from '$lib/server/api/base';
 import {
 	deleteFlashcardsInputSchema,
 	flashcardDeleteOutputSchema,
 	flashcardPartialForbiddenDataSchema
 } from '$lib/schemas/flashcard';
+import { authorizedProcedure } from '$lib/server/api/base';
 import { flashcardService } from '../index';
 
 const ERRORS = {
