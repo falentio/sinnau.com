@@ -11,6 +11,7 @@
 			? ([
 					{ def: false, label: 'Dev: Empty', value: 'empty' },
 					{ def: false, label: 'Dev: Paginated', value: 'paginated' },
+					{ def: false, label: 'Dev: Unpaginated', value: 'unpaginated' },
 					{ def: false, label: 'Dev: 500', value: '500' }
 				] as const)
 			: [])

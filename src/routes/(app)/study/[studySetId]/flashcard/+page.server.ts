@@ -6,7 +6,7 @@ import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 const VALID_FILTERS = new Set(["latest"]);
-const DEV_STUB_FILTERS = new Set(["empty", "paginated", "500"]);
+const DEV_STUB_FILTERS = new Set(["empty", "paginated", "unpaginated", "500"]);
 
 export const load: PageServerLoad = async ({ url, params, locals }) => {
   const user = locals.mustGetUser();
@@ -31,6 +31,12 @@ export const load: PageServerLoad = async ({ url, params, locals }) => {
       return {
         filter,
         flashcards: getFlashcardStubs(50, params.studySetId, user.id),
+      };
+    }
+    if (filter === "unpaginated") {
+      return {
+        filter,
+        flashcards: getFlashcardStubs(9, params.studySetId, user.id),
       };
     }
   }

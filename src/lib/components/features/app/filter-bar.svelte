@@ -17,6 +17,7 @@
 					{ def: false, label: 'Dev: Empty', value: 'empty' },
 					{ def: false, label: 'Dev: Invalid Filter', value: 'invalid' },
 					{ def: false, label: 'Dev: Paginated', value: 'paginated' },
+					{ def: false, label: 'Dev: Unpaginated', value: 'unpaginated' },
 					{ def: false, label: 'Dev: Internal Server Error', value: '500' }
 				] as const)
 			: [])

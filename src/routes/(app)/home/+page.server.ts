@@ -11,7 +11,7 @@ import * as v from "valibot";
 import type { PageServerLoad } from "./$types";
 
 const VALID_FILTERS = new Set(["latest", "newly-studied", "newly-opened"]);
-const DEV_STUB_FILTERS = new Set(["empty", "paginated", "500"]);
+const DEV_STUB_FILTERS = new Set(["empty", "paginated", "unpaginated", "500"]);
 
 export const load: PageServerLoad = async ({ url, locals }) => {
   const filter = url.searchParams.get("filter");
@@ -54,6 +54,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
       const page = parsed.output.pagination?.page ?? 1;
       return {
         ...getStudySetStubs(100, page, STUDY_SET_PAGE_LIMIT, user.id),
+        filter,
+      };
+    }
+    if (filter === "unpaginated") {
+      return {
+        ...getStudySetStubs(9, 1, STUDY_SET_PAGE_LIMIT, user.id),
         filter,
       };
     }
