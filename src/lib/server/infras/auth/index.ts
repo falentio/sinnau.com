@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
-import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { betterAuth } from "better-auth/minimal";
 import { admin } from "better-auth/plugins";
 
 import { db } from "../db/client.ts";

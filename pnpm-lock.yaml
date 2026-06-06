@@ -11,33 +11,9 @@ importers:
 
   .:
     dependencies:
-      '@orpc/client':
-        specifier: ^1.14.5
-        version: 1.14.5
-      '@orpc/server':
-        specifier: ^1.14.5
-        version: 1.14.5
-      '@orpc/valibot':
-        specifier: ^1.14.5
-        version: 1.14.5(@orpc/contract@1.14.5)(@orpc/server@1.14.5)(valibot@1.4.1(typescript@6.0.3))
-      better-auth:
-        specifier: ^1.6.14
-        version: 1.6.14(@sveltejs/kit@2.63.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.2)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(svelte@5.56.2)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(better-sqlite3@12.10.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(kysely@0.28.17))(svelte@5.56.2)(vitest@4.1.8)
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.10.0
-      drizzle-kit:
-        specifier: ^0.31.10
-        version: 0.31.10
-      drizzle-orm:
-        specifier: ^0.45.2
-        version: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(kysely@0.28.17)
-      nanoid:
-        specifier: ^5.1.11
-        version: 5.1.11
-      valibot:
-        specifier: ^1.4.1
-        version: 1.4.1(typescript@6.0.3)
     devDependencies:
       '@fontsource-variable/outfit':
         specifier: ^5.2.8
@@ -51,6 +27,15 @@ importers:
       '@internationalized/date':
         specifier: ^3.12.2
         version: 3.12.2
+      '@orpc/client':
+        specifier: ^1.14.5
+        version: 1.14.5
+      '@orpc/server':
+        specifier: ^1.14.5
+        version: 1.14.5
+      '@orpc/valibot':
+        specifier: ^1.14.5
+        version: 1.14.5(@orpc/contract@1.14.5)(@orpc/server@1.14.5)(valibot@1.4.1(typescript@6.0.3))
       '@sveltejs/adapter-node':
         specifier: ^5.5.4
         version: 5.5.4(@sveltejs/kit@2.63.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.2)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(svelte@5.56.2)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))
@@ -81,12 +66,21 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.8
         version: 4.1.8(vitest@4.1.8)
+      better-auth:
+        specifier: ^1.6.14
+        version: 1.6.14(@sveltejs/kit@2.63.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.2)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(svelte@5.56.2)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(better-sqlite3@12.10.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(kysely@0.28.17))(svelte@5.56.2)(vitest@4.1.8)
       bits-ui:
         specifier: ^2.18.1
         version: 2.18.1(@internationalized/date@3.12.2)(@sveltejs/kit@2.63.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.2)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(svelte@5.56.2)(typescript@6.0.3)(vite@8.0.16(@types/node@22.19.20)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(svelte@5.56.2)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      drizzle-kit:
+        specifier: ^0.31.10
+        version: 0.31.10
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.10.0)(kysely@0.28.17)
       embla-carousel-svelte:
         specifier: ^8.6.0
         version: 8.6.0(svelte@5.56.2)
@@ -99,6 +93,9 @@ importers:
       mode-watcher:
         specifier: ^1.1.0
         version: 1.1.0(svelte@5.56.2)
+      nanoid:
+        specifier: ^5.1.11
+        version: 5.1.11
       oxfmt:
         specifier: ^0.53.0
         version: 0.53.0(svelte@5.56.2)
@@ -144,6 +141,9 @@ importers:
       ultracite:
         specifier: 7.8.1
         version: 7.8.1(oxfmt@0.53.0(svelte@5.56.2))(oxlint@1.68.0(oxlint-tsgolint@0.23.0))
+      valibot:
+        specifier: ^1.4.1
+        version: 1.4.1(typescript@6.0.3)
       vaul-svelte:
         specifier: 1.0.0-next.7
         version: 1.0.0-next.7(svelte@5.56.2)
