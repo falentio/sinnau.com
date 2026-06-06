@@ -3,6 +3,7 @@
 import type { WithElementRef } from '$lib/utils.js';
 	import { setEmblaContext } from './context.js';
 import type { CarouselAPI, CarouselProps, EmblaContext } from './context.js';
+	import { untrack } from 'svelte';
 
 	let {
 		ref = $bindable(null),
@@ -15,7 +16,7 @@ import type { CarouselAPI, CarouselProps, EmblaContext } from './context.js';
 		...restProps
 	}: WithElementRef<CarouselProps> = $props();
 
-	const carouselState = $state<EmblaContext>({
+	const carouselState = $state<EmblaContext>(untrack(() => ({
 		api: undefined,
 		canScrollNext: false,
 		canScrollPrev: false,
@@ -39,7 +40,7 @@ import type { CarouselAPI, CarouselProps, EmblaContext } from './context.js';
 			// placeholder, replaced below
 		},
 		selectedIndex: 0
-	});
+	})));
 
 	const onSelect = () => {
 		if (!carouselState.api) {
