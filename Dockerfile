@@ -42,7 +42,7 @@ FROM base AS runner
 
 LABEL org.opencontainers.image.title="sinnau" \
       org.opencontainers.image.description="Sinnau SvelteKit app (adapter-node)" \
-      org.opencontainers.image.source="https://github.com/anomalyco/2sinnau" \
+      org.opencontainers.image.source="https://github.com/falentio/sinnau.com" \
       org.opencontainers.image.licenses="UNLICENSED"
 
 ENV NODE_ENV=production \
