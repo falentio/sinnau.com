@@ -2,7 +2,21 @@ allowBuilds:
   "@hugeicons/svelte": true
   better-sqlite3: true
   esbuild: true
+minimumReleaseAgeExclude:
+  - "@types/node@22.19.20"
 onlyBuiltDependencies:
   - "@tailwindcss/oxide"
   - better-sqlite3
   - esbuild
+# TODO(rollback): remove this override once upstream ships a release of
+# @better-auth/kysely-adapter that imports DEFAULT_MIGRATION_TABLE /
+# DEFAULT_MIGRATION_LOCK_TABLE from 'kysely/migration' instead of 'kysely'.
+# Tracked by:
+#   - https://github.com/better-auth/better-auth/pull/9554
+#   - https://github.com/better-auth/better-auth/pull/9811
+#   - https://github.com/better-auth/better-auth/issues/9610
+# Until then, kysely 0.29.x breaks `vite build` (rolldown strict ESM static
+# analysis: MISSING_EXPORT). This project uses drizzleAdapter exclusively, so
+# kysely is transitive dead code and the 0.28.x pin is safe.
+overrides:
+  kysely: ^0.28.17

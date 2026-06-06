@@ -10,6 +10,7 @@ coverage
 # SvelteKit
 .svelte-kit
 dist
+build
 
 # Env (keep .env.example / .env.test tracked)
 .env
