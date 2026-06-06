@@ -6,7 +6,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { Snippet } from 'svelte';
 	import Command from './command.svelte';
 
-	const {
+	let {
 		open = $bindable(false),
 		ref = $bindable(null),
 		value = $bindable(''),

@@ -3,7 +3,7 @@
 import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Slider as SliderPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		orientation = 'horizontal',

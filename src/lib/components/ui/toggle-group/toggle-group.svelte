@@ -22,7 +22,7 @@
 	import { cn } from '$lib/utils.js';
 	import { ToggleGroup as ToggleGroupPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		class: className,

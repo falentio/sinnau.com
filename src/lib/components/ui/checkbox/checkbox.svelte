@@ -5,7 +5,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Checkbox as CheckboxPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		checked = $bindable(false),
 		indeterminate = $bindable(false),

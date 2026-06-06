@@ -3,7 +3,7 @@
 import type { WithElementRef } from '$lib/utils.js';
 	import type { HTMLOptionAttributes } from 'svelte/elements';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

@@ -6,7 +6,7 @@ import type { ButtonVariant } from '$lib/components/ui/button/index.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

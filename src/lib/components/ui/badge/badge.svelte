@@ -28,7 +28,7 @@ import type { VariantProps } from 'tailwind-variants';
 import type { WithElementRef } from '$lib/utils.js';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
 
-	const {
+	let {
 		ref = $bindable(null),
 		href,
 		class: className,

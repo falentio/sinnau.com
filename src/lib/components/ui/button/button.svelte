@@ -49,7 +49,7 @@ import type { VariantProps } from 'tailwind-variants';
 </script>
 
 <script lang="ts">
-	const {
+	let {
 		class: className,
 		variant = 'default',
 		size = 'default',

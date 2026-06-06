@@ -3,7 +3,7 @@
 	import { NavigationMenu as NavigationMenuPrimitive } from 'bits-ui';
 	import NavigationMenuViewport from './navigation-menu-viewport.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		viewport = true,

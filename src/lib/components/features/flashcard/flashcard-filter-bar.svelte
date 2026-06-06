@@ -3,7 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 
-	const { currentFilter }: { currentFilter: string | null } = $props();
+	let { currentFilter }: { currentFilter: string | null } = $props();
 
 	const filters = $derived([
 		{ def: true, label: 'Terbaru', value: 'latest' },

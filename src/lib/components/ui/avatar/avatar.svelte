@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Avatar as AvatarPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		loadingStatus = $bindable('loading'),
 		size = 'default',

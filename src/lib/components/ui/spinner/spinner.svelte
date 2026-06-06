@@ -4,7 +4,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { SVGAttributes } from 'svelte/elements';
 
-	const {
+	let {
 		class: className,
 		role = 'status',
 		// we add name, color, and stroke for compatibility with different icon libraries props

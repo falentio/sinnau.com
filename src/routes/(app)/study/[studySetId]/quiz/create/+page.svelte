@@ -39,7 +39,7 @@
 
 	let serverError = $state('');
 	let pending = $state(false);
-	const showExplanation = $state(false);
+	let showExplanation = $state(false);
 
 	const quizTypeItems = [
 		{ label: 'Pilihan Ganda', value: 'MULTIPLE_CHOICE' },

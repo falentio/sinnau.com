@@ -5,7 +5,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { ComponentProps } from 'svelte';
 	import MenubarPortal from './menubar-portal.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		sideOffset = 8,

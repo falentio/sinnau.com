@@ -10,7 +10,7 @@ import type { WithElementRef } from '$lib/utils.js';
 			({ type: 'file'; files?: FileList } | { type?: InputType; files?: undefined })
 	>;
 
-	const {
+	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		type,

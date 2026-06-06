@@ -3,8 +3,8 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Label from '$lib/components/ui/label/index.js';
 
-	const username = $state('');
-	const pending = $state(false);
+	let username = $state('');
+	let pending = $state(false);
 	let error = $state('');
 
 	const handleSubmit = (e: SubmitEvent) => {

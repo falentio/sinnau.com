@@ -25,10 +25,10 @@
 	import { defaults, superForm } from 'sveltekit-superforms';
 	import { valibotClient } from 'sveltekit-superforms/adapters';
 
-	const serverError = $state('');
-	const pending = $state(false);
-	const advancedMode = $state(false);
-	const selectedFiles = $state<File[]>([]);
+	let serverError = $state('');
+	let pending = $state(false);
+	let advancedMode = $state(false);
+	let selectedFiles = $state<File[]>([]);
 
 	const form = superForm(
 		defaults<GenerateForm>(

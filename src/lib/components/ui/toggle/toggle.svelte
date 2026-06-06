@@ -31,7 +31,7 @@ import type { VariantProps } from 'tailwind-variants';
 	import { cn } from '$lib/utils.js';
 	import { Toggle as TogglePrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		pressed = $bindable(false),
 		class: className,

@@ -5,7 +5,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { ComponentProps } from 'svelte';
 	import DropdownMenuPortal from './dropdown-menu-portal.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		sideOffset = 4,
 		align = 'start',

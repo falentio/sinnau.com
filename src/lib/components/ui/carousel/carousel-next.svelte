@@ -7,7 +7,7 @@ import type { Props } from '$lib/components/ui/button/index.js';
 	import type { WithoutChildren } from 'bits-ui';
 	import { getEmblaContext } from './context.js';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		variant = 'outline',

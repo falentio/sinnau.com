@@ -3,7 +3,7 @@
 	import type { WithElementRef } from 'bits-ui';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	const {
+	let {
 		ref = $bindable(null),
 		inset,
 		children,

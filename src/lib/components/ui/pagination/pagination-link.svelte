@@ -4,7 +4,7 @@ import type { ButtonSize } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
 	import { Pagination as PaginationPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		size = 'icon',

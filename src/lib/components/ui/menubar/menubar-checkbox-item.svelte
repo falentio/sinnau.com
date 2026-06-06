@@ -6,7 +6,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Menubar as MenubarPrimitive } from 'bits-ui';
 	import type { Snippet } from 'svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		checked = $bindable(false),

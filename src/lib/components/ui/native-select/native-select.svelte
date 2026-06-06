@@ -9,7 +9,7 @@ import type { WithElementRef } from '$lib/utils.js';
 		size?: 'sm' | 'default';
 	};
 
-	const {
+	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		class: className,

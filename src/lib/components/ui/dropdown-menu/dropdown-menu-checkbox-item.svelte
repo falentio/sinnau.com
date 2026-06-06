@@ -6,7 +6,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 	import type { Snippet } from 'svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		checked = $bindable(false),
 		indeterminate = $bindable(false),

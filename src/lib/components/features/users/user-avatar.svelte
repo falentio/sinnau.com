@@ -4,7 +4,7 @@
 	import Avatar from '$lib/components/ui/avatar/avatar.svelte';
 	import { cn } from '$lib/utils.js';
 
-	const {
+	let {
 		name,
 		userId,
 		class: className

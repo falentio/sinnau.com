@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		type = 'button',
 		...restProps

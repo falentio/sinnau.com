@@ -5,7 +5,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { ComponentProps } from 'svelte';
 	import HoverCardPortal from './hover-card-portal.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		align = 'center',

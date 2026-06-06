@@ -3,7 +3,7 @@
 import type { WithoutChild } from '$lib/utils.js';
 	import { Accordion as AccordionPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

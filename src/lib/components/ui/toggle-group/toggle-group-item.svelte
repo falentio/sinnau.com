@@ -5,7 +5,7 @@ import type { ToggleVariants } from '$lib/components/ui/toggle/index.js';
 	import { ToggleGroup as ToggleGroupPrimitive } from 'bits-ui';
 	import { getToggleGroupCtx } from './toggle-group.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		value = $bindable(),
 		class: className,

@@ -5,7 +5,7 @@ import type { WithElementRef, WithoutChildren } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import type { FormPath } from 'sveltekit-superforms';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		form,

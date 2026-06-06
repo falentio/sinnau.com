@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { PinInput as InputOTPPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		cell,
 		class: className,

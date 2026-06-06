@@ -5,7 +5,7 @@ import type { WithElementRef } from '$lib/utils.js';
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

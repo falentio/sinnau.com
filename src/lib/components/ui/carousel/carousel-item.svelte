@@ -4,7 +4,7 @@ import type { WithElementRef } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { getEmblaContext } from './context.js';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

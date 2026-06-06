@@ -8,7 +8,7 @@ import type { ChartConfig } from './chart-utils.js';
 
 	const uid = $props.id();
 
-	const {
+	let {
 		ref = $bindable(null),
 		id = uid,
 		class: className,

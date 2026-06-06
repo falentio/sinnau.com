@@ -13,7 +13,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import SheetOverlay from './sheet-overlay.svelte';
 	import SheetPortal from './sheet-portal.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		side = 'right',

@@ -6,7 +6,7 @@ import type { WithoutChild, WithoutChildrenOrChild } from '$lib/utils.js';
 	import AlertDialogOverlay from './alert-dialog-overlay.svelte';
 	import AlertDialogPortal from './alert-dialog-portal.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		size = 'default',

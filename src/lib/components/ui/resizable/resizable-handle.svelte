@@ -3,7 +3,7 @@
 import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import * as ResizablePrimitive from 'paneforge';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		withHandle = false,

@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Drawer as DrawerPrimitive } from 'vaul-svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		...restProps

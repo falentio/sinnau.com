@@ -5,7 +5,7 @@ import type { WithoutChild } from '$lib/utils.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		inset,

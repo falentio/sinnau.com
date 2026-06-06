@@ -16,9 +16,9 @@
 	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 
-	const { children } = $props();
+	let { children } = $props();
 
-	const search = $state('');
+	let search = $state('');
 
 	const user = getUser;
 </script>

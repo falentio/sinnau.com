@@ -6,7 +6,7 @@
 	import { AiBeautifyIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 
-	const { currentFilter }: { currentFilter: string | null } = $props();
+	let { currentFilter }: { currentFilter: string | null } = $props();
 
 	const filters = $derived([
 		{ def: true, label: 'Terbaru', value: 'latest' },

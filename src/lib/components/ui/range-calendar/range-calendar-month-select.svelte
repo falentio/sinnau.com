@@ -5,7 +5,7 @@ import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { RangeCalendar as RangeCalendarPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		value,

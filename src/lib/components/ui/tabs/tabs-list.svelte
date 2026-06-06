@@ -22,7 +22,7 @@ import type { VariantProps } from 'tailwind-variants';
 	import { cn } from '$lib/utils.js';
 	import { Tabs as TabsPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		variant = 'default',
 		class: className,

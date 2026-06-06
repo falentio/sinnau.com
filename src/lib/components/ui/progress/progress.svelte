@@ -3,7 +3,7 @@
 import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Progress as ProgressPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		max = 100,

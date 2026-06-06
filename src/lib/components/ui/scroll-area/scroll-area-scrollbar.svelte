@@ -3,7 +3,7 @@
 import type { WithoutChild } from '$lib/utils.js';
 	import { ScrollArea as ScrollAreaPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		orientation = 'vertical',

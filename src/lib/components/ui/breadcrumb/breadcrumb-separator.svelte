@@ -5,7 +5,7 @@ import type { WithElementRef } from '$lib/utils.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { HTMLLiAttributes } from 'svelte/elements';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

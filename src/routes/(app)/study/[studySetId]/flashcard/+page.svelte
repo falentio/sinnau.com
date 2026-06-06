@@ -11,7 +11,7 @@
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 
-	const { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const flashcards = $derived(data.flashcards);
 	const currentFilter = $derived(data.filter ?? null);

@@ -12,7 +12,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { NavigationMenu as NavigationMenuPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

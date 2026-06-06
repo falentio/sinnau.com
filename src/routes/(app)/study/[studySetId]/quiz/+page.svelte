@@ -11,12 +11,12 @@
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 
-	const { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const quizzes = $derived(data.quizzes);
 	const currentFilter = $derived(data.filter ?? null);
 
-	const openExplanation = $state(false);
+	let openExplanation = $state(false);
 	const pageIndex = $derived(Number(pageStore.url.searchParams.get('page')) || 1);
 
 	const displayedQuizzes = $derived(quizzes.slice((pageIndex - 1) * 10, pageIndex * 10));

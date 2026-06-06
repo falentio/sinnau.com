@@ -4,7 +4,7 @@ import type { ButtonVariant, ButtonSize } from '$lib/components/ui/button/index.
 	import { cn } from '$lib/utils.js';
 	import { AlertDialog as AlertDialogPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		variant = 'outline',

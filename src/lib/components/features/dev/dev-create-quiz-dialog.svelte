@@ -10,10 +10,10 @@
 		studySetId: string;
 	}
 
-	const { open = $bindable(false), studySetId }: Props = $props();
+	let { open = $bindable(false), studySetId }: Props = $props();
 
-	const count = $state(10);
-	const quizType = $state<QuizType>('MULTIPLE_CHOICE');
+	let count = $state(10);
+	let quizType = $state<QuizType>('MULTIPLE_CHOICE');
 
 	const QUIZ_TYPE_OPTIONS = [
 		{ label: 'Pilihan Ganda', value: 'MULTIPLE_CHOICE' as const },

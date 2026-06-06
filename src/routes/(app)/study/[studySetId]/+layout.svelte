@@ -43,7 +43,7 @@ import type { Snippet } from 'svelte';
 		}))
 	);
 
-	const selectedChapterId = $state(untrack(() => data.chapters[0]?.id ?? ''));
+	let selectedChapterId = $state(untrack(() => data.chapters[0]?.id ?? ''));
 
 	const selectedChapter = $derived(
 		data.chapters.find((chapter) => chapter.id === selectedChapterId)
@@ -51,9 +51,9 @@ import type { Snippet } from 'svelte';
 
 	const studySetId = $derived(page.params.studySetId ?? '');
 
-	const flashcardDialogOpen = $state(false);
-	const chapterDialogOpen = $state(false);
-	const quizDialogOpen = $state(false);
+	let flashcardDialogOpen = $state(false);
+	let chapterDialogOpen = $state(false);
+	let quizDialogOpen = $state(false);
 </script>
 
 <div

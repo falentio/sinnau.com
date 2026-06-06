@@ -3,7 +3,7 @@
 import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Switch as SwitchPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		checked = $bindable(false),

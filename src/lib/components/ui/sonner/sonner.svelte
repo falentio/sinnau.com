@@ -11,7 +11,7 @@
 	import { Toaster as Sonner } from 'svelte-sonner';
 import type { ToasterProps as SonnerProps } from 'svelte-sonner';
 
-	const { ...restProps }: SonnerProps = $props();
+	let { ...restProps }: SonnerProps = $props();
 </script>
 
 <Sonner

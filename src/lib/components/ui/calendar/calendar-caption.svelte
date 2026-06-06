@@ -6,7 +6,7 @@ import type { DateValue } from '@internationalized/date';
 	import CalendarYearSelect from './calendar-year-select.svelte';
 	import type Calendar from './calendar.svelte';
 
-	const {
+	let {
 		captionLayout,
 		months,
 		monthFormat,

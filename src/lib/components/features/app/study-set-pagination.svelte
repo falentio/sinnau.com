@@ -5,7 +5,7 @@
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 
-	const {
+	let {
 		pagination,
 		currentFilter
 	}: {

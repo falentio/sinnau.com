@@ -10,7 +10,7 @@
 		description: string | null;
 	}
 
-	const { studySet }: { studySet: StudySet } = $props();
+	let { studySet }: { studySet: StudySet } = $props();
 	const rng = $derived(createRng(studySet.id));
 
 	const getColor = (random: Rng) => {

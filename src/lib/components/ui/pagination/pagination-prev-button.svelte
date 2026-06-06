@@ -5,7 +5,7 @@
 	import { Pagination as PaginationPrimitive } from 'bits-ui';
 	import { buttonVariants } from '../button/index.js';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		children,

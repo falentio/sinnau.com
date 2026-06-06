@@ -7,7 +7,7 @@ import type { WithoutChild, WithoutChildrenOrChild } from '$lib/utils.js';
 	import SelectScrollDownButton from './select-scroll-down-button.svelte';
 	import SelectScrollUpButton from './select-scroll-up-button.svelte';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		sideOffset = 4,

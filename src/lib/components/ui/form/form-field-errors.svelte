@@ -3,7 +3,7 @@
 import type { WithoutChild } from '$lib/utils.js';
 	import * as FormPrimitive from 'formsnap';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		errorClasses,

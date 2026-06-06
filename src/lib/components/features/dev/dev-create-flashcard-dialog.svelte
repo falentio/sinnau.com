@@ -7,9 +7,9 @@
 		studySetId: string;
 	}
 
-	const { open = $bindable(false), studySetId }: Props = $props();
+	let { open = $bindable(false), studySetId }: Props = $props();
 
-	const count = $state(10);
+	let count = $state(10);
 
 	const onSubmit = async (submitCount: number) => {
 		if (!studySetId) {throw new Error('Study set tidak ditemukan');}

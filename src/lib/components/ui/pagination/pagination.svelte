@@ -3,7 +3,7 @@
 
 	import { cn } from '$lib/utils.js';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		count = 0,

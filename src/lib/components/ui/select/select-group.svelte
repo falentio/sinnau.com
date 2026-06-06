@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Select as SelectPrimitive } from 'bits-ui';
 
-	const {
+	let {
 		ref = $bindable(null),
 		class: className,
 		...restProps
