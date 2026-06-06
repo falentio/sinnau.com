@@ -8,6 +8,7 @@ export default defineConfig({
   ignorePatterns: [
     ...(core.ignorePatterns ?? []),
     ".agents/skills/**",
+    "drizzle/*",
     "src/lib/server/infras/db/schema/auth-schema.ts",
   ],
   overrides: [
