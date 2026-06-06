@@ -10,7 +10,6 @@
 	import {
 		Alert02Icon,
 		ArrowLeft01Icon,
-		Cancel01Icon,
 		Home01Icon
 	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
@@ -33,7 +32,7 @@
 
 	const friendlyError = $derived(
 		errorMap[page.error?.message ?? ''] ??
-			errorMap[page.error?.code ?? ''] ?? {
+    errorMap[page.error?.code ?? ''] ?? {
 				message: page.error?.message ?? 'Terjadi kesalahan. Coba lagi nanti.',
 				title: 'Terjadi kesalahan'
 			}
