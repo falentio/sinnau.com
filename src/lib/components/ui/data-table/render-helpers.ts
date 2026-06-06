@@ -1,7 +1,6 @@
 import type { Component, ComponentProps, Snippet } from "svelte";
 
 import { RenderSnippetConfig } from "./render-snippet-config.ts";
-
 /**
  * A helper class to make it easy to identify Svelte components in
  * `columnDef.cell` and `columnDef.header` properties.
@@ -91,3 +90,5 @@ export const renderSnippet = <TProps>(
   /** The parameters to pass to the snippet. */
   params: TProps = {} as TProps
 ) => new RenderSnippetConfig(snippet, params);
+
+export { RenderSnippetConfig };
