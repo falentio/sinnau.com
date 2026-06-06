@@ -38,7 +38,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --prod
 
-FROM node:24-bookworm-slim AS runner
+FROM base AS runner
 
 LABEL org.opencontainers.image.title="sinnau" \
       org.opencontainers.image.description="Sinnau SvelteKit app (adapter-node)" \
