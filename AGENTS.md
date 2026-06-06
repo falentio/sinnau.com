@@ -1,4 +1,4 @@
-## Usefull docs
+## Useful docs
 
 Try to fetch this docs if your work or task is related to some of these techs.
 If you still have lack of information after get the docs, you should either use context7 or exa websearch.
@@ -56,46 +56,11 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 ## Script
 
-- use `pnpm run check` for typecheck all files
-- use `pnpm run check:filter -- files` for typecheck with files filter
-- use `pnpm run lint:agent` for linting
+- use `pnpm run check` for formatting check, linting check, typecheck all files
 - use `rtk pnpm run test:unit` for testing without coverage
 - use `rtk pnpm run test:coverage` if you need test with coverage
 
----
-
-## `check:filter` Usage Guide
-
-script wrap their respective commands in a shell function that defaults to `.` when no args are passed.
-Always use this script to save times on our iterations, rather than run on all files.
-Keep lint and check as narrow as possible.
-
-### Syntax
-
-```
-pnpm check:filter -- <args...>
-```
-
-The `--` separator is required to pass args through to the underlying commands.
-
-### Scenarios
-
-| Scenario                 | Command                                                                                 |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| **Everything (default)** | `pnpm check:filter`                                                                     |
-| **Single file**          | `pnpm check:filter -- "src/routes/home/+page.svelte"`                                   |
-| **Multiple files**       | `pnpm check:filter -- "src/routes/home/+page.svelte" "src/routes/home/+page.server.ts"` |
-| **Glob pattern**         | `pnpm check:filter -- "src/routes/**/*.svelte"`                                         |
-| **Specific directory**   | `pnpm check:filter -- "src/lib/components/"`                                            |
-| **Multiple globs**       | `pnpm check:filter -- "src/routes/**/*.svelte" "src/lib/**/*.ts"`                       |
-| **TypeScript only**      | `pnpm check:filter -- "**/*.ts"`                                                        |
-| **Changed files (git)**  | `pnpm check:filter -- $(git diff --name-only HEAD \| tr '\n' ' ')`                      |
-
-### What each runs
-
-| Script         | Commands                                                                               |
-| -------------- | -------------------------------------------------------------------------------------- |
-| `check:filter` | `svelte-kit sync` then `svelte-check --tsconfig ./tsconfig.json` on the selected paths |
+always run pnpm run check before finalize your tasks
 
 ---
 
@@ -110,7 +75,7 @@ narrow testing run would help to speed up our iterations, rather than waiting fo
 ## Tooling
 
 always use sqlite cli to debug the sqlite state if needed.
-assume the host machine have `sqlite` cli installed, if not prompt the user to install.
+assume the host machine have `sqlite3` cli installed, if not prompt the user to install.
 
 ---
 
