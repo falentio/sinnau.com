@@ -2,23 +2,23 @@
 	import { client } from '$lib/orpc';
 	import DevCreateEntityDialog from './dev-create-entity-dialog.svelte';
 
-	type Props = {
+	interface Props {
 		open: boolean;
 		studySetId: string;
-	};
-
-	let { open = $bindable(false), studySetId }: Props = $props();
-
-	let count = $state(10);
-
-	async function onSubmit(submitCount: number) {
-		if (!studySetId) throw new Error('Study set tidak ditemukan');
-		const flashcards = Array.from({ length: submitCount }, (_, i) => ({
-			front: `Flashcard depan #${i + 1}`,
-			back: `Flashcard belakang #${i + 1}`
-		}));
-		await client.flashcard.create({ studySetId, flashcards });
 	}
+
+	const { open = $bindable(false), studySetId }: Props = $props();
+
+	const count = $state(10);
+
+	const onSubmit = async (submitCount: number) => {
+		if (!studySetId) {throw new Error('Study set tidak ditemukan');}
+		const flashcards = Array.from({ length: submitCount }, (_, i) => ({
+			back: `Flashcard belakang #${i + 1}`,
+			front: `Flashcard depan #${i + 1}`
+		}));
+		await client.flashcard.create({ flashcards, studySetId });
+	};
 </script>
 
 <DevCreateEntityDialog

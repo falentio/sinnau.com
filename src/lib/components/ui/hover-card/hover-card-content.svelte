@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { LinkPreview as HoverCardPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 	import HoverCardPortal from './hover-card-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		align = 'center',

@@ -1,10 +1,10 @@
-import { defineConfig } from 'drizzle-kit';
+import { defineConfig } from "drizzle-kit";
 
-const url = process.env.DB_FILE_NAME ?? '.data/data.db';
+const url = process.env.DB_FILE_NAME ?? ".data/data.db";
 
 export default defineConfig({
-	schema: './src/lib/server/infras/db/schema/index.ts',
-	out: './drizzle',
-	dialect: 'sqlite',
-	dbCredentials: { url }
+  dbCredentials: { url },
+  dialect: "sqlite",
+  out: "./drizzle",
+  schema: "./src/lib/server/infras/db/schema/index.ts",
 });

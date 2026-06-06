@@ -34,16 +34,16 @@ Flashcard is not responsible for:
 
 ```typescript
 interface Flashcard {
-	id: UUID;
-	chapterId?: UUID;
-	studySetId: UUID;
-	front: string;
-	back: string;
-	hint?: string;
-	importance: number;
-	ownerId: UUID;
-	createdAt: number;
-	updatedAt: number;
+  id: UUID;
+  chapterId?: UUID;
+  studySetId: UUID;
+  front: string;
+  back: string;
+  hint?: string;
+  importance: number;
+  ownerId: UUID;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -78,14 +78,14 @@ interface Flashcard {
 
 ```typescript
 interface CreateFlashcardsCommand {
-	studySetId: UUID;
-	flashcards: Array<{
-		chapterId?: UUID;
-		front: string;
-		back: string;
-		hint?: string;
-		importance?: number;
-	}>;
+  studySetId: UUID;
+  flashcards: Array<{
+    chapterId?: UUID;
+    front: string;
+    back: string;
+    hint?: string;
+    importance?: number;
+  }>;
 }
 ```
 
@@ -100,11 +100,11 @@ interface CreateFlashcardsCommand {
 
 ```typescript
 interface UpdateFlashcardCommand {
-	id: UUID;
-	front: string;
-	back: string;
-	hint?: string;
-	importance?: number;
+  id: UUID;
+  front: string;
+  back: string;
+  hint?: string;
+  importance?: number;
 }
 ```
 
@@ -121,7 +121,7 @@ interface UpdateFlashcardCommand {
 
 ```typescript
 interface DeleteFlashcardsCommand {
-	ids: UUID[];
+  ids: UUID[];
 }
 ```
 
@@ -137,7 +137,7 @@ interface DeleteFlashcardsCommand {
 
 ```typescript
 interface GetFlashcardsQuery {
-	studySetId: UUID;
+  studySetId: UUID;
 }
 ```
 
@@ -151,7 +151,7 @@ interface GetFlashcardsQuery {
 
 ```typescript
 interface GetFlashcardQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 

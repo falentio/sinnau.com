@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import {
 		SIDEBAR_WIDTH,
@@ -11,7 +12,9 @@
 	let {
 		ref = $bindable(null),
 		open = $bindable(true),
-		onOpenChange = () => {},
+		onOpenChange = (_value: boolean) => {
+			// no-op default; replaced by consumer
+		},
 		class: className,
 		style,
 		children,

@@ -3,7 +3,7 @@
 	import { cn } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

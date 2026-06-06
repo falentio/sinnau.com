@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
-	import { MinusSignIcon } from '@hugeicons/core-free-icons';
-	import { Tick02Icon } from '@hugeicons/core-free-icons';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
+	import { MinusSignIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Menubar as MenubarPrimitive } from 'bits-ui';
 	import type { Snippet } from 'svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		checked = $bindable(false),

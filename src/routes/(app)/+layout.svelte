@@ -23,7 +23,7 @@
 	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 
-	let { children } = $props();
+	const { children } = $props();
 	const isMobile = new IsMobile();
 	const authRouteIds = ['/(auth)/login', '/(auth)/sign-up', '/login', '/sign-up'];
 	const homeRouteIds = ['/(app)/home', '/(app)/subs/usage', '/(app)/subs/pricing'];

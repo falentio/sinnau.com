@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Tick02Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 	import type { Snippet } from 'svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		checked = $bindable(false),
 		indeterminate = $bindable(false),

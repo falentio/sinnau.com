@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { HTMLLiAttributes } from 'svelte/elements';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

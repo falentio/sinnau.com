@@ -1,16 +1,17 @@
 <script lang="ts" module>
-	import { tv, type VariantProps } from 'tailwind-variants';
+	import { tv } from 'tailwind-variants';
+import type { VariantProps } from 'tailwind-variants';
 
 	export const emptyMediaVariants = tv({
 		base: 'mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0',
+		defaultVariants: {
+			variant: 'default'
+		},
 		variants: {
 			variant: {
 				default: 'bg-transparent',
 				icon: "bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg:not([class*='size-'])]:size-5"
 			}
-		},
-		defaultVariants: {
-			variant: 'default'
 		}
 	});
 
@@ -18,10 +19,11 @@
 </script>
 
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

@@ -1,8 +1,8 @@
 allowBuilds:
-  '@hugeicons/svelte': true
+  "@hugeicons/svelte": true
   better-sqlite3: true
   esbuild: true
 onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
+  - "@tailwindcss/oxide"
   - better-sqlite3
   - esbuild

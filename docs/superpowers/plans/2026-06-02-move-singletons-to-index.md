@@ -21,9 +21,9 @@
 - [ ] **Step 1: Create study-set/index.ts**
 
 ```ts
-import { StudySetDrizzleRepository } from './study-set.repository.drizzle.ts';
-import { StudySetGuard } from './study-set.guard.ts';
-import { StudySetService } from './study-set.service.ts';
+import { StudySetDrizzleRepository } from "./study-set.repository.drizzle.ts";
+import { StudySetGuard } from "./study-set.guard.ts";
+import { StudySetService } from "./study-set.service.ts";
 
 const studySetRepo = new StudySetDrizzleRepository();
 export const studySetGuard = new StudySetGuard(studySetRepo);
@@ -54,10 +54,10 @@ git commit -m "feat(study-set): add index.ts with singleton wiring"
 - [ ] **Step 1: Create chapter/index.ts**
 
 ```ts
-import { ChapterDrizzleRepository } from './chapter.repository.drizzle.ts';
-import { ChapterGuard } from './chapter.guard.ts';
-import { ChapterService } from './chapter.service.ts';
-import { studySetGuard } from '../study-set/index.ts';
+import { ChapterDrizzleRepository } from "./chapter.repository.drizzle.ts";
+import { ChapterGuard } from "./chapter.guard.ts";
+import { ChapterService } from "./chapter.service.ts";
+import { studySetGuard } from "../study-set/index.ts";
 
 const chapterRepo = new ChapterDrizzleRepository();
 export const chapterGuard = new ChapterGuard(chapterRepo, studySetGuard);
@@ -82,14 +82,17 @@ git commit -m "feat(chapter): add index.ts with singleton wiring"
 - [ ] **Step 1: Create flashcard/index.ts**
 
 ```ts
-import { FlashcardDrizzleRepository } from './flashcard.repository.drizzle.ts';
-import { FlashcardGuard } from './flashcard.guard.ts';
-import { FlashcardService } from './flashcard.service.ts';
-import { studySetGuard } from '../study-set/index.ts';
+import { FlashcardDrizzleRepository } from "./flashcard.repository.drizzle.ts";
+import { FlashcardGuard } from "./flashcard.guard.ts";
+import { FlashcardService } from "./flashcard.service.ts";
+import { studySetGuard } from "../study-set/index.ts";
 
 const flashcardRepo = new FlashcardDrizzleRepository();
 export const flashcardGuard = new FlashcardGuard(flashcardRepo, studySetGuard);
-export const flashcardService = new FlashcardService(flashcardRepo, flashcardGuard);
+export const flashcardService = new FlashcardService(
+  flashcardRepo,
+  flashcardGuard
+);
 ```
 
 - [ ] **Step 2: Commit**
@@ -110,11 +113,11 @@ git commit -m "feat(flashcard): add index.ts with singleton wiring"
 - [ ] **Step 1: Create quiz/index.ts**
 
 ```ts
-import { QuizDrizzleRepository } from './quiz.repository.drizzle.ts';
-import { QuizGuard } from './quiz.guard.ts';
-import { QuizService } from './quiz.service.ts';
-import { studySetGuard } from '../study-set/index.ts';
-import { chapterGuard } from '../chapter/index.ts';
+import { QuizDrizzleRepository } from "./quiz.repository.drizzle.ts";
+import { QuizGuard } from "./quiz.guard.ts";
+import { QuizService } from "./quiz.service.ts";
+import { studySetGuard } from "../study-set/index.ts";
+import { chapterGuard } from "../chapter/index.ts";
 
 const quizRepo = new QuizDrizzleRepository();
 export const quizGuard = new QuizGuard(quizRepo, studySetGuard, chapterGuard);
@@ -151,9 +154,9 @@ export const studySetDrizzleRepository = new StudySetDrizzleRepository();
 Change the imports (lines 1-4) — remove the value import of `studySetDrizzleRepository`:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import type { StudySet } from '../../infras/db/schema/study-set.ts';
-import type { StudySetRepository } from './study-set.repository.ts';
+import { ORPCError } from "@orpc/server";
+import type { StudySet } from "../../infras/db/schema/study-set.ts";
+import type { StudySetRepository } from "./study-set.repository.ts";
 ```
 
 Change line 7 constructor from:
@@ -179,21 +182,30 @@ export const studySetGuard = new StudySetGuard();
 Change the imports (lines 1-16) — remove `studySetDrizzleRepository` value import, change `StudySetGuard` to type-only:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import { generateSlug, SlugConflictError } from '../../infras/slug.ts';
-import type { StudySet, StudySetVisibility } from '../../infras/db/schema/study-set.ts';
+import { ORPCError } from "@orpc/server";
+import { generateSlug, SlugConflictError } from "../../infras/slug.ts";
 import type {
-	CreateStudySetInput,
-	DeleteStudySetInput,
-	GetRecentStudySetsInput,
-	GetStudySetInput,
-	GetStudySetsInput,
-	RefreshStudySetVisitInput,
-	UpdateStudySetInput
-} from '../../../schemas/study-set.ts';
-import { STUDY_SET_DEFAULT_VISIBILITY, STUDY_SET_VISIT_TTL_MS } from './study-set.constant.ts';
-import type { StudySetListResult, StudySetRepository } from './study-set.repository.ts';
-import type { StudySetGuard } from './study-set.guard.ts';
+  StudySet,
+  StudySetVisibility,
+} from "../../infras/db/schema/study-set.ts";
+import type {
+  CreateStudySetInput,
+  DeleteStudySetInput,
+  GetRecentStudySetsInput,
+  GetStudySetInput,
+  GetStudySetsInput,
+  RefreshStudySetVisitInput,
+  UpdateStudySetInput,
+} from "../../../schemas/study-set.ts";
+import {
+  STUDY_SET_DEFAULT_VISIBILITY,
+  STUDY_SET_VISIT_TTL_MS,
+} from "./study-set.constant.ts";
+import type {
+  StudySetListResult,
+  StudySetRepository,
+} from "./study-set.repository.ts";
+import type { StudySetGuard } from "./study-set.guard.ts";
 ```
 
 Change lines 20-28 constructor from:
@@ -260,10 +272,10 @@ export const chapterDrizzleRepository = new ChapterDrizzleRepository();
 Change the imports (lines 1-5) — remove value imports of `chapterDrizzleRepository` and `studySetGuard`:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import type { Chapter } from '../../infras/db/schema/chapter.ts';
-import type { ChapterRepository } from './chapter.repository.ts';
-import type { StudySetGuard } from '../study-set/study-set.guard.ts';
+import { ORPCError } from "@orpc/server";
+import type { Chapter } from "../../infras/db/schema/chapter.ts";
+import type { ChapterRepository } from "./chapter.repository.ts";
+import type { StudySetGuard } from "../study-set/study-set.guard.ts";
 ```
 
 Change lines 7-15 constructor from:
@@ -305,18 +317,18 @@ export const chapterGuard = new ChapterGuard();
 Change the imports (lines 1-13) — remove `chapterDrizzleRepository` value import, change `ChapterGuard` to type-only:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import { generateSlug, SlugConflictError } from '../../infras/slug.ts';
-import type { Chapter } from '../../infras/db/schema/chapter.ts';
+import { ORPCError } from "@orpc/server";
+import { generateSlug, SlugConflictError } from "../../infras/slug.ts";
+import type { Chapter } from "../../infras/db/schema/chapter.ts";
 import type {
-	CreateChapterInput,
-	DeleteChapterInput,
-	GetChapterInput,
-	GetChaptersInput,
-	UpdateChapterInput
-} from '../../../schemas/chapter.ts';
-import type { ChapterRepository } from './chapter.repository.ts';
-import type { ChapterGuard } from './chapter.guard.ts';
+  CreateChapterInput,
+  DeleteChapterInput,
+  GetChapterInput,
+  GetChaptersInput,
+  UpdateChapterInput,
+} from "../../../schemas/chapter.ts";
+import type { ChapterRepository } from "./chapter.repository.ts";
+import type { ChapterGuard } from "./chapter.guard.ts";
 ```
 
 Change lines 17-25 constructor from:
@@ -383,11 +395,11 @@ export const flashcardDrizzleRepository = new FlashcardDrizzleRepository();
 Change the imports (lines 1-6) — remove value imports of `studySetGuard` and `flashcardDrizzleRepository`:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import type { Flashcard } from '../../infras/db/schema/flashcard.ts';
-import type { StudySet } from '../../infras/db/schema/study-set.ts';
-import type { StudySetGuard } from '../study-set/study-set.guard.ts';
-import type { FlashcardRepository } from './flashcard.repository.ts';
+import { ORPCError } from "@orpc/server";
+import type { Flashcard } from "../../infras/db/schema/flashcard.ts";
+import type { StudySet } from "../../infras/db/schema/study-set.ts";
+import type { StudySetGuard } from "../study-set/study-set.guard.ts";
+import type { FlashcardRepository } from "./flashcard.repository.ts";
 ```
 
 Change lines 8-16 constructor from:
@@ -429,18 +441,18 @@ export const flashcardGuard = new FlashcardGuard();
 Change the imports (lines 1-13) — remove `flashcardDrizzleRepository` value import, change `FlashcardGuard` to type-only:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import type { Flashcard } from '../../infras/db/schema/flashcard.ts';
+import { ORPCError } from "@orpc/server";
+import type { Flashcard } from "../../infras/db/schema/flashcard.ts";
 import type {
-	CreateFlashcardsInput,
-	DeleteFlashcardsInput,
-	GetFlashcardInput,
-	GetFlashcardsInput,
-	UpdateFlashcardInput
-} from '../../../schemas/flashcard.ts';
-import { FLASHCARD_IMPORTANCE_DEFAULT } from './flashcard.constant.ts';
-import type { FlashcardRepository } from './flashcard.repository.ts';
-import type { FlashcardGuard } from './flashcard.guard.ts';
+  CreateFlashcardsInput,
+  DeleteFlashcardsInput,
+  GetFlashcardInput,
+  GetFlashcardsInput,
+  UpdateFlashcardInput,
+} from "../../../schemas/flashcard.ts";
+import { FLASHCARD_IMPORTANCE_DEFAULT } from "./flashcard.constant.ts";
+import type { FlashcardRepository } from "./flashcard.repository.ts";
+import type { FlashcardGuard } from "./flashcard.guard.ts";
 ```
 
 Change lines 17-25 constructor from:
@@ -507,13 +519,13 @@ export const quizDrizzleRepository = new QuizDrizzleRepository();
 Change the imports (lines 1-8) — remove value imports of `studySetGuard`, `chapterGuard`, and `quizDrizzleRepository`:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import type { Chapter } from '../../infras/db/schema/chapter.ts';
-import type { StudySet } from '../../infras/db/schema/study-set.ts';
-import type { StudySetGuard } from '../study-set/study-set.guard.ts';
-import type { ChapterGuard } from '../chapter/chapter.guard.ts';
-import type { Quiz, QuizOption } from '../../infras/db/schema/quiz.ts';
-import type { QuizRepository } from './quiz.repository.ts';
+import { ORPCError } from "@orpc/server";
+import type { Chapter } from "../../infras/db/schema/chapter.ts";
+import type { StudySet } from "../../infras/db/schema/study-set.ts";
+import type { StudySetGuard } from "../study-set/study-set.guard.ts";
+import type { ChapterGuard } from "../chapter/chapter.guard.ts";
+import type { Quiz, QuizOption } from "../../infras/db/schema/quiz.ts";
+import type { QuizRepository } from "./quiz.repository.ts";
 ```
 
 Change lines 10-21 constructor from:
@@ -561,26 +573,30 @@ export const quizGuard = new QuizGuard();
 Change the imports (lines 1-21) — remove `QuizGuard` value import and `quizDrizzleRepository` value import, change `QuizGuard` to type-only:
 
 ```ts
-import { ORPCError } from '@orpc/server';
-import type { Quiz, QuizOption, QuizType } from '../../infras/db/schema/quiz.ts';
+import { ORPCError } from "@orpc/server";
 import type {
-	CreateQuizInput,
-	CreateQuizOptionsInput,
-	DeleteQuizOptionsInput,
-	DeleteQuizzesInput,
-	GetQuizInput,
-	GetQuizzesInput,
-	UpdateQuizInput,
-	UpdateQuizOptionInput
-} from '../../../schemas/quiz.ts';
+  Quiz,
+  QuizOption,
+  QuizType,
+} from "../../infras/db/schema/quiz.ts";
+import type {
+  CreateQuizInput,
+  CreateQuizOptionsInput,
+  DeleteQuizOptionsInput,
+  DeleteQuizzesInput,
+  GetQuizInput,
+  GetQuizzesInput,
+  UpdateQuizInput,
+  UpdateQuizOptionInput,
+} from "../../../schemas/quiz.ts";
 import {
-	FITB_OPTION_EXACT,
-	MCQ_OPTION_MAX,
-	MCQ_OPTION_MIN,
-	MS_OPTION_MAX
-} from './quiz.constant.ts';
-import type { QuizGuard } from './quiz.guard.ts';
-import type { QuizRepository } from './quiz.repository.ts';
+  FITB_OPTION_EXACT,
+  MCQ_OPTION_MAX,
+  MCQ_OPTION_MIN,
+  MS_OPTION_MAX,
+} from "./quiz.constant.ts";
+import type { QuizGuard } from "./quiz.guard.ts";
+import type { QuizRepository } from "./quiz.repository.ts";
 ```
 
 Change lines 27-35 constructor from:
@@ -644,13 +660,13 @@ git commit -m "refactor(quiz): remove singletons and defaults from class files"
 In each of the 8 files above, change the import line from:
 
 ```ts
-import { studySetService } from '../study-set.service';
+import { studySetService } from "../study-set.service";
 ```
 
 to:
 
 ```ts
-import { studySetService } from '../index';
+import { studySetService } from "../index";
 ```
 
 The line number varies per file — for each file, find the line containing `from '../study-set.service'` and change that import path only.
@@ -679,13 +695,13 @@ git commit -m "refactor(study-set): update consumer imports to use index.ts"
 In each of the 5 files above, change the import line from:
 
 ```ts
-import { chapterService } from '../chapter.service';
+import { chapterService } from "../chapter.service";
 ```
 
 to:
 
 ```ts
-import { chapterService } from '../index';
+import { chapterService } from "../index";
 ```
 
 - [ ] **Step 2: Commit**
@@ -712,13 +728,13 @@ git commit -m "refactor(chapter): update consumer imports to use index.ts"
 In each of the 5 files above, change the import line from:
 
 ```ts
-import { flashcardService } from '../flashcard.service';
+import { flashcardService } from "../flashcard.service";
 ```
 
 to:
 
 ```ts
-import { flashcardService } from '../index';
+import { flashcardService } from "../index";
 ```
 
 - [ ] **Step 2: Commit**
@@ -748,13 +764,13 @@ git commit -m "refactor(flashcard): update consumer imports to use index.ts"
 In each of the 8 files above, change the import line from:
 
 ```ts
-import { quizService } from '../quiz.service';
+import { quizService } from "../quiz.service";
 ```
 
 to:
 
 ```ts
-import { quizService } from '../index';
+import { quizService } from "../index";
 ```
 
 - [ ] **Step 2: Commit**
@@ -815,9 +831,9 @@ Each domain has an `index.ts` that imports the classes, wires the dependency cha
 
 ```ts
 // study-set/index.ts (root domain, no cross-domain deps)
-import { StudySetDrizzleRepository } from './study-set.repository.drizzle.ts';
-import { StudySetGuard } from './study-set.guard.ts';
-import { StudySetService } from './study-set.service.ts';
+import { StudySetDrizzleRepository } from "./study-set.repository.drizzle.ts";
+import { StudySetGuard } from "./study-set.guard.ts";
+import { StudySetService } from "./study-set.service.ts";
 
 const studySetRepo = new StudySetDrizzleRepository();
 export const studySetGuard = new StudySetGuard(studySetRepo);
@@ -826,10 +842,10 @@ export const studySetService = new StudySetService(studySetRepo, studySetGuard);
 
 ```ts
 // chapter/index.ts (depends on studySetGuard)
-import { ChapterDrizzleRepository } from './chapter.repository.drizzle.ts';
-import { ChapterGuard } from './chapter.guard.ts';
-import { ChapterService } from './chapter.service.ts';
-import { studySetGuard } from '../study-set/index.ts';
+import { ChapterDrizzleRepository } from "./chapter.repository.drizzle.ts";
+import { ChapterGuard } from "./chapter.guard.ts";
+import { ChapterService } from "./chapter.service.ts";
+import { studySetGuard } from "../study-set/index.ts";
 
 const chapterRepo = new ChapterDrizzleRepository();
 export const chapterGuard = new ChapterGuard(chapterRepo, studySetGuard);
@@ -838,11 +854,11 @@ export const chapterService = new ChapterService(chapterRepo, chapterGuard);
 
 ```ts
 // quiz/index.ts (depends on studySetGuard + chapterGuard)
-import { QuizDrizzleRepository } from './quiz.repository.drizzle.ts';
-import { QuizGuard } from './quiz.guard.ts';
-import { QuizService } from './quiz.service.ts';
-import { studySetGuard } from '../study-set/index.ts';
-import { chapterGuard } from '../chapter/index.ts';
+import { QuizDrizzleRepository } from "./quiz.repository.drizzle.ts";
+import { QuizGuard } from "./quiz.guard.ts";
+import { QuizService } from "./quiz.service.ts";
+import { studySetGuard } from "../study-set/index.ts";
+import { chapterGuard } from "../chapter/index.ts";
 
 const quizRepo = new QuizDrizzleRepository();
 export const quizGuard = new QuizGuard(quizRepo, studySetGuard, chapterGuard);

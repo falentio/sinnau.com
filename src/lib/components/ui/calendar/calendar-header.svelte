@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Calendar as CalendarPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		...restProps

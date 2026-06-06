@@ -4,7 +4,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Command as CommandPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

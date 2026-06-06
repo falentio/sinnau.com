@@ -1,18 +1,19 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { env } from '../env.ts';
-import * as schema from './schema/index.ts';
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
-export function createDb(options: { fileName: string }) {
-	const { fileName } = options;
-	const sqlite = new Database(fileName);
-	sqlite.pragma('journal_mode = WAL');
-	sqlite.pragma('foreign_keys = ON');
-	const db = drizzle({ client: sqlite, schema });
-	migrate(db, { migrationsFolder: './drizzle' });
-	return db;
-}
+import { env } from "../env.ts";
+import * as schema from "./schema/index.ts";
+
+export const createDb = (options: { fileName: string }) => {
+  const { fileName } = options;
+  const sqlite = new Database(fileName);
+  sqlite.pragma("journal_mode = WAL");
+  sqlite.pragma("foreign_keys = ON");
+  const db = drizzle({ client: sqlite, schema });
+  migrate(db, { migrationsFolder: "./drizzle" });
+  return db;
+};
 
 export type DB = ReturnType<typeof createDb>;
 

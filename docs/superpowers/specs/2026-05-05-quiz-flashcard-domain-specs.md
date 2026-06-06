@@ -114,14 +114,14 @@ Previous specs used HTTP REST patterns (GET/POST/PATCH/DELETE with endpoints). T
 
 ```typescript
 interface StudySet {
-	id: UUID;
-	slug: string; // auto-generated: transliterated + entropy
-	title: string; // 5-50 chars, non-empty, trimmed
-	description?: string; // max 2000 chars
-	visibility: Visibility;
-	ownerId: UUID; // from auth context
-	createdAt: Timestamp;
-	updatedAt: Timestamp;
+  id: UUID;
+  slug: string; // auto-generated: transliterated + entropy
+  title: string; // 5-50 chars, non-empty, trimmed
+  description?: string; // max 2000 chars
+  visibility: Visibility;
+  ownerId: UUID; // from auth context
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 ```
 
@@ -142,14 +142,14 @@ interface StudySet {
 
 ```typescript
 interface Chapter {
-	id: UUID;
-	slug: string; // auto-generated, same rules as StudySet
-	title: string; // 5-50 chars, non-empty, trimmed
-	description?: string; // max 1000 chars
-	studySetId: UUID; // required
-	ownerId: UUID; // from auth context
-	createdAt: Timestamp;
-	updatedAt: Timestamp;
+  id: UUID;
+  slug: string; // auto-generated, same rules as StudySet
+  title: string; // 5-50 chars, non-empty, trimmed
+  description?: string; // max 1000 chars
+  studySetId: UUID; // required
+  ownerId: UUID; // from auth context
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 ```
 
@@ -163,16 +163,16 @@ interface Chapter {
 
 ```typescript
 interface Flashcard {
-	id: UUID;
-	chapterId: UUID; // required, must exist
-	studySetId: UUID; // required
-	front: string; // non-empty, max ~4 sentences, plain text
-	back: string; // non-empty, max ~4 sentences, plain text
-	hint?: string; // max 500 chars, plain text
-	importance: number; // integer >= 0, default 0
-	ownerId: UUID; // from auth context
-	createdAt: Timestamp;
-	updatedAt: Timestamp;
+  id: UUID;
+  chapterId: UUID; // required, must exist
+  studySetId: UUID; // required
+  front: string; // non-empty, max ~4 sentences, plain text
+  back: string; // non-empty, max ~4 sentences, plain text
+  hint?: string; // max 500 chars, plain text
+  importance: number; // integer >= 0, default 0
+  ownerId: UUID; // from auth context
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 ```
 
@@ -188,15 +188,15 @@ interface Flashcard {
 
 ```typescript
 interface Quiz {
-	id: UUID;
-	chapterId: UUID; // required
-	studySetId: UUID; // required
-	type: QuizType; // immutable after creation
-	questionText: string; // non-empty, plain text
-	options: QuizOption[]; // embedded in response, empty array if none
-	ownerId: UUID; // from auth context
-	createdAt: Timestamp;
-	updatedAt: Timestamp;
+  id: UUID;
+  chapterId: UUID; // required
+  studySetId: UUID; // required
+  type: QuizType; // immutable after creation
+  questionText: string; // non-empty, plain text
+  options: QuizOption[]; // embedded in response, empty array if none
+  ownerId: UUID; // from auth context
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 ```
 
@@ -218,13 +218,13 @@ interface Quiz {
 
 ```typescript
 interface QuizOption {
-	id: UUID;
-	quizId: UUID; // required
-	optionText: string; // non-empty, max ~4 sentences
-	isCorrect: boolean;
-	explanation?: string; // optional
-	createdAt: Timestamp;
-	updatedAt: Timestamp;
+  id: UUID;
+  quizId: UUID; // required
+  optionText: string; // non-empty, max ~4 sentences
+  isCorrect: boolean;
+  explanation?: string; // optional
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 ```
 
@@ -249,21 +249,21 @@ Commands are operations that mutate state. Use `command` from `$app/server`.
 ### Command Pattern
 
 ```typescript
-import { command } from '$app/server';
-import { error } from '@sveltejs/kit';
-import { guard } from '../guard';
-import type { Repository } from '../quiz.repository.drizzle';
+import { command } from "$app/server";
+import { error } from "@sveltejs/kit";
+import { guard } from "../guard";
+import type { Repository } from "../quiz.repository.drizzle";
 
 export function createQuiz(repo: Repository) {
-	return command(QuizSchema, async (data) => {
-		// Guard checks
-		guard.isAuthenticated();
-		guard.canCreateQuiz(data);
+  return command(QuizSchema, async (data) => {
+    // Guard checks
+    guard.isAuthenticated();
+    guard.canCreateQuiz(data);
 
-		// Create
-		const quiz = await repo.createQuiz(data);
-		return quiz;
-	});
+    // Create
+    const quiz = await repo.createQuiz(data);
+    return quiz;
+  });
 }
 ```
 
@@ -272,10 +272,10 @@ export function createQuiz(repo: Repository) {
 Use `error()` from `@sveltejs/kit`:
 
 ```typescript
-error(400, { code: 'VALIDATION_FAILED', message: '...' });
-error(403, { code: 'FORBIDDEN', message: '...' });
-error(404, { code: 'NOT_FOUND', message: '...' });
-error(409, { code: 'CHAPTER_NOT_EMPTY', message: '...' });
+error(400, { code: "VALIDATION_FAILED", message: "..." });
+error(403, { code: "FORBIDDEN", message: "..." });
+error(404, { code: "NOT_FOUND", message: "..." });
+error(409, { code: "CHAPTER_NOT_EMPTY", message: "..." });
 ```
 
 ### Guard Pattern
@@ -285,23 +285,23 @@ Guards handle authorization and complex validation not covered by Valibot:
 ```typescript
 // guard.ts
 export const guard = {
-	isAuthenticated() {
-		const event = getRequestEvent();
-		if (!event.locals.user) {
-			error(401, { code: 'UNAUTHORIZED', message: '...' });
-		}
-	},
+  isAuthenticated() {
+    const event = getRequestEvent();
+    if (!event.locals.user) {
+      error(401, { code: "UNAUTHORIZED", message: "..." });
+    }
+  },
 
-	isOwner(ownerId: UUID) {
-		const event = getRequestEvent();
-		if (event.locals.user.id !== ownerId) {
-			error(403, { code: 'FORBIDDEN', message: '...' });
-		}
-	},
+  isOwner(ownerId: UUID) {
+    const event = getRequestEvent();
+    if (event.locals.user.id !== ownerId) {
+      error(403, { code: "FORBIDDEN", message: "..." });
+    }
+  },
 
-	chapterExists(chapterId: UUID) {
-		// Check chapter exists and user has access
-	}
+  chapterExists(chapterId: UUID) {
+    // Check chapter exists and user has access
+  },
 };
 ```
 
@@ -311,9 +311,9 @@ export const guard = {
 
 ```typescript
 interface CreateStudySetCommand {
-	title: string; // 5-50 chars
-	description?: string;
-	visibility?: Visibility; // default: PUBLIC
+  title: string; // 5-50 chars
+  description?: string;
+  visibility?: Visibility; // default: PUBLIC
 }
 ```
 
@@ -323,10 +323,10 @@ Returns: `{ success: true, data: StudySet }` with auto-generated slug
 
 ```typescript
 interface UpdateStudySetCommand {
-	id: UUID;
-	title?: string;
-	description?: string;
-	visibility?: Visibility;
+  id: UUID;
+  title?: string;
+  description?: string;
+  visibility?: Visibility;
 }
 ```
 
@@ -337,7 +337,7 @@ Returns: `{ success: true, data: StudySet }`
 
 ```typescript
 interface DeleteStudySetCommand {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -352,9 +352,9 @@ Returns: `{ success: true }`
 
 ```typescript
 interface CreateChapterCommand {
-	studySetId: UUID;
-	title: string; // 5-50 chars
-	description?: string;
+  studySetId: UUID;
+  title: string; // 5-50 chars
+  description?: string;
 }
 ```
 
@@ -364,9 +364,9 @@ Returns: `{ success: true, data: Chapter }`
 
 ```typescript
 interface UpdateChapterCommand {
-	id: UUID;
-	title?: string;
-	description?: string;
+  id: UUID;
+  title?: string;
+  description?: string;
 }
 ```
 
@@ -376,7 +376,7 @@ Returns: `{ success: true, data: Chapter }`
 
 ```typescript
 interface DeleteChapterCommand {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -391,13 +391,13 @@ Returns: `{ success: true }`
 
 ```typescript
 interface CreateFlashcardsCommand {
-	flashcards: Array<{
-		chapterId: UUID;
-		front: string;
-		back: string;
-		hint?: string;
-		importance?: number; // default: 0
-	}>;
+  flashcards: Array<{
+    chapterId: UUID;
+    front: string;
+    back: string;
+    hint?: string;
+    importance?: number; // default: 0
+  }>;
 }
 ```
 
@@ -408,10 +408,10 @@ Returns: `{ success: true, data: Flashcard[] }`
 
 ```typescript
 interface UpdateFlashcardCommand {
-	id: UUID;
-	front: string; // required (replace semantics)
-	back: string; // required (replace semantics)
-	hint?: string;
+  id: UUID;
+  front: string; // required (replace semantics)
+  back: string; // required (replace semantics)
+  hint?: string;
 }
 ```
 
@@ -422,7 +422,7 @@ Returns: `{ success: true, data: Flashcard }`
 
 ```typescript
 interface DeleteFlashcardsCommand {
-	ids: UUID[];
+  ids: UUID[];
 }
 ```
 
@@ -437,14 +437,14 @@ Returns: `{ success: true }` with 204 No Content
 
 ```typescript
 interface CreateQuizCommand {
-	chapterId: UUID;
-	type: QuizType;
-	questionText: string;
-	options?: Array<{
-		optionText: string;
-		isCorrect: boolean;
-		explanation?: string;
-	}>;
+  chapterId: UUID;
+  type: QuizType;
+  questionText: string;
+  options?: Array<{
+    optionText: string;
+    isCorrect: boolean;
+    explanation?: string;
+  }>;
 }
 ```
 
@@ -456,8 +456,8 @@ Returns: `{ success: true, data: Quiz }` with embedded options
 
 ```typescript
 interface UpdateQuizCommand {
-	id: UUID;
-	questionText: string; // required
+  id: UUID;
+  questionText: string; // required
 }
 ```
 
@@ -468,7 +468,7 @@ Returns: `{ success: true, data: Quiz }`
 
 ```typescript
 interface DeleteQuizzesCommand {
-	ids: UUID[];
+  ids: UUID[];
 }
 ```
 
@@ -484,12 +484,12 @@ Returns: `{ success: true }` with 204 No Content
 
 ```typescript
 interface CreateQuizOptionsCommand {
-	options: Array<{
-		quizId: UUID;
-		optionText: string;
-		isCorrect: boolean;
-		explanation?: string;
-	}>;
+  options: Array<{
+    quizId: UUID;
+    optionText: string;
+    isCorrect: boolean;
+    explanation?: string;
+  }>;
 }
 ```
 
@@ -501,10 +501,10 @@ Returns: `{ success: true, data: QuizOption[] }`
 
 ```typescript
 interface UpdateQuizOptionCommand {
-	id: UUID;
-	optionText?: string;
-	isCorrect?: boolean;
-	explanation?: string;
+  id: UUID;
+  optionText?: string;
+  isCorrect?: boolean;
+  explanation?: string;
 }
 ```
 
@@ -516,7 +516,7 @@ Returns: `{ success: true, data: QuizOption }`
 
 ```typescript
 interface DeleteQuizOptionsCommand {
-	ids: UUID[];
+  ids: UUID[];
 }
 ```
 
@@ -532,12 +532,12 @@ Queries are operations that read state. They return a `QueryResult`.
 
 ```typescript
 interface QueryResult<T> {
-	success: boolean;
-	data?: T;
-	error?: {
-		code: string;
-		message: string;
-	};
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+  };
 }
 ```
 
@@ -547,8 +547,8 @@ interface QueryResult<T> {
 
 ```typescript
 interface GetStudySetsQuery {
-	// No filters - returns all user's study sets
-	// Implicitly filtered by auth context (owner) + public visibility
+  // No filters - returns all user's study sets
+  // Implicitly filtered by auth context (owner) + public visibility
 }
 ```
 
@@ -559,7 +559,7 @@ Order: by `createdAt` DESC
 
 ```typescript
 interface GetStudySetQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -574,7 +574,7 @@ Returns: `{ success: true, data: StudySet }`
 
 ```typescript
 interface GetChaptersQuery {
-	// No filters - returns all chapters for accessible study sets
+  // No filters - returns all chapters for accessible study sets
 }
 ```
 
@@ -585,7 +585,7 @@ Returns: `{ success: true, data: Chapter[] }`
 
 ```typescript
 interface GetChapterQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -599,7 +599,7 @@ Returns: `{ success: true, data: Chapter }`
 
 ```typescript
 interface GetFlashcardsQuery {
-	// No filters - returns all flashcards
+  // No filters - returns all flashcards
 }
 ```
 
@@ -610,7 +610,7 @@ Returns: `{ success: true, data: Flashcard[] }`
 
 ```typescript
 interface GetFlashcardQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -624,7 +624,7 @@ Returns: `{ success: true, data: Flashcard }`
 
 ```typescript
 interface GetQuizzesQuery {
-	// No filters - returns all quizzes
+  // No filters - returns all quizzes
 }
 ```
 
@@ -635,7 +635,7 @@ Returns: `{ success: true, data: Quiz[] }` with embedded options
 
 ```typescript
 interface GetQuizQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 

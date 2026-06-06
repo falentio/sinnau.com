@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { cn, type WithoutChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChild } from '$lib/utils.js';
 	import * as FormPrimitive from 'formsnap';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		...restProps

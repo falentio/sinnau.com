@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Popover as PopoverPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 	import PopoverPortal from './popover-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		sideOffset = 4,

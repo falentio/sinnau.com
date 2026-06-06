@@ -3,21 +3,22 @@
 	import { createRng, Rng } from '$lib/utils/rng';
 	import { Book03Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	type StudySet = {
+
+	interface StudySet {
 		id: string;
 		title: string;
 		description: string | null;
-	};
+	}
 
-	let { studySet }: { studySet: StudySet } = $props();
+	const { studySet }: { studySet: StudySet } = $props();
 	const rng = $derived(createRng(studySet.id));
 
-	function getColor(rng: Rng) {
+	const getColor = (random: Rng) => {
 		const step = 30;
 		const n = 360 / step;
-		const hue = rng.range(n) * step;
+		const hue = random.range(n) * step;
 		return `oklch(63.7% 0.237 ${hue})`;
-	}
+	};
 
 	const color = $derived(getColor(rng));
 </script>

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
-	import { Tick02Icon } from '@hugeicons/core-free-icons';
-	import { MinusSignIcon } from '@hugeicons/core-free-icons';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
+	import { MinusSignIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Checkbox as CheckboxPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		checked = $bindable(false),
 		indeterminate = $bindable(false),

@@ -103,9 +103,7 @@
       "indexes": {
         "account_userId_idx": {
           "name": "account_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -114,12 +112,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -199,16 +193,12 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "session_userId_idx": {
           "name": "session_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -217,12 +207,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -319,9 +305,7 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -381,9 +365,7 @@
       "indexes": {
         "verification_identifier_idx": {
           "name": "verification_identifier_idx",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": false
         }
       },
@@ -465,23 +447,17 @@
       "indexes": {
         "study_set_slug_unique": {
           "name": "study_set_slug_unique",
-          "columns": [
-            "lower(\"slug\")"
-          ],
+          "columns": ["lower(\"slug\")"],
           "isUnique": true
         },
         "study_set_ownerId_idx": {
           "name": "study_set_ownerId_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         },
         "study_set_visibility_idx": {
           "name": "study_set_visibility_idx",
-          "columns": [
-            "visibility"
-          ],
+          "columns": ["visibility"],
           "isUnique": false
         }
       },
@@ -490,12 +466,8 @@
           "name": "study_set_owner_id_user_id_fk",
           "tableFrom": "study_set",
           "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -540,31 +512,22 @@
       "indexes": {
         "study_set_visit_user_studySet_unique": {
           "name": "study_set_visit_user_studySet_unique",
-          "columns": [
-            "user_id",
-            "study_set_id"
-          ],
+          "columns": ["user_id", "study_set_id"],
           "isUnique": true
         },
         "study_set_visit_userId_idx": {
           "name": "study_set_visit_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "study_set_visit_studySetId_idx": {
           "name": "study_set_visit_studySetId_idx",
-          "columns": [
-            "study_set_id"
-          ],
+          "columns": ["study_set_id"],
           "isUnique": false
         },
         "study_set_visit_visitedAt_idx": {
           "name": "study_set_visit_visitedAt_idx",
-          "columns": [
-            "visited_at"
-          ],
+          "columns": ["visited_at"],
           "isUnique": false
         }
       },
@@ -573,12 +536,8 @@
           "name": "study_set_visit_user_id_user_id_fk",
           "tableFrom": "study_set_visit",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -586,12 +545,8 @@
           "name": "study_set_visit_study_set_id_study_set_id_fk",
           "tableFrom": "study_set_visit",
           "tableTo": "study_set",
-          "columnsFrom": [
-            "study_set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["study_set_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -665,24 +620,17 @@
       "indexes": {
         "chapter_studySetId_slug_unique": {
           "name": "chapter_studySetId_slug_unique",
-          "columns": [
-            "lower(\"slug\")",
-            "study_set_id"
-          ],
+          "columns": ["lower(\"slug\")", "study_set_id"],
           "isUnique": true
         },
         "chapter_studySetId_idx": {
           "name": "chapter_studySetId_idx",
-          "columns": [
-            "study_set_id"
-          ],
+          "columns": ["study_set_id"],
           "isUnique": false
         },
         "chapter_ownerId_idx": {
           "name": "chapter_ownerId_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         }
       },
@@ -691,12 +639,8 @@
           "name": "chapter_study_set_id_study_set_id_fk",
           "tableFrom": "chapter",
           "tableTo": "study_set",
-          "columnsFrom": [
-            "study_set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["study_set_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -704,12 +648,8 @@
           "name": "chapter_owner_id_user_id_fk",
           "tableFrom": "chapter",
           "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -798,23 +738,17 @@
       "indexes": {
         "flashcard_ownerId_idx": {
           "name": "flashcard_ownerId_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         },
         "flashcard_studySetId_idx": {
           "name": "flashcard_studySetId_idx",
-          "columns": [
-            "study_set_id"
-          ],
+          "columns": ["study_set_id"],
           "isUnique": false
         },
         "flashcard_chapterId_idx": {
           "name": "flashcard_chapterId_idx",
-          "columns": [
-            "chapter_id"
-          ],
+          "columns": ["chapter_id"],
           "isUnique": false
         }
       },
@@ -823,12 +757,8 @@
           "name": "flashcard_chapter_id_chapter_id_fk",
           "tableFrom": "flashcard",
           "tableTo": "chapter",
-          "columnsFrom": [
-            "chapter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chapter_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -836,12 +766,8 @@
           "name": "flashcard_study_set_id_study_set_id_fk",
           "tableFrom": "flashcard",
           "tableTo": "study_set",
-          "columnsFrom": [
-            "study_set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["study_set_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -849,12 +775,8 @@
           "name": "flashcard_owner_id_user_id_fk",
           "tableFrom": "flashcard",
           "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -928,23 +850,17 @@
       "indexes": {
         "quiz_ownerId_idx": {
           "name": "quiz_ownerId_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         },
         "quiz_studySetId_idx": {
           "name": "quiz_studySetId_idx",
-          "columns": [
-            "study_set_id"
-          ],
+          "columns": ["study_set_id"],
           "isUnique": false
         },
         "quiz_chapterId_idx": {
           "name": "quiz_chapterId_idx",
-          "columns": [
-            "chapter_id"
-          ],
+          "columns": ["chapter_id"],
           "isUnique": false
         }
       },
@@ -953,12 +869,8 @@
           "name": "quiz_chapter_id_chapter_id_fk",
           "tableFrom": "quiz",
           "tableTo": "chapter",
-          "columnsFrom": [
-            "chapter_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["chapter_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -966,12 +878,8 @@
           "name": "quiz_study_set_id_study_set_id_fk",
           "tableFrom": "quiz",
           "tableTo": "study_set",
-          "columnsFrom": [
-            "study_set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["study_set_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -979,12 +887,8 @@
           "name": "quiz_owner_id_user_id_fk",
           "tableFrom": "quiz",
           "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1051,9 +955,7 @@
       "indexes": {
         "quiz_option_quizId_idx": {
           "name": "quiz_option_quizId_idx",
-          "columns": [
-            "quiz_id"
-          ],
+          "columns": ["quiz_id"],
           "isUnique": false
         }
       },
@@ -1062,12 +964,8 @@
           "name": "quiz_option_quiz_id_quiz_id_fk",
           "tableFrom": "quiz_option",
           "tableTo": "quiz",
-          "columnsFrom": [
-            "quiz_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["quiz_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

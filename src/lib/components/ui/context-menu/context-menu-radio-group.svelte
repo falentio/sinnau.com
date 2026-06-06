@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		value = $bindable(''),
 		...restProps

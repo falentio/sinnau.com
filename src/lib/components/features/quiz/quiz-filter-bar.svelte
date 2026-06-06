@@ -3,15 +3,15 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 
-	let { currentFilter }: { currentFilter: string | null } = $props();
+	const { currentFilter }: { currentFilter: string | null } = $props();
 
 	const filters = $derived([
-		{ label: 'Terbaru', value: 'latest', def: true },
+		{ def: true, label: 'Terbaru', value: 'latest' },
 		...(dev
 			? ([
-					{ label: 'Dev: Empty', value: 'empty', def: false },
-					{ label: 'Dev: Paginated', value: 'paginated', def: false },
-					{ label: 'Dev: 500', value: '500', def: false }
+					{ def: false, label: 'Dev: Empty', value: 'empty' },
+					{ def: false, label: 'Dev: Paginated', value: 'paginated' },
+					{ def: false, label: 'Dev: 500', value: '500' }
 				] as const)
 			: [])
 	]);

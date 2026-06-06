@@ -5,7 +5,8 @@
 	import type { CellContext, ColumnDefTemplate, HeaderContext } from '@tanstack/table-core';
 	import type { Attachment } from 'svelte/attachments';
 	import { RenderComponentConfig, RenderSnippetConfig } from './render-helpers.js';
-	type Props = {
+
+	interface Props {
 		/** The cell or header field of the current cell's column definition. */
 		content?: TContext extends HeaderContext<TData, TValue>
 			? ColumnDefTemplate<HeaderContext<TData, TValue>>
@@ -17,9 +18,9 @@
 
 		/** Used to pass attachments that can't be gotten through context */
 		attach?: Attachment;
-	};
+	}
 
-	let { content, context, attach }: Props = $props();
+	const { content, context, attach }: Props = $props();
 </script>
 
 {#if typeof content === 'string'}

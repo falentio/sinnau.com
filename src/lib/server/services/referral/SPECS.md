@@ -32,30 +32,30 @@ Referral is not responsible for:
 
 ```typescript
 interface ReferralProfile {
-	id: UUID;
-	userId: UUID;
-	slug: string;
-	points: number;
-	version: number;
-	createdAt: Date;
-	updatedAt: Date;
+  id: UUID;
+  userId: UUID;
+  slug: string;
+  points: number;
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface ReferralRelationship {
-	id: UUID;
-	referrerUserId: UUID;
-	referredUserId: UUID;
-	createdAt: Date;
+  id: UUID;
+  referrerUserId: UUID;
+  referredUserId: UUID;
+  createdAt: Date;
 }
 
 interface ReferralSubscriptionEvent {
-	id: UUID;
-	relationshipId: UUID;
-	referrerUserId: UUID;
-	referredUserId: UUID;
-	idempotencyKey: string;
-	pointsAwarded: number;
-	createdAt: Date;
+  id: UUID;
+  relationshipId: UUID;
+  referrerUserId: UUID;
+  referredUserId: UUID;
+  idempotencyKey: string;
+  pointsAwarded: number;
+  createdAt: Date;
 }
 ```
 
@@ -134,8 +134,8 @@ interface GetOrCreateReferralProfileCommand {}
 
 ```typescript
 interface RecordReferralRelationshipCommand {
-	referrerUserId: UUID;
-	referredUserId: UUID;
+  referrerUserId: UUID;
+  referredUserId: UUID;
 }
 ```
 
@@ -149,11 +149,11 @@ interface RecordReferralRelationshipCommand {
 
 ```typescript
 interface AddReferralPointsCommand {
-	referrerUserId: UUID;
-	referredUserId: UUID;
-	points: number;
-	idempotencyKey: string;
-	expectedVersion: number;
+  referrerUserId: UUID;
+  referredUserId: UUID;
+  points: number;
+  idempotencyKey: string;
+  expectedVersion: number;
 }
 ```
 
@@ -170,11 +170,11 @@ interface AddReferralPointsCommand {
 
 ```typescript
 interface AdjustReferralPointsCommand {
-	referrerUserId: UUID;
-	points: number;
-	reason: string;
-	idempotencyKey: string;
-	expectedVersion: number;
+  referrerUserId: UUID;
+  points: number;
+  reason: string;
+  idempotencyKey: string;
+  expectedVersion: number;
 }
 ```
 
@@ -203,7 +203,7 @@ interface GetMyReferralProfileQuery {}
 
 ```typescript
 interface ResolveReferralSlugQuery {
-	slug: string;
+  slug: string;
 }
 ```
 
@@ -217,7 +217,7 @@ interface ResolveReferralSlugQuery {
 
 ```typescript
 interface GetReferralRelationshipForUserQuery {
-	referredUserId: UUID;
+  referredUserId: UUID;
 }
 ```
 

@@ -33,15 +33,15 @@ Approach A
 
 ```typescript
 interface ReviewSession {
-	id: UUID;
-	userId: UUID;
-	studySetId: UUID;
-	status: 'active' | 'completed' | 'abandoned';
-	totalCards: number; // snapshot of total flashcards in study set at session start
-	completedCards: number; // cards reviewed at least once in this session
-	remainingCards: number; // totalCards - completedCards (live-computed or stored)
-	startedAt: number; // Unix ms
-	completedAt?: number; // set when status = 'completed'
+  id: UUID;
+  userId: UUID;
+  studySetId: UUID;
+  status: "active" | "completed" | "abandoned";
+  totalCards: number; // snapshot of total flashcards in study set at session start
+  completedCards: number; // cards reviewed at least once in this session
+  remainingCards: number; // totalCards - completedCards (live-computed or stored)
+  startedAt: number; // Unix ms
+  completedAt?: number; // set when status = 'completed'
 }
 ```
 
@@ -216,30 +216,30 @@ Approach A
 
 ```typescript
 interface ReviewLog {
-	id: UUID;
-	userId: UUID;
-	flashcardId: UUID;
-	sessionId: UUID; // links to review_session
-	rating: 'again' | 'hard' | 'good' | 'easy';
-	previousState: {
-		// snapshot of flashcard_state before this review
-		state: string;
-		due: string;
-		stability: number;
-		difficulty: number;
-		reps: number;
-		lapses: number;
-	};
-	newState: {
-		// snapshot after this review
-		state: string;
-		due: string;
-		stability: number;
-		difficulty: number;
-		reps: number;
-		lapses: number;
-	};
-	reviewedAt: number; // Unix ms
+  id: UUID;
+  userId: UUID;
+  flashcardId: UUID;
+  sessionId: UUID; // links to review_session
+  rating: "again" | "hard" | "good" | "easy";
+  previousState: {
+    // snapshot of flashcard_state before this review
+    state: string;
+    due: string;
+    stability: number;
+    difficulty: number;
+    reps: number;
+    lapses: number;
+  };
+  newState: {
+    // snapshot after this review
+    state: string;
+    due: string;
+    stability: number;
+    difficulty: number;
+    reps: number;
+    lapses: number;
+  };
+  reviewedAt: number; // Unix ms
 }
 ```
 

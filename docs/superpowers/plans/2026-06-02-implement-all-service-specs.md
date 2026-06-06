@@ -97,22 +97,24 @@ Each task below is intended to be the smallest useful unit: one contract, one la
 Create `src/lib/schemas/api.test.ts` with tests that parse these shapes:
 
 ```ts
-import { describe, it } from 'vitest';
-import * as v from 'valibot';
-import { successDataSchema, successOnlySchema } from './api.ts';
+import { describe, it } from "vitest";
+import * as v from "valibot";
+import { successDataSchema, successOnlySchema } from "./api.ts";
 
-describe.concurrent('api response schemas', () => {
-	it('accepts success with data', ({ expect }) => {
-		const schema = successDataSchema(v.object({ id: v.string() }));
-		expect(v.parse(schema, { success: true, data: { id: 'row-1' } })).toEqual({
-			success: true,
-			data: { id: 'row-1' }
-		});
-	});
+describe.concurrent("api response schemas", () => {
+  it("accepts success with data", ({ expect }) => {
+    const schema = successDataSchema(v.object({ id: v.string() }));
+    expect(v.parse(schema, { success: true, data: { id: "row-1" } })).toEqual({
+      success: true,
+      data: { id: "row-1" },
+    });
+  });
 
-	it('accepts success without data', ({ expect }) => {
-		expect(v.parse(successOnlySchema, { success: true })).toEqual({ success: true });
-	});
+  it("accepts success without data", ({ expect }) => {
+    expect(v.parse(successOnlySchema, { success: true })).toEqual({
+      success: true,
+    });
+  });
 });
 ```
 
@@ -127,10 +129,12 @@ Expected: fail because `src/lib/schemas/api.ts` does not exist.
 Create `src/lib/schemas/api.ts`:
 
 ```ts
-import * as v from 'valibot';
+import * as v from "valibot";
 
-export function successDataSchema<const TSchema extends v.GenericSchema>(data: TSchema) {
-	return v.object({ success: v.literal(true), data });
+export function successDataSchema<const TSchema extends v.GenericSchema>(
+  data: TSchema
+) {
+  return v.object({ success: v.literal(true), data });
 }
 
 export const successOnlySchema = v.object({ success: v.literal(true) });
@@ -171,45 +175,48 @@ Expected: fail because the helpers do not exist.
 Create `src/lib/server/infras/id.ts` with this public surface:
 
 ```ts
-import { nanoid } from 'nanoid';
+import { nanoid } from "nanoid";
 
 export const ID_PREFIX = {
-	SUBSCRIPTION_ORDER: 'sbo',
-	SUBSCRIPTION_PERIOD: 'sbp',
-	FSRS_SESSION: 'frs',
-	FLASHCARD_STATE: 'fst',
-	REVIEW_LOG: 'frl'
+  SUBSCRIPTION_ORDER: "sbo",
+  SUBSCRIPTION_PERIOD: "sbp",
+  FSRS_SESSION: "frs",
+  FLASHCARD_STATE: "fst",
+  REVIEW_LOG: "frl",
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIX)[keyof typeof ID_PREFIX];
 export type PrefixedId<TPrefix extends string> = `${TPrefix}_${string}`;
 
 export function createPrefixedId<const TPrefix extends IdPrefix>(
-	prefix: TPrefix
+  prefix: TPrefix
 ): PrefixedId<TPrefix> {
-	return `${prefix}_${nanoid(16)}` as PrefixedId<TPrefix>;
+  return `${prefix}_${nanoid(16)}` as PrefixedId<TPrefix>;
 }
 
 export function isPrefixedId<const TPrefix extends string>(
-	value: string,
-	prefix: TPrefix
+  value: string,
+  prefix: TPrefix
 ): value is PrefixedId<TPrefix> {
-	return value.startsWith(`${prefix}_`) && value.length > prefix.length + 1;
+  return value.startsWith(`${prefix}_`) && value.length > prefix.length + 1;
 }
 ```
 
 Create `src/lib/schemas/id.ts`:
 
 ```ts
-import * as v from 'valibot';
+import * as v from "valibot";
 
 export const uuidSchema = v.pipe(v.string(), v.uuid());
 
 export function prefixedIdSchema(prefix: string) {
-	return v.pipe(
-		v.string(),
-		v.regex(new RegExp(`^${prefix}_[A-Za-z0-9_-]+$`), `Expected ${prefix}_ prefixed id`)
-	);
+  return v.pipe(
+    v.string(),
+    v.regex(
+      new RegExp(`^${prefix}_[A-Za-z0-9_-]+$`),
+      `Expected ${prefix}_ prefixed id`
+    )
+  );
 }
 ```
 

@@ -1,25 +1,25 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	type EventStub = {
+	interface EventStub {
 		id: string;
 		createdAt: string;
 		content: {
 			estimation: { estimatedCompletedAt: string };
 		};
-	};
+	}
 
-	type GenerateStub = {
+	interface GenerateStub {
 		status: 'PENDING' | 'COMPLETED' | 'FAILED';
-	};
+	}
 
 	let events = $state<EventStub[]>([
 		{
-			id: 'evt_placeholder_001',
-			createdAt: new Date().toISOString(),
 			content: {
 				estimation: { estimatedCompletedAt: new Date().toISOString() }
-			}
+			},
+			createdAt: new Date().toISOString(),
+			id: 'evt_placeholder_001'
 		}
 	]);
 
@@ -34,14 +34,14 @@
 				events = [
 					...events,
 					{
-						id: `evt_placeholder_${events.length + 1}`,
-						createdAt: new Date().toISOString(),
 						content: {
-							estimation: { estimatedCompletedAt: new Date(Date.now() + 60000).toISOString() }
-						}
+							estimation: { estimatedCompletedAt: new Date(Date.now() + 60_000).toISOString() }
+						},
+						createdAt: new Date().toISOString(),
+						id: `evt_placeholder_${events.length + 1}`
 					}
 				];
-			}, 15000);
+			}, 15_000);
 			return () => clearInterval(interval);
 		});
 	}

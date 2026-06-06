@@ -1,12 +1,13 @@
 export const STUDY_SET_PAGE_LIMIT = 10;
 
 export const STUDY_SET_VISIT_TTL_DAYS = 90;
-export const STUDY_SET_VISIT_TTL_MS = STUDY_SET_VISIT_TTL_DAYS * 24 * 60 * 60 * 1000;
+export const STUDY_SET_VISIT_TTL_MS =
+  STUDY_SET_VISIT_TTL_DAYS * 24 * 60 * 60 * 1000;
 
-export const STUDY_SET_DEFAULT_VISIBILITY = 'PUBLIC' as const;
+export const STUDY_SET_DEFAULT_VISIBILITY = "PUBLIC" as const;
 
 export const STUDY_SET_SLUG_MAX_RETRIES = 5;
 export const STUDY_SET_SLUG_RANDOM_LENGTH = 6;
 export const STUDY_SET_SLUG_SHORT_RANDOM_LENGTH = 12;
 export const STUDY_SET_SLUG_MIN_SANITIZED_LENGTH = 5;
-export const STUDY_SET_VISIT_ID_PREFIX = 'ssv';
+export const STUDY_SET_VISIT_ID_PREFIX = "ssv";

@@ -22,8 +22,8 @@ Remove the aggregate `remainingCards` field from the stored session model. Store
 
 ```typescript
 interface ReviewSession {
-	newCardsRemaining: number;
-	dueCardsRemaining: number;
+  newCardsRemaining: number;
+  dueCardsRemaining: number;
 }
 ```
 
@@ -157,9 +157,9 @@ Use this response shape:
 
 ```typescript
 interface StudySetWithDueCards {
-	studySet: StudySet;
-	session: ReviewSession;
-	dueCardsCount: number;
+  studySet: StudySet;
+  session: ReviewSession;
+  dueCardsCount: number;
 }
 ```
 
@@ -191,16 +191,16 @@ Use this session shape:
 
 ```typescript
 interface ReviewSession {
-	id: ReviewSessionId;
-	userId: UserId;
-	studySetId: StudySetId;
-	status: 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
-	newCardsRemaining: number;
-	dueCardsRemaining: number;
-	completedCards: number;
-	startedAt: Date;
-	lastReviewedAt?: Date;
-	completedAt?: Date;
+  id: ReviewSessionId;
+  userId: UserId;
+  studySetId: StudySetId;
+  status: "ACTIVE" | "COMPLETED" | "ABANDONED";
+  newCardsRemaining: number;
+  dueCardsRemaining: number;
+  completedCards: number;
+  startedAt: Date;
+  lastReviewedAt?: Date;
+  completedAt?: Date;
 }
 ```
 
@@ -232,10 +232,10 @@ Use this shape:
 
 ```typescript
 interface SessionCard {
-	flashcardId: FlashcardId;
-	kind: 'NEW' | 'DUE';
-	state: FsrsCardState;
-	previewState: Record<FsrsRating, FsrsCardState>;
+  flashcardId: FlashcardId;
+  kind: "NEW" | "DUE";
+  state: FsrsCardState;
+  previewState: Record<FsrsRating, FsrsCardState>;
 }
 ```
 
@@ -267,15 +267,15 @@ Use:
 
 ```typescript
 interface ReviewLog {
-	id: ReviewLogId;
-	userId: UserId;
-	flashcardId: FlashcardId;
-	sessionId: ReviewSessionId;
-	rating: FsrsRating;
-	previousState: FsrsCardStateJson;
-	newState: FsrsCardStateJson;
-	reviewedAt: Date;
-	idempotencyKey?: string;
+  id: ReviewLogId;
+  userId: UserId;
+  flashcardId: FlashcardId;
+  sessionId: ReviewSessionId;
+  rating: FsrsRating;
+  previousState: FsrsCardStateJson;
+  newState: FsrsCardStateJson;
+  reviewedAt: Date;
+  idempotencyKey?: string;
 }
 ```
 
@@ -359,8 +359,8 @@ Mixing lowercase strings, uppercase strings, and numeric enums will create valid
 Persist state and rating as uppercase strings at the service boundary:
 
 ```typescript
-type FsrsState = 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING';
-type FsrsRating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY';
+type FsrsState = "NEW" | "LEARNING" | "REVIEW" | "RELEARNING";
+type FsrsRating = "AGAIN" | "HARD" | "GOOD" | "EASY";
 ```
 
 Map these to ts-fsrs `State` and `Rating` enums inside the FSRS service only.
@@ -390,9 +390,9 @@ This keeps FSRS consistent with `sst_`, `chp_`, `flc_`, and other existing servi
 Add prefixes to `ID_PREFIX` for:
 
 ```typescript
-FSRS_SESSION: 'frs';
-FLASHCARD_STATE: 'fst';
-REVIEW_LOG: 'frl';
+FSRS_SESSION: "frs";
+FLASHCARD_STATE: "fst";
+REVIEW_LOG: "frl";
 ```
 
 Use the final names consistently in schema validators and service specs.
@@ -457,8 +457,8 @@ Use this completion rule:
 
 ```typescript
 if (session.newCardsRemaining === 0 && session.dueCardsRemaining === 0) {
-	session.status = 'COMPLETED';
-	session.completedAt = now;
+  session.status = "COMPLETED";
+  session.completedAt = now;
 }
 ```
 

@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { cn, type WithElementRef, type WithoutChildren } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef, WithoutChildren } from '$lib/utils.js';
 	import { getChartContext, Tooltip as TooltipPrimitive } from 'layerchart';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { getPayloadConfigFromPayload, useChart, type TooltipPayload } from './chart-utils.js';
+	import { getPayloadConfigFromPayload, useChart } from './chart-utils.js';
+import type { TooltipPayload } from './chart-utils.js';
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function defaultFormatter(value: any, _payload: TooltipPayload[]) {
-		return `${value}`;
-	}
+	const defaultFormatter = (value: any, _payload: TooltipPayload[]) => `${value}`;
 
 	let {
 		ref = $bindable(null),
@@ -57,13 +57,13 @@
 	);
 
 	const formattedLabel = $derived.by(() => {
-		if (hideLabel || !visibleSeries?.length) return null;
+		if (hideLabel || !visibleSeries?.length) {return null;}
 
 		const [item] = visibleSeries;
 		const tooltipData = chartCtx.tooltip.data;
 
 		// Get the x-axis label value from the raw tooltip data (e.g. a Date or month string)
-		const dataLabel = tooltipData != null ? chartCtx.x(tooltipData) : undefined;
+		const dataLabel = tooltipData === null || tooltipData === undefined ? undefined : chartCtx.x(tooltipData);
 
 		const key = labelKey ?? item?.label ?? item?.key ?? 'value';
 		const itemConfig = getPayloadConfigFromPayload(
@@ -82,8 +82,8 @@
 			value = dataLabel;
 		}
 
-		if (value === undefined) return null;
-		if (!labelFormatter) return value;
+		if (value === undefined) {return null;}
+		if (!labelFormatter) {return value;}
 		return labelFormatter(value, visibleSeries);
 	});
 

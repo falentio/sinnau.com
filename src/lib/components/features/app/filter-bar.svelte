@@ -6,18 +6,18 @@
 	import { AiBeautifyIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 
-	let { currentFilter }: { currentFilter: string | null } = $props();
+	const { currentFilter }: { currentFilter: string | null } = $props();
 
 	const filters = $derived([
-		{ label: 'Terbaru', value: 'latest', def: true },
-		{ label: 'Baru dipelajari', value: 'newly-studied', def: false },
-		{ label: 'Baru dibuka', value: 'newly-opened', def: false },
+		{ def: true, label: 'Terbaru', value: 'latest' },
+		{ def: false, label: 'Baru dipelajari', value: 'newly-studied' },
+		{ def: false, label: 'Baru dibuka', value: 'newly-opened' },
 		...(dev
 			? ([
-					{ label: 'Dev: Empty', value: 'empty', def: false },
-					{ label: 'Dev: Invalid Filter', value: 'invalid', def: false },
-					{ label: 'Dev: Paginated', value: 'paginated', def: false },
-					{ label: 'Dev: Internal Server Error', value: '500', def: false }
+					{ def: false, label: 'Dev: Empty', value: 'empty' },
+					{ def: false, label: 'Dev: Invalid Filter', value: 'invalid' },
+					{ def: false, label: 'Dev: Paginated', value: 'paginated' },
+					{ def: false, label: 'Dev: Internal Server Error', value: '500' }
 				] as const)
 			: [])
 	]);

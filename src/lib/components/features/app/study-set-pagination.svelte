@@ -5,7 +5,7 @@
 	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 
-	let {
+	const {
 		pagination,
 		currentFilter
 	}: {
@@ -15,14 +15,14 @@
 
 	const currentPage = $derived(Number(pageStore.url.searchParams.get('page')) || pagination.page);
 
-	function handlePageChange(p: number) {
+	const handlePageChange = (p: number) => {
 		const params = new SvelteURLSearchParams();
-		if (p > 1) params.set('page', String(p));
-		if (currentFilter) params.set('filter', currentFilter);
+		if (p > 1) {params.set('page', String(p));}
+		if (currentFilter) {params.set('filter', currentFilter);}
 		const query = params.toString();
 		const target = query ? resolve(`/(app)/home?${query}`) : resolve('/(app)/home');
-		goto(target, { replaceState: true, noScroll: true });
-	}
+		goto(target, { noScroll: true, replaceState: true });
+	};
 </script>
 
 <Pagination.Root

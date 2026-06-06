@@ -16,26 +16,26 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 
 	const errorMap: Record<string, { title: string; message: string }> = {
+		INTERNAL_SERVER_ERROR: {
+			message: 'Server mengalami masalah yang tak terduga. Coba beberapa saat lagi.',
+			title: 'Masalah Internal Server'
+		},
 		'filter unknown': {
-			title: 'Filter tidak valid',
-			message: 'Filter yang dipilih tidak dikenali. Silakan pilih filter yang tersedia.'
+			message: 'Filter yang dipilih tidak dikenali. Silakan pilih filter yang tersedia.',
+			title: 'Filter tidak valid'
 		},
 		'invalid query': {
-			title: 'Permintaan tidak valid',
 			message:
-				'Parameter yang diberikan tidak sesuai. Silakan periksa halaman atau filter yang dipilih.'
-		},
-		INTERNAL_SERVER_ERROR: {
-			title: 'Masalah Internal Server',
-			message: 'Server mengalami masalah yang tak terduga. Coba beberapa saat lagi.'
+				'Parameter yang diberikan tidak sesuai. Silakan periksa halaman atau filter yang dipilih.',
+			title: 'Permintaan tidak valid'
 		}
 	};
 
 	const friendlyError = $derived(
 		errorMap[page.error?.message ?? ''] ??
 			errorMap[page.error?.code ?? ''] ?? {
-				title: 'Terjadi kesalahan',
-				message: page.error?.message ?? 'Terjadi kesalahan. Coba lagi nanti.'
+				message: page.error?.message ?? 'Terjadi kesalahan. Coba lagi nanti.',
+				title: 'Terjadi kesalahan'
 			}
 	);
 </script>

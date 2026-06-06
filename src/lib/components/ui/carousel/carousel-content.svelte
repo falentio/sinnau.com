@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import emblaCarouselSvelte from 'embla-carousel-svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { getEmblaContext } from './context.js';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

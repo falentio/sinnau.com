@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import { UnfoldMoreIcon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { HTMLSelectAttributes } from 'svelte/elements';
@@ -8,7 +9,7 @@
 		size?: 'sm' | 'default';
 	};
 
-	let {
+	const {
 		ref = $bindable(null),
 		value = $bindable(),
 		class: className,

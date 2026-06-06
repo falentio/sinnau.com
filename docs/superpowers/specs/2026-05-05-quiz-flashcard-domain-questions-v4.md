@@ -369,14 +369,14 @@ Help client understand what went wrong.
 
 ```json
 {
-	"error": {
-		"code": "VALIDATION_FAILED",
-		"message": "Validation failed",
-		"details": [
-			{ "field": "front", "message": "Required" },
-			{ "field": "importance", "message": "Must be positive integer" }
-		]
-	}
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Validation failed",
+    "details": [
+      { "field": "front", "message": "Required" },
+      { "field": "importance", "message": "Must be positive integer" }
+    ]
+  }
 }
 ```
 
@@ -387,10 +387,10 @@ Help client understand what went wrong.
 
 ```json
 {
-	"error": {
-		"code": "VALIDATION_FAILED",
-		"message": "Item 2: front is required"
-	}
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Item 2: front is required"
+  }
 }
 ```
 
@@ -488,10 +488,10 @@ When batch fails, client needs to understand why.
 
 ```json
 {
-	"error": {
-		"code": "BATCH_VALIDATION_FAILED",
-		"message": "Validation failed"
-	}
+  "error": {
+    "code": "BATCH_VALIDATION_FAILED",
+    "message": "Validation failed"
+  }
 }
 ```
 
@@ -524,10 +524,10 @@ Security - prevent unauthorized modifications.
 
 ```json
 {
-	"error": {
-		"code": "FORBIDDEN",
-		"message": "You do not have permission to update this resource"
-	}
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "You do not have permission to update this resource"
+  }
 }
 ```
 
@@ -614,10 +614,10 @@ Same conflict handling as on create.
 
 ```json
 {
-	"error": {
-		"code": "SLUG_CONFLICT",
-		"message": "Slug already in use"
-	}
+  "error": {
+    "code": "SLUG_CONFLICT",
+    "message": "Slug already in use"
+  }
 }
 ```
 

@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { cn, type WithoutChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChild } from '$lib/utils.js';
 	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		inset,

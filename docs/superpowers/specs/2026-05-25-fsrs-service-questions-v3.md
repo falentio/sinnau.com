@@ -96,20 +96,20 @@ Approach C.
 
 ```typescript
 interface StartSessionResponse {
-	session: {
-		id: UUID;
-		userId: UUID;
-		studySetId: UUID;
-		status: 'active';
-		totalCards: number; // snapshot of total flashcards in study set
-		newCardsCount: number; // never-reviewed cards in this session
-		dueCardsCount: number; // previously-reviewed cards due <= now
-		remainingCards: number; // newCardsCount + dueCardsCount (manually set)
-		completedCards: number; // 0 at start
-		startedAt: number;
-		lastReviewedAt?: number;
-		completedAt?: null;
-	};
+  session: {
+    id: UUID;
+    userId: UUID;
+    studySetId: UUID;
+    status: "active";
+    totalCards: number; // snapshot of total flashcards in study set
+    newCardsCount: number; // never-reviewed cards in this session
+    dueCardsCount: number; // previously-reviewed cards due <= now
+    remainingCards: number; // newCardsCount + dueCardsCount (manually set)
+    completedCards: number; // 0 at start
+    startedAt: number;
+    lastReviewedAt?: number;
+    completedAt?: null;
+  };
 }
 ```
 
@@ -154,20 +154,20 @@ approach A
 
 ```typescript
 interface SessionCard {
-	flashcardId: UUID;
-	chapterId?: UUID;
-	front: string;
-	back: string;
-	hint?: string;
-	state: {
-		state: 'new' | 'learning' | 'review' | 'relearning'; // 'new' if no flashcard_state row
-		due: number | null; // null for new cards
-		stability: number | null;
-		difficulty: number | null;
-		reps: number | null;
-		lapses: number | null;
-		lastReview: number | null;
-	};
+  flashcardId: UUID;
+  chapterId?: UUID;
+  front: string;
+  back: string;
+  hint?: string;
+  state: {
+    state: "new" | "learning" | "review" | "relearning"; // 'new' if no flashcard_state row
+    due: number | null; // null for new cards
+    stability: number | null;
+    difficulty: number | null;
+    reps: number | null;
+    lapses: number | null;
+    lastReview: number | null;
+  };
 }
 ```
 
@@ -213,21 +213,21 @@ We remove the snapshot totalCards
 
 ```typescript
 interface ReviewFlashcardResponse {
-	flashcardId: UUID;
-	newState: {
-		state: 'new' | 'learning' | 'review' | 'relearning';
-		due: number;
-		stability: number;
-		difficulty: number;
-		reps: number;
-		lapses: number;
-		lastReview: number;
-	};
-	session: {
-		completedCards: number;
-		remainingCards: number;
-		status: 'active' | 'completed';
-	};
+  flashcardId: UUID;
+  newState: {
+    state: "new" | "learning" | "review" | "relearning";
+    due: number;
+    stability: number;
+    difficulty: number;
+    reps: number;
+    lapses: number;
+    lastReview: number;
+  };
+  session: {
+    completedCards: number;
+    remainingCards: number;
+    status: "active" | "completed";
+  };
 }
 ```
 

@@ -174,7 +174,10 @@ Prefer a database-level uniqueness guarantee and use application-level checks on
 Require a database-level unique constraint on `(userId, studySetId)` for `review_session`.
 
 ```typescript
-uniqueIndex('review_session_user_study_set_idx').on(table.userId, table.studySetId);
+uniqueIndex("review_session_user_study_set_idx").on(
+  table.userId,
+  table.studySetId
+);
 ```
 
 `StartSession` becomes get-or-create for that pair. `ResetSession` should be removed or redefined as manual session deletion/recreation.

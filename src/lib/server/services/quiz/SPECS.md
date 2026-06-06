@@ -33,28 +33,28 @@ Quiz is not responsible for:
 ## Entities
 
 ```typescript
-type QuizType = 'MULTIPLE_CHOICE' | 'MULTIPLE_SELECT' | 'FILL_IN_THE_BLANK';
+type QuizType = "MULTIPLE_CHOICE" | "MULTIPLE_SELECT" | "FILL_IN_THE_BLANK";
 
 interface Quiz {
-	id: UUID;
-	chapterId?: UUID;
-	studySetId: UUID;
-	type: QuizType;
-	questionText: string;
-	options: QuizOption[];
-	ownerId: UUID;
-	createdAt: number;
-	updatedAt: number;
+  id: UUID;
+  chapterId?: UUID;
+  studySetId: UUID;
+  type: QuizType;
+  questionText: string;
+  options: QuizOption[];
+  ownerId: UUID;
+  createdAt: number;
+  updatedAt: number;
 }
 
 interface QuizOption {
-	id: UUID;
-	quizId: UUID;
-	optionText: string;
-	isCorrect: boolean;
-	explanation?: string;
-	createdAt: number;
-	updatedAt: number;
+  id: UUID;
+  quizId: UUID;
+  optionText: string;
+  isCorrect: boolean;
+  explanation?: string;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -110,15 +110,15 @@ interface QuizOption {
 
 ```typescript
 interface CreateQuizCommand {
-	studySetId: UUID;
-	chapterId?: UUID;
-	type: QuizType;
-	questionText: string;
-	options?: Array<{
-		optionText: string;
-		isCorrect: boolean;
-		explanation?: string;
-	}>;
+  studySetId: UUID;
+  chapterId?: UUID;
+  type: QuizType;
+  questionText: string;
+  options?: Array<{
+    optionText: string;
+    isCorrect: boolean;
+    explanation?: string;
+  }>;
 }
 ```
 
@@ -133,8 +133,8 @@ interface CreateQuizCommand {
 
 ```typescript
 interface UpdateQuizCommand {
-	id: UUID;
-	questionText: string;
+  id: UUID;
+  questionText: string;
 }
 ```
 
@@ -148,7 +148,7 @@ interface UpdateQuizCommand {
 
 ```typescript
 interface DeleteQuizzesCommand {
-	ids: UUID[];
+  ids: UUID[];
 }
 ```
 
@@ -165,12 +165,12 @@ interface DeleteQuizzesCommand {
 
 ```typescript
 interface CreateQuizOptionsCommand {
-	options: Array<{
-		quizId: UUID;
-		optionText: string;
-		isCorrect: boolean;
-		explanation?: string;
-	}>;
+  options: Array<{
+    quizId: UUID;
+    optionText: string;
+    isCorrect: boolean;
+    explanation?: string;
+  }>;
 }
 ```
 
@@ -188,10 +188,10 @@ interface CreateQuizOptionsCommand {
 
 ```typescript
 interface UpdateQuizOptionCommand {
-	id: UUID;
-	optionText?: string;
-	isCorrect?: boolean;
-	explanation?: string;
+  id: UUID;
+  optionText?: string;
+  isCorrect?: boolean;
+  explanation?: string;
 }
 ```
 
@@ -207,7 +207,7 @@ interface UpdateQuizOptionCommand {
 
 ```typescript
 interface DeleteQuizOptionsCommand {
-	ids: UUID[];
+  ids: UUID[];
 }
 ```
 
@@ -226,7 +226,7 @@ interface DeleteQuizOptionsCommand {
 
 ```typescript
 interface GetQuizzesQuery {
-	studySetId: UUID;
+  studySetId: UUID;
 }
 ```
 
@@ -241,7 +241,7 @@ interface GetQuizzesQuery {
 
 ```typescript
 interface GetQuizQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 

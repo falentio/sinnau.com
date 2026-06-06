@@ -4,7 +4,7 @@
 	import StudySetItem from '$lib/components/features/app/study-set-item.svelte';
 	import StudySetPagination from '$lib/components/features/app/study-set-pagination.svelte';
 
-	let { data } = $props();
+	const { data } = $props();
 
 	const studySets = $derived(data.studySets);
 	const pagination = $derived(data.pagination);

@@ -3,14 +3,14 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Label from '$lib/components/ui/label/index.js';
 
-	let username = $state('');
-	let pending = $state(false);
+	const username = $state('');
+	const pending = $state(false);
 	let error = $state('');
 
-	function handleSubmit(e: SubmitEvent) {
+	const handleSubmit = (e: SubmitEvent) => {
 		e.preventDefault();
 		error = 'Pemilihan username belum tersedia. Backend belum diimplementasikan.';
-	}
+	};
 </script>
 
 <form class="flex flex-col gap-4" onsubmit={handleSubmit}>

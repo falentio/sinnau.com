@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { cn, type WithoutChild } from '$lib/utils.js';
-	import type { WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChild, WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Select as SelectPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 	import SelectPortal from './select-portal.svelte';
 	import SelectScrollDownButton from './select-scroll-down-button.svelte';
 	import SelectScrollUpButton from './select-scroll-up-button.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		sideOffset = 4,

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		showOnHover = false,
@@ -22,8 +23,8 @@
 				'peer-data-active/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-open:opacity-100 md:opacity-0',
 			className
 		),
-		'data-slot': 'sidebar-menu-action',
 		'data-sidebar': 'menu-action',
+		'data-slot': 'sidebar-menu-action',
 		...restProps
 	});
 </script>

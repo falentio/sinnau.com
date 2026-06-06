@@ -418,7 +418,8 @@ Service methods translate repository outcomes into these errors:
 
 ```ts
 const updated = await this.repo.update<Domain>(input.id, owner, patch);
-if (!updated) throw new ORPCError('NOT_FOUND', { message: '<Domain> not found' });
+if (!updated)
+  throw new ORPCError("NOT_FOUND", { message: "<Domain> not found" });
 ```
 
 `SlugConflictError` (and similar infrastructure errors) are caught in the service and re-thrown as the domain-specific code so the router's `ERRORS` map stays the single source of truth.

@@ -5,5 +5,17 @@ import vitest from "ultracite/oxlint/vitest";
 
 export default defineConfig({
   extends: [core, svelte, vitest],
-  ignorePatterns: core.ignorePatterns,
+  ignorePatterns: [
+    ...(core.ignorePatterns ?? []),
+    ".agents/skills/**",
+    "src/lib/server/infras/db/schema/auth-schema.ts",
+  ],
+  overrides: [
+    {
+      files: ["*.svelte"],
+      rules: {
+        "prefer-const": "off",
+      },
+    },
+  ],
 });

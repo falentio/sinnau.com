@@ -3,19 +3,19 @@
 
 	let result = $state<{ message: string; timestamp: number } | null>(null);
 	let loading = $state(false);
-	let error = $state<string | null>(null);
+	let errorMessage = $state<string | null>(null);
 
-	async function ping() {
+	const ping = async () => {
 		loading = true;
-		error = null;
+		errorMessage = null;
 		try {
 			result = await client.ping();
-		} catch (e) {
-			error = String(e);
+		} catch (error) {
+			errorMessage = String(error);
 		} finally {
 			loading = false;
 		}
-	}
+	};
 </script>
 
 <h1>Selamat Datang di Sinnau</h1>
@@ -34,7 +34,7 @@
 		<pre class="rounded-lg bg-muted p-4 text-sm">{JSON.stringify(result, null, 2)}</pre>
 	{/if}
 
-	{#if error}
-		<p class="text-destructive">{error}</p>
+	{#if errorMessage}
+		<p class="text-destructive">{errorMessage}</p>
 	{/if}
 </div>

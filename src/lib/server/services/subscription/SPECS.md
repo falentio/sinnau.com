@@ -35,76 +35,76 @@ Subscription is not responsible for:
 ## Entities
 
 ```typescript
-type SubscriptionPlanKey = 'FREE' | 'PRO' | 'PREMIUM';
-type SubscriptionPaidPlanKey = Exclude<SubscriptionPlanKey, 'FREE'>;
-type SubscriptionDurationKey = 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL';
+type SubscriptionPlanKey = "FREE" | "PRO" | "PREMIUM";
+type SubscriptionPaidPlanKey = Exclude<SubscriptionPlanKey, "FREE">;
+type SubscriptionDurationKey = "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL";
 
 type SubscriptionOrderStatus =
-	| 'PENDING'
-	| 'PAID'
-	| 'FAILED'
-	| 'EXPIRED'
-	| 'CANCELED'
-	| 'REFUNDED'
-	| 'CONFLICT';
+  | "PENDING"
+  | "PAID"
+  | "FAILED"
+  | "EXPIRED"
+  | "CANCELED"
+  | "REFUNDED"
+  | "CONFLICT";
 
-type SubscriptionPeriodStatus = 'ACTIVE' | 'EXPIRED' | 'REFUNDED' | 'REVOKED';
-type ReferralRewardStatus = 'NOT_APPLICABLE' | 'PENDING' | 'AWARDED' | 'FAILED';
+type SubscriptionPeriodStatus = "ACTIVE" | "EXPIRED" | "REFUNDED" | "REVOKED";
+type ReferralRewardStatus = "NOT_APPLICABLE" | "PENDING" | "AWARDED" | "FAILED";
 
 interface SubscriptionOrder {
-	id: PrefixedId<'sbo'>;
-	userId: string;
-	planKey: SubscriptionPaidPlanKey;
-	durationKey: SubscriptionDurationKey;
-	durationDays: number;
-	amount: number;
-	status: SubscriptionOrderStatus;
-	snapToken?: string;
-	redirectUrl?: string;
-	midtransOrderId: string;
-	midtransTransactionId?: string;
-	paymentType?: string;
-	grossAmount?: number;
-	transactionStatus?: string;
-	fraudStatus?: string;
-	statusCode?: string;
-	statusMessage?: string;
-	paidAt?: Date;
-	expiresAt: Date;
-	lastSyncedAt?: Date;
-	referralRewardStatus: ReferralRewardStatus;
-	createdAt: Date;
-	updatedAt: Date;
+  id: PrefixedId<"sbo">;
+  userId: string;
+  planKey: SubscriptionPaidPlanKey;
+  durationKey: SubscriptionDurationKey;
+  durationDays: number;
+  amount: number;
+  status: SubscriptionOrderStatus;
+  snapToken?: string;
+  redirectUrl?: string;
+  midtransOrderId: string;
+  midtransTransactionId?: string;
+  paymentType?: string;
+  grossAmount?: number;
+  transactionStatus?: string;
+  fraudStatus?: string;
+  statusCode?: string;
+  statusMessage?: string;
+  paidAt?: Date;
+  expiresAt: Date;
+  lastSyncedAt?: Date;
+  referralRewardStatus: ReferralRewardStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface SubscriptionPeriod {
-	id: PrefixedId<'sbp'>;
-	orderId?: PrefixedId<'sbo'>;
-	userId: string;
-	planKey: SubscriptionPaidPlanKey;
-	durationKey: SubscriptionDurationKey;
-	durationDays: number;
-	status: SubscriptionPeriodStatus;
-	startsAt: Date;
-	endsAt: Date;
-	refundedAt?: Date;
-	expiredAt?: Date;
-	revokedAt?: Date;
-	manualGrantReason?: string;
-	createdAt: Date;
-	updatedAt: Date;
+  id: PrefixedId<"sbp">;
+  orderId?: PrefixedId<"sbo">;
+  userId: string;
+  planKey: SubscriptionPaidPlanKey;
+  durationKey: SubscriptionDurationKey;
+  durationDays: number;
+  status: SubscriptionPeriodStatus;
+  startsAt: Date;
+  endsAt: Date;
+  refundedAt?: Date;
+  expiredAt?: Date;
+  revokedAt?: Date;
+  manualGrantReason?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface SubscriptionStatus {
-	planKey: SubscriptionPlanKey;
-	activePeriod?: SubscriptionPeriod;
-	pendingOrder?: Pick<
-		SubscriptionOrder,
-		'id' | 'planKey' | 'durationKey' | 'amount' | 'redirectUrl' | 'expiresAt'
-	>;
-	canCreateCheckout: boolean;
-	canRenew: boolean;
-	canUpgrade: boolean;
+  planKey: SubscriptionPlanKey;
+  activePeriod?: SubscriptionPeriod;
+  pendingOrder?: Pick<
+    SubscriptionOrder,
+    "id" | "planKey" | "durationKey" | "amount" | "redirectUrl" | "expiresAt"
+  >;
+  canCreateCheckout: boolean;
+  canRenew: boolean;
+  canUpgrade: boolean;
 }
 ```
 
@@ -227,8 +227,8 @@ interface SubscriptionStatus {
 
 ```typescript
 interface CreateSubscriptionCheckoutCommand {
-	planKey: 'PRO' | 'PREMIUM';
-	durationKey: 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL';
+  planKey: "PRO" | "PREMIUM";
+  durationKey: "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL";
 }
 ```
 
@@ -248,7 +248,7 @@ interface CreateSubscriptionCheckoutCommand {
 
 ```typescript
 interface ProcessSubscriptionPaymentUpdateCommand {
-	payload: MidtransTransactionStatusResponse;
+  payload: MidtransTransactionStatusResponse;
 }
 ```
 
@@ -265,7 +265,7 @@ interface ProcessSubscriptionPaymentUpdateCommand {
 
 ```typescript
 interface RefreshSubscriptionOrderStatusCommand {
-	orderId: PrefixedId<'sbo'>;
+  orderId: PrefixedId<"sbo">;
 }
 ```
 
@@ -280,7 +280,7 @@ interface RefreshSubscriptionOrderStatusCommand {
 
 ```typescript
 interface CleanupSubscriptionRowsCommand {
-	now?: Date;
+  now?: Date;
 }
 ```
 
@@ -294,10 +294,10 @@ interface CleanupSubscriptionRowsCommand {
 
 ```typescript
 interface GrantSubscriptionPeriodCommand {
-	userId: string;
-	planKey: 'PRO' | 'PREMIUM';
-	durationKey: 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL';
-	reason: string;
+  userId: string;
+  planKey: "PRO" | "PREMIUM";
+  durationKey: "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL";
+  reason: string;
 }
 ```
 
@@ -312,8 +312,8 @@ interface GrantSubscriptionPeriodCommand {
 
 ```typescript
 interface RevokeSubscriptionPeriodCommand {
-	periodId: PrefixedId<'sbp'>;
-	reason: string;
+  periodId: PrefixedId<"sbp">;
+  reason: string;
 }
 ```
 
@@ -339,8 +339,8 @@ interface GetMySubscriptionStatusQuery {}
 
 ```typescript
 interface GetCurrentPlanForUserQuery {
-	userId: string;
-	now?: Date;
+  userId: string;
+  now?: Date;
 }
 ```
 

@@ -5,7 +5,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Pagination as PaginationPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		...restProps

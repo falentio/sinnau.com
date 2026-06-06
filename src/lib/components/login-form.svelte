@@ -26,12 +26,12 @@
 	let serverError = $state('');
 	let pending = $state(false);
 
-	function getErrorMessage(error: { message?: string } | null | undefined) {
-		if (error?.message) return error.message;
+	const getErrorMessage = (error: { message?: string } | null | undefined) => {
+		if (error?.message) {return error.message;}
 		return 'Tidak bisa masuk. Periksa email dan kata sandi.';
-	}
+	};
 
-	async function signIn(data: LoginForm) {
+	const signIn = async (data: LoginForm) => {
 		pending = true;
 		try {
 			const { error } = await authClient.signIn.email({
@@ -48,7 +48,7 @@
 		} finally {
 			pending = false;
 		}
-	}
+	};
 
 	const form = superForm(
 		defaults<LoginForm>(
@@ -60,13 +60,13 @@
 		),
 		{
 			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: false,
 			onUpdate: async ({ form: submittedForm }) => {
 				serverError = '';
-				if (!submittedForm.valid) return;
+				if (!submittedForm.valid) {return;}
 				await signIn(submittedForm.data);
-			}
+			},
+			resetForm: false,
+			validators: valibotClient(formSchema)
 		}
 	);
 

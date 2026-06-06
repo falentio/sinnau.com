@@ -3,7 +3,7 @@
 	import { Menubar as MenubarPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		inset,
 		class: className,

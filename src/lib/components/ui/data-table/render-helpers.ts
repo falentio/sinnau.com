@@ -1,4 +1,6 @@
-import type { Component, ComponentProps, Snippet } from 'svelte';
+import type { Component, ComponentProps, Snippet } from "svelte";
+
+import { RenderSnippetConfig } from "./render-snippet-config.ts";
 
 /**
  * A helper class to make it easy to identify Svelte components in
@@ -17,39 +19,15 @@ import type { Component, ComponentProps, Snippet } from 'svelte';
  * ```
  */
 export class RenderComponentConfig<TComponent extends Component> {
-	component: TComponent;
-	props: ComponentProps<TComponent> | Record<string, never>;
-	constructor(
-		component: TComponent,
-		props: ComponentProps<TComponent> | Record<string, never> = {}
-	) {
-		this.component = component;
-		this.props = props;
-	}
-}
-
-/**
- * A helper class to make it easy to identify Svelte Snippets in `columnDef.cell` and `columnDef.header` properties.
- *
- * > NOTE: This class should only be used internally by the adapter. If you're
- * reading this and you don't know what this is for, you probably don't need it.
- *
- * @example
- * ```svelte
- * {@const result = content(context as any)}
- * {#if result instanceof RenderSnippetConfig}
- *   {@const { snippet, params } = result}
- *   {@render snippet(params)}
- * {/if}
- * ```
- */
-export class RenderSnippetConfig<TProps> {
-	snippet: Snippet<[TProps]>;
-	params: TProps;
-	constructor(snippet: Snippet<[TProps]>, params: TProps) {
-		this.snippet = snippet;
-		this.params = params;
-	}
+  component: TComponent;
+  props: ComponentProps<TComponent> | Record<string, never>;
+  constructor(
+    component: TComponent,
+    props: ComponentProps<TComponent> | Record<string, never> = {}
+  ) {
+    this.component = component;
+    this.props = props;
+  }
 }
 
 /**
@@ -74,13 +52,14 @@ export class RenderSnippetConfig<TProps> {
  * ```
  * @see {@link https://tanstack.com/table/latest/docs/guide/column-defs}
  */
-export function renderComponent<
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	T extends Component<any>,
-	Props extends ComponentProps<T>
->(component: T, props: Props = {} as Props) {
-	return new RenderComponentConfig(component, props);
-}
+export const renderComponent = <
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  T extends Component<any>,
+  Props extends ComponentProps<T>,
+>(
+  component: T,
+  props: Props = {} as Props
+) => new RenderComponentConfig(component, props);
 
 /**
  * A helper function to help create cells from Svelte Snippets through ColumnDef's `cell` and `header` properties.
@@ -89,8 +68,8 @@ export function renderComponent<
  *
  * This is only to be used with Snippets - use `renderComponent` for Svelte Components.
  *
- * @param snippet
- * @param params
+ * @param snippet The snippet to render.
+ * @param params The parameters to pass to the snippet.
  * @returns - A `RenderSnippetConfig` object that helps svelte-table know how to render the header/cell snippet.
  * @example
  * ```ts
@@ -106,6 +85,9 @@ export function renderComponent<
  * ```
  * @see {@link https://tanstack.com/table/latest/docs/guide/column-defs}
  */
-export function renderSnippet<TProps>(snippet: Snippet<[TProps]>, params: TProps = {} as TProps) {
-	return new RenderSnippetConfig(snippet, params);
-}
+export const renderSnippet = <TProps>(
+  /** The snippet to render. */
+  snippet: Snippet<[TProps]>,
+  /** The parameters to pass to the snippet. */
+  params: TProps = {} as TProps
+) => new RenderSnippetConfig(snippet, params);

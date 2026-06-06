@@ -11,7 +11,8 @@
 	import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { NavigationMenu as NavigationMenuPrimitive } from 'bits-ui';
-	let {
+
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

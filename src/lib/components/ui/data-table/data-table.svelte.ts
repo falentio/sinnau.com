@@ -1,16 +1,19 @@
-import {
-	type RowData,
-	type TableOptions,
-	type TableOptionsResolved,
-	type TableState,
-	type Updater,
-	createTable
-} from '@tanstack/table-core';
+import { createTable } from "@tanstack/table-core";
+import type {
+  RowData,
+  TableOptions,
+  TableOptionsResolved,
+  TableState,
+  Updater,
+} from "@tanstack/table-core";
 
 type MaybeThunk<T extends object> = T | (() => T | null | undefined);
-type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer R]
-	? H & Intersection<R>
-	: unknown) & {};
+type Intersection<T extends readonly unknown[]> = T extends [
+  infer H,
+  ...infer R,
+]
+  ? H & Intersection<R>
+  : unknown;
 
 /**
  * Lazily merges several objects (or thunks) while preserving
@@ -18,60 +21,62 @@ type Intersection<T extends readonly unknown[]> = (T extends [infer H, ...infer 
  *
  * Proxy-based to avoid known WebKit recursion issue.
  */
+const resolveThunk = <T extends object>(src: MaybeThunk<T>): T | undefined =>
+  typeof src === "function" ? (src() ?? undefined) : src;
+
 // oxlint-disable-next-line no-explicit-any
-export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
-	...sources: Sources
-): Intersection<{ [K in keyof Sources]: Sources[K] }> {
-	// oxlint-disable-next-line no-unsafe-assignment
-	const resolve = <T extends object>(src: MaybeThunk<T>): T | undefined =>
-		typeof src === 'function' ? (src() ?? undefined) : src;
+export const mergeObjects = <Sources extends readonly MaybeThunk<any>[]>(
+  ...sources: Sources
+): Intersection<{ [K in keyof Sources]: Sources[K] }> => {
+  // oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+  const findSourceWithKey = (key: PropertyKey) => {
+    for (let i = sources.length - 1; i >= 0; i -= 1) {
+      const obj = resolveThunk(sources[i]);
+      if (obj && key in obj) {
+        return obj;
+      }
+    }
+  };
 
-	// oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
-	const findSourceWithKey = (key: PropertyKey) => {
-		for (let i = sources.length - 1; i >= 0; i--) {
-			const obj = resolve(sources[i]);
-			if (obj && key in obj) return obj;
-		}
-		return undefined;
-	};
+  return new Proxy(Object.create(null), {
+    get(_, key) {
+      const src = findSourceWithKey(key);
+      return src?.[key as never];
+    },
 
-	return new Proxy(Object.create(null), {
-		get(_, key) {
-			const src = findSourceWithKey(key);
-			return src?.[key as never];
-		},
+    getOwnPropertyDescriptor(_, key) {
+      const src = findSourceWithKey(key);
+      if (!src) {
+        return;
+      }
+      return {
+        configurable: true,
+        enumerable: true,
+        // oxlint-disable-next-line no-explicit-any
+        value: (src as any)[key],
+        writable: true,
+      };
+    },
 
-		has(_, key) {
-			return !!findSourceWithKey(key);
-		},
+    has(_, key) {
+      return !!findSourceWithKey(key);
+    },
 
-		ownKeys(): (string | symbol)[] {
-			const all = new Set<string | symbol>();
-			for (const s of sources) {
-				const obj = resolve(s);
-				if (obj) {
-					for (const k of Reflect.ownKeys(obj) as (string | symbol)[]) {
-						all.add(k);
-					}
-				}
-			}
-			return [...all];
-		},
-
-		getOwnPropertyDescriptor(_, key) {
-			const src = findSourceWithKey(key);
-			if (!src) return undefined;
-			return {
-				configurable: true,
-				enumerable: true,
-				// oxlint-disable-next-line no-explicit-any
-				value: (src as any)[key],
-				writable: true
-			};
-		}
-	}) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
-	// oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
-}
+    ownKeys(): (string | symbol)[] {
+      const all = new Set<string | symbol>();
+      for (const s of sources) {
+        const obj = resolveThunk(s);
+        if (obj) {
+          for (const k of Reflect.ownKeys(obj) as (string | symbol)[]) {
+            all.add(k);
+          }
+        }
+      }
+      return [...all];
+    },
+  }) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
+  // oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+};
 
 /**
  * Creates a reactive TanStack table object for Svelte.
@@ -99,45 +104,49 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
  * </table>
  * ```
  */
-export function createSvelteTable<TData extends RowData>(options: TableOptions<TData>) {
-	const resolvedOptions: TableOptionsResolved<TData> = mergeObjects(
-		{
-			state: {},
-			onStateChange() {},
-			renderFallbackValue: null,
-			mergeOptions: (
-				defaultOptions: TableOptions<TData>,
-				options: Partial<TableOptions<TData>>
-			) => {
-				return mergeObjects(defaultOptions, options);
-			}
-		},
-		options
-	);
+export const createSvelteTable = <TData extends RowData>(
+  options: TableOptions<TData>
+) => {
+  const resolvedOptions: TableOptionsResolved<TData> = mergeObjects(
+    {
+      mergeOptions: (
+        defaultOptions: TableOptions<TData>,
+        overrides: Partial<TableOptions<TData>>
+      ) => mergeObjects(defaultOptions, overrides),
+      onStateChange: () => {
+        // no-op default; replaced by user options
+      },
+      renderFallbackValue: null,
+      state: {},
+    },
+    options
+  );
 
-	const table = createTable(resolvedOptions);
-	let state = $state<TableState>(table.initialState);
+  const table = createTable(resolvedOptions);
+  let state = $state<TableState>(table.initialState);
 
-	function updateOptions() {
-		table.setOptions(() => {
-			return mergeObjects(resolvedOptions, options, {
-				state: mergeObjects(state, options.state || {}),
+  const updateOptions = () => {
+    table.setOptions(() =>
+      mergeObjects(resolvedOptions, options, {
+        onStateChange: (updater: Updater<TableState>) => {
+          state =
+            typeof updater === "function"
+              ? updater(state)
+              : mergeObjects(state, updater);
 
-				onStateChange: (updater: Updater<TableState>) => {
-					if (typeof updater === 'function') state = updater(state);
-					else state = mergeObjects(state, updater);
+          options.onStateChange?.(updater);
+        },
 
-					options.onStateChange?.(updater);
-				}
-			});
-		});
-	}
+        state: mergeObjects(state, options.state || {}),
+      })
+    );
+  };
 
-	updateOptions();
+  updateOptions();
 
-	$effect.pre(() => {
-		updateOptions();
-	});
+  $effect.pre(() => {
+    updateOptions();
+  });
 
-	return table;
-}
+  return table;
+};

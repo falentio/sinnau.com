@@ -10,20 +10,19 @@
 		orientation?: 'horizontal' | 'vertical';
 	}
 
-	export function setToggleGroupCtx(props: ToggleGroupContext) {
+	export const setToggleGroupCtx = (props: ToggleGroupContext) => {
 		setContext('toggleGroup', props);
-	}
+	};
 
-	export function getToggleGroupCtx() {
-		return getContext<Required<ToggleGroupContext>>('toggleGroup');
-	}
+	export const getToggleGroupCtx = () =>
+		getContext<Required<ToggleGroupContext>>('toggleGroup');
 </script>
 
 <script lang="ts">
 	import { cn } from '$lib/utils.js';
 	import { ToggleGroup as ToggleGroupPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		value = $bindable(),
 		class: className,
@@ -39,8 +38,8 @@
 		} = $props();
 
 	setToggleGroupCtx({
-		get variant() {
-			return variant;
+		get orientation() {
+			return orientation;
 		},
 		get size() {
 			return size;
@@ -48,8 +47,8 @@
 		get spacing() {
 			return spacing;
 		},
-		get orientation() {
-			return orientation;
+		get variant() {
+			return variant;
 		}
 	});
 </script>

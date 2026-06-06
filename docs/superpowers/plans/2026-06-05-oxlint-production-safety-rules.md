@@ -14,21 +14,21 @@
 
 `pnpm run lint:agent` reports **210 errors** across 13 rules:
 
-| Rule | Count | Type |
-|---|---|---|
-| `vitest(require-mock-type-parameters)` | 98 | test |
-| `eslint(no-use-before-define)` | 35 | correctness |
-| `typescript(promise-function-async)` | 25 | real bug (unhandled rejections) |
-| `import(no-cycle)` | 22 | correctness (10 shadcn-svelte, 12 Drizzle schema) |
-| `vitest(require-to-throw-message)` | 8 | test |
-| `eslint(no-await-in-loop)` | 8 | suspicious (case-by-case audit) |
-| `unicorn(no-array-sort)` | 5 | correctness |
-| `unicorn(no-empty-file)` | 2 | correctness |
-| `typescript(use-unknown-in-catch-callback-variable)` | 2 | real bug (crash on `.message`) |
-| `eslint(default-case)` | 2 | restriction |
-| `unicorn(no-new-array)` | 1 | correctness |
-| `unicorn(no-instanceof-builtins)` | 1 | correctness |
-| `unicorn(no-document-cookie)` | 1 | security (XSS-readable) |
+| Rule                                                 | Count | Type                                              |
+| ---------------------------------------------------- | ----- | ------------------------------------------------- |
+| `vitest(require-mock-type-parameters)`               | 98    | test                                              |
+| `eslint(no-use-before-define)`                       | 35    | correctness                                       |
+| `typescript(promise-function-async)`                 | 25    | real bug (unhandled rejections)                   |
+| `import(no-cycle)`                                   | 22    | correctness (10 shadcn-svelte, 12 Drizzle schema) |
+| `vitest(require-to-throw-message)`                   | 8     | test                                              |
+| `eslint(no-await-in-loop)`                           | 8     | suspicious (case-by-case audit)                   |
+| `unicorn(no-array-sort)`                             | 5     | correctness                                       |
+| `unicorn(no-empty-file)`                             | 2     | correctness                                       |
+| `typescript(use-unknown-in-catch-callback-variable)` | 2     | real bug (crash on `.message`)                    |
+| `eslint(default-case)`                               | 2     | restriction                                       |
+| `unicorn(no-new-array)`                              | 1     | correctness                                       |
+| `unicorn(no-instanceof-builtins)`                    | 1     | correctness                                       |
+| `unicorn(no-document-cookie)`                        | 1     | security (XSS-readable)                           |
 
 The final test suite state is **410/410 passing**.
 
@@ -53,9 +53,11 @@ Each task is small and self-contained. The verification command is always `pnpm 
 ## File Structure Map
 
 ### Config
+
 - **Modify:** `.oxlintrc.json` (add `import/no-cycle` override for shadcn-svelte paths in Task 2)
 
 ### Drizzle schemas
+
 - **Modify:** `src/lib/server/infras/db/schema/index.ts` (break cycle in Task 3)
 - **Modify:** `src/lib/server/infras/db/schema/chapter.ts`
 - **Modify:** `src/lib/server/infras/db/schema/flashcard.ts`
@@ -64,6 +66,7 @@ Each task is small and self-contained. The verification command is always `pnpm 
 - **Modify:** `src/lib/server/infras/db/schema/study-set-content.ts`
 
 ### Services (promise-function-async + use-unknown-in-catch + no-await-in-loop + default-case)
+
 - **Modify:** `src/lib/server/services/chapter/chapter.service.ts`
 - **Modify:** `src/lib/server/services/flashcard/flashcard.service.ts`
 - **Modify:** `src/lib/server/services/flashcard/flashcard.repository.drizzle.ts`
@@ -74,6 +77,7 @@ Each task is small and self-contained. The verification command is always `pnpm 
 - **Modify:** `src/lib/server/infras/slug.ts`
 
 ### Testing files (vi.fn type params + toThrow + no-use-before-define + no-await-in-loop)
+
 - **Modify:** `src/lib/server/services/chapter/chapter.testing.ts`
 - **Modify:** `src/lib/server/services/chapter/chapter.guard.test.ts`
 - **Modify:** `src/lib/server/services/chapter/chapter.repository.drizzle.test.ts`
@@ -90,6 +94,7 @@ Each task is small and self-contained. The verification command is always `pnpm 
 - **Modify:** `src/lib/utils/rng.test.ts`
 
 ### UI / Svelte (no-use-before-define + no-document-cookie + no-instanceof-builtins + no-array-sort + no-await-in-loop)
+
 - **Modify:** `src/lib/components/ui/carousel/carousel.svelte`
 - **Modify:** `src/lib/components/ui/data-table/data-table.svelte.ts`
 - **Modify:** `src/lib/components/ui/sidebar/sidebar-provider.svelte`
@@ -103,6 +108,7 @@ Each task is small and self-contained. The verification command is always `pnpm 
 - **Modify:** `src/routes/(app)/study/[studySetId]/quiz/create/+page.svelte`
 
 ### Files to delete
+
 - **Delete:** `src/lib/index.ts` (empty)
 - **Delete:** `src/lib/server/index.ts` (empty)
 
@@ -124,6 +130,7 @@ Each task is small and self-contained. The verification command is always `pnpm 
 ## Task 1: Worktree Setup and Baseline
 
 **Files:**
+
 - Create: isolated git worktree via `git worktree add`
 - Read: current lint output and test state
 
@@ -199,6 +206,7 @@ Expected output: 1 error (`src/lib/components/ui/chart/chart-tooltip.svelte:71` 
 ## Task 2: Ignore shadcn-svelte Cycles in Config
 
 **Files:**
+
 - Modify: `.oxlintrc.json:131-170` (add new overrides entry)
 
 - [ ] **Step 1: Capture pre-task count**
@@ -216,12 +224,12 @@ Expected output: `22`
 In `.oxlintrc.json`, add a new entry to the `overrides` array (before the `**/*.test.ts` entry, alphabetically/logically grouped with the other non-test override). The new override:
 
 ```json
-		{
-			"files": ["src/lib/components/ui/**"],
-			"rules": {
-				"import/no-cycle": "off"
-			}
-		}
+{
+  "files": ["src/lib/components/ui/**"],
+  "rules": {
+    "import/no-cycle": "off"
+  }
+}
 ```
 
 The final `overrides` array should look like:
@@ -313,6 +321,7 @@ git commit -m "chore(oxlint): ignore import/no-cycle in shadcn-svelte components
 ## Task 3: Refactor Drizzle Schema Cycles
 
 **Files:**
+
 - Modify: `src/lib/server/infras/db/schema/index.ts`
 - Modify: `src/lib/server/infras/db/schema/chapter.ts`
 - Modify: `src/lib/server/infras/db/schema/flashcard.ts`
@@ -354,17 +363,23 @@ For this codebase, **Strategy A is the right call** because Drizzle's `relations
 Create the new file (replacing the `relations()` calls currently inside each domain schema file). The exact content depends on what `relations()` calls exist; read each schema file first, then move all `relations(table, ({ one, many }) => ({ ... }))` blocks here, importing only the table objects:
 
 ```ts
-import { relations } from 'drizzle-orm';
-import { chapter } from './chapter.ts';
-import { flashcard } from './flashcard.ts';
-import { quiz } from './quiz.ts';
-import { studySet, studySetVisit } from './study-set.ts';
-import { studySetContent, studySetContentToChapter } from './study-set-content.ts';
+import { relations } from "drizzle-orm";
+import { chapter } from "./chapter.ts";
+import { flashcard } from "./flashcard.ts";
+import { quiz } from "./quiz.ts";
+import { studySet, studySetVisit } from "./study-set.ts";
+import {
+  studySetContent,
+  studySetContentToChapter,
+} from "./study-set-content.ts";
 
 export const chapterRelations = relations(chapter, ({ one, many }) => ({
-	studySet: one(studySet, { fields: [chapter.studySetId], references: [studySet.id] }),
-	flashcards: many(flashcard),
-	contents: many(studySetContent)
+  studySet: one(studySet, {
+    fields: [chapter.studySetId],
+    references: [studySet.id],
+  }),
+  flashcards: many(flashcard),
+  contents: many(studySetContent),
 }));
 
 // ... all other relations() blocks, same shape ...
@@ -382,7 +397,7 @@ Edit `src/lib/server/infras/db/schema/index.ts` to also re-export the new `relat
 
 ```ts
 // ... existing exports ...
-export * from './relations.ts';
+export * from "./relations.ts";
 ```
 
 - [ ] **Step 7: Verify cycles are gone**
@@ -417,6 +432,7 @@ git commit -m "refactor(db): extract Drizzle relations to break import cycles"
 ## Task 4: Add Type Parameters to `vi.fn()` Calls — All Testing Files
 
 **Files:**
+
 - Modify: `src/lib/server/services/chapter/chapter.testing.ts` (12 sites)
 - Modify: `src/lib/server/services/flashcard/flashcard.testing.ts` (17 sites)
 - Modify: `src/lib/server/services/quiz/quiz.testing.ts` (22 sites)
@@ -463,11 +479,12 @@ The `*testing.ts` files mock repository methods. The `Mocked<Domain>Repository` 
 
 ```ts
 // Example — flashcard.testing.ts
-import { vi, type Mocked } from 'vitest';
-import type { FlashcardRepository } from './flashcard.repository.ts';
+import { vi, type Mocked } from "vitest";
+import type { FlashcardRepository } from "./flashcard.repository.ts";
 
-const insertFlashcards = vi.fn<FlashcardRepository['insertFlashcards']>();
-const findFlashcardsByChapter = vi.fn<FlashcardRepository['findFlashcardsByChapter']>();
+const insertFlashcards = vi.fn<FlashcardRepository["insertFlashcards"]>();
+const findFlashcardsByChapter =
+  vi.fn<FlashcardRepository["findFlashcardsByChapter"]>();
 ```
 
 For `slug.test.ts` and `chapter.repository.drizzle.test.ts` / `flashcard.repository.drizzle.test.ts`, the patterns are simpler — `vi.fn<() => Promise<MyType>>()` is usually correct.
@@ -504,6 +521,7 @@ git commit -m "test: add type parameters to all vi.fn() mock calls"
 ## Task 5: Add Error Messages to `toThrow()` Calls
 
 **Files:**
+
 - Modify: `src/lib/utils/rng.test.ts` (8 sites)
 
 - [ ] **Step 1: Capture pre-task count**
@@ -533,7 +551,7 @@ The pattern is to either pass the error message string or a matcher. Choose the 
 expect(() => r.intn(0)).toThrow();
 
 // After (preferred — asserts the error is specifically the one thrown):
-expect(() => r.intn(0)).toThrow('argument must be positive');
+expect(() => r.intn(0)).toThrow("argument must be positive");
 ```
 
 Look at the actual error message thrown by the source code (`src/lib/utils/rng.ts`) to get the right text. If the source code doesn't have a useful message, use a descriptive one that matches the test's intent (e.g., `'RNG: argument must be positive'`).
@@ -570,6 +588,7 @@ git commit -m "test(rng): add error messages to toThrow assertions"
 ## Task 6: Mark Promise-Returning Functions as `async`
 
 **Files:**
+
 - Modify: `src/lib/server/services/chapter/chapter.service.ts:31` (1 site)
 - Modify: `src/lib/server/services/flashcard/flashcard.repository.drizzle.ts:52` (1 site)
 - Modify: `src/lib/server/services/quiz/quiz.repository.drizzle.ts:24, 65` (2 sites)
@@ -658,6 +677,7 @@ git commit -m "fix: mark promise-returning functions as async"
 ## Task 7: Type `catch` Clause Variables as `unknown`
 
 **Files:**
+
 - Modify: `src/lib/server/services/chapter/chapter.service.ts:34`
 - Modify: `src/lib/server/services/study-set/study-set.service.ts:37`
 
@@ -728,6 +748,7 @@ git commit -m "fix: type catch clause variables as unknown"
 ## Task 8: Add `default` Case to `switch` Statements
 
 **Files:**
+
 - Modify: `src/lib/server/services/quiz/quiz.service.ts:259, 315`
 
 - [ ] **Step 1: Capture pre-task count**
@@ -750,15 +771,17 @@ The pattern:
 
 ```ts
 switch (quiz.type) {
-	case 'MULTIPLE_CHOICE':
-		// ...
-		break;
-	case 'FILL_IN_THE_BLANK':
-		// ...
-		break;
-	default: {
-		throw new ORPCError('INTERNAL_SERVER_ERROR', { message: 'Internal server error' });
-	}
+  case "MULTIPLE_CHOICE":
+    // ...
+    break;
+  case "FILL_IN_THE_BLANK":
+    // ...
+    break;
+  default: {
+    throw new ORPCError("INTERNAL_SERVER_ERROR", {
+      message: "Internal server error",
+    });
+  }
 }
 ```
 
@@ -796,6 +819,7 @@ git commit -m "fix(quiz): add default case to switch statements on quiz type"
 ## Task 9: Delete Empty Files
 
 **Files:**
+
 - Delete: `src/lib/index.ts`
 - Delete: `src/lib/server/index.ts`
 
@@ -868,6 +892,7 @@ git commit -m "chore: remove empty index.ts files"
 ## Task 10: Replace `.sort()` with `.toSorted()`
 
 **Files:**
+
 - Modify: `src/lib/server/services/flashcard/flashcard.repository.drizzle.test.ts:145`
 - Modify: `src/lib/server/services/quiz/quiz.repository.drizzle.test.ts:294`
 - Modify: `src/lib/server/services/study-set/study-set.repository.drizzle.test.ts:162`
@@ -929,6 +954,7 @@ git commit -m "test: use toSorted() instead of sort() to avoid mutation"
 ## Task 11: Replace `new Array(n)` with `Array.from()`
 
 **Files:**
+
 - Modify: `src/lib/utils/rng.test.ts:83`
 
 - [ ] **Step 1: Capture pre-task count**
@@ -987,6 +1013,7 @@ git commit -m "test(rng): use Array.from() instead of new Array(n)"
 ## Task 12: Replace `arr instanceof Array` with `Array.isArray()`
 
 **Files:**
+
 - Modify: `src/lib/components/ui/data-table/data-table.svelte.ts:61`
 
 - [ ] **Step 1: Capture pre-task count**
@@ -1006,12 +1033,12 @@ The pattern:
 ```ts
 // Before:
 if (value instanceof Array) {
-	// ...
+  // ...
 }
 
 // After:
 if (Array.isArray(value)) {
-	// ...
+  // ...
 }
 ```
 
@@ -1049,6 +1076,7 @@ git commit -m "fix(data-table): use Array.isArray() instead of instanceof Array"
 ## Task 13: Audit `document.cookie` Usage in Sidebar Provider
 
 **Files:**
+
 - Modify: `src/lib/components/ui/sidebar/sidebar-provider.svelte:33` (or add per-line disable with rationale)
 
 - [ ] **Step 1: Capture pre-task count**
@@ -1066,7 +1094,9 @@ Expected output: `1`
 Read line 33 of `src/lib/components/ui/sidebar/sidebar-provider.svelte`. The current code likely reads `document.cookie` to persist the sidebar state, e.g.:
 
 ```ts
-const cookie = document.cookie.split('; ').find((row) => row.startsWith('sidebar:state='));
+const cookie = document.cookie
+  .split("; ")
+  .find((row) => row.startsWith("sidebar:state="));
 ```
 
 - [ ] **Step 3: Decide fix strategy**
@@ -1079,7 +1109,9 @@ Two options:
 
 ```ts
 // oxlint-disable-next-line unicorn/no-document-cookie -- SSR hydration requires cookie persistence
-const cookie = document.cookie.split('; ').find((row) => row.startsWith('sidebar:state='));
+const cookie = document.cookie
+  .split("; ")
+  .find((row) => row.startsWith("sidebar:state="));
 ```
 
 - [ ] **Step 4: Apply the chosen fix**
@@ -1122,6 +1154,7 @@ git commit -m "fix(sidebar): switch sidebar state from document.cookie to localS
 ## Task 14: Move Declarations Above Use — Svelte Components
 
 **Files:**
+
 - Modify: `src/lib/components/ui/carousel/carousel.svelte` (5 sites)
 - Modify: `src/lib/components/ui/data-table/data-table.svelte.ts` (5 sites)
 - Modify: `src/lib/components/features/app/study-set-item.svelte` (1 site)
@@ -1151,6 +1184,7 @@ For Svelte files, the function declarations are typically at the bottom of the `
 The file declares `scrollPrev`, `scrollNext`, `handleKeyDown`, `onInit`, and `scrollTo` near the bottom. The fix is to move them above the first use. The simplest move: cut the entire declarations block and paste it right after the imports/props destructuring at the top of the `<script>` block.
 
 If the function references variables that aren't yet declared at the new position, either:
+
 - Use `function foo() { ... }` (declarations are hoisted, references are resolved at call time)
 - Or move the dependencies along with it
 
@@ -1204,6 +1238,7 @@ git commit -m "refactor: move function declarations above first use (no-use-befo
 ## Task 15: Move Declarations Above Use — Forms and Pages
 
 **Files:**
+
 - Modify: `src/lib/components/sign-up-form.svelte` (1 site)
 - Modify: `src/lib/components/login-form.svelte` (1 site)
 - Modify: `src/routes/(app)/study/new/+page.svelte` (1 site)
@@ -1270,6 +1305,7 @@ git commit -m "refactor: move submit handlers above template references"
 ## Task 16: Move Declarations Above Use — Test Files
 
 **Files:**
+
 - Modify: `src/lib/server/services/chapter/chapter.guard.test.ts` (8 sites)
 - Modify: `src/lib/server/services/study-set-content/study-set-content.guard.test.ts` (9 sites)
 
@@ -1327,6 +1363,7 @@ git commit -m "refactor(test): move captureError helper above its uses"
 ## Task 17: Move Declarations Above Use — Schema Files
 
 **Files:**
+
 - Modify: `src/lib/server/infras/db/schema/study-set.ts:44` (`studySetVisit` used before defined)
 - Modify: `src/lib/server/infras/db/schema/study-set-content.ts:30` (`studySetContentToChapter` used before defined)
 
@@ -1384,6 +1421,7 @@ git commit -m "refactor(db): reorder schema declarations to satisfy no-use-befor
 ## Task 18: Audit `no-await-in-loop` — Service File
 
 **Files:**
+
 - Modify: `src/lib/server/services/flashcard/flashcard.service.ts:35`
 
 - [ ] **Step 1: Capture pre-task count**
@@ -1409,7 +1447,7 @@ If the inserts are FK-constrained and must be sequential, add the disable:
 ```ts
 // oxlint-disable-next-line no-await-in-loop -- FK constraints require sequential inserts
 for (const item of items) {
-	await this.repo.insert(item);
+  await this.repo.insert(item);
 }
 ```
 
@@ -1453,6 +1491,7 @@ git commit -m "refactor(flashcard): parallelize bulk insert with Promise.all"
 ## Task 19: Audit `no-await-in-loop` — `slug.ts`
 
 **Files:**
+
 - Modify: `src/lib/server/infras/slug.ts:34`
 
 - [ ] **Step 1: Capture pre-task count**
@@ -1476,9 +1515,9 @@ The loop cannot be parallelized; the disable is the right call:
 ```ts
 // oxlint-disable-next-line no-await-in-loop -- slug uniqueness retries are inherently sequential
 while (attempts < MAX_SLUG_ATTEMPTS) {
-	const collision = await this.repo.findStudySetBySlug(candidate);
-	if (!collision) return candidate;
-	// ...
+  const collision = await this.repo.findStudySetBySlug(candidate);
+  if (!collision) return candidate;
+  // ...
 }
 ```
 
@@ -1514,6 +1553,7 @@ git commit -m "chore(slug): document sequential nature of slug uniqueness retry"
 ## Task 20: Audit `no-await-in-loop` — Test Files
 
 **Files:**
+
 - Modify: `src/lib/server/services/study-set/study-set.repository.drizzle.test.ts:168, 332, 333`
 
 - [ ] **Step 1: Capture pre-task count**
@@ -1529,6 +1569,7 @@ Expected output: `6`
 - [ ] **Step 2: Read each flagged loop**
 
 The test file has 3 sites. Each is in a test that seeds the database. Test seeding is **intentionally sequential** because:
+
 - FK constraints require parent rows before child rows
 - Some seeders need to read what previous seeders created (e.g., to link children to parents)
 - Parallel inserts in tests cause flaky timing
@@ -1575,6 +1616,7 @@ git commit -m "test(study-set): document sequential nature of DB seed loops"
 ## Task 21: Audit `no-await-in-loop` — Service and Dev Dialog Files
 
 **Files:**
+
 - Modify: `src/lib/server/services/study-set-content/study-set-content.service.ts:142`
 - Modify: `src/lib/components/features/dev/dev-create-chapter-dialog.svelte:17`
 - Modify: `src/lib/components/features/dev/dev-create-quiz-dialog.svelte:47`
@@ -1592,6 +1634,7 @@ Expected output: `3`
 - [ ] **Step 2: Read each flagged loop**
 
 Three sites:
+
 - `study-set-content.service.ts:142` — likely a bulk content insert (same FK argument as Task 18)
 - `dev-create-chapter-dialog.svelte:17` — dev-only dialog, seeding test data
 - `dev-create-quiz-dialog.svelte:47` — dev-only dialog, seeding test data
@@ -1599,6 +1642,7 @@ Three sites:
 - [ ] **Step 3: Apply the appropriate fix per site**
 
 For `study-set-content.service.ts:142`:
+
 - If the loop is `setChapters` (replacing all chapter links for a content), it is parallelizable (deletes + inserts can be `Promise.all`).
 - If it's bulk content insert, it is FK-constrained → disable with rationale.
 
@@ -1701,6 +1745,7 @@ gh pr create --title "chore(oxlint): enable production-safety rules" --body "Ena
 **Type consistency:** The fix patterns reference the same function signatures used elsewhere in the codebase (e.g., `ORPCError('INTERNAL_SERVER_ERROR', { message: 'Internal server error' })` matches the existing safety nets; `Array.from({ length: n }, () => 0)` is the standard fix; `vi.fn<MethodType>()` is the standard mock pattern).
 
 **Potential drift points to watch:**
+
 - Task 3 (Drizzle schema cycles) depends on the actual `relations()` blocks in the codebase; the engineer must read each file first and copy the blocks verbatim, not invent new fields.
 - Task 4 (vi.fn type params) has 98 sites; the engineer should use `Parameters<typeof mock.method>` and `ReturnType<typeof mock.method>` derived types when the signature is complex.
 - Tasks 18–21 (no-await-in-loop) require the engineer to actually read the loop and judge whether parallelism is safe; the plan provides defaults but acknowledges they may need to be flipped.

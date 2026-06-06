@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,
@@ -16,10 +17,10 @@
 
 	const hasContent = $derived.by(() => {
 		// has slotted error
-		if (children) return true;
+		if (children) {return true;}
 
 		// no errors
-		if (!errors || errors.length === 0) return false;
+		if (!errors || errors.length === 0) {return false;}
 
 		// has an error but no message
 		if (errors.length === 1 && !errors[0]?.message) {

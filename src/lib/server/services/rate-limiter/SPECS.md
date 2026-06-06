@@ -29,43 +29,43 @@ Rate Limiter is not responsible for:
 ## Entities
 
 ```typescript
-type RateLimitWindowType = 'DAILY' | 'WEEKLY';
-type RateLimitPlanKey = 'FREE' | 'PRO' | 'PREMIUM';
+type RateLimitWindowType = "DAILY" | "WEEKLY";
+type RateLimitPlanKey = "FREE" | "PRO" | "PREMIUM";
 
 interface RateLimitUsage {
-	id: UUID;
-	userId: UUID;
-	windowType: RateLimitWindowType;
-	windowStart: Date;
-	usedUnits: number;
-	createdAt: Date;
-	updatedAt: Date;
+  id: UUID;
+  userId: UUID;
+  windowType: RateLimitWindowType;
+  windowStart: Date;
+  usedUnits: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface RateLimitOperation {
-	id: UUID;
-	userId: UUID;
-	dailyUsageId: UUID;
-	weeklyUsageId: UUID;
-	amount: number;
-	status: 'CONSUMED' | 'REFUNDED';
-	createdAt: Date;
-	refundedAt?: Date;
+  id: UUID;
+  userId: UUID;
+  dailyUsageId: UUID;
+  weeklyUsageId: UUID;
+  amount: number;
+  status: "CONSUMED" | "REFUNDED";
+  createdAt: Date;
+  refundedAt?: Date;
 }
 
 interface RateLimitWindowStatus {
-	windowType: RateLimitWindowType;
-	windowStart: Date;
-	resetAt: Date;
-	used: number;
-	limit: number;
-	remaining: number;
+  windowType: RateLimitWindowType;
+  windowStart: Date;
+  resetAt: Date;
+  used: number;
+  limit: number;
+  remaining: number;
 }
 
 interface RateLimitStatus {
-	planKey: RateLimitPlanKey;
-	daily: RateLimitWindowStatus;
-	weekly: RateLimitWindowStatus;
+  planKey: RateLimitPlanKey;
+  daily: RateLimitWindowStatus;
+  weekly: RateLimitWindowStatus;
 }
 ```
 
@@ -129,7 +129,7 @@ interface RateLimitStatus {
 
 ```typescript
 interface ConsumeGenerationQuotaCommand {
-	amount: number;
+  amount: number;
 }
 ```
 
@@ -146,7 +146,7 @@ interface ConsumeGenerationQuotaCommand {
 
 ```typescript
 interface RefundGenerationQuotaCommand {
-	operationId: UUID;
+  operationId: UUID;
 }
 ```
 
@@ -160,7 +160,7 @@ interface RefundGenerationQuotaCommand {
 
 ```typescript
 interface CleanupRateLimitRowsCommand {
-	olderThanDays: 90;
+  olderThanDays: 90;
 }
 ```
 

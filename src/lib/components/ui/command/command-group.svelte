@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Command as CommandPrimitive, useId } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

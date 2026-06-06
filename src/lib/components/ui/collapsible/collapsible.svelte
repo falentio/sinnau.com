@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Collapsible as CollapsiblePrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		open = $bindable(false),
 		...restProps

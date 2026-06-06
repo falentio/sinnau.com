@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { Button, type Props } from '$lib/components/ui/button/index.js';
+	import { Button } from '$lib/components/ui/button/index.js';
+import type { Props } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
 	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { WithoutChildren } from 'bits-ui';
 	import { getEmblaContext } from './context.js';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		variant = 'outline',

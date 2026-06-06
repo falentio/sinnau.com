@@ -57,24 +57,24 @@ Recommended `ID_PREFIX` entries:
 One `FlashcardState` exists per flashcard per user after the user's first review of that flashcard.
 
 ```typescript
-type FsrsState = 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING';
+type FsrsState = "NEW" | "LEARNING" | "REVIEW" | "RELEARNING";
 
 interface FlashcardState {
-	id: FlashcardStateId;
-	userId: UserId;
-	flashcardId: FlashcardId;
-	state: FsrsState;
-	due: number;
-	stability: number;
-	difficulty: number;
-	scheduledDays: number;
-	learningSteps: number;
-	reps: number;
-	lapses: number;
-	lastReview?: number;
-	fsrsPreset: string;
-	createdAt: number;
-	updatedAt: number;
+  id: FlashcardStateId;
+  userId: UserId;
+  flashcardId: FlashcardId;
+  state: FsrsState;
+  due: number;
+  stability: number;
+  difficulty: number;
+  scheduledDays: number;
+  learningSteps: number;
+  reps: number;
+  lapses: number;
+  lastReview?: number;
+  fsrsPreset: string;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -99,14 +99,14 @@ One `ReviewSession` exists per user per StudySet after the user starts studying 
 
 ```typescript
 interface ReviewSession {
-	id: ReviewSessionId;
-	userId: UserId;
-	studySetId: StudySetId;
-	fsrsPreset: string;
-	startedAt: number;
-	lastReviewedAt?: number;
-	createdAt: number;
-	updatedAt: number;
+  id: ReviewSessionId;
+  userId: UserId;
+  studySetId: StudySetId;
+  fsrsPreset: string;
+  startedAt: number;
+  lastReviewedAt?: number;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -129,30 +129,30 @@ interface ReviewSession {
 `ReviewLog` is append-only review history for reviews accepted through a long-lived session.
 
 ```typescript
-type FsrsRating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY';
+type FsrsRating = "AGAIN" | "HARD" | "GOOD" | "EASY";
 
 interface ReviewLogStateSnapshot {
-	state: FsrsState;
-	due: number;
-	stability: number;
-	difficulty: number;
-	learningSteps: number;
-	reps: number;
-	lapses: number;
-	lastReview?: number;
+  state: FsrsState;
+  due: number;
+  stability: number;
+  difficulty: number;
+  learningSteps: number;
+  reps: number;
+  lapses: number;
+  lastReview?: number;
 }
 
 interface ReviewLog {
-	id: ReviewLogId;
-	userId: UserId;
-	flashcardId: FlashcardId;
-	sessionId: ReviewSessionId;
-	rating: FsrsRating;
-	previousState: ReviewLogStateSnapshot | null;
-	newState: ReviewLogStateSnapshot;
-	reviewedAt: number;
-	fsrsPreset: string;
-	createdAt: number;
+  id: ReviewLogId;
+  userId: UserId;
+  flashcardId: FlashcardId;
+  sessionId: ReviewSessionId;
+  rating: FsrsRating;
+  previousState: ReviewLogStateSnapshot | null;
+  newState: ReviewLogStateSnapshot;
+  reviewedAt: number;
+  fsrsPreset: string;
+  createdAt: number;
 }
 ```
 
@@ -182,11 +182,11 @@ Public service responses use a UI-focused card-state shape.
 
 ```typescript
 interface FsrsCardState {
-	state: FsrsState;
-	due: number | null;
-	reps: number;
-	lapses: number;
-	lastReview?: number;
+  state: FsrsState;
+  due: number | null;
+  reps: number;
+  lapses: number;
+  lastReview?: number;
 }
 ```
 
@@ -199,14 +199,14 @@ Session progress is computed live from current StudySet flashcards and `Flashcar
 
 ```typescript
 interface ReviewSessionProgress {
-	newCardsCount: number;
-	dueCardsCount: number;
-	isComplete: boolean;
+  newCardsCount: number;
+  dueCardsCount: number;
+  isComplete: boolean;
 }
 
 interface ReviewSessionWithProgress {
-	session: ReviewSession;
-	progress: ReviewSessionProgress;
+  session: ReviewSession;
+  progress: ReviewSessionProgress;
 }
 ```
 
@@ -219,10 +219,10 @@ interface ReviewSessionWithProgress {
 
 ```typescript
 interface SessionCard {
-	flashcardId: FlashcardId;
-	kind: 'NEW' | 'DUE';
-	state: FsrsCardState;
-	previewState: Record<FsrsRating, FsrsCardState>;
+  flashcardId: FlashcardId;
+  kind: "NEW" | "DUE";
+  state: FsrsCardState;
+  previewState: Record<FsrsRating, FsrsCardState>;
 }
 ```
 
@@ -271,7 +271,7 @@ Cards created after the session was created can appear as `NEW` in the same long
 
 ```typescript
 interface StartSessionCommand {
-	studySetId: StudySetId;
+  studySetId: StudySetId;
 }
 ```
 
@@ -288,7 +288,7 @@ interface StartSessionCommand {
 
 ```typescript
 interface DeleteSessionCommand {
-	sessionId: ReviewSessionId;
+  sessionId: ReviewSessionId;
 }
 ```
 
@@ -303,9 +303,9 @@ interface DeleteSessionCommand {
 
 ```typescript
 interface ReviewFlashcardCommand {
-	sessionId: ReviewSessionId;
-	flashcardId: FlashcardId;
-	rating: FsrsRating;
+  sessionId: ReviewSessionId;
+  flashcardId: FlashcardId;
+  rating: FsrsRating;
 }
 ```
 
@@ -334,7 +334,7 @@ All writes in `ReviewFlashcard` must be atomic. `FlashcardState`, `ReviewLog`, a
 
 ```typescript
 interface GetSessionQuery {
-	sessionId: ReviewSessionId;
+  sessionId: ReviewSessionId;
 }
 ```
 
@@ -347,7 +347,7 @@ interface GetSessionQuery {
 
 ```typescript
 interface GetSessionsQuery {
-	isComplete?: boolean;
+  isComplete?: boolean;
 }
 ```
 
@@ -362,7 +362,7 @@ interface GetSessionsQuery {
 
 ```typescript
 interface GetSessionCardsQuery {
-	sessionId: ReviewSessionId;
+  sessionId: ReviewSessionId;
 }
 ```
 

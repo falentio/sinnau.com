@@ -11,27 +11,27 @@
 
 	const plans: { key: PlanKey; description: string; price: string; features: string[] }[] = [
 		{
-			key: 'FREE',
 			description: 'Paket gratis untuk mencoba.',
-			price: '0',
-			features: ['10 generate per hari', '3 modul belajar', 'Flashcard dasar']
+			features: ['10 generate per hari', '3 modul belajar', 'Flashcard dasar'],
+			key: 'FREE',
+			price: '0'
 		},
 		{
-			key: 'PRO',
 			description: 'Untuk pelajar aktif.',
-			price: '49',
 			features: [
 				'100 generate per hari',
 				'Modul tidak terbatas',
 				'Quiz otomatis',
 				'Statistik belajar'
-			]
+			],
+			key: 'PRO',
+			price: '49'
 		},
 		{
-			key: 'PREMIUM',
 			description: 'Untuk semua kebutuhan belajar.',
-			price: '99',
-			features: ['Generate tidak terbatas', 'AI tutor personal', 'Ekspor PDF', 'Dukungan prioritas']
+			features: ['Generate tidak terbatas', 'AI tutor personal', 'Ekspor PDF', 'Dukungan prioritas'],
+			key: 'PREMIUM',
+			price: '99'
 		}
 	];
 </script>

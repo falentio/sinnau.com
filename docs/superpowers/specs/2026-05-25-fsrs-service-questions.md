@@ -137,8 +137,8 @@ Approach B
 
 ```typescript
 interface ReviewFlashcardCommand {
-	flashcardId: UUID;
-	rating: 'again' | 'hard' | 'good' | 'easy'; // maps to ts-fsrs Rating 1–4
+  flashcardId: UUID;
+  rating: "again" | "hard" | "good" | "easy"; // maps to ts-fsrs Rating 1–4
 }
 ```
 

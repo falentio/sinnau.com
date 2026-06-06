@@ -1,34 +1,44 @@
-import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { user } from './auth-schema.ts';
-import { studySet } from './study-set.ts';
+import { sql } from "drizzle-orm";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
+
+import { user } from "./auth-schema.ts";
+import { studySet } from "./study-set.ts";
 
 export const chapter = sqliteTable(
-	'chapter',
-	{
-		id: text('id').primaryKey(),
-		slug: text('slug').notNull(),
-		title: text('title').notNull(),
-		description: text('description'),
-		studySetId: text('study_set_id')
-			.notNull()
-			.references(() => studySet.id, { onDelete: 'cascade' }),
-		ownerId: text('owner_id')
-			.notNull()
-			.references(() => user.id, { onDelete: 'cascade' }),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.$onUpdate(() => new Date())
-			.notNull()
-	},
-	(table) => [
-		uniqueIndex('chapter_studySetId_slug_unique').on(sql`lower(${table.slug})`, table.studySetId),
-		index('chapter_studySetId_idx').on(table.studySetId),
-		index('chapter_ownerId_idx').on(table.ownerId)
-	]
+  "chapter",
+  {
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    description: text("description"),
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    studySetId: text("study_set_id")
+      .notNull()
+      .references(() => studySet.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("chapter_studySetId_slug_unique").on(
+      sql`lower(${table.slug})`,
+      table.studySetId
+    ),
+    index("chapter_studySetId_idx").on(table.studySetId),
+    index("chapter_ownerId_idx").on(table.ownerId),
+  ]
 );
 
 export type Chapter = typeof chapter.$inferSelect;

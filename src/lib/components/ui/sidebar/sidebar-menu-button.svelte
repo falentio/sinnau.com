@@ -1,23 +1,24 @@
 <script lang="ts" module>
-	import { tv, type VariantProps } from 'tailwind-variants';
+	import { tv } from 'tailwind-variants';
+import type { VariantProps } from 'tailwind-variants';
 
 	export const sidebarMenuButtonVariants = tv({
 		base: 'ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground gap-2 rounded-xl px-3 py-2 text-left text-sm transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 data-active:font-medium peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate',
+		defaultVariants: {
+			size: 'default',
+			variant: 'default'
+		},
 		variants: {
+			size: {
+				default: 'h-9 text-sm',
+				lg: 'h-14 px-3 text-sm group-data-[collapsible=icon]:p-0!',
+				sm: 'h-8 text-xs'
+			},
 			variant: {
 				default: 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
 				outline:
 					'bg-background hover:bg-sidebar-accent hover:text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)] hover:shadow-[0_0_0_1px_var(--sidebar-accent)]'
-			},
-			size: {
-				default: 'h-9 text-sm',
-				sm: 'h-8 text-xs',
-				lg: 'h-14 px-3 text-sm group-data-[collapsible=icon]:p-0!'
 			}
-		},
-		defaultVariants: {
-			variant: 'default',
-			size: 'default'
 		}
 	});
 
@@ -27,13 +28,14 @@
 
 <script lang="ts">
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
-	import { cn, type WithElementRef, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef, WithoutChildrenOrChild } from '$lib/utils.js';
 	import { mergeProps } from 'bits-ui';
 	import type { ComponentProps, Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { useSidebar } from './context.svelte.js';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,
@@ -56,11 +58,11 @@
 	const sidebar = useSidebar();
 
 	const buttonProps = $derived({
-		class: cn(sidebarMenuButtonVariants({ variant, size }), className),
-		'data-slot': 'sidebar-menu-button',
+		class: cn(sidebarMenuButtonVariants({ size, variant }), className),
+		'data-active': isActive,
 		'data-sidebar': 'menu-button',
 		'data-size': size,
-		'data-active': isActive,
+		'data-slot': 'sidebar-menu-button',
 		...restProps
 	});
 </script>

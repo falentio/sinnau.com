@@ -5,7 +5,7 @@
 	import type { ComponentProps } from 'svelte';
 	import ContextMenuPortal from './context-menu-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		portalProps,
 		class: className,

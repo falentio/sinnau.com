@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Menubar as MenubarPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		...restProps

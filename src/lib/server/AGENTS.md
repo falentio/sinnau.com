@@ -38,14 +38,14 @@ Any time you have public-facing code that imports server-only code (whether dire
 // @errors: 7005
 /// file: $lib/server/secrets.js
 export const atlantisCoordinates = [
-	/* redacted */
+  /* redacted */
 ];
 ```
 
 ```js
 // @errors: 2307 7006 7005
 /// file: src/routes/utils.js
-export { atlantisCoordinates } from '$lib/server/secrets.js';
+export { atlantisCoordinates } from "$lib/server/secrets.js";
 
 export const add = (a, b) => a + b;
 ```
@@ -53,7 +53,7 @@ export const add = (a, b) => a + b;
 ```html
 /// file: src/routes/+page.svelte
 <script>
-	import { add } from './utils.js';
+  import { add } from "./utils.js";
 </script>
 ```
 

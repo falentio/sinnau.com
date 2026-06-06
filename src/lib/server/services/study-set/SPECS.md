@@ -34,15 +34,15 @@ StudySet is not responsible for:
 
 ```typescript
 interface StudySet {
-	id: UUID;
-	slug: string;
-	title: string;
-	description?: string;
-	visibility: 'PUBLIC' | 'PRIVATE';
-	ownerId: UUID;
-	files: string[];
-	createdAt: number;
-	updatedAt: number;
+  id: UUID;
+  slug: string;
+  title: string;
+  description?: string;
+  visibility: "PUBLIC" | "PRIVATE";
+  ownerId: UUID;
+  files: string[];
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -94,10 +94,10 @@ interface StudySet {
 
 ```typescript
 interface CreateStudySetCommand {
-	title: string;
-	description?: string;
-	visibility?: 'PUBLIC' | 'PRIVATE';
-	files?: string[];
+  title: string;
+  description?: string;
+  visibility?: "PUBLIC" | "PRIVATE";
+  files?: string[];
 }
 ```
 
@@ -109,11 +109,11 @@ interface CreateStudySetCommand {
 
 ```typescript
 interface UpdateStudySetCommand {
-	id: UUID;
-	title?: string;
-	description?: string;
-	visibility?: 'PUBLIC' | 'PRIVATE';
-	files?: string[];
+  id: UUID;
+  title?: string;
+  description?: string;
+  visibility?: "PUBLIC" | "PRIVATE";
+  files?: string[];
 }
 ```
 
@@ -127,7 +127,7 @@ interface UpdateStudySetCommand {
 
 ```typescript
 interface DeleteStudySetCommand {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -141,11 +141,11 @@ interface DeleteStudySetCommand {
 
 ```typescript
 interface GetStudySetsQuery {
-	pagination?: {
-		orderBy?: 'createdAt' | 'updatedAt';
-		orderDirection?: 'asc' | 'desc';
-		page?: number;
-	};
+  pagination?: {
+    orderBy?: "createdAt" | "updatedAt";
+    orderDirection?: "asc" | "desc";
+    page?: number;
+  };
 }
 ```
 
@@ -194,10 +194,10 @@ type GetStudySetQuery = { id: UUID } | { slug: string };
 
 ```typescript
 interface StudySetVisit {
-	id: UUID;
-	userId: UUID;
-	studySetId: UUID;
-	visitedAt: number;
+  id: UUID;
+  userId: UUID;
+  studySetId: UUID;
+  visitedAt: number;
 }
 ```
 
@@ -215,7 +215,7 @@ interface StudySetVisit {
 
 ```typescript
 interface RefreshStudySetVisitCommand {
-	studySetId: UUID;
+  studySetId: UUID;
 }
 ```
 
@@ -240,7 +240,7 @@ interface CleanupOldStudySetVisitsCommand {}
 
 ```typescript
 interface GetRecentStudySetsQuery {
-	count: number;
+  count: number;
 }
 ```
 

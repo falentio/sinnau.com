@@ -2,20 +2,20 @@
 	import * as v from 'valibot';
 
 	const optionSchema = v.object({
+		explanation: v.optional(v.pipe(v.string(), v.maxLength(500, 'Maksimal 500 karakter.'))),
+		isCorrect: v.boolean(),
 		optionText: v.pipe(
 			v.string(),
 			v.trim(),
 			v.nonEmpty('Opsi tidak boleh kosong.'),
 			v.maxLength(500, 'Maksimal 500 karakter.')
-		),
-		isCorrect: v.boolean(),
-		explanation: v.optional(v.pipe(v.string(), v.maxLength(500, 'Maksimal 500 karakter.')))
+		)
 	});
 
 	const formSchema = v.object({
-		type: v.picklist(['MULTIPLE_CHOICE', 'MULTIPLE_SELECT', 'FILL_IN_THE_BLANK'] as const),
+		options: v.array(optionSchema),
 		questionText: v.pipe(v.string(), v.trim(), v.nonEmpty('Soal tidak boleh kosong.')),
-		options: v.array(optionSchema)
+		type: v.picklist(['MULTIPLE_CHOICE', 'MULTIPLE_SELECT', 'FILL_IN_THE_BLANK'] as const)
 	});
 
 	type QuizForm = v.InferOutput<typeof formSchema>;
@@ -39,38 +39,38 @@
 
 	let serverError = $state('');
 	let pending = $state(false);
-	let showExplanation = $state(false);
+	const showExplanation = $state(false);
 
 	const quizTypeItems = [
-		{ value: 'MULTIPLE_CHOICE', label: 'Pilihan Ganda' },
-		{ value: 'MULTIPLE_SELECT', label: 'Pilihan Banyak' },
-		{ value: 'FILL_IN_THE_BLANK', label: 'Isian Singkat' }
+		{ label: 'Pilihan Ganda', value: 'MULTIPLE_CHOICE' },
+		{ label: 'Pilihan Banyak', value: 'MULTIPLE_SELECT' },
+		{ label: 'Isian Singkat', value: 'FILL_IN_THE_BLANK' }
 	];
 
-	function emptyOption(isCorrect = false): QuizOptionForm {
-		return {
-			optionText: '',
+	const emptyOption = (isCorrect = false): QuizOptionForm => (
+		{
+			explanation: '',
 			isCorrect,
-			explanation: ''
-		};
+			optionText: ''
+		}
+	)
+
+	const getOptionBounds = (type: FormQuizType) => {
+		if (type === 'FILL_IN_THE_BLANK') {return { max: 1, min: 1 };}
+		if (type === 'MULTIPLE_SELECT') {return { max: 10, min: 2 };}
+		return { max: 6, min: 2 };
 	}
 
-	function getOptionBounds(type: FormQuizType) {
-		if (type === 'FILL_IN_THE_BLANK') return { min: 1, max: 1 };
-		if (type === 'MULTIPLE_SELECT') return { min: 2, max: 10 };
-		return { min: 2, max: 6 };
-	}
-
-	function normalizeOptions(type: FormQuizType, options: QuizOptionForm[]) {
+	const normalizeOptions = (type: FormQuizType, options: QuizOptionForm[]) => {
 		if (type === 'FILL_IN_THE_BLANK') {
-			const option = options.find((option) => option.isCorrect) ?? options[0] ?? emptyOption();
-			return [{ ...option, isCorrect: true }];
+			const correct = options.find((opt) => opt.isCorrect) ?? options[0] ?? emptyOption();
+			return [{ ...correct, isCorrect: true }];
 		}
 
 		const { min, max } = getOptionBounds(type);
 		const normalized = options.slice(0, max);
 
-		while (normalized.length < min) normalized.push(emptyOption());
+		while (normalized.length < min) {normalized.push(emptyOption());}
 
 		if (type === 'MULTIPLE_CHOICE') {
 			const correctIndex = Math.max(
@@ -83,12 +83,12 @@
 		return normalized;
 	}
 
-	function getQuizType() {
-		return $formData.type;
-	}
+	const getQuizType = () => 
+		$formData.type
+	
 
-	function setQuizType(type: string | undefined) {
-		if (!type) return;
+	const setQuizType = (type: string | undefined) => {
+		if (!type) {return;}
 		const quizType = type as FormQuizType;
 
 		$formData.type = quizType;
@@ -96,38 +96,36 @@
 		serverError = '';
 	}
 
-	function validateOptions(type: FormQuizType, options: QuizOptionForm[]) {
+	const validateOptions = (type: FormQuizType, options: QuizOptionForm[]) => {
 		const correctCount = options.filter((option) => option.isCorrect).length;
 
 		if (type === 'MULTIPLE_CHOICE') {
 			if (options.length < 2 || options.length > 6) {
 				return 'Pilihan ganda harus memiliki 2-6 opsi.';
 			}
-			if (correctCount !== 1) return 'Pilihan ganda harus memiliki tepat satu jawaban benar.';
+			if (correctCount !== 1) {return 'Pilihan ganda harus memiliki tepat satu jawaban benar.';}
 		}
 
 		if (type === 'MULTIPLE_SELECT') {
 			if (options.length < 2 || options.length > 10) {
 				return 'Pilihan banyak harus memiliki 2-10 opsi.';
 			}
-			if (correctCount < 1) return 'Pilih setidaknya satu jawaban benar.';
+			if (correctCount < 1) {return 'Pilih setidaknya satu jawaban benar.';}
 		}
 
-		if (type === 'FILL_IN_THE_BLANK') {
-			if (options.length !== 1 || correctCount !== 1) {
-				return 'Isian singkat harus memiliki tepat satu jawaban benar.';
-			}
+		if (type === 'FILL_IN_THE_BLANK' && (options.length !== 1 || correctCount !== 1)) {
+			return 'Isian singkat harus memiliki tepat satu jawaban benar.';
 		}
 
 		return '';
 	}
 
-	function getErrorMessage(error: unknown) {
-		if (error instanceof Error && error.message) return error.message;
+	const getErrorMessage = (error: unknown) => {
+		if (error instanceof Error && error.message) {return error.message;}
 		return 'Quiz belum bisa dibuat. Coba lagi sebentar.';
 	}
 
-	async function submitQuiz(data: QuizForm) {
+	const submitQuiz = async (data: QuizForm) => {
 		pending = true;
 
 		try {
@@ -165,22 +163,22 @@
 	const form = superForm(
 		defaults<QuizForm>(
 			{
-				type: 'MULTIPLE_CHOICE',
+				options: [emptyOption(true), emptyOption(), emptyOption(), emptyOption()],
 				questionText: '',
-				options: [emptyOption(true), emptyOption(), emptyOption(), emptyOption()]
+				type: 'MULTIPLE_CHOICE'
 			},
 			valibotClient(formSchema)
 		),
 		{
 			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: false,
 			dataType: 'json',
 			onUpdate: async ({ form: submittedForm }) => {
 				serverError = '';
-				if (!submittedForm.valid) return;
+				if (!submittedForm.valid) {return;}
 				await submitQuiz(submittedForm.data);
-			}
+			},
+			resetForm: false,
+			validators: valibotClient(formSchema)
 		}
 	);
 
@@ -195,23 +193,23 @@
 		!isFillInTheBlank && $formData.options.length > optionBounds.min
 	);
 
-	function addOption() {
-		if (!canAddOption) return;
+	const addOption = () => {
+		if (!canAddOption) {return;}
 		$formData.options = [...$formData.options, emptyOption()];
 	}
 
-	function removeOption(index: number) {
-		if (!canRemoveOption) return;
+	const removeOption = (index: number) => {
+		if (!canRemoveOption) {return;}
 		$formData.options = normalizeOptions(
 			$formData.type,
 			$formData.options.filter((_, i) => i !== index)
 		);
 	}
 
-	function toggleCorrectOption(index: number) {
+	const toggleCorrectOption = (index: number) => {
 		if ($formData.type === 'MULTIPLE_SELECT') {
 			const option = $formData.options[index];
-			if (!option) return;
+			if (!option) {return;}
 			option.isCorrect = !option.isCorrect;
 			return;
 		}

@@ -1,4 +1,8 @@
-export const QUIZ_TYPES = ['MULTIPLE_CHOICE', 'MULTIPLE_SELECT', 'FILL_IN_THE_BLANK'] as const;
+export const QUIZ_TYPES = [
+  "MULTIPLE_CHOICE",
+  "MULTIPLE_SELECT",
+  "FILL_IN_THE_BLANK",
+] as const;
 export type QuizType = (typeof QUIZ_TYPES)[number];
 
 export const QUIZ_QUESTION_TEXT_MIN_LENGTH = 1;

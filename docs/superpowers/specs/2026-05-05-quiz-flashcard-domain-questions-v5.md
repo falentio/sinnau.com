@@ -558,11 +558,11 @@ Part of all-or-nothing handling.
 
 ```json
 {
-	"error": {
-		"code": "PARTIAL_FORBIDDEN",
-		"message": "You do not own these resources",
-		"ids": ["...", "..."]
-	}
+  "error": {
+    "code": "PARTIAL_FORBIDDEN",
+    "message": "You do not own these resources",
+    "ids": ["...", "..."]
+  }
 }
 ```
 

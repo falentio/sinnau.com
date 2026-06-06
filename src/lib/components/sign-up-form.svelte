@@ -3,24 +3,24 @@
 
 	const formSchema = v.pipe(
 		v.object({
-			name: v.pipe(
-				v.string(),
-				v.trim(),
-				v.minLength(1, 'Nama wajib diisi.'),
-				v.maxLength(64, 'Nama maksimal 64 karakter.')
-			),
+			confirmPassword: v.pipe(v.string(), v.minLength(1, 'Konfirmasi kata sandi wajib diisi.')),
 			email: v.pipe(
 				v.string(),
 				v.trim(),
 				v.email('Email tidak valid.'),
 				v.maxLength(255, 'Email maksimal 255 karakter.')
 			),
+			name: v.pipe(
+				v.string(),
+				v.trim(),
+				v.minLength(1, 'Nama wajib diisi.'),
+				v.maxLength(64, 'Nama maksimal 64 karakter.')
+			),
 			password: v.pipe(
 				v.string(),
 				v.minLength(8, 'Kata sandi minimal 8 karakter.'),
 				v.maxLength(128, 'Kata sandi maksimal 128 karakter.')
-			),
-			confirmPassword: v.pipe(v.string(), v.minLength(1, 'Konfirmasi kata sandi wajib diisi.'))
+			)
 		}),
 		v.forward(
 			v.partialCheck(
@@ -47,17 +47,17 @@
 	let serverError = $state('');
 	let pending = $state(false);
 
-	function getErrorMessage(error: { message?: string } | null | undefined) {
-		if (error?.message) return error.message;
+	const getErrorMessage = (error: { message?: string } | null | undefined) => {
+		if (error?.message) {return error.message;}
 		return 'Tidak bisa mendaftar. Coba lagi sebentar.';
-	}
+	};
 
-	async function signUp(data: SignUpForm) {
+	const signUp = async (data: SignUpForm) => {
 		pending = true;
 		try {
 			const { error } = await authClient.signUp.email({
-				name: data.name,
 				email: data.email,
+				name: data.name,
 				password: data.password
 			});
 			if (error) {
@@ -70,27 +70,27 @@
 		} finally {
 			pending = false;
 		}
-	}
+	};
 
 	const form = superForm(
 		defaults<SignUpForm>(
 			{
-				name: '',
+				confirmPassword: '',
 				email: '',
-				password: '',
-				confirmPassword: ''
+				name: '',
+				password: ''
 			},
 			valibotClient(formSchema)
 		),
 		{
 			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: false,
 			onUpdate: async ({ form: submittedForm }) => {
 				serverError = '';
-				if (!submittedForm.valid) return;
+				if (!submittedForm.valid) {return;}
 				await signUp(submittedForm.data);
-			}
+			},
+			resetForm: false,
+			validators: valibotClient(formSchema)
 		}
 	);
 

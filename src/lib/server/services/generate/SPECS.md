@@ -40,68 +40,68 @@ Generate is not responsible for:
 ## Entities
 
 ```typescript
-type GenerateStatus = 'CREATED' | 'ONGOING' | 'COMPLETED' | 'FAILED';
-type GenerateStopReason = 'completed' | 'input_token_limit';
+type GenerateStatus = "CREATED" | "ONGOING" | "COMPLETED" | "FAILED";
+type GenerateStopReason = "completed" | "input_token_limit";
 
 interface Generate {
-	id: UUID;
-	ownerId: UUID;
-	studySetId?: UUID;
-	studySetName: string;
-	input: string;
-	workflowId?: string;
-	status: GenerateStatus;
-	errorMessage?: string;
-	startedAt: Date;
-	completedAt?: Date;
-	createdAt: Date;
-	updatedAt: Date;
+  id: UUID;
+  ownerId: UUID;
+  studySetId?: UUID;
+  studySetName: string;
+  input: string;
+  workflowId?: string;
+  status: GenerateStatus;
+  errorMessage?: string;
+  startedAt: Date;
+  completedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface GenerateContentEvent {
-	id: UUID;
-	generateId: UUID;
-	content: string;
-	createdAt: Date;
+  id: UUID;
+  generateId: UUID;
+  content: string;
+  createdAt: Date;
 }
 
 interface GenerateResult {
-	id: UUID;
-	generateId: UUID;
-	startedAt: Date;
-	completedAt: Date;
-	durationMs: number;
-	stopReason: GenerateStopReason;
-	chunkCount: number;
-	chunkProcessed: number;
-	processedChunkProgress: number;
-	inputCharsLength: number;
-	inputCharsLengthPerThousandTokens: number;
-	totalInputTokens: number;
-	totalOutputTokens: number;
-	totalReasoningTokens: number;
-	totalCachedTokens: number;
-	generatedChapterCount: number;
-	generatedQuizCount: number;
-	generatedFlashcardCount: number;
-	createdAt: Date;
+  id: UUID;
+  generateId: UUID;
+  startedAt: Date;
+  completedAt: Date;
+  durationMs: number;
+  stopReason: GenerateStopReason;
+  chunkCount: number;
+  chunkProcessed: number;
+  processedChunkProgress: number;
+  inputCharsLength: number;
+  inputCharsLengthPerThousandTokens: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalReasoningTokens: number;
+  totalCachedTokens: number;
+  generatedChapterCount: number;
+  generatedQuizCount: number;
+  generatedFlashcardCount: number;
+  createdAt: Date;
 }
 
 interface GenerateChunkResult {
-	id: UUID;
-	generateId: UUID;
-	chunkIndex: number;
-	inputCharsLength: number;
-	inputTokens: number;
-	outputTokens: number;
-	reasoningTokens: number;
-	cachedTokens: number;
-	steps: number;
-	generatedChapterCount: number;
-	generatedQuizCount: number;
-	generatedFlashcardCount: number;
-	correlatedChapterCount: number;
-	createdAt: Date;
+  id: UUID;
+  generateId: UUID;
+  chunkIndex: number;
+  inputCharsLength: number;
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  cachedTokens: number;
+  steps: number;
+  generatedChapterCount: number;
+  generatedQuizCount: number;
+  generatedFlashcardCount: number;
+  correlatedChapterCount: number;
+  createdAt: Date;
 }
 ```
 
@@ -159,8 +159,8 @@ interface GenerateChunkResult {
 
 ```typescript
 interface CreateGenerateStudySetCommand {
-	input: string;
-	studySetName: string;
+  input: string;
+  studySetName: string;
 }
 ```
 
@@ -177,8 +177,8 @@ interface CreateGenerateStudySetCommand {
 
 ```typescript
 interface CreateGenerateStudySetV2Command {
-	input: string;
-	studySetName: string;
+  input: string;
+  studySetName: string;
 }
 ```
 
@@ -194,8 +194,8 @@ interface CreateGenerateStudySetV2Command {
 
 ```typescript
 interface RunGenerateStudySetCommand {
-	generateId?: UUID;
-	studySetId?: UUID;
+  generateId?: UUID;
+  studySetId?: UUID;
 }
 ```
 
@@ -213,8 +213,8 @@ interface RunGenerateStudySetCommand {
 
 ```typescript
 interface CreateGenerateStudySetV3Command {
-	input: string;
-	studySetName: string;
+  input: string;
+  studySetName: string;
 }
 ```
 
@@ -232,7 +232,7 @@ interface CreateGenerateStudySetV3Command {
 
 ```typescript
 interface CleanupGenerateContentEventsCommand {
-	olderThanDays?: number;
+  olderThanDays?: number;
 }
 ```
 
@@ -249,9 +249,9 @@ interface CleanupGenerateContentEventsCommand {
 
 ```typescript
 interface PollGenerateContentQuery {
-	generateId?: UUID;
-	studySetId?: UUID;
-	lastPollingDate: Date;
+  generateId?: UUID;
+  studySetId?: UUID;
+  lastPollingDate: Date;
 }
 ```
 
@@ -273,7 +273,7 @@ interface PollGenerateContentQuery {
 
 ```typescript
 interface GetGenerateQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 

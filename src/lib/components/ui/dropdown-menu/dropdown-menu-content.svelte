@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 	import DropdownMenuPortal from './dropdown-menu-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		sideOffset = 4,
 		align = 'start',

@@ -22,13 +22,14 @@
 		Share01Icon
 	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { untrack, type Snippet } from 'svelte';
+	import { untrack } from 'svelte';
+import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
-	type Props = {
+	interface Props {
 		children: Snippet;
 		data: LayoutData;
-	};
+	}
 
 	const { children, data } = $props() as Props;
 
@@ -37,12 +38,12 @@
 
 	const chapterItems = $derived(
 		data.chapters.map((chapter) => ({
-			value: chapter.id,
-			label: chapter.title
+			label: chapter.title,
+			value: chapter.id
 		}))
 	);
 
-	let selectedChapterId = $state(untrack(() => data.chapters[0]?.id ?? ''));
+	const selectedChapterId = $state(untrack(() => data.chapters[0]?.id ?? ''));
 
 	const selectedChapter = $derived(
 		data.chapters.find((chapter) => chapter.id === selectedChapterId)
@@ -50,9 +51,9 @@
 
 	const studySetId = $derived(page.params.studySetId ?? '');
 
-	let flashcardDialogOpen = $state(false);
-	let chapterDialogOpen = $state(false);
-	let quizDialogOpen = $state(false);
+	const flashcardDialogOpen = $state(false);
+	const chapterDialogOpen = $state(false);
+	const quizDialogOpen = $state(false);
 </script>
 
 <div

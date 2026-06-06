@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Slider as SliderPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		value = $bindable(),
 		orientation = 'horizontal',

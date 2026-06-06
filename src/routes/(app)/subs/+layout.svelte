@@ -5,7 +5,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import type { Snippet } from 'svelte';
 
-	let p = $props() as {
+	const p = $props() as {
 		children: Snippet;
 	};
 </script>

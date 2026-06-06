@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		inset,

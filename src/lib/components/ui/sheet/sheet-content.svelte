@@ -4,16 +4,16 @@
 
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChildrenOrChild } from '$lib/utils.js';
 	import { Cancel01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Dialog as SheetPrimitive } from 'bits-ui';
-	import type { Snippet } from 'svelte';
-	import type { ComponentProps } from 'svelte';
+	import type { ComponentProps, Snippet } from 'svelte';
 	import SheetOverlay from './sheet-overlay.svelte';
 	import SheetPortal from './sheet-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		side = 'right',

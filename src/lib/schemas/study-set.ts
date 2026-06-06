@@ -1,129 +1,152 @@
-import * as v from 'valibot';
-import { createPrefixedIdSchema } from './id-schema.ts';
+import * as v from "valibot";
 
-export const STUDY_SET_ID_PREFIX = 'sts';
+import { createPrefixedIdSchema } from "./id-schema.ts";
 
-const STUDY_SET_VISIBILITIES = ['PUBLIC', 'PRIVATE'] as const;
+export const STUDY_SET_ID_PREFIX = "sts";
+
+const STUDY_SET_VISIBILITIES = ["PUBLIC", "PRIVATE"] as const;
 
 const trimmedTitleSchema = v.pipe(
-	v.string(),
-	v.trim(),
-	v.minLength(5, 'Judul minimal 5 karakter setelah dipangkas'),
-	v.maxLength(50, 'Judul maksimal 50 karakter')
+  v.string(),
+  v.trim(),
+  v.minLength(5, "Judul minimal 5 karakter setelah dipangkas"),
+  v.maxLength(50, "Judul maksimal 50 karakter")
 );
 
 const descriptionSchema = v.optional(
-	v.pipe(v.string(), v.maxLength(2000, 'Deskripsi maksimal 2000 karakter'))
+  v.pipe(v.string(), v.maxLength(2000, "Deskripsi maksimal 2000 karakter"))
 );
 
 const filenameSchema = v.pipe(
-	v.string(),
-	v.maxLength(255, 'Setiap nama file maksimal 255 karakter')
+  v.string(),
+  v.maxLength(255, "Setiap nama file maksimal 255 karakter")
 );
 
 const filesSchema = v.optional(
-	v.pipe(v.array(filenameSchema), v.maxLength(32, 'Maksimal 32 file per study set'))
+  v.pipe(
+    v.array(filenameSchema),
+    v.maxLength(32, "Maksimal 32 file per study set")
+  )
 );
 
 const studySetIdSchema = createPrefixedIdSchema(STUDY_SET_ID_PREFIX);
 
 const slugSchema = v.pipe(
-	v.string(),
-	v.minLength(1, 'Slug diperlukan'),
-	v.maxLength(255, 'Slug maksimal 255 karakter'),
-	v.regex(/^[a-z0-9-]+$/, 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung')
+  v.string(),
+  v.minLength(1, "Slug diperlukan"),
+  v.maxLength(255, "Slug maksimal 255 karakter"),
+  v.regex(
+    /^[a-z0-9-]+$/u,
+    "Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung"
+  )
 );
 
 const queryParamIntegerSchema = v.pipe(
-	v.union([v.string(), v.number()]),
-	v.transform((input) => (typeof input === 'string' ? Number(input) : input)),
-	v.check((input) => !Number.isNaN(input), 'Harus berupa angka yang valid'),
-	v.integer(),
-	v.minValue(1)
+  v.union([v.string(), v.number()]),
+  v.transform((input) => (typeof input === "string" ? Number(input) : input)),
+  v.check((input) => !Number.isNaN(input), "Harus berupa angka yang valid"),
+  v.integer(),
+  v.minValue(1)
 );
 
 const paginationSchema = v.optional(
-	v.object({
-		orderBy: v.optional(v.picklist(['createdAt', 'updatedAt'])),
-		orderDirection: v.optional(v.picklist(['asc', 'desc'])),
-		page: v.optional(queryParamIntegerSchema)
-	})
+  v.object({
+    orderBy: v.optional(v.picklist(["createdAt", "updatedAt"])),
+    orderDirection: v.optional(v.picklist(["asc", "desc"])),
+    page: v.optional(queryParamIntegerSchema),
+  })
 );
 
 const visibilitySchema = v.picklist(STUDY_SET_VISIBILITIES);
 
 export const createStudySetInputSchema = v.object({
-	title: trimmedTitleSchema,
-	description: descriptionSchema,
-	visibility: v.optional(visibilitySchema),
-	files: filesSchema
+  description: descriptionSchema,
+  files: filesSchema,
+  title: trimmedTitleSchema,
+  visibility: v.optional(visibilitySchema),
 });
 
 export const updateStudySetInputSchema = v.object({
-	id: studySetIdSchema,
-	title: v.optional(trimmedTitleSchema),
-	description: v.optional(
-		v.union([v.pipe(v.string(), v.maxLength(2000)), v.literal(''), v.null()])
-	),
-	visibility: v.optional(visibilitySchema),
-	files: v.optional(v.array(filenameSchema))
+  description: v.optional(
+    v.union([v.pipe(v.string(), v.maxLength(2000)), v.literal(""), v.null()])
+  ),
+  files: v.optional(v.array(filenameSchema)),
+  id: studySetIdSchema,
+  title: v.optional(trimmedTitleSchema),
+  visibility: v.optional(visibilitySchema),
 });
 
 export const deleteStudySetInputSchema = v.object({
-	id: studySetIdSchema
+  id: studySetIdSchema,
 });
 
 export const getStudySetsInputSchema = v.object({
-	pagination: paginationSchema
+  pagination: paginationSchema,
 });
 
 export const getStudySetInputSchema = v.union([
-	v.object({ id: studySetIdSchema }),
-	v.object({ slug: slugSchema })
+  v.object({ id: studySetIdSchema }),
+  v.object({ slug: slugSchema }),
 ]);
 
 export const refreshStudySetVisitInputSchema = v.object({
-	studySetId: studySetIdSchema
+  studySetId: studySetIdSchema,
 });
 
 export const getRecentStudySetsInputSchema = v.object({
-	count: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100))
+  count: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
 });
 
 const visibilityOutputSchema = v.picklist(STUDY_SET_VISIBILITIES);
 
 export const studySetSchema = v.object({
-	id: v.string(),
-	slug: v.string(),
-	title: v.string(),
-	description: v.nullable(v.string()),
-	visibility: visibilityOutputSchema,
-	ownerId: v.string(),
-	files: v.array(v.string()),
-	createdAt: v.date(),
-	updatedAt: v.date()
+  createdAt: v.date(),
+  description: v.nullable(v.string()),
+  files: v.array(v.string()),
+  id: v.string(),
+  ownerId: v.string(),
+  slug: v.string(),
+  title: v.string(),
+  updatedAt: v.date(),
+  visibility: visibilityOutputSchema,
 });
 
 const paginationOutputSchema = v.object({
-	page: v.number(),
-	limit: v.number(),
-	total: v.number(),
-	totalPages: v.number()
+  limit: v.number(),
+  page: v.number(),
+  total: v.number(),
+  totalPages: v.number(),
 });
 
 export const studySetListResultSchema = v.object({
-	data: v.array(studySetSchema),
-	pagination: paginationOutputSchema
+  data: v.array(studySetSchema),
+  pagination: paginationOutputSchema,
 });
 
-export const studySetDeleteOutputSchema = v.object({ success: v.literal(true) });
-export const studySetRefreshVisitOutputSchema = v.object({ visitedAt: v.number() });
-export const studySetAdminCleanupVisitsOutputSchema = v.object({ deletedCount: v.number() });
+export const studySetDeleteOutputSchema = v.object({
+  success: v.literal(true),
+});
+export const studySetRefreshVisitOutputSchema = v.object({
+  visitedAt: v.number(),
+});
+export const studySetAdminCleanupVisitsOutputSchema = v.object({
+  deletedCount: v.number(),
+});
 
-export type CreateStudySetInput = v.InferOutput<typeof createStudySetInputSchema>;
-export type UpdateStudySetInput = v.InferOutput<typeof updateStudySetInputSchema>;
-export type DeleteStudySetInput = v.InferOutput<typeof deleteStudySetInputSchema>;
+export type CreateStudySetInput = v.InferOutput<
+  typeof createStudySetInputSchema
+>;
+export type UpdateStudySetInput = v.InferOutput<
+  typeof updateStudySetInputSchema
+>;
+export type DeleteStudySetInput = v.InferOutput<
+  typeof deleteStudySetInputSchema
+>;
 export type GetStudySetsInput = v.InferOutput<typeof getStudySetsInputSchema>;
 export type GetStudySetInput = v.InferOutput<typeof getStudySetInputSchema>;
-export type RefreshStudySetVisitInput = v.InferOutput<typeof refreshStudySetVisitInputSchema>;
-export type GetRecentStudySetsInput = v.InferOutput<typeof getRecentStudySetsInputSchema>;
+export type RefreshStudySetVisitInput = v.InferOutput<
+  typeof refreshStudySetVisitInputSchema
+>;
+export type GetRecentStudySetsInput = v.InferOutput<
+  typeof getRecentStudySetsInputSchema
+>;

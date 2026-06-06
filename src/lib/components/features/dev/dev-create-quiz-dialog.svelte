@@ -5,54 +5,54 @@
 	import type { QuizType } from '$lib/schemas/quiz.constant';
 	import DevCreateEntityDialog from './dev-create-entity-dialog.svelte';
 
-	type Props = {
+	interface Props {
 		open: boolean;
 		studySetId: string;
-	};
+	}
 
-	let { open = $bindable(false), studySetId }: Props = $props();
+	const { open = $bindable(false), studySetId }: Props = $props();
 
-	let count = $state(10);
-	let quizType = $state<QuizType>('MULTIPLE_CHOICE');
+	const count = $state(10);
+	const quizType = $state<QuizType>('MULTIPLE_CHOICE');
 
 	const QUIZ_TYPE_OPTIONS = [
-		{ value: 'MULTIPLE_CHOICE' as const, label: 'Pilihan Ganda' },
-		{ value: 'MULTIPLE_SELECT' as const, label: 'Pilihan Banyak' },
-		{ value: 'FILL_IN_THE_BLANK' as const, label: 'Isian Singkat' }
+		{ label: 'Pilihan Ganda', value: 'MULTIPLE_CHOICE' as const },
+		{ label: 'Pilihan Banyak', value: 'MULTIPLE_SELECT' as const },
+		{ label: 'Isian Singkat', value: 'FILL_IN_THE_BLANK' as const }
 	];
 
-	function stubOptionsForType(type: QuizType) {
+	const stubOptionsForType = (type: QuizType) => {
 		if (type === 'FILL_IN_THE_BLANK') {
-			return [{ optionText: 'jawaban-stub', isCorrect: true }];
+			return [{ isCorrect: true, optionText: 'jawaban-stub' }];
 		}
 		if (type === 'MULTIPLE_CHOICE') {
 			return [
-				{ optionText: 'Opsi A (benar)', isCorrect: true },
-				{ optionText: 'Opsi B', isCorrect: false },
-				{ optionText: 'Opsi C', isCorrect: false },
-				{ optionText: 'Opsi D', isCorrect: false }
+				{ isCorrect: true, optionText: 'Opsi A (benar)' },
+				{ isCorrect: false, optionText: 'Opsi B' },
+				{ isCorrect: false, optionText: 'Opsi C' },
+				{ isCorrect: false, optionText: 'Opsi D' }
 			];
 		}
 		return [
-			{ optionText: 'Opsi A (benar)', isCorrect: true },
-			{ optionText: 'Opsi B (benar)', isCorrect: true },
-			{ optionText: 'Opsi C', isCorrect: false },
-			{ optionText: 'Opsi D', isCorrect: false }
+			{ isCorrect: true, optionText: 'Opsi A (benar)' },
+			{ isCorrect: true, optionText: 'Opsi B (benar)' },
+			{ isCorrect: false, optionText: 'Opsi C' },
+			{ isCorrect: false, optionText: 'Opsi D' }
 		];
-	}
+	};
 
-	async function onSubmit(submitCount: number) {
-		if (!studySetId) throw new Error('Study set tidak ditemukan');
-		for (let i = 1; i <= submitCount; i++) {
+	const onSubmit = async (submitCount: number) => {
+		if (!studySetId) {throw new Error('Study set tidak ditemukan');}
+		for (let i = 1; i <= submitCount; i += 1) {
 			// oxlint-disable-next-line no-await-in-loop -- dev-only seeding, not user-facing
 			await client.quiz.create({
-				studySetId,
-				type: quizType,
+				options: stubOptionsForType(quizType),
 				questionText: `Pertanyaan stub #${i}?`,
-				options: stubOptionsForType(quizType)
+				studySetId,
+				type: quizType
 			});
 		}
-	}
+	};
 </script>
 
 <DevCreateEntityDialog

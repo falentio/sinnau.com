@@ -1,23 +1,24 @@
 <script lang="ts" module>
-	import { tv, type VariantProps } from 'tailwind-variants';
+	import { tv } from 'tailwind-variants';
+import type { VariantProps } from 'tailwind-variants';
 
 	export const itemVariants = tv({
 		base: '[a]:hover:bg-muted rounded-2xl border text-sm group/item focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-wrap items-center transition-colors duration-100 outline-none focus-visible:ring-[3px] [a]:transition-colors',
+		defaultVariants: {
+			size: 'default',
+			variant: 'default'
+		},
 		variants: {
-			variant: {
-				default: 'border-transparent',
-				outline: 'border-border',
-				muted: 'bg-muted/50 border-transparent'
-			},
 			size: {
 				default: 'gap-3.5 px-4 py-3.5',
 				sm: 'gap-3.5 px-3.5 py-3',
 				xs: 'gap-2.5 px-3 py-2.5 in-data-[slot=dropdown-menu-content]:p-0'
+			},
+			variant: {
+				default: 'border-transparent',
+				muted: 'bg-muted/50 border-transparent',
+				outline: 'border-border'
 			}
-		},
-		defaultVariants: {
-			variant: 'default',
-			size: 'default'
 		}
 	});
 
@@ -26,11 +27,12 @@
 </script>
 
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		child,
@@ -44,10 +46,10 @@
 	} = $props();
 
 	const mergedProps = $derived({
-		class: cn(itemVariants({ variant, size }), className),
+		class: cn(itemVariants({ size, variant }), className),
+		'data-size': size,
 		'data-slot': 'item',
 		'data-variant': variant,
-		'data-size': size,
 		...restProps
 	});
 </script>

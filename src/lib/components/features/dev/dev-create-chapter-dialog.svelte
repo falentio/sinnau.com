@@ -2,26 +2,26 @@
 	import { client } from '$lib/orpc';
 	import DevCreateEntityDialog from './dev-create-entity-dialog.svelte';
 
-	type Props = {
+	interface Props {
 		open: boolean;
 		studySetId: string;
-	};
+	}
 
-	let { open = $bindable(false), studySetId }: Props = $props();
+	const { open = $bindable(false), studySetId }: Props = $props();
 
-	let count = $state(10);
+	const count = $state(10);
 
-	async function onSubmit(submitCount: number) {
-		if (!studySetId) throw new Error('Study set tidak ditemukan');
-		for (let i = 1; i <= submitCount; i++) {
+	const onSubmit = async (submitCount: number) => {
+		if (!studySetId) {throw new Error('Study set tidak ditemukan');}
+		for (let i = 1; i <= submitCount; i += 1) {
 			// oxlint-disable-next-line no-await-in-loop -- dev-only seeding, not user-facing
 			await client.chapter.create({
+				description: `Chapter dev stub #${i}`,
 				studySetId,
-				title: `Bab stub ${i}`,
-				description: `Chapter dev stub #${i}`
+				title: `Bab stub ${i}`
 			});
 		}
-	}
+	};
 </script>
 
 <DevCreateEntityDialog

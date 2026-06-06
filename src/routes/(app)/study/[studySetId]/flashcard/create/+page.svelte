@@ -23,8 +23,8 @@
 	import * as v from 'valibot';
 
 	const formSchema = v.object({
-		front: trimmedTextSchema,
 		back: trimmedTextSchema,
+		front: trimmedTextSchema,
 		hint: hintSchema,
 		importance: importanceSchema
 	});
@@ -36,11 +36,11 @@
 		resolve('/(app)/study/[studySetId]/flashcard', { studySetId })
 	);
 
-	async function submitFlashcard(data: FlashcardForm) {
+	const submitFlashcard = async (data: FlashcardForm) => {
 		try {
 			await client.flashcard.create({
-				studySetId,
-				flashcards: [data]
+				flashcards: [data],
+				studySetId
 			});
 			toast.success('Flashcard berhasil dibuat.', { position: 'top-right' });
 			await goto(flashcardListHref);
@@ -64,20 +64,20 @@
 	const form = superForm(
 		defaults<FlashcardForm>(
 			{
-				front: '',
 				back: '',
+				front: '',
 				hint: ''
 			},
 			valibotClient(formSchema)
 		),
 		{
 			SPA: true,
-			validators: valibotClient(formSchema),
-			resetForm: true,
 			onUpdate: async ({ form: submittedForm }) => {
-				if (!submittedForm.valid) return;
+				if (!submittedForm.valid) {return;}
 				await submitFlashcard(submittedForm.data);
-			}
+			},
+			resetForm: true,
+			validators: valibotClient(formSchema)
 		}
 	);
 

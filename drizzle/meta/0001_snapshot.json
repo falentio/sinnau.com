@@ -103,9 +103,7 @@
       "indexes": {
         "account_userId_idx": {
           "name": "account_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -114,12 +112,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -199,16 +193,12 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "session_userId_idx": {
           "name": "session_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -217,12 +207,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -319,9 +305,7 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -381,9 +365,7 @@
       "indexes": {
         "verification_identifier_idx": {
           "name": "verification_identifier_idx",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": false
         }
       },
@@ -465,23 +447,17 @@
       "indexes": {
         "study_set_slug_unique": {
           "name": "study_set_slug_unique",
-          "columns": [
-            "lower(\"slug\")"
-          ],
+          "columns": ["lower(\"slug\")"],
           "isUnique": true
         },
         "study_set_ownerId_idx": {
           "name": "study_set_ownerId_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         },
         "study_set_visibility_idx": {
           "name": "study_set_visibility_idx",
-          "columns": [
-            "visibility"
-          ],
+          "columns": ["visibility"],
           "isUnique": false
         }
       },
@@ -490,12 +466,8 @@
           "name": "study_set_owner_id_user_id_fk",
           "tableFrom": "study_set",
           "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -540,31 +512,22 @@
       "indexes": {
         "study_set_visit_user_studySet_unique": {
           "name": "study_set_visit_user_studySet_unique",
-          "columns": [
-            "user_id",
-            "study_set_id"
-          ],
+          "columns": ["user_id", "study_set_id"],
           "isUnique": true
         },
         "study_set_visit_userId_idx": {
           "name": "study_set_visit_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "study_set_visit_studySetId_idx": {
           "name": "study_set_visit_studySetId_idx",
-          "columns": [
-            "study_set_id"
-          ],
+          "columns": ["study_set_id"],
           "isUnique": false
         },
         "study_set_visit_visitedAt_idx": {
           "name": "study_set_visit_visitedAt_idx",
-          "columns": [
-            "visited_at"
-          ],
+          "columns": ["visited_at"],
           "isUnique": false
         }
       },
@@ -573,12 +536,8 @@
           "name": "study_set_visit_user_id_user_id_fk",
           "tableFrom": "study_set_visit",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -586,12 +545,8 @@
           "name": "study_set_visit_study_set_id_study_set_id_fk",
           "tableFrom": "study_set_visit",
           "tableTo": "study_set",
-          "columnsFrom": [
-            "study_set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["study_set_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

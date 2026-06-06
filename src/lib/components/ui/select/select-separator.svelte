@@ -3,7 +3,7 @@
 	import { cn } from '$lib/utils.js';
 	import type { Separator as SeparatorPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		...restProps

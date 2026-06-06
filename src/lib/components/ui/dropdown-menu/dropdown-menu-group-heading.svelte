@@ -3,7 +3,7 @@
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		inset,

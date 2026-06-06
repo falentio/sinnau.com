@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { cn, type WithoutChild } from '$lib/utils.js';
-	import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
-	import { ArrowUp01Icon } from '@hugeicons/core-free-icons';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChild } from '$lib/utils.js';
+	import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Accordion as AccordionPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		level = 3,

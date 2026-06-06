@@ -9,7 +9,7 @@
 	import type { Snippet } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
-	type Props = {
+	interface Props {
 		open: boolean;
 		title: string;
 		description: string;
@@ -22,13 +22,13 @@
 		fallbackError: string;
 		onSubmit: (count: number) => Promise<void>;
 		children?: Snippet;
-	};
+	}
 
 	let {
 		open = $bindable(false),
+		count = $bindable(0),
 		title,
 		description,
-		count = $bindable(0),
 		min = 1,
 		max = 200,
 		presets = [10, 20, 30, 50, 100] as const,
@@ -41,7 +41,7 @@
 
 	let pending = $state(false);
 
-	async function handleSubmit() {
+	const handleSubmit = async () => {
 		pending = true;
 		try {
 			await onSubmit(count);
@@ -62,7 +62,7 @@
 		} finally {
 			pending = false;
 		}
-	}
+	};
 </script>
 
 <Dialog.Root bind:open>

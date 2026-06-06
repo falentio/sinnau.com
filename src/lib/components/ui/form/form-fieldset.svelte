@@ -1,9 +1,10 @@
 <script lang="ts" generics="T extends Record<string, unknown>, U extends FormPath<T>">
-	import { cn, type WithoutChild } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithoutChild } from '$lib/utils.js';
 	import * as FormPrimitive from 'formsnap';
 	import type { FormPath } from 'sveltekit-superforms';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		form,

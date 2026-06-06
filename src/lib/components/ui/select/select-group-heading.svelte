@@ -3,7 +3,7 @@
 	import { Select as SelectPrimitive } from 'bits-ui';
 	import type { ComponentProps } from 'svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		children,

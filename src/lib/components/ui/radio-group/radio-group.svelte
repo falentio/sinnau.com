@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { RadioGroup as RadioGroupPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		value = $bindable(''),

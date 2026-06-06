@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date';
+	import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
+import type { DateValue } from '@internationalized/date';
 	import type { ComponentProps } from 'svelte';
 	import CalendarMonthSelect from './calendar-month-select.svelte';
 	import CalendarYearSelect from './calendar-year-select.svelte';
 	import type Calendar from './calendar.svelte';
 
-	let {
+	const {
 		captionLayout,
 		months,
 		monthFormat,
@@ -27,17 +28,17 @@
 		monthIndex: number;
 	} = $props();
 
-	function formatYear(date: DateValue) {
+	const formatYear = (date: DateValue) => {
 		const dateObj = date.toDate(getLocalTimeZone());
-		if (typeof yearFormat === 'function') return yearFormat(dateObj.getFullYear());
+		if (typeof yearFormat === 'function') {return yearFormat(dateObj.getFullYear());}
 		return new DateFormatter(locale, { year: yearFormat }).format(dateObj);
-	}
+	};
 
-	function formatMonth(date: DateValue) {
+	const formatMonth = (date: DateValue) => {
 		const dateObj = date.toDate(getLocalTimeZone());
-		if (typeof monthFormat === 'function') return monthFormat(dateObj.getMonth() + 1);
+		if (typeof monthFormat === 'function') {return monthFormat(dateObj.getMonth() + 1);}
 		return new DateFormatter(locale, { month: monthFormat }).format(dateObj);
-	}
+	};
 </script>
 
 {#snippet MonthSelect()}

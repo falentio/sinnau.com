@@ -31,14 +31,14 @@ Chapter is not responsible for:
 
 ```typescript
 interface Chapter {
-	id: UUID;
-	slug: string;
-	title: string;
-	description?: string;
-	studySetId: UUID;
-	ownerId: UUID;
-	createdAt: number;
-	updatedAt: number;
+  id: UUID;
+  slug: string;
+  title: string;
+  description?: string;
+  studySetId: UUID;
+  ownerId: UUID;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -81,9 +81,9 @@ interface Chapter {
 
 ```typescript
 interface CreateChapterCommand {
-	studySetId: UUID;
-	title: string;
-	description?: string;
+  studySetId: UUID;
+  title: string;
+  description?: string;
 }
 ```
 
@@ -95,9 +95,9 @@ interface CreateChapterCommand {
 
 ```typescript
 interface UpdateChapterCommand {
-	id: UUID;
-	title?: string;
-	description?: string;
+  id: UUID;
+  title?: string;
+  description?: string;
 }
 ```
 
@@ -110,7 +110,7 @@ interface UpdateChapterCommand {
 
 ```typescript
 interface DeleteChapterCommand {
-	id: UUID;
+  id: UUID;
 }
 ```
 
@@ -125,7 +125,7 @@ interface DeleteChapterCommand {
 
 ```typescript
 interface GetChaptersQuery {
-	studySetId: UUID;
+  studySetId: UUID;
 }
 ```
 
@@ -139,7 +139,7 @@ interface GetChaptersQuery {
 
 ```typescript
 interface GetChapterQuery {
-	id: UUID;
+  id: UUID;
 }
 ```
 

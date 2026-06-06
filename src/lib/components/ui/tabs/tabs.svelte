@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils.js';
 	import { Tabs as TabsPrimitive } from 'bits-ui';
 
-	let {
+	const {
 		ref = $bindable(null),
 		value = $bindable(''),
 		class: className,

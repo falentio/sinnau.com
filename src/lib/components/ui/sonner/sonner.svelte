@@ -1,14 +1,17 @@
 <script lang="ts">
-	import { Loading03Icon } from '@hugeicons/core-free-icons';
-	import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
-	import { MultiplicationSignCircleIcon } from '@hugeicons/core-free-icons';
-	import { InformationCircleIcon } from '@hugeicons/core-free-icons';
-	import { Alert02Icon } from '@hugeicons/core-free-icons';
+	import {
+		Alert02Icon,
+		CheckmarkCircle02Icon,
+		InformationCircleIcon,
+		Loading03Icon,
+		MultiplicationSignCircleIcon,
+	} from '@hugeicons/core-free-icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { mode } from 'mode-watcher';
-	import { Toaster as Sonner, type ToasterProps as SonnerProps } from 'svelte-sonner';
+	import { Toaster as Sonner } from 'svelte-sonner';
+import type { ToasterProps as SonnerProps } from 'svelte-sonner';
 
-	let { ...restProps }: SonnerProps = $props();
+	const { ...restProps }: SonnerProps = $props();
 </script>
 
 <Sonner

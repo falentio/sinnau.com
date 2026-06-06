@@ -6,7 +6,7 @@
 	import DrawerOverlay from './drawer-overlay.svelte';
 	import DrawerPortal from './drawer-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		portalProps,

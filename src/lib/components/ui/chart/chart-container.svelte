@@ -1,12 +1,14 @@
 <script lang="ts">
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn } from '$lib/utils.js';
+import type { WithElementRef } from '$lib/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import ChartStyle from './chart-style.svelte';
-	import { setChartContext, type ChartConfig } from './chart-utils.js';
+	import { setChartContext } from './chart-utils.js';
+import type { ChartConfig } from './chart-utils.js';
 
 	const uid = $props.id();
 
-	let {
+	const {
 		ref = $bindable(null),
 		id = uid,
 		class: className,
@@ -17,7 +19,7 @@
 		config: ChartConfig;
 	} = $props();
 
-	const chartId = $derived(`chart-${id || uid.replace(/:/g, '')}`);
+	const chartId = $derived(`chart-${id || uid.replaceAll(':', '')}`);
 
 	setChartContext({
 		get config() {

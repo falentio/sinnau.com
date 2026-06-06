@@ -1,4 +1,30 @@
 {
+  "name": "2sinnau",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "svelte-kit sync || echo ''",
+    "check": "ultracite check",
+    "check:filter": "f() { svelte-kit sync && svelte-check --tsconfig ./tsconfig.json ${@:-.}; }; f",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "lint": "oxlint --type-aware",
+    "lint:agent": "oxlint --type-aware -f agent",
+    "lint:filter": "f() { p=\"${@:-.}\"; oxlint --type-aware $p; }; f",
+    "format": "oxfmt",
+    "test:unit": "vitest",
+    "test": "npm run test:unit -- --run",
+    "test:coverage": "vitest run --coverage",
+    "auth:generate": "pnpm dlx @better-auth/cli@latest generate --config ./src/lib/server/infras/auth/index.ts --output ./src/lib/server/infras/db/schema/auth-schema.ts --yes",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "fix": "ultracite fix"
+  },
   "dependencies": {
     "@orpc/client": "^1.14.4",
     "@orpc/server": "^1.14.4",
@@ -49,31 +75,5 @@
     "vaul-svelte": "1.0.0-next.7",
     "vite": "^8.0.7",
     "vitest": "^4.1.3"
-  },
-  "name": "2sinnau",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "prepare": "svelte-kit sync || echo ''",
-    "check": "ultracite check",
-    "check:filter": "f() { svelte-kit sync && svelte-check --tsconfig ./tsconfig.json ${@:-.}; }; f",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "oxlint --type-aware",
-    "lint:agent": "oxlint --type-aware -f agent",
-    "lint:filter": "f() { p=\"${@:-.}\"; oxlint --type-aware $p; }; f",
-    "format": "oxfmt",
-    "test:unit": "vitest",
-    "test": "npm run test:unit -- --run",
-    "test:coverage": "vitest run --coverage",
-    "auth:generate": "pnpm dlx @better-auth/cli@latest generate --config ./src/lib/server/infras/auth/index.ts --output ./src/lib/server/infras/db/schema/auth-schema.ts --yes",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "fix": "ultracite fix"
-  },
-  "type": "module",
-  "version": "0.0.1",
-  "private": true
+  }
 }

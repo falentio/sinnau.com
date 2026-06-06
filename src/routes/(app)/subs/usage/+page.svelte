@@ -14,30 +14,30 @@
 		style: 'long'
 	});
 
-	function remainingPercentage(remaining: number, limit: number) {
-		if (limit <= 0) return 0;
+	const remainingPercentage = (remaining: number, limit: number) => {
+		if (limit <= 0) {return 0;}
 		return Math.max(0, Math.min(100, Math.round((remaining / limit) * 100)));
 	}
 
-	function formatTimeUntilReset(resetAt: Date | string) {
+	const formatTimeUntilReset = (resetAt: Date | string) => {
 		const remainingMs = new Date(resetAt).getTime() - Date.now();
 		const minute = 60 * 1000;
 		const hour = 60 * minute;
 		const day = 24 * hour;
 		const remaining = Math.max(remainingMs, 0);
 
-		if (remaining >= day) return relativeTimeFormatter.format(Math.ceil(remaining / day), 'day');
-		if (remaining >= hour) return relativeTimeFormatter.format(Math.ceil(remaining / hour), 'hour');
+		if (remaining >= day) {return relativeTimeFormatter.format(Math.ceil(remaining / day), 'day');}
+		if (remaining >= hour) {return relativeTimeFormatter.format(Math.ceil(remaining / hour), 'hour');}
 		if (remaining >= minute)
-			return relativeTimeFormatter.format(Math.ceil(remaining / minute), 'minute');
+			{return relativeTimeFormatter.format(Math.ceil(remaining / minute), 'minute');}
 
 		return relativeTimeFormatter.format(0, 'second');
 	}
 
 	const limitStatus = {
+		daily: { limit: 10, remaining: 7, resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
 		planKey: 'FREE' as const,
-		daily: { remaining: 7, limit: 10, resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
-		weekly: { remaining: 50, limit: 70, resetAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) }
+		weekly: { limit: 70, remaining: 50, resetAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) }
 	};
 
 	const usageLimits = [

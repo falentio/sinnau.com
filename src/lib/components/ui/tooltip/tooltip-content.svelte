@@ -5,7 +5,7 @@
 	import type { ComponentProps } from 'svelte';
 	import TooltipPortal from './tooltip-portal.svelte';
 
-	let {
+	const {
 		ref = $bindable(null),
 		class: className,
 		sideOffset = 0,

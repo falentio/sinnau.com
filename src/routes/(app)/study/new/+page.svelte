@@ -19,11 +19,11 @@
 	type Visibility = 'PUBLIC' | 'PRIVATE';
 
 	const visibilityItems: { value: Visibility; label: string }[] = [
-		{ value: 'PRIVATE', label: 'Privat' },
-		{ value: 'PUBLIC', label: 'Publik' }
+		{ label: 'Privat', value: 'PRIVATE' },
+		{ label: 'Publik', value: 'PUBLIC' }
 	];
 
-	async function submitStudySet(data: CreateStudySetInput) {
+	const submitStudySet = async (data: CreateStudySetInput) => {
 		try {
 			const studySet = await client.studySet.create(data);
 			toast.success('Modul belajar berhasil dibuat.', { position: 'top-right' });
@@ -54,20 +54,20 @@
 	const form = superForm(
 		defaults<CreateStudySetInput>(
 			{
-				title: '',
 				description: '',
+				title: '',
 				visibility: 'PRIVATE'
 			},
 			valibotClient(createStudySetInputSchema)
 		),
 		{
 			SPA: true,
-			validators: valibotClient(createStudySetInputSchema),
-			resetForm: false,
 			onUpdate: async ({ form: submittedForm }) => {
-				if (!submittedForm.valid) return;
+				if (!submittedForm.valid) {return;}
 				await submitStudySet(submittedForm.data);
-			}
+			},
+			resetForm: false,
+			validators: valibotClient(createStudySetInputSchema)
 		}
 	);
 

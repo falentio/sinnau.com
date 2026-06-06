@@ -15,40 +15,40 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 
 	const flashcard = {
-		id: 'flc_000000000000000001',
-		front: 'Apa itu vektor?',
 		back: 'Objek yang memiliki besar dan arah dalam ruang.',
-		hint: 'Bayangkan panah pada bidang koordinat.'
+		front: 'Apa itu vektor?',
+		hint: 'Bayangkan panah pada bidang koordinat.',
+		id: 'flc_000000000000000001'
 	};
 
 	const ratings = [
 		{
-			label: 'Lupa',
-			interval: '1 jam',
+			class:
+				'border-red-200 bg-red-50/70 text-red-700 shadow-xs hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-900/60 dark:bg-red-950/20 dark:text-red-300 dark:hover:bg-red-950/30',
 			icon: SadDizzyIcon,
-			class:
-				'border-red-200 bg-red-50/70 text-red-700 shadow-xs hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-900/60 dark:bg-red-950/20 dark:text-red-300 dark:hover:bg-red-950/30'
+			interval: '1 jam',
+			label: 'Lupa'
 		},
 		{
-			label: 'Sulit',
-			interval: '6 jam',
+			class:
+				'border-orange-200 bg-orange-50/70 text-orange-700 shadow-xs hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 dark:border-orange-900/60 dark:bg-orange-950/20 dark:text-orange-300 dark:hover:bg-orange-950/30',
 			icon: SadIcon,
-			class:
-				'border-orange-200 bg-orange-50/70 text-orange-700 shadow-xs hover:border-orange-300 hover:bg-orange-50 hover:text-orange-800 dark:border-orange-900/60 dark:bg-orange-950/20 dark:text-orange-300 dark:hover:bg-orange-950/30'
+			interval: '6 jam',
+			label: 'Sulit'
 		},
 		{
-			label: 'Cukup',
-			interval: '1 hari',
+			class:
+				'border-blue-200 bg-blue-50/70 text-blue-700 shadow-xs hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/20 dark:text-blue-300 dark:hover:bg-blue-950/30',
 			icon: ConfusedIcon,
-			class:
-				'border-blue-200 bg-blue-50/70 text-blue-700 shadow-xs hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/20 dark:text-blue-300 dark:hover:bg-blue-950/30'
+			interval: '1 hari',
+			label: 'Cukup'
 		},
 		{
-			label: 'Mudah',
-			interval: '3 hari',
-			icon: HappyIcon,
 			class:
-				'border-green-200 bg-green-50/70 text-green-700 shadow-xs hover:border-green-300 hover:bg-green-50 hover:text-green-800 dark:border-green-900/60 dark:bg-green-950/20 dark:text-green-300 dark:hover:bg-green-950/30'
+				'border-green-200 bg-green-50/70 text-green-700 shadow-xs hover:border-green-300 hover:bg-green-50 hover:text-green-800 dark:border-green-900/60 dark:bg-green-950/20 dark:text-green-300 dark:hover:bg-green-950/30',
+			icon: HappyIcon,
+			interval: '3 hari',
+			label: 'Mudah'
 		}
 	] as const;
 </script>

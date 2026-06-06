@@ -16,18 +16,18 @@
 	const quizzes = $derived(data.quizzes);
 	const currentFilter = $derived(data.filter ?? null);
 
-	let openExplanation = $state(false);
+	const openExplanation = $state(false);
 	const pageIndex = $derived(Number(pageStore.url.searchParams.get('page')) || 1);
 
 	const displayedQuizzes = $derived(quizzes.slice((pageIndex - 1) * 10, pageIndex * 10));
 
-	function handlePageChange(p: number) {
+	const handlePageChange = (p: number) => {
 		const params = new SvelteURLSearchParams();
-		if (p > 1) params.set('page', String(p));
-		if (currentFilter) params.set('filter', currentFilter);
+		if (p > 1) {params.set('page', String(p));}
+		if (currentFilter) {params.set('filter', currentFilter);}
 		const query = params.toString();
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(`.?${query}`, { replaceState: true, noScroll: true });
+		goto(`.?${query}`, { noScroll: true, replaceState: true });
 	}
 </script>
 
