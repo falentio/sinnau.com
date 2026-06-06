@@ -66,5 +66,5 @@ export const getQuizStubs = (
       return { ...quiz, options };
     });
   }
-  return stubs;
+  return stubs.slice(0, count);
 };

@@ -35,14 +35,15 @@ export const getStudySetStubs = (
     }));
   }
 
+  const effective = stubs.slice(0, count);
   const start = (page - 1) * limit;
   return {
     pagination: {
       limit,
       page,
-      total: stubs.length,
-      totalPages: Math.ceil(stubs.length / limit),
+      total: effective.length,
+      totalPages: Math.ceil(effective.length / limit),
     },
-    studySets: stubs.slice(start, start + limit),
+    studySets: effective.slice(start, start + limit),
   };
 };

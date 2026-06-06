@@ -25,5 +25,5 @@ export const getFlashcardStubs = (
       updatedAt: new Date(now.getTime() - (count - i) * 1_800_000),
     }));
   }
-  return stubs;
+  return stubs.slice(0, count);
 };
