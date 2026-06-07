@@ -2,6 +2,7 @@ allowBuilds:
   "@hugeicons/svelte": true
   better-sqlite3: true
   esbuild: true
+  lefthook: true
 minimumReleaseAgeExclude:
   - "@types/node@22.19.20"
 onlyBuiltDependencies:
