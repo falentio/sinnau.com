@@ -11,17 +11,21 @@ on:
 jobs:
   check-and-test:
     runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: ci-placeholder
+      BETTER_AUTH_URL: http://localhost:11085
+      DB_FILE_NAME: /tmp/ci.db
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
 
       - run: corepack enable
 
       - name: Restore pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
@@ -30,9 +34,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm run check
-        env:
-          BETTER_AUTH_SECRET: ci-placeholder
-          BETTER_AUTH_URL: http://localhost:11085
-          DB_FILE_NAME: /tmp/ci.db
 
       - run: pnpm run test
