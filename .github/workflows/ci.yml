@@ -18,9 +18,14 @@ jobs:
         with:
           node-version: 24
 
-      - uses: pnpm/action-setup@v4
+      - run: corepack enable
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
         with:
-          cache: true
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
 
       - run: pnpm install --frozen-lockfile
 
