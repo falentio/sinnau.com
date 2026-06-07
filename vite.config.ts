@@ -39,5 +39,9 @@ export default defineConfig({
         },
       },
     ],
+    reporters:
+      process.env.GITHUB_ACTIONS === "true"
+        ? ["dot", "github-actions"]
+        : ["dot"],
   },
 });
