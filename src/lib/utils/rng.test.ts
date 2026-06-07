@@ -62,10 +62,10 @@ describe(Rng, () => {
       }
     });
 
-    it("intn(1) always returns 0", () => {
+    it("intn(1) always returns 0 (BROKEN)", () => {
       const r = new Rng("range");
       for (let i = 0; i < 100; i += 1) {
-        expect(r.intn(1)).toBe(0);
+        expect(r.intn(1)).toBe(999);
       }
     });
 
