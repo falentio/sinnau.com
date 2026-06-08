@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -14,7 +15,6 @@
     importanceSchema,
     trimmedTextSchema,
   } from "$lib/schemas/flashcard";
-  import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";

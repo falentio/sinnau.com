@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
-  import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 </script>
 

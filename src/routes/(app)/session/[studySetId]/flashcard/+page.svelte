@@ -1,11 +1,5 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import Button, {
-    buttonVariants,
-  } from "$lib/components/ui/button/button.svelte";
-  import PopoverContent from "$lib/components/ui/popover/popover-content.svelte";
-  import PopoverTrigger from "$lib/components/ui/popover/popover-trigger.svelte";
-  import Popover from "$lib/components/ui/popover/popover.svelte";
   import {
     ArrowLeft01Icon,
     ConfusedIcon,
@@ -13,7 +7,13 @@
     IdeaIcon,
     SadDizzyIcon,
     SadIcon,
-  } from "@hugeicons/core-free-icons";
+  } from "$lib/components/features/icons";
+  import Button, {
+    buttonVariants,
+  } from "$lib/components/ui/button/button.svelte";
+  import PopoverContent from "$lib/components/ui/popover/popover-content.svelte";
+  import PopoverTrigger from "$lib/components/ui/popover/popover-trigger.svelte";
+  import Popover from "$lib/components/ui/popover/popover.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   const flashcard = {

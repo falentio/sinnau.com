@@ -33,12 +33,12 @@
 </script>
 
 <script lang="ts">
+  import { Add01Icon, Delete02Icon } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import * as Select from "$lib/components/ui/select/index.js";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import { PlusSignIcon, DeleteIcon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { tick } from "svelte";
   import { toast } from "svelte-sonner";
@@ -344,7 +344,7 @@
         onclick={addOption}
         disabled={$submitting || pending || !canAddOption}
       >
-        <HugeiconsIcon icon={PlusSignIcon} />
+        <HugeiconsIcon icon={Add01Icon} />
       </Button>
     {/if}
   </div>
@@ -396,7 +396,7 @@
                 class="ml-auto text-muted-foreground hover:text-destructive disabled:opacity-50"
                 disabled={$submitting || pending}
               >
-                <HugeiconsIcon icon={DeleteIcon} class="size-4" />
+                <HugeiconsIcon icon={Delete02Icon} class="size-4" />
               </button>
             {/if}
           </div>

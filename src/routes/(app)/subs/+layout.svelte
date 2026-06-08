@@ -1,11 +1,11 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import Button from "$lib/components/ui/button/button.svelte";
   import {
     ArrowLeft01Icon,
     Dollar01Icon,
     PieChartIcon,
-  } from "@hugeicons/core-free-icons";
+  } from "$lib/components/features/icons";
+  import Button from "$lib/components/ui/button/button.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import type { Snippet } from "svelte";
 
