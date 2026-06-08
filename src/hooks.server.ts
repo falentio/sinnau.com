@@ -1,9 +1,8 @@
 import "$lib/orpc.server";
 import { building } from "$app/environment";
 import { auth } from "$lib/server/infras/auth";
-import { ORPCError } from "@orpc/client";
 import { redirect } from "@sveltejs/kit";
-import type { Handle, HandleServerError } from "@sveltejs/kit";
+import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 
@@ -39,14 +38,3 @@ const authGuardHandle: Handle = ({ event, resolve }) => {
 };
 
 export const handle = sequence(betterAuthHandle, authGuardHandle);
-
-export const handleError: HandleServerError = ({ error }) => {
-  if (error instanceof ORPCError) {
-    return {
-      code: error.code as string,
-      data: error.data as unknown,
-      message: error.message,
-    };
-  }
-  return { message: "Internal Error" };
-};
