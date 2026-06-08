@@ -4,8 +4,8 @@
   import {
     Alert02Icon,
     LockIcon,
-    Search01Icon,
-  } from "@hugeicons/core-free-icons";
+    Search02Icon,
+  } from "$lib/components/features/icons";
   import type { IconSvgElement } from "@hugeicons/svelte";
 
   interface ErrorInfo {
@@ -21,7 +21,7 @@
       title: "Akses ditolak",
     },
     404: {
-      icon: Search01Icon,
+      icon: Search02Icon,
       message: "Modul belajar yang Anda cari tidak ada atau telah dihapus.",
       title: "Modul belajar tidak ditemukan",
     },

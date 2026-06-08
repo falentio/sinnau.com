@@ -1,4 +1,9 @@
 <script lang="ts">
+  import {
+    Alert02Icon,
+    ArrowLeft01Icon,
+    Home01Icon,
+  } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import EmptyContent from "$lib/components/ui/empty/empty-content.svelte";
   import EmptyDescription from "$lib/components/ui/empty/empty-description.svelte";
@@ -6,11 +11,6 @@
   import EmptyMedia from "$lib/components/ui/empty/empty-media.svelte";
   import EmptyTitle from "$lib/components/ui/empty/empty-title.svelte";
   import Empty from "$lib/components/ui/empty/empty.svelte";
-  import {
-    Alert02Icon,
-    ArrowLeft01Icon,
-    Home01Icon,
-  } from "@hugeicons/core-free-icons";
   import type { IconSvgElement } from "@hugeicons/svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 

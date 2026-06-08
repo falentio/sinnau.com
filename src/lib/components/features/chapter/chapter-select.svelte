@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { Add01Icon } from "$lib/components/features/icons";
   import * as Select from "$lib/components/ui/select/index.js";
   import { navigateWithParams } from "$lib/utils/url";
-  import { Add01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { untrack } from "svelte";
 
@@ -48,9 +47,7 @@
 
   const handleChapterChange = (value: string | undefined) => {
     if (value === ACTION_CREATE_CHAPTER) {
-      // Placeholder: real action will navigate to the create-chapter route.
-      // eslint-disable-next-line svelte/no-navigation-without-resolve
-      void goto(".");
+      navigateWithParams(page.url.searchParams, { action: "create-chapter" });
       return;
     }
     const chapter = value === ALL_CHAPTERS ? null : value || null;
@@ -76,19 +73,20 @@
         Semua chapter
       </Select.Item>
     </div>
-    <Select.Separator />
-    <Select.Group>
-      <Select.Label>Chapter</Select.Label>
-      {#each sortedChapters as chapter (chapter.id)}
-        <Select.Item value={chapter.id} label={chapter.title}>
-          {chapter.title}
-        </Select.Item>
-      {/each}
-    </Select.Group>
+    {#if sortedChapters.length > 0}
+      <Select.Separator />
+      <Select.Group>
+        <Select.Label>Chapter</Select.Label>
+        {#each sortedChapters as chapter (chapter.id)}
+          <Select.Item value={chapter.id} label={chapter.title}>
+            {chapter.title}
+          </Select.Item>
+        {/each}
+      </Select.Group>
+    {/if}
     <Select.Separator />
     <Select.Group>
       <Select.Label>Aksi</Select.Label>
-      <!-- TODO: replace goto('.') placeholder with the real create-chapter route -->
       <Select.Item value={ACTION_CREATE_CHAPTER} label="Buat chapter baru">
         <HugeiconsIcon icon={Add01Icon} class="size-4" />
         Buat chapter baru

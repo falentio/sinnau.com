@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { AiBeautifyIcon } from "@hugeicons/core-free-icons";
+  import { AiBeautifyIcon } from "$lib/components/features/icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import type { Snippet } from "svelte";
 

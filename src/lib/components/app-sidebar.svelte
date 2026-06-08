@@ -1,16 +1,16 @@
 <script lang="ts">
-  import AvatarFallback from "$lib/components/ui/avatar/avatar-fallback.svelte";
-  import AvatarImage from "$lib/components/ui/avatar/avatar-image.svelte";
-  import Avatar from "$lib/components/ui/avatar/avatar.svelte";
-  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-  import { getUser } from "$lib/hooks/auth.svelte";
   import {
     AiBeautifyIcon,
     Book03Icon,
     CrownIcon,
     Home01Icon,
     Search02Icon,
-  } from "@hugeicons/core-free-icons";
+  } from "$lib/components/features/icons";
+  import AvatarFallback from "$lib/components/ui/avatar/avatar-fallback.svelte";
+  import AvatarImage from "$lib/components/ui/avatar/avatar-image.svelte";
+  import Avatar from "$lib/components/ui/avatar/avatar.svelte";
+  import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+  import { getUser } from "$lib/hooks/auth.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   const user = getUser;

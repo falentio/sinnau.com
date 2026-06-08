@@ -3,10 +3,10 @@
   import ListPagination from "$lib/components/features/app/list-pagination.svelte";
   import FlashcardEmpty from "$lib/components/features/flashcard/flashcard-empty.svelte";
   import FlashcardFilterBar from "$lib/components/features/flashcard/flashcard-filter-bar.svelte";
+  import { Add01Icon } from "$lib/components/features/icons";
   import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { navigateWithParams } from "$lib/utils/url";
-  import { PlusSignIcon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
@@ -43,7 +43,7 @@
   <h2 class="font-medium">Flashcard ({filteredFlashcards.length})</h2>
   <div>
     <Button variant="outline" size="icon-sm" href="create">
-      <HugeiconsIcon icon={PlusSignIcon} />
+      <HugeiconsIcon icon={Add01Icon} />
     </Button>
   </div>
 </div>

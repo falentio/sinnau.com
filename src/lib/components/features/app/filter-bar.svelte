@@ -1,10 +1,10 @@
 <script lang="ts">
   import { dev } from "$app/environment";
   import { page as pageStore } from "$app/state";
+  import { AiBeautifyIcon } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import { buildHref } from "$lib/utils/url";
-  import { AiBeautifyIcon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   let { currentFilter }: { currentFilter: string | null } = $props();

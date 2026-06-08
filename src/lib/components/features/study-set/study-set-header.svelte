@@ -6,22 +6,20 @@
   import DevCreateChapterDialog from "$lib/components/features/dev/dev-create-chapter-dialog.svelte";
   import DevCreateFlashcardDialog from "$lib/components/features/dev/dev-create-flashcard-dialog.svelte";
   import DevCreateQuizDialog from "$lib/components/features/dev/dev-create-quiz-dialog.svelte";
-  import Button from "$lib/components/ui/button/button.svelte";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import {
     Add01Icon,
     AiChat02Icon,
     ArrowLeft01Icon,
     Book03Icon,
-    BookOpen01Icon,
-    Cards02Icon,
-    Delete01Icon,
+    Cards01Icon,
+    Delete02Icon,
     Edit01Icon,
     Quiz01Icon,
-    Quiz02Icon,
     Settings02Icon,
     Share01Icon,
-  } from "@hugeicons/core-free-icons";
+  } from "$lib/components/features/icons";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   interface Chapter {
@@ -81,7 +79,7 @@
               Edit set
             </DropdownMenu.Item>
             <DropdownMenu.Item>
-              <HugeiconsIcon icon={Delete01Icon} />
+              <HugeiconsIcon icon={Delete02Icon} />
               Hapus set
             </DropdownMenu.Item>
             <DropdownMenu.Item>
@@ -99,7 +97,7 @@
                 Dev: Buat quiz
               </DropdownMenu.Item>
               <DropdownMenu.Item onSelect={() => (chapterDialogOpen = true)}>
-                <HugeiconsIcon icon={BookOpen01Icon} />
+                <HugeiconsIcon icon={Book03Icon} />
                 Dev: Buat chapter
               </DropdownMenu.Item>
             {/if}
@@ -138,14 +136,14 @@
         href="/study/{page.params.studySetId}/flashcard/{chapterQuery}"
         variant={page.url.pathname.includes("flashcard") ? "outline" : "ghost"}
       >
-        <HugeiconsIcon icon={Cards02Icon} />
+        <HugeiconsIcon icon={Cards01Icon} />
         Flashcard
       </Button>
       <Button
         href="/study/{page.params.studySetId}/quiz/{chapterQuery}"
         variant={page.url.pathname.includes("quiz") ? "outline" : "ghost"}
       >
-        <HugeiconsIcon icon={Quiz02Icon} />
+        <HugeiconsIcon icon={Quiz01Icon} />
         Quiz
       </Button>
       <Button variant="ghost">

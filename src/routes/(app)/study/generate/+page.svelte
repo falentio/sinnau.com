@@ -13,17 +13,17 @@
 </script>
 
 <script lang="ts">
-  import Button from "$lib/components/ui/button/button.svelte";
-  import * as Form from "$lib/components/ui/form/index.js";
-  import Input from "$lib/components/ui/input/input.svelte";
-  import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import {
     ArrowLeft01Icon,
     ArrowDown01Icon,
     ArrowUp01Icon,
     FileUploadIcon,
-    DeleteIcon,
-  } from "@hugeicons/core-free-icons";
+    Delete02Icon,
+  } from "$lib/components/features/icons";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import * as Form from "$lib/components/ui/form/index.js";
+  import Input from "$lib/components/ui/input/input.svelte";
+  import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
@@ -119,7 +119,7 @@
                     }}
                     class="text-muted-foreground hover:text-destructive"
                   >
-                    <HugeiconsIcon icon={DeleteIcon} class="size-4" />
+                    <HugeiconsIcon icon={Delete02Icon} class="size-4" />
                   </button>
                 </li>
               {/each}

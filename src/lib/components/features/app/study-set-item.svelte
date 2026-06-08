@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { Book03Icon } from "$lib/components/features/icons";
   import { createRng, Rng } from "$lib/utils/rng";
-  import { Book03Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   interface StudySet {

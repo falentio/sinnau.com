@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -9,7 +10,6 @@
   import { client } from "$lib/orpc";
   import type { CreateStudySetInput } from "$lib/schemas/study-set";
   import { createStudySetInputSchema } from "$lib/schemas/study-set";
-  import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";

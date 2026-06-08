@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page as pageStore } from "$app/state";
   import ListPagination from "$lib/components/features/app/list-pagination.svelte";
+  import { Quiz01Icon, Add01Icon } from "$lib/components/features/icons";
   import QuizEmpty from "$lib/components/features/quiz/quiz-empty.svelte";
   import QuizFilterBar from "$lib/components/features/quiz/quiz-filter-bar.svelte";
   import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { navigateWithParams } from "$lib/utils/url";
-  import { ChatQuestion01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
@@ -43,7 +43,7 @@
   <h2 class="font-medium">Quiz ({filteredQuizzes.length})</h2>
   <div>
     <Button variant="outline" size="icon-sm" href="create">
-      <HugeiconsIcon icon={PlusSignIcon} />
+      <HugeiconsIcon icon={Add01Icon} />
     </Button>
   </div>
 </div>
@@ -73,7 +73,7 @@
               variant={openExplanation ? "outline" : "ghost"}
               size="icon-sm"
             >
-              <HugeiconsIcon icon={ChatQuestion01Icon} />
+              <HugeiconsIcon icon={Quiz01Icon} />
             </Button>
           </div>
           <h3 class="mt-3 text-lg font-semibold">{quiz.questionText}</h3>

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import Button from "$lib/components/ui/button/button.svelte";
   import {
     AiBeautifyIcon,
     Book03Icon,
     CrownIcon,
     Home01Icon,
     Search02Icon,
-  } from "@hugeicons/core-free-icons";
+  } from "$lib/components/features/icons";
+  import Button from "$lib/components/ui/button/button.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 </script>
 

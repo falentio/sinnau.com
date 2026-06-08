@@ -1,4 +1,11 @@
 <script lang="ts">
+  import {
+    Cancel01Icon,
+    Settings02Icon,
+    Search02Icon,
+    AiBeautifyIcon,
+    QuillWrite01Icon,
+  } from "$lib/components/features/icons";
   import UserAvatar from "$lib/components/features/users/user-avatar.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import InputGroupAddon from "$lib/components/ui/input-group/input-group-addon.svelte";
@@ -7,13 +14,6 @@
   import InputGroup from "$lib/components/ui/input-group/input-group.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import { getUser } from "$lib/hooks/auth.svelte";
-  import {
-    Cancel01Icon,
-    Settings02Icon,
-    Search02Icon,
-    AiBeautifyIcon,
-    QuillWrite01Icon,
-  } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   let search = $state("");
@@ -21,7 +21,7 @@
   const user = getUser;
 </script>
 
-<div class="sticky top-0 z-20 bg-card text-card-foreground shadow-sm">
+<div class="sticky top-0 z-20 bg-card text-card-foreground shadow-xs">
   <div class="mx-auto flex w-full max-w-2xl flex-col gap-3 px-6 py-3">
     <div class="flex items-start gap-4">
       <UserAvatar

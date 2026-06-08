@@ -1,5 +1,10 @@
 <script lang="ts">
   import { page as pageStore } from "$app/state";
+  import {
+    Add01Icon,
+    Cancel01Icon,
+    Cards01Icon,
+  } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import EmptyContent from "$lib/components/ui/empty/empty-content.svelte";
   import EmptyDescription from "$lib/components/ui/empty/empty-description.svelte";
@@ -8,11 +13,6 @@
   import EmptyTitle from "$lib/components/ui/empty/empty-title.svelte";
   import Empty from "$lib/components/ui/empty/empty.svelte";
   import { navigateWithParams } from "$lib/utils/url";
-  import {
-    Add01Icon,
-    Cancel01Icon,
-    Cards01Icon,
-  } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   let {

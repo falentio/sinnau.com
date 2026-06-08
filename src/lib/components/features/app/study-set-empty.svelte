@@ -1,4 +1,9 @@
 <script lang="ts">
+  import {
+    AiBeautifyIcon,
+    QuillWrite01Icon,
+    Book03Icon,
+  } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import EmptyContent from "$lib/components/ui/empty/empty-content.svelte";
   import EmptyDescription from "$lib/components/ui/empty/empty-description.svelte";
@@ -6,12 +11,6 @@
   import EmptyMedia from "$lib/components/ui/empty/empty-media.svelte";
   import EmptyTitle from "$lib/components/ui/empty/empty-title.svelte";
   import Empty from "$lib/components/ui/empty/empty.svelte";
-  import {
-    File01Icon,
-    AiBeautifyIcon,
-    QuillWrite01Icon,
-    Book03Icon,
-  } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 </script>
 
