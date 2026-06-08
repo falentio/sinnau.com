@@ -18,6 +18,7 @@
     Settings02Icon,
     Share01Icon,
   } from "$lib/components/features/icons";
+  import StudySetIcon from "$lib/components/features/study-set/study-set-icon.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { HugeiconsIcon } from "@hugeicons/svelte";
@@ -117,11 +118,7 @@
         <CreateChapterDialog />
       </div>
     </div>
-    <div>
-      <div class="w-min rounded-lg bg-primary/10 p-3 text-primary">
-        <HugeiconsIcon class="size-8" icon={Book03Icon} />
-      </div>
-    </div>
+    <StudySetIcon {studySetId} size="lg" />
     <div>
       <h1 class="text-lg font-semibold">{studySet.title}</h1>
       {#if studySet.description}
