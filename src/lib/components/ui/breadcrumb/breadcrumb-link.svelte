@@ -1,32 +1,32 @@
 <script lang="ts">
-	import { cn } from '$lib/utils.js';
-import type { WithElementRef } from '$lib/utils.js';
-	import type { Snippet } from 'svelte';
-	import type { HTMLAnchorAttributes } from 'svelte/elements';
+  import { cn } from "$lib/utils.js";
+  import type { WithElementRef } from "$lib/utils.js";
+  import type { Snippet } from "svelte";
+  import type { HTMLAnchorAttributes } from "svelte/elements";
 
-	let {
-		ref = $bindable(null),
-		class: className,
-		href,
-		child,
-		children,
-		...restProps
-	}: WithElementRef<HTMLAnchorAttributes> & {
-		child?: Snippet<[{ props: HTMLAnchorAttributes }]>;
-	} = $props();
+  let {
+    ref = $bindable(null),
+    class: className,
+    href,
+    child,
+    children,
+    ...restProps
+  }: WithElementRef<HTMLAnchorAttributes> & {
+    child?: Snippet<[{ props: HTMLAnchorAttributes }]>;
+  } = $props();
 
-	const attrs = $derived({
-		class: cn('hover:text-foreground transition-colors', className),
-		'data-slot': 'breadcrumb-link',
-		href,
-		...restProps
-	});
+  const attrs = $derived({
+    class: cn("hover:text-foreground transition-colors", className),
+    "data-slot": "breadcrumb-link",
+    href,
+    ...restProps,
+  });
 </script>
 
 {#if child}
-	{@render child({ props: attrs })}
+  {@render child({ props: attrs })}
 {:else}
-	<a bind:this={ref} {...attrs}>
-		{@render children?.()}
-	</a>
+  <a bind:this={ref} {...attrs}>
+    {@render children?.()}
+  </a>
 {/if}

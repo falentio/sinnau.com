@@ -8,4 +8,5 @@ export default defineConfig({
     ".agents/skills/**",
     "drizzle/*",
   ],
+  svelte: true,
 });

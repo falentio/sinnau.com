@@ -1,56 +1,56 @@
 <script lang="ts" module>
-	import { toggleVariants } from '$lib/components/ui/toggle/index.js';
-	import { getContext, setContext } from 'svelte';
-	import type { VariantProps } from 'tailwind-variants';
+  import { toggleVariants } from "$lib/components/ui/toggle/index.js";
+  import { getContext, setContext } from "svelte";
+  import type { VariantProps } from "tailwind-variants";
 
-	type ToggleVariants = VariantProps<typeof toggleVariants>;
+  type ToggleVariants = VariantProps<typeof toggleVariants>;
 
-	interface ToggleGroupContext extends ToggleVariants {
-		spacing?: number;
-		orientation?: 'horizontal' | 'vertical';
-	}
+  interface ToggleGroupContext extends ToggleVariants {
+    spacing?: number;
+    orientation?: "horizontal" | "vertical";
+  }
 
-	export const setToggleGroupCtx = (props: ToggleGroupContext) => {
-		setContext('toggleGroup', props);
-	};
+  export const setToggleGroupCtx = (props: ToggleGroupContext) => {
+    setContext("toggleGroup", props);
+  };
 
-	export const getToggleGroupCtx = () =>
-		getContext<Required<ToggleGroupContext>>('toggleGroup');
+  export const getToggleGroupCtx = () =>
+    getContext<Required<ToggleGroupContext>>("toggleGroup");
 </script>
 
 <script lang="ts">
-	import { cn } from '$lib/utils.js';
-	import { ToggleGroup as ToggleGroupPrimitive } from 'bits-ui';
+  import { cn } from "$lib/utils.js";
+  import { ToggleGroup as ToggleGroupPrimitive } from "bits-ui";
 
-	let {
-		ref = $bindable(null),
-		value = $bindable(),
-		class: className,
-		size = 'default',
-		spacing = 0,
-		orientation = 'horizontal',
-		variant = 'default',
-		...restProps
-	}: ToggleGroupPrimitive.RootProps &
-		ToggleVariants & {
-			spacing?: number;
-			orientation?: 'horizontal' | 'vertical';
-		} = $props();
+  let {
+    ref = $bindable(null),
+    value = $bindable(),
+    class: className,
+    size = "default",
+    spacing = 0,
+    orientation = "horizontal",
+    variant = "default",
+    ...restProps
+  }: ToggleGroupPrimitive.RootProps &
+    ToggleVariants & {
+      spacing?: number;
+      orientation?: "horizontal" | "vertical";
+    } = $props();
 
-	setToggleGroupCtx({
-		get orientation() {
-			return orientation;
-		},
-		get size() {
-			return size;
-		},
-		get spacing() {
-			return spacing;
-		},
-		get variant() {
-			return variant;
-		}
-	});
+  setToggleGroupCtx({
+    get orientation() {
+      return orientation;
+    },
+    get size() {
+      return size;
+    },
+    get spacing() {
+      return spacing;
+    },
+    get variant() {
+      return variant;
+    },
+  });
 </script>
 
 <!--
@@ -58,17 +58,17 @@ Discriminated Unions + Destructing (required for bindable) do not
 get along, so we shut typescript up by casting `value` to `never`.
 -->
 <ToggleGroupPrimitive.Root
-	bind:value={value as never}
-	bind:ref
-	{orientation}
-	data-slot="toggle-group"
-	data-variant={variant}
-	data-size={size}
-	data-spacing={spacing}
-	style={`--gap: ${spacing}`}
-	class={cn(
-		'group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] data-[spacing=0]:data-[variant=outline]:rounded-3xl data-vertical:flex-col data-vertical:items-stretch',
-		className
-	)}
-	{...restProps}
+  bind:value={value as never}
+  bind:ref
+  {orientation}
+  data-slot="toggle-group"
+  data-variant={variant}
+  data-size={size}
+  data-spacing={spacing}
+  style={`--gap: ${spacing}`}
+  class={cn(
+    "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] data-[spacing=0]:data-[variant=outline]:rounded-3xl data-vertical:flex-col data-vertical:items-stretch",
+    className
+  )}
+  {...restProps}
 />

@@ -1,43 +1,47 @@
 <script lang="ts" module>
-	import { tv } from 'tailwind-variants';
-import type { VariantProps } from 'tailwind-variants';
+  import { tv } from "tailwind-variants";
+  import type { VariantProps } from "tailwind-variants";
 
-	export const emptyMediaVariants = tv({
-		base: 'mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0',
-		defaultVariants: {
-			variant: 'default'
-		},
-		variants: {
-			variant: {
-				default: 'bg-transparent',
-				icon: "bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg:not([class*='size-'])]:size-5"
-			}
-		}
-	});
+  export const emptyMediaVariants = tv({
+    base: "mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0",
+    defaultVariants: {
+      variant: "default",
+    },
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        icon: "bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg:not([class*='size-'])]:size-5",
+      },
+    },
+  });
 
-	export type EmptyMediaVariant = VariantProps<typeof emptyMediaVariants>['variant'];
+  export type EmptyMediaVariant = VariantProps<
+    typeof emptyMediaVariants
+  >["variant"];
 </script>
 
 <script lang="ts">
-	import { cn } from '$lib/utils.js';
-import type { WithElementRef } from '$lib/utils.js';
-	import type { HTMLAttributes } from 'svelte/elements';
+  import { cn } from "$lib/utils.js";
+  import type { WithElementRef } from "$lib/utils.js";
+  import type { HTMLAttributes } from "svelte/elements";
 
-	let {
-		ref = $bindable(null),
-		class: className,
-		children,
-		variant = 'default',
-		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & { variant?: EmptyMediaVariant } = $props();
+  let {
+    ref = $bindable(null),
+    class: className,
+    children,
+    variant = "default",
+    ...restProps
+  }: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
+    variant?: EmptyMediaVariant;
+  } = $props();
 </script>
 
 <div
-	bind:this={ref}
-	data-slot="empty-icon"
-	data-variant={variant}
-	class={cn(emptyMediaVariants({ variant }), className)}
-	{...restProps}
+  bind:this={ref}
+  data-slot="empty-icon"
+  data-variant={variant}
+  class={cn(emptyMediaVariants({ variant }), className)}
+  {...restProps}
 >
-	{@render children?.()}
+  {@render children?.()}
 </div>

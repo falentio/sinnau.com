@@ -4,6 +4,7 @@
   import { getChartContext, Tooltip as TooltipPrimitive } from "layerchart";
   import type { Component, Snippet } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";
+
   import { getPayloadConfigFromPayload, useChart } from "./chart-utils.js";
   import type { THEMES, TooltipPayload } from "./chart-utils.js";
 
@@ -34,7 +35,7 @@
     hideIndicator?: boolean;
     labelClassName?: string;
     labelFormatter?: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    | ((value: any, payload: TooltipPayload[]) => string | number | Snippet)
+      | ((value: any, payload: TooltipPayload[]) => string | number | Snippet)
       | null;
     formatter?: Snippet<
       [
@@ -55,21 +56,27 @@
   // Filter to series with defined values (important for item-based charts like Pie/Arc
   // where only the hovered item has a value)
   const visibleSeries = $derived(
-    chartCtx.tooltip.series.filter(
-      (s: TooltipPayload) => s.value !== undefined,
-    ),
+    chartCtx.tooltip.series.filter((s: TooltipPayload) => s.value !== undefined)
   );
 
-  const getValue = (itemConfig: ({
-    label?: string;
-    icon?: Component;
-} & ({
-    color?: string;
-    theme?: never;
-} | {
-    color?: never;
-    theme: Record<keyof typeof THEMES, string>;
-})) | undefined, dataLabel: unknown) => {
+  const getValue = (
+    itemConfig:
+      | ({
+          label?: string;
+          icon?: Component;
+        } & (
+          | {
+              color?: string;
+              theme?: never;
+            }
+          | {
+              color?: never;
+              theme: Record<keyof typeof THEMES, string>;
+            }
+        ))
+      | undefined,
+    dataLabel: unknown
+  ) => {
     let value: unknown;
     if (!labelKey && typeof label === "string") {
       value = chart.config[label as keyof typeof chart.config]?.label ?? label;
@@ -79,7 +86,7 @@
       value = dataLabel;
     }
     return value;
-  }
+  };
 
   const formattedLabel = $derived.by(() => {
     if (hideLabel || !visibleSeries?.length) {
@@ -103,7 +110,7 @@
       chart.config,
       item,
       key,
-      tooltipData as Record<string, unknown> | null,
+      tooltipData as Record<string, unknown> | null
     );
 
     const value = getValue(itemConfig, dataLabel);
@@ -137,7 +144,7 @@
     bind:this={ref}
     class={cn(
       "grid min-w-[9rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
-      className,
+      className
     )}
     {...restProps}
   >
@@ -151,13 +158,13 @@
           chart.config,
           item,
           key,
-          chartCtx.tooltip.data,
+          chartCtx.tooltip.data
         )}
         {@const indicatorColor = color || item.config?.color || item.color}
         <div
           class={cn(
             "flex w-full flex-wrap items-stretch gap-2 [&>svg]:size-2.5 [&>svg]:text-muted-foreground",
-            indicator === "dot" && "items-center",
+            indicator === "dot" && "items-center"
           )}
         >
           {#if formatter && item.value !== undefined && item.label}
@@ -182,14 +189,14 @@
                     "w-0 border-[1.5px] border-dashed bg-transparent":
                       indicator === "dashed",
                     "my-0.5": nestLabel && indicator === "dashed",
-                  },
+                  }
                 )}
               ></div>
             {/if}
             <div
               class={cn(
                 "flex flex-1 shrink-0 justify-between leading-none",
-                nestLabel ? "items-end" : "items-center",
+                nestLabel ? "items-end" : "items-center"
               )}
             >
               <div class="grid gap-1.5">

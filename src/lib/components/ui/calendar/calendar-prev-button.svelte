@@ -1,38 +1,42 @@
 <script lang="ts">
-	import { buttonVariants } from '$lib/components/ui/button/index.js';
-import type { ButtonVariant } from '$lib/components/ui/button/index.js';
-	import { cn } from '$lib/utils.js';
-	import { ArrowLeftIcon } from '@hugeicons/core-free-icons';
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { Calendar as CalendarPrimitive } from 'bits-ui';
+  import { buttonVariants } from "$lib/components/ui/button/index.js";
+  import type { ButtonVariant } from "$lib/components/ui/button/index.js";
+  import { cn } from "$lib/utils.js";
+  import { ArrowLeftIcon } from "@hugeicons/core-free-icons";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { Calendar as CalendarPrimitive } from "bits-ui";
 
-	let {
-		ref = $bindable(null),
-		class: className,
-		children,
-		variant = 'ghost',
-		...restProps
-	}: CalendarPrimitive.PrevButtonProps & {
-		variant?: ButtonVariant;
-	} = $props();
+  let {
+    ref = $bindable(null),
+    class: className,
+    children,
+    variant = "ghost",
+    ...restProps
+  }: CalendarPrimitive.PrevButtonProps & {
+    variant?: ButtonVariant;
+  } = $props();
 </script>
 
 {#snippet Fallback()}
-	<HugeiconsIcon icon={ArrowLeftIcon} strokeWidth={2} class={cn('size-4', className)} />
+  <HugeiconsIcon
+    icon={ArrowLeftIcon}
+    strokeWidth={2}
+    class={cn("size-4", className)}
+  />
 {/snippet}
 
 <CalendarPrimitive.PrevButton
-	bind:ref
-	class={cn(
-		buttonVariants({ variant }),
-		'size-(--cell-size) bg-transparent p-0 select-none disabled:opacity-50 rtl:rotate-180',
-		className
-	)}
-	{...restProps}
+  bind:ref
+  class={cn(
+    buttonVariants({ variant }),
+    "size-(--cell-size) bg-transparent p-0 select-none disabled:opacity-50 rtl:rotate-180",
+    className
+  )}
+  {...restProps}
 >
-	{#if children}
-		{@render children?.()}
-	{:else}
-		{@render Fallback()}
-	{/if}
+  {#if children}
+    {@render children?.()}
+  {:else}
+    {@render Fallback()}
+  {/if}
 </CalendarPrimitive.PrevButton>
