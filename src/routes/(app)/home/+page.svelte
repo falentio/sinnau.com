@@ -1,14 +1,27 @@
 <script lang="ts">
+  import { preloadData } from "$app/navigation";
   import FilterBar from "$lib/components/features/app/filter-bar.svelte";
   import StudySetEmpty from "$lib/components/features/app/study-set-empty.svelte";
   import StudySetItem from "$lib/components/features/app/study-set-item.svelte";
   import StudySetPagination from "$lib/components/features/app/study-set-pagination.svelte";
+  import { onMount } from "svelte";
 
   let { data } = $props();
 
   const studySets = $derived(data.studySets);
   const pagination = $derived(data.pagination);
   const currentFilter = $derived(data.filter ?? null);
+
+  onMount(async () => {
+    try {
+      await Promise.all([
+        preloadData("/study/new/"),
+        preloadData("/study/generate/"),
+      ]);
+    } catch (error) {
+      console.error("Error preloading data:", error);
+    }
+  });
 </script>
 
 <div id="study-set-display" class="mx-auto flex w-full max-w-2xl flex-col px-6">
