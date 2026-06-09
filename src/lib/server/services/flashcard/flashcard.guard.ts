@@ -37,7 +37,7 @@ export class FlashcardGuard {
     studySetId: string,
     userId: string
   ): Promise<StudySet> {
-    return this.resolvedStudySetGuard.assertStudySetVisibleByIdOrNotFound(
+    return await this.resolvedStudySetGuard.assertStudySetVisibleByIdOrNotFound(
       studySetId,
       userId
     );
