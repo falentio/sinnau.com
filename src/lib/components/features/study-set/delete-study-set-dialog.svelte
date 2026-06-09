@@ -3,76 +3,98 @@
   import { resolve } from "$app/paths";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { client } from "$lib/orpc";
   import { ORPCError } from "@orpc/client";
+  import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
+  import { defaults, superForm } from "sveltekit-superforms";
+  import { valibotClient } from "sveltekit-superforms/adapters";
+  import * as v from "valibot";
 
   interface Props {
     open: boolean;
     studySetId: string;
     studySetTitle: string;
-    onOpenChange: (open: boolean) => void;
   }
 
   const {
     open = $bindable(false),
     studySetId,
     studySetTitle,
-    onOpenChange,
   }: Props = $props();
 
-  let confirmationText = $state("");
-  let submitting = $state(false);
+  const formSchema = v.object({
+    confirmation: v.pipe(
+      v.string(),
+      v.minLength(1, "Harus diisi"),
+      v.check(
+        (input) => input.trim() === untrack(() => studySetTitle),
+        `Ketik "${untrack(() => studySetTitle)}" untuk mengonfirmasi`
+      )
+    ),
+  });
 
-  const canDelete = $derived(confirmationText.trim() === studySetTitle);
-
-  const resetForm = () => {
-    confirmationText = "";
-    submitting = false;
+  const deleteStudySet = async () => {
+    await client.studySet.delete({ id: studySetId });
   };
+
+  const form = superForm(
+    defaults<v.InferInput<typeof formSchema>>(
+      { confirmation: "" },
+      valibotClient(formSchema)
+    ),
+    {
+      SPA: true,
+      onUpdate: async ({ form: submittedForm }) => {
+        if (!submittedForm.valid) {
+          return;
+        }
+        try {
+          await deleteStudySet();
+          toast.success("Study set berhasil dihapus.", {
+            position: "top-right",
+          });
+          await goto(resolve("/home/"));
+        } catch (error) {
+          if (error instanceof ORPCError) {
+            if (error.code === "UNAUTHORIZED") {
+              await goto(resolve("/(auth)/login"));
+              return;
+            }
+            toast.error(error.message, { position: "top-right" });
+          } else if (error instanceof Error) {
+            toast.error(error.message, { position: "top-right" });
+          } else {
+            toast.error("Study set belum bisa dihapus. Coba lagi sebentar.", {
+              position: "top-right",
+            });
+          }
+        }
+      },
+      resetForm: true,
+      validators: valibotClient(formSchema),
+    }
+  );
+
+  const { form: formData, enhance, submitting, reset, errors } = form;
 
   const handleOpenChange = (value: boolean) => {
     if (!value) {
-      resetForm();
+      reset();
     }
-    onOpenChange(value);
   };
 
-  const handleDelete = async () => {
-    if (!canDelete || submitting) {
-      return;
+  $effect(() => {
+    if (open) {
+      reset();
     }
-    submitting = true;
-    try {
-      await client.studySet.delete({ id: studySetId });
-      toast.success("Study set berhasil dihapus.", {
-        position: "top-right",
-      });
-      handleOpenChange(false);
-      await goto(resolve("/home/"));
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        if (error.code === "UNAUTHORIZED") {
-          await goto(resolve("/(auth)/login"));
-          return;
-        }
-        toast.error(error.message, { position: "top-right" });
-      } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
-      } else {
-        toast.error("Study set belum bisa dihapus. Coba lagi sebentar.", {
-          position: "top-right",
-        });
-      }
-    } finally {
-      submitting = false;
-    }
-  };
+  });
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
-  <Dialog.Content showCloseButton={!submitting}>
+  <Dialog.Content showCloseButton={!$submitting}>
     <Dialog.Header>
       <Dialog.Title>Hapus Study Set</Dialog.Title>
       <Dialog.Description>
@@ -80,31 +102,42 @@
         membukanya. Kamu bisa mengembalikannya nanti.
       </Dialog.Description>
     </Dialog.Header>
-    <div class="flex flex-col gap-3">
-      <p class="text-sm text-muted-foreground">
-        Ketik <span class="font-semibold text-foreground">{studySetTitle}</span> untuk
-        mengonfirmasi:
-      </p>
-      <Input
-        bind:value={confirmationText}
-        placeholder={studySetTitle}
-        disabled={submitting}
-      />
-    </div>
+    <form method="POST" class="flex flex-col gap-5" novalidate use:enhance>
+      <Form.Field {form} name="confirmation">
+        <Form.Control>
+          {#snippet children({ props })}
+            <Form.Label>
+              Ketik
+              <span class="mx-1 font-semibold text-foreground"
+                >{studySetTitle}</span
+              >
+              untuk mengonfirmasi:
+            </Form.Label>
+            <Input
+              {...props}
+              bind:value={$formData.confirmation}
+              placeholder={studySetTitle}
+              disabled={$submitting}
+            />
+          {/snippet}
+        </Form.Control>
+        <Form.FieldErrors />
+      </Form.Field>
+    </form>
     <Dialog.Footer>
       <Dialog.Close>
         {#snippet child({ props: closeProps })}
-          <Button {...closeProps} variant="outline" disabled={submitting}>
+          <Button {...closeProps} variant="outline" disabled={$submitting}>
             Batal
           </Button>
         {/snippet}
       </Dialog.Close>
       <Button
         variant="destructive"
-        onclick={handleDelete}
-        disabled={!canDelete || submitting}
+        onclick={() => form.submit()}
+        disabled={$errors.confirmation !== undefined || $submitting}
       >
-        {submitting ? "Menghapus..." : "Hapus"}
+        {$submitting ? "Menghapus..." : "Hapus"}
       </Button>
     </Dialog.Footer>
   </Dialog.Content>

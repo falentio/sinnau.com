@@ -125,7 +125,6 @@
           open={deleteDialogOpen}
           {studySetId}
           studySetTitle={studySet.title}
-          onOpenChange={(open) => (deleteDialogOpen = open)}
         />
       </div>
     </div>
