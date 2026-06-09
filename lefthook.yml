@@ -1,6 +1,6 @@
 pre-commit:
   jobs:
-    - run: pnpm run fix
+    - run: pnpm run format
       stage_fixed: true
 
 pre-push:

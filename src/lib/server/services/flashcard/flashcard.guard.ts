@@ -33,7 +33,7 @@ export class FlashcardGuard {
     }
   }
 
-  assertStudySetVisibleOrNotFound(
+  async assertStudySetVisibleOrNotFound(
     studySetId: string,
     userId: string
   ): Promise<StudySet> {

@@ -41,7 +41,7 @@ export class QuizGuard {
     }
   }
 
-  assertStudySetVisibleOrNotFound(
+  async assertStudySetVisibleOrNotFound(
     studySetId: string,
     userId: string
   ): Promise<StudySet> {
@@ -51,7 +51,7 @@ export class QuizGuard {
     );
   }
 
-  assertChapterOwnerOrForbidden(
+  async assertChapterOwnerOrForbidden(
     chapterId: string,
     ownerId: string
   ): Promise<Chapter> {

@@ -14,6 +14,6 @@ export const studySetDelete = authorizedProcedure
   .errors(ERRORS)
   .input(deleteStudySetInputSchema)
   .output(studySetSchema)
-  .handler(({ input, context }) =>
+  .handler(async ({ input, context }) =>
     studySetService.deleteStudySet(input, context.user.id)
   );

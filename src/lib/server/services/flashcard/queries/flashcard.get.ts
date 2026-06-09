@@ -14,6 +14,6 @@ export const flashcardGet = authorizedProcedure
   .errors(ERRORS)
   .input(getFlashcardInputSchema)
   .output(flashcardSchema)
-  .handler(({ input, context }) =>
+  .handler(async ({ input, context }) =>
     flashcardService.getFlashcard(input, context.user.id)
   );

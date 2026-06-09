@@ -11,6 +11,6 @@ export const chapterGet = authorizedProcedure
   .errors(ERRORS)
   .input(getChapterInputSchema)
   .output(chapterSchema)
-  .handler(({ input, context }) =>
+  .handler(async ({ input, context }) =>
     chapterService.getChapter(input, context.user.id)
   );

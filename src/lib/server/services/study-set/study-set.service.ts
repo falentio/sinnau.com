@@ -122,7 +122,7 @@ export class StudySetService {
     return result;
   }
 
-  getStudySets(
+  async getStudySets(
     input: GetStudySetsInput,
     ownerId: string
   ): Promise<StudySetListResult> {
@@ -151,7 +151,7 @@ export class StudySetService {
     return { visitedAt };
   }
 
-  getRecentStudySets(
+  async getRecentStudySets(
     input: GetRecentStudySetsInput,
     userId: string
   ): Promise<StudySet[]> {

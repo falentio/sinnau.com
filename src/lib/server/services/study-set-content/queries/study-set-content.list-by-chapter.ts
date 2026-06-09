@@ -14,6 +14,6 @@ export const studySetContentListByChapter = authorizedProcedure
   .errors(ERRORS)
   .input(listByChapterStudySetContentInputSchema)
   .output(studySetContentListOutputSchema)
-  .handler(({ input, context }) =>
+  .handler(async ({ input, context }) =>
     studySetContentService.listContentsByChapter(input, context.user.id)
   );

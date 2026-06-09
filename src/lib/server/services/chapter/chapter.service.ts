@@ -102,7 +102,7 @@ export class ChapterService {
     }
   }
 
-  getChaptersByStudySet(
+  async getChaptersByStudySet(
     input: GetChaptersInput,
     userId: string
   ): Promise<Chapter[]> {

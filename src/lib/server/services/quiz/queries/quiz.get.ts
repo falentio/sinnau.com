@@ -11,4 +11,6 @@ export const quizGet = authorizedProcedure
   .errors(ERRORS)
   .input(getQuizInputSchema)
   .output(quizSchema)
-  .handler(({ input, context }) => quizService.getQuiz(input, context.user.id));
+  .handler(async ({ input, context }) =>
+    quizService.getQuiz(input, context.user.id)
+  );

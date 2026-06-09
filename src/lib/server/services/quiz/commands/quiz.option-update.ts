@@ -25,6 +25,6 @@ export const quizOptionUpdate = authorizedProcedure
   .errors(ERRORS)
   .input(updateQuizOptionInputSchema)
   .output(quizOptionSchema)
-  .handler(({ input, context }) =>
+  .handler(async ({ input, context }) =>
     quizService.updateQuizOption(input, context.user.id)
   );
