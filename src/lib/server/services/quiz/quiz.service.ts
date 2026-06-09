@@ -1,11 +1,6 @@
-import {
-  FITB_OPTION_EXACT,
-  MCQ_OPTION_MAX,
-  MCQ_OPTION_MIN,
-  MS_OPTION_MAX,
-} from "$lib/schemas/quiz.constant";
 import { ORPCError } from "@orpc/server";
 
+import { validateQuizOptions } from "../../../schemas/quiz.ts";
 import type {
   CreateQuizInput,
   CreateQuizOptionsInput,
@@ -49,29 +44,11 @@ export class QuizService {
       );
     }
 
-    const options: {
-      id: string;
-      optionText: string;
-      isCorrect: boolean;
-      explanation: string | null;
-    }[] = [];
-    if (input.options && input.options.length > 0) {
-      QuizService.validateMergedOptionsForType(input.type, input.options);
-      for (const opt of input.options) {
-        options.push({
-          explanation: opt.explanation ?? null,
-          id: crypto.randomUUID(),
-          isCorrect: opt.isCorrect,
-          optionText: opt.optionText,
-        });
-      }
-    }
-
     const id = crypto.randomUUID();
     const now = new Date();
-    const optionRows = options.map((opt) => ({
-      explanation: opt.explanation,
-      id: opt.id,
+    const optionRows = input.options.map((opt) => ({
+      explanation: opt.explanation ?? null,
+      id: crypto.randomUUID(),
       isCorrect: opt.isCorrect,
       optionText: opt.optionText,
       quizId: id,
@@ -267,11 +244,6 @@ export class QuizService {
       const remaining = allForQuiz.filter(
         (o) => !optionsToDelete.some((d) => d.id === o.id)
       );
-      QuizService.assertRemainingOptionsValid(
-        quizRow.type,
-        allForQuiz,
-        remaining
-      );
       QuizService.validateMergedOptionsForType(quizRow.type, remaining);
     }
 
@@ -308,101 +280,10 @@ export class QuizService {
     type: QuizType,
     options: { isCorrect: boolean }[]
   ): void {
-    switch (type) {
-      case "MULTIPLE_CHOICE": {
-        if (options.length > MCQ_OPTION_MAX) {
-          throw new ORPCError("VALIDATION_FAILED", {
-            message: `Multiple choice quizzes allow at most ${MCQ_OPTION_MAX} options`,
-          });
-        }
-        if (options.length >= MCQ_OPTION_MIN) {
-          const correct = options.filter((o) => o.isCorrect);
-          if (correct.length !== 1) {
-            throw new ORPCError("MC_ALREADY_HAS_CORRECT", {
-              message:
-                "Multiple choice quizzes must have exactly one correct option",
-            });
-          }
-        }
-        return;
-      }
-      case "MULTIPLE_SELECT": {
-        if (options.length > MS_OPTION_MAX) {
-          throw new ORPCError("VALIDATION_FAILED", {
-            message: `Multiple select quizzes allow at most ${MS_OPTION_MAX} options`,
-          });
-        }
-        if (options.length > 0) {
-          const correct = options.filter((o) => o.isCorrect);
-          if (correct.length === 0) {
-            throw new ORPCError("VALIDATION_FAILED", {
-              message:
-                "Multiple select quizzes must have at least one correct option",
-            });
-          }
-        }
-        return;
-      }
-      case "FILL_IN_THE_BLANK": {
-        if (options.length > FITB_OPTION_EXACT) {
-          throw new ORPCError("FITB_MULTIPLE_OPTIONS", {
-            message: "Fill-in-the-blank quizzes allow exactly one option",
-          });
-        }
-        if (options.length === 1 && !options.some((o) => o.isCorrect)) {
-          throw new ORPCError("CANNOT_DELETE_LAST_CORRECT", {
-            message: "Fill-in-the-blank option must be correct",
-          });
-        }
-        return;
-      }
-      default: {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Internal server error",
-        });
-      }
-    }
-  }
-
-  private static assertRemainingOptionsValid(
-    type: QuizType,
-    previousOptions: { isCorrect: boolean }[],
-    remainingOptions: { isCorrect: boolean }[]
-  ): void {
-    const hadCorrect = previousOptions.some((o) => o.isCorrect);
-    const hasCorrect = remainingOptions.some((o) => o.isCorrect);
-    switch (type) {
-      case "FILL_IN_THE_BLANK": {
-        if (remainingOptions.length === 0 && previousOptions.length > 0) {
-          throw new ORPCError("CANNOT_DELETE_LAST_CORRECT", {
-            message: "Cannot delete the only fill-in-the-blank option",
-          });
-        }
-        return;
-      }
-      case "MULTIPLE_CHOICE": {
-        if (hadCorrect && !hasCorrect) {
-          throw new ORPCError("CANNOT_DELETE_LAST_CORRECT", {
-            message:
-              "Cannot delete the last correct option from a multiple choice quiz",
-          });
-        }
-        return;
-      }
-      case "MULTIPLE_SELECT": {
-        if (hadCorrect && !hasCorrect) {
-          throw new ORPCError("CANNOT_DELETE_LAST_CORRECT", {
-            message:
-              "Cannot delete the last correct option from a multiple select quiz",
-          });
-        }
-        return;
-      }
-      default: {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Internal server error",
-        });
-      }
+    if (!validateQuizOptions(type, options)) {
+      throw new ORPCError("VALIDATION_FAILED", {
+        message: "Quiz options violate type constraints",
+      });
     }
   }
 }

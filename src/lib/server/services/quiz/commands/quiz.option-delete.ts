@@ -7,9 +7,6 @@ import { authorizedProcedure } from "$lib/server/api/base";
 import { quizService } from "../index";
 
 const ERRORS = {
-  CANNOT_DELETE_LAST_CORRECT: {
-    message: "Cannot leave a quiz without its required correct option",
-  },
   NOT_FOUND: { message: "Some quiz options could not be found" },
   VALIDATION_FAILED: { message: "Quiz options violate type constraints" },
 } as const;

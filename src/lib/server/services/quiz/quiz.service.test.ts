@@ -133,6 +133,10 @@ describe.concurrent(QuizService, () => {
       const err = await captureError(
         service.createQuiz(
           {
+            options: [
+              { isCorrect: true, optionText: "A" },
+              { isCorrect: false, optionText: "B" },
+            ],
             questionText: "Q?",
             studySetId: STUDY_SET_ID,
             type: "MULTIPLE_CHOICE",
@@ -152,6 +156,10 @@ describe.concurrent(QuizService, () => {
       await service.createQuiz(
         {
           chapterId: CHAPTER_ID,
+          options: [
+            { isCorrect: true, optionText: "A" },
+            { isCorrect: false, optionText: "B" },
+          ],
           questionText: "Q?",
           studySetId: STUDY_SET_ID,
           type: "MULTIPLE_CHOICE",
@@ -171,6 +179,10 @@ describe.concurrent(QuizService, () => {
       const { guard, service } = setupService();
       await service.createQuiz(
         {
+          options: [
+            { isCorrect: true, optionText: "A" },
+            { isCorrect: false, optionText: "B" },
+          ],
           questionText: "Q?",
           studySetId: STUDY_SET_ID,
           type: "MULTIPLE_CHOICE",
@@ -180,10 +192,14 @@ describe.concurrent(QuizService, () => {
       expect(guard.assertChapterInStudySetOrForbidden).not.toHaveBeenCalled();
     });
 
-    it("creates a quiz with no options when omitted", async ({ expect }) => {
+    it("creates a quiz with options", async ({ expect }) => {
       const { repo, service } = setupService();
       const result = await service.createQuiz(
         {
+          options: [
+            { isCorrect: true, optionText: "A" },
+            { isCorrect: false, optionText: "B" },
+          ],
           questionText: "Q?",
           studySetId: STUDY_SET_ID,
           type: "MULTIPLE_CHOICE",
@@ -197,68 +213,12 @@ describe.concurrent(QuizService, () => {
           studySetId: STUDY_SET_ID,
           type: "MULTIPLE_CHOICE",
         }),
-        []
+        expect.arrayContaining([
+          expect.objectContaining({ isCorrect: true }),
+          expect.objectContaining({ isCorrect: false }),
+        ])
       );
-      expect(result.options).toEqual([]);
-    });
-
-    it("rejects MCQ with more than one correct option during creation", async ({
-      expect,
-    }) => {
-      const { service } = setupService();
-      const err = await captureError(
-        service.createQuiz(
-          {
-            options: [
-              { isCorrect: true, optionText: "A" },
-              { isCorrect: true, optionText: "B" },
-            ],
-            questionText: "Q?",
-            studySetId: STUDY_SET_ID,
-            type: "MULTIPLE_CHOICE",
-          },
-          "owner-1"
-        )
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "MC_ALREADY_HAS_CORRECT" });
-    });
-
-    it("rejects FITB with more than one option", async ({ expect }) => {
-      const { service } = setupService();
-      const err = await captureError(
-        service.createQuiz(
-          {
-            options: [
-              { isCorrect: true, optionText: "A" },
-              { isCorrect: false, optionText: "B" },
-            ],
-            questionText: "Q?",
-            studySetId: STUDY_SET_ID,
-            type: "FILL_IN_THE_BLANK",
-          },
-          "owner-1"
-        )
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "FITB_MULTIPLE_OPTIONS" });
-    });
-
-    it("rejects FITB with a non-correct option", async ({ expect }) => {
-      const { service } = setupService();
-      const err = await captureError(
-        service.createQuiz(
-          {
-            options: [{ isCorrect: false, optionText: "A" }],
-            questionText: "Q?",
-            studySetId: STUDY_SET_ID,
-            type: "FILL_IN_THE_BLANK",
-          },
-          "owner-1"
-        )
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(result.options).toHaveLength(2);
     });
   });
 
@@ -361,7 +321,7 @@ describe.concurrent(QuizService, () => {
         )
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "MC_ALREADY_HAS_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects MS with all options incorrect", async ({ expect }) => {
@@ -399,7 +359,7 @@ describe.concurrent(QuizService, () => {
         )
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "FITB_MULTIPLE_OPTIONS" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("inserts options and returns the rows", async ({ expect }) => {
@@ -451,7 +411,7 @@ describe.concurrent(QuizService, () => {
         service.updateQuizOption({ id: OPTION_ID, isCorrect: true }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "MC_ALREADY_HAS_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects MS removing the last correct option", async ({ expect }) => {
@@ -473,9 +433,13 @@ describe.concurrent(QuizService, () => {
     it("clears explanation when null is sent", async ({ expect }) => {
       const { repo, service, ownedOption, ownedQuiz } = setupService();
       ownedOption.explanation = "old";
+      ownedOption.isCorrect = true;
       repo.findOptionByIdForOwner.mockResolvedValue(ownedOption);
       repo.findQuizById.mockResolvedValue(ownedQuiz);
-      repo.findOptionsByQuizIds.mockResolvedValue([ownedOption]);
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        ownedOption,
+        createQuizOptionFixture({ isCorrect: false, quizId: QUIZ_ID }),
+      ]);
       await service.updateQuizOption(
         { explanation: null, id: OPTION_ID },
         "owner-1"
@@ -489,9 +453,13 @@ describe.concurrent(QuizService, () => {
 
     it("updates allowed fields and returns the row", async ({ expect }) => {
       const { repo, service, ownedOption, ownedQuiz } = setupService();
+      ownedOption.isCorrect = true;
       repo.findOptionByIdForOwner.mockResolvedValue(ownedOption);
       repo.findQuizById.mockResolvedValue(ownedQuiz);
-      repo.findOptionsByQuizIds.mockResolvedValue([ownedOption]);
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        ownedOption,
+        createQuizOptionFixture({ isCorrect: false, quizId: QUIZ_ID }),
+      ]);
       const result = await service.updateQuizOption(
         { id: OPTION_ID, optionText: "Renamed" },
         "owner-1"
@@ -508,9 +476,13 @@ describe.concurrent(QuizService, () => {
       expect,
     }) => {
       const { repo, service, ownedOption, ownedQuiz } = setupService();
+      ownedOption.isCorrect = true;
       repo.findOptionByIdForOwner.mockResolvedValue(ownedOption);
       repo.findQuizById.mockResolvedValue(ownedQuiz);
-      repo.findOptionsByQuizIds.mockResolvedValue([ownedOption]);
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        ownedOption,
+        createQuizOptionFixture({ isCorrect: false, quizId: QUIZ_ID }),
+      ]);
       repo.updateQuizOption.mockResolvedValue(null);
       const err = await captureError(
         service.updateQuizOption({ id: OPTION_ID, optionText: "X" }, "owner-1")
@@ -552,7 +524,7 @@ describe.concurrent(QuizService, () => {
         service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects MS removing the last correct option", async ({ expect }) => {
@@ -573,7 +545,7 @@ describe.concurrent(QuizService, () => {
         service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects deleting the only FITB option", async ({ expect }) => {
@@ -587,7 +559,7 @@ describe.concurrent(QuizService, () => {
         service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects MS removing the last correct option (batch delete)", async ({
@@ -603,7 +575,7 @@ describe.concurrent(QuizService, () => {
         service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects deleting the last MCQ correct option", async ({ expect }) => {
@@ -617,7 +589,7 @@ describe.concurrent(QuizService, () => {
         service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("rejects deleting the only FITB option (the answer)", async ({
@@ -633,7 +605,7 @@ describe.concurrent(QuizService, () => {
         service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "CANNOT_DELETE_LAST_CORRECT" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
     it("passes ids and owner to the repo when all checks pass", async ({
@@ -647,6 +619,8 @@ describe.concurrent(QuizService, () => {
       repo.findOptionsByQuizIds.mockResolvedValue([
         ownedOption,
         createQuizOptionFixture({ isCorrect: true, quizId: QUIZ_ID }),
+        createQuizOptionFixture({ isCorrect: false, quizId: QUIZ_ID }),
+        createQuizOptionFixture({ isCorrect: false, quizId: QUIZ_ID }),
       ]);
       await service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1");
       expect(repo.deleteQuizOptions).toHaveBeenCalledWith(
@@ -666,6 +640,7 @@ describe.concurrent(QuizService, () => {
       repo.findOptionsByQuizIds.mockResolvedValue([
         ownedOption,
         createQuizOptionFixture({ isCorrect: true, quizId: QUIZ_ID }),
+        createQuizOptionFixture({ isCorrect: false, quizId: QUIZ_ID }),
       ]);
       repo.deleteQuizOptions.mockResolvedValue(false);
       const err = await captureError(

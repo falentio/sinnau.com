@@ -67,7 +67,7 @@ interface QuizOption {
 - `questionText` is required, plain text only, and non-empty.
 - Quiz has no title field and is identified by ID only.
 - `options` are embedded in Quiz responses.
-- Quiz can be created without options; responses return `options: []` when no options exist.
+- Quiz must be created with options that satisfy the type constraints defined below.
 - `ownerId` is inferred from auth context and is never client-provided.
 - `createdAt` and `updatedAt` are Unix timestamps in milliseconds.
 - Unknown fields are ignored for all Quiz and QuizOption request payloads.
@@ -85,12 +85,11 @@ interface QuizOption {
 
 ## Quiz Type Rules
 
-- `MULTIPLE_CHOICE` quizzes require 2-6 options when complete and exactly one correct option.
-- `MULTIPLE_SELECT` quizzes require 2-10 options when complete and at least one correct option.
+- `MULTIPLE_CHOICE` quizzes require 2-6 options and exactly one correct option.
+- `MULTIPLE_SELECT` quizzes require 2-10 options and at least one correct option.
 - `FILL_IN_THE_BLANK` quizzes require exactly one option with `isCorrect: true`.
-- A quiz is valid to create without options so options can be added later.
-- Option create/update/delete commands must not leave `MULTIPLE_SELECT` quizzes with zero correct options once options exist.
-- Option create/update/delete commands must preserve the `FILL_IN_THE_BLANK` invariant of exactly one correct option.
+- Option constraints are validated via the input schema for quiz creation and via valibot schema for all option mutation commands.
+- Option create/update/delete commands must preserve the quiz type invariants defined above.
 - Quiz type cannot be changed after creation.
 - Multiple acceptable answers for fill-in-the-blank are not supported.
 - Fill-in-the-blank uses the unified QuizOption model, not a separate `correctAnswer` field.
@@ -114,7 +113,7 @@ interface CreateQuizCommand {
   chapterId?: UUID;
   type: QuizType;
   questionText: string;
-  options?: Array<{
+  options: Array<{
     optionText: string;
     isCorrect: boolean;
     explanation?: string;
@@ -123,10 +122,8 @@ interface CreateQuizCommand {
 ```
 
 - Creates a quiz inside an owned StudySet.
-- May create options in the same operation.
+- Options are required and validated against the quiz type.
 - Embedded option creation is atomic with quiz creation.
-- Validates option constraints when options are provided.
-- If options are omitted, the quiz is created with `options: []`.
 - Returns `{ success: true, data: Quiz }` with embedded options.
 
 ### UpdateQuiz
@@ -176,11 +173,8 @@ interface CreateQuizOptionsCommand {
 
 - Creates one or more quiz options in a batch.
 - Uses all-or-nothing transaction semantics.
-- Validates each option against the owning quiz type.
-- For `MULTIPLE_CHOICE`, creating a second correct option is blocked with `MC_ALREADY_HAS_CORRECT`.
-- For `MULTIPLE_SELECT`, the resulting option set must include at least one correct option when options exist.
-- For `FILL_IN_THE_BLANK`, creating a second option is blocked with `FITB_MULTIPLE_OPTIONS`.
-- For `FILL_IN_THE_BLANK`, the single option must be correct.
+- Validates each option against the owning quiz type using valibot schema.
+- All option constraint violations are surfaced as `VALIDATION_FAILED`.
 - Batch timestamps are created per record, not forced to the same timestamp.
 - Returns `{ success: true, data: QuizOption[] }`.
 
@@ -196,11 +190,8 @@ interface UpdateQuizOptionCommand {
 ```
 
 - Partially updates only provided fields.
-- For `MULTIPLE_CHOICE`, changing the correct answer requires explicitly unchecking the old correct option before checking a new one.
-- For `MULTIPLE_CHOICE`, attempting to set a second correct option is blocked with `MC_ALREADY_HAS_CORRECT`.
-- For `MULTIPLE_SELECT`, updating `isCorrect` is blocked when it would leave the quiz with zero correct options.
-- For `FILL_IN_THE_BLANK`, adding or changing state in a way that produces multiple options is blocked with `FITB_MULTIPLE_OPTIONS`.
-- For `FILL_IN_THE_BLANK`, updating the only option to `isCorrect: false` is blocked.
+- The merged option state (existing + projected) is validated against the quiz type invariants.
+- All option constraint violations are surfaced as `VALIDATION_FAILED`.
 - Returns `{ success: true, data: QuizOption }`.
 
 ### DeleteQuizOptions
@@ -214,9 +205,8 @@ interface DeleteQuizOptionsCommand {
 - Deletes one or more quiz options in a batch.
 - Checks ownership of all requested IDs before deleting any records.
 - Uses all-or-nothing semantics.
-- Blocks deleting the last correct option from a `MULTIPLE_CHOICE` quiz with `CANNOT_DELETE_LAST_CORRECT`.
-- Blocks deleting the last correct option from a `MULTIPLE_SELECT` quiz with `CANNOT_DELETE_LAST_CORRECT`.
-- Blocks deleting the only `FILL_IN_THE_BLANK` option with `CANNOT_DELETE_LAST_CORRECT`.
+- The remaining options after deletion are validated against the quiz type invariants.
+- All option constraint violations are surfaced as `VALIDATION_FAILED`.
 - If any ID is not owned or not deletable, no quiz options are deleted and `PARTIAL_FORBIDDEN` includes the blocked `ids`.
 - Returns `{ success: true }`.
 
@@ -258,15 +248,12 @@ interface GetQuizQuery {
 
 ## Errors
 
-- `VALIDATION_FAILED`: invalid quiz, quiz option, ID, chapter ID, quiz ID, type, or request payload.
+- `VALIDATION_FAILED`: invalid quiz, quiz option, ID, chapter ID, quiz ID, type, request payload, or option constraint violation.
 - `BATCH_VALIDATION_FAILED`: batch validation failed; no records were created or deleted.
 - `UNAUTHORIZED`: missing authenticated user.
 - `FORBIDDEN`: authenticated user cannot modify the quiz or option.
 - `PARTIAL_FORBIDDEN`: batch delete includes IDs the authenticated user cannot delete; the error payload includes those blocked `ids`.
 - `NOT_FOUND`: quiz, quiz option, or parent Chapter/StudySet does not exist or is not visible to the user.
-- `MC_ALREADY_HAS_CORRECT`: multiple-choice quiz already has a correct option.
-- `FITB_MULTIPLE_OPTIONS`: fill-in-the-blank quiz cannot have multiple options.
-- `CANNOT_DELETE_LAST_CORRECT`: deleting would leave a quiz without its required correct option.
 
 ## Deferred Or Out Of Scope
 

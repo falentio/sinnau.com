@@ -3,6 +3,7 @@ import * as v from "valibot";
 import { CHAPTER_ID_PREFIX } from "./chapter.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
 import {
+  FITB_OPTION_EXACT,
   MCQ_OPTION_MAX,
   MCQ_OPTION_MIN,
   MS_OPTION_MAX,
@@ -15,6 +16,7 @@ import {
   QUIZ_QUESTION_TEXT_MIN_LENGTH,
   QUIZ_TYPES,
 } from "./quiz.constant.ts";
+import type { QuizType } from "./quiz.constant.ts";
 import { STUDY_SET_ID_PREFIX } from "./study-set.ts";
 
 export const QUIZ_ID_PREFIX = "qiz";
@@ -80,13 +82,49 @@ export const updateQuizOptionInputSchema = v.object({
   optionText: v.optional(optionTextSchema),
 });
 
-export const createQuizInputSchema = v.object({
-  chapterId: v.optional(chapterIdSchema),
-  options: v.optional(v.array(embeddedCreateOptionInputSchema)),
-  questionText: questionTextSchema,
-  studySetId: studySetIdSchema,
-  type: quizTypeSchema,
-});
+export const validateQuizOptions = (
+  type: QuizType,
+  options: { isCorrect: boolean }[]
+): boolean => {
+  switch (type) {
+    case "MULTIPLE_CHOICE": {
+      return (
+        options.length >= MCQ_OPTION_MIN &&
+        options.length <= MCQ_OPTION_MAX &&
+        options.filter((o) => o.isCorrect).length === 1
+      );
+    }
+    case "MULTIPLE_SELECT": {
+      return (
+        options.length >= MS_OPTION_MIN &&
+        options.length <= MS_OPTION_MAX &&
+        options.some((o) => o.isCorrect)
+      );
+    }
+    case "FILL_IN_THE_BLANK": {
+      return (
+        options.length === FITB_OPTION_EXACT && options[0]?.isCorrect === true
+      );
+    }
+    default: {
+      return false;
+    }
+  }
+};
+
+export const createQuizInputSchema = v.pipe(
+  v.object({
+    chapterId: v.optional(chapterIdSchema),
+    options: v.array(embeddedCreateOptionInputSchema),
+    questionText: questionTextSchema,
+    studySetId: studySetIdSchema,
+    type: quizTypeSchema,
+  }),
+  v.check(
+    (input) => validateQuizOptions(input.type, input.options),
+    "Quiz options violate type constraints"
+  )
+);
 
 export const updateQuizInputSchema = v.object({
   id: quizIdSchema,
