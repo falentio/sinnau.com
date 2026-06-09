@@ -37,8 +37,7 @@ const setupService = () => {
   repo.findOwnedStudySets.mockResolvedValue(EMPTY_STUDY_SET_LIST);
   repo.hasUserVisitedStudySet.mockResolvedValue(false);
   repo.upsertVisit.mockImplementation(
-    // oxlint-disable-next-line require-await
-    async (userId, studySetId, visitedAt) =>
+    (userId, studySetId, visitedAt) =>
       Promise.resolve({
         id: generateId(STUDY_SET_VISIT_ID_PREFIX),
         studySetId,
