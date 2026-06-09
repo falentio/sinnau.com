@@ -31,8 +31,8 @@ export class ChapterService {
   ): Promise<Chapter> {
     await this.guard.assertStudySetOwnerOrForbidden(input.studySetId, ownerId);
 
-    const isSlugTakenInStudySet = (candidate: string) =>
-      this.repo.isSlugTakenInStudySet(input.studySetId, candidate);
+    const isSlugTakenInStudySet = async (candidate: string) =>
+      await this.repo.isSlugTakenInStudySet(input.studySetId, candidate);
 
     const slug = await generateSlug(input.title, isSlugTakenInStudySet).catch(
       (error: unknown) => {
@@ -45,7 +45,7 @@ export class ChapterService {
       }
     );
 
-    return this.repo.insertChapter({
+    return await this.repo.insertChapter({
       description: input.description ?? null,
       id: generateId(CHAPTER_ID_PREFIX),
       ownerId,
@@ -106,7 +106,7 @@ export class ChapterService {
     input: GetChaptersInput,
     userId: string
   ): Promise<Chapter[]> {
-    return this.repo.findChaptersByStudySet(userId, input.studySetId);
+    return await this.repo.findChaptersByStudySet(userId, input.studySetId);
   }
 
   async getChapter(input: GetChapterInput, userId: string): Promise<Chapter> {

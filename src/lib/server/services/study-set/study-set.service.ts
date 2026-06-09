@@ -42,8 +42,9 @@ export class StudySetService {
     input: CreateStudySetInput,
     ownerId: string
   ): Promise<StudySet> {
-    const slug = await generateSlug(input.title, (candidate) =>
-      this.repo.isSlugTaken(candidate)
+    const slug = await generateSlug(
+      input.title,
+      async (candidate) => await this.repo.isSlugTaken(candidate)
     ).catch((error: unknown) => {
       if (error instanceof SlugConflictError) {
         throw new ORPCError("STUDY_SET_SLUG_CONFLICT", {
@@ -53,7 +54,7 @@ export class StudySetService {
       throw error;
     });
 
-    return this.repo.insertStudySet({
+    return await this.repo.insertStudySet({
       description: input.description ?? null,
       files: input.files ?? [],
       id: generateId(STUDY_SET_ID_PREFIX),
@@ -129,7 +130,12 @@ export class StudySetService {
     const orderBy = input.pagination?.orderBy ?? "createdAt";
     const orderDirection = input.pagination?.orderDirection ?? "desc";
     const page = input.pagination?.page ?? 1;
-    return this.repo.findOwnedStudySets(ownerId, orderBy, orderDirection, page);
+    return await this.repo.findOwnedStudySets(
+      ownerId,
+      orderBy,
+      orderDirection,
+      page
+    );
   }
 
   async getStudySet(
@@ -155,7 +161,7 @@ export class StudySetService {
     input: GetRecentStudySetsInput,
     userId: string
   ): Promise<StudySet[]> {
-    return this.repo.findRecentVisits(userId, input.count);
+    return await this.repo.findRecentVisits(userId, input.count);
   }
 
   async cleanupOldStudySetVisits(): Promise<{ deletedCount: number }> {
