@@ -41,7 +41,7 @@ export class QuizService {
   ): Promise<QuizWithOptions> {
     await this.guard.assertStudySetOwnerOrForbidden(input.studySetId, ownerId);
 
-    if (input.chapterId) {
+    if (input.chapterId !== undefined) {
       await this.guard.assertChapterInStudySetOrForbidden(
         input.chapterId,
         ownerId,
@@ -111,7 +111,7 @@ export class QuizService {
       throw new ORPCError("NOT_FOUND", { message: "Quiz not found" });
     }
 
-    return this.hydrateQuiz(updated);
+    return await this.hydrateQuiz(updated);
   }
 
   async deleteQuizzes(
@@ -134,8 +134,8 @@ export class QuizService {
   ): Promise<QuizOption[]> {
     const quizIds = [...new Set(input.options.map((o) => o.quizId))];
     const quizzes = await Promise.all(
-      quizIds.map(async (id) =>
-        this.guard.assertQuizOwnerOrForbidden(id, ownerId)
+      quizIds.map(
+        async (id) => await this.guard.assertQuizOwnerOrForbidden(id, ownerId)
       )
     );
 
@@ -162,7 +162,7 @@ export class QuizService {
       quizId: opt.quizId,
     }));
 
-    return this.repo.insertQuizOptions(rows);
+    return await this.repo.insertQuizOptions(rows);
   }
 
   async updateQuizOption(
@@ -288,7 +288,7 @@ export class QuizService {
     userId: string
   ): Promise<QuizWithOptions[]> {
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, userId);
-    return this.repo.findQuizzesByStudySetId(input.studySetId);
+    return await this.repo.findQuizzesByStudySetId(input.studySetId);
   }
 
   async getQuiz(input: GetQuizInput, userId: string): Promise<QuizWithOptions> {
@@ -296,7 +296,7 @@ export class QuizService {
       input.id,
       userId
     );
-    return this.hydrateQuiz(quizRow);
+    return await this.hydrateQuiz(quizRow);
   }
 
   private async hydrateQuiz(quiz: Quiz): Promise<QuizWithOptions> {

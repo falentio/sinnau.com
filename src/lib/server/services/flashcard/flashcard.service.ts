@@ -33,7 +33,9 @@ export class FlashcardService {
 
     const chapterIds = [
       ...new Set(
-        input.flashcards.map((f) => f.chapterId).filter((v): v is string => !!v)
+        input.flashcards
+          .map((f) => f.chapterId)
+          .filter((v): v is string => v !== null && v !== undefined)
       ),
     ];
     for (const chapterId of chapterIds) {
@@ -60,7 +62,7 @@ export class FlashcardService {
         studySetId: input.studySetId,
       }));
 
-    return this.repo.insertFlashcards(rows);
+    return await this.repo.insertFlashcards(rows);
   }
 
   async updateFlashcard(
@@ -100,7 +102,7 @@ export class FlashcardService {
     userId: string
   ): Promise<Flashcard[]> {
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, userId);
-    return this.repo.findFlashcardsByStudySet(input.studySetId);
+    return await this.repo.findFlashcardsByStudySet(input.studySetId);
   }
 
   async getFlashcard(

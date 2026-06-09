@@ -116,7 +116,7 @@ export class StudySetContentService {
       input.studySetId,
       userId
     );
-    return this.repo.findContentsByStudySet(input.studySetId);
+    return await this.repo.findContentsByStudySet(input.studySetId);
   }
 
   async listContentsByChapter(
@@ -132,7 +132,7 @@ export class StudySetContentService {
       chapter.studySetId,
       userId
     );
-    return this.repo.findContentsByChapter(input.chapterId);
+    return await this.repo.findContentsByChapter(input.chapterId);
   }
 
   async linkChapter(
