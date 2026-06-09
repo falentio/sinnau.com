@@ -333,7 +333,7 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
         };
         map.set(row.id, entry);
       }
-      if (row.chapterId) {
+      if (row.chapterId !== null) {
         entry.chapterIds.push(row.chapterId);
       }
     }

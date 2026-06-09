@@ -31,7 +31,7 @@ export const setInitialUser = (u: () => User | null) => {
 
 export const getUser = () => {
   if (isPending) {
-    return user || initialUser;
+    return user ?? initialUser;
   }
   return user;
 };

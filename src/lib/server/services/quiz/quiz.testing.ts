@@ -177,7 +177,7 @@ export class QuizTestEnv implements AsyncDisposable {
     studySetId: string | undefined,
     ownerId?: string
   ): Promise<string> {
-    if (studySetId) {
+    if (studySetId !== undefined) {
       return studySetId;
     }
     const seeded = await this.seedStudySet({

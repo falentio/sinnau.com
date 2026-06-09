@@ -137,7 +137,7 @@ export const createSvelteTable = <TData extends RowData>(
           options.onStateChange?.(updater);
         },
 
-        state: mergeObjects(state, options.state || {}),
+        state: mergeObjects(state, options.state ?? {}),
       })
     );
   };
