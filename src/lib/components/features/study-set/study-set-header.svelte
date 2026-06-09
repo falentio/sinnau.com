@@ -20,6 +20,7 @@
   } from "$lib/components/features/icons";
   import DeleteStudySetDialog from "$lib/components/features/study-set/delete-study-set-dialog.svelte";
   import StudySetIcon from "$lib/components/features/study-set/study-set-icon.svelte";
+  import UpdateStudySetDialog from "$lib/components/features/study-set/update-study-set-dialog.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { HugeiconsIcon } from "@hugeicons/svelte";
@@ -34,6 +35,7 @@
     studySet: {
       description: string | null;
       title: string;
+      visibility: "PUBLIC" | "PRIVATE";
     };
   }
 
@@ -45,6 +47,7 @@
   let chapterDialogOpen = $state(false);
   let quizDialogOpen = $state(false);
   let deleteDialogOpen = $state(false);
+  let updateDialogOpen = $state(false);
 
   const chapterQuery = $derived.by(() => {
     const chapter = page.url.searchParams.get("chapter");
@@ -77,9 +80,13 @@
             {/snippet}
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
-            <DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => (updateDialogOpen = true)}>
               <HugeiconsIcon icon={Edit01Icon} />
               Edit set
+            </DropdownMenu.Item>
+            <DropdownMenu.Item>
+              <HugeiconsIcon icon={Share01Icon} />
+              Bagikan
             </DropdownMenu.Item>
             <DropdownMenu.Item
               variant="destructive"
@@ -87,10 +94,6 @@
             >
               <HugeiconsIcon icon={Delete02Icon} />
               Hapus set
-            </DropdownMenu.Item>
-            <DropdownMenu.Item>
-              <HugeiconsIcon icon={Share01Icon} />
-              Bagikan
             </DropdownMenu.Item>
             {#if dev}
               <DropdownMenu.Separator />
@@ -122,9 +125,14 @@
         />
         <CreateChapterDialog />
         <DeleteStudySetDialog
-          open={deleteDialogOpen}
+          bind:open={deleteDialogOpen}
           {studySetId}
           studySetTitle={studySet.title}
+        />
+        <UpdateStudySetDialog
+          bind:open={updateDialogOpen}
+          {studySetId}
+          {studySet}
         />
       </div>
     </div>

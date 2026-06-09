@@ -19,11 +19,7 @@
     studySetTitle: string;
   }
 
-  const {
-    open = $bindable(false),
-    studySetId,
-    studySetTitle,
-  }: Props = $props();
+  let { open = $bindable(false), studySetId, studySetTitle }: Props = $props();
 
   const formSchema = v.object({
     confirmation: v.pipe(
@@ -93,7 +89,7 @@
   });
 </script>
 
-<Dialog.Root {open} onOpenChange={handleOpenChange}>
+<Dialog.Root bind:open onOpenChange={handleOpenChange}>
   <Dialog.Content showCloseButton={!$submitting}>
     <Dialog.Header>
       <Dialog.Title>Hapus Study Set</Dialog.Title>
