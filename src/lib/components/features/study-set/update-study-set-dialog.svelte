@@ -57,6 +57,7 @@
             position: "top-right",
           });
           await invalidate(`study-set:${studySetId}`);
+          open = false;
         } catch (error) {
           if (error instanceof ORPCError) {
             if (error.code === "UNAUTHORIZED") {
@@ -135,7 +136,8 @@
               {...props}
               bind:value={$formData.description}
               placeholder="Deskripsi opsional"
-              rows={3}
+              rows={5}
+              class="min-h-[10ch]"
               disabled={$submitting}
             />
           {/snippet}
@@ -153,10 +155,10 @@
               bind:value={$formData.visibility}
               disabled={$submitting}
             >
-              <Select.Trigger {...props}>
+              <Select.Trigger class="w-full " {...props}>
                 {$formData.visibility === "PUBLIC" ? "Public" : "Private"}
               </Select.Trigger>
-              <Select.Content>
+              <Select.Content class="p-2">
                 <Select.Item value="PUBLIC" label="Public" />
                 <Select.Item value="PRIVATE" label="Private" />
               </Select.Content>
