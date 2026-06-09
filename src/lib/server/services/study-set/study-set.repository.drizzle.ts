@@ -223,7 +223,7 @@ export class StudySetDrizzleRepository implements StudySetRepository {
           ),
       ]);
 
-      const total = Number(totalRow[0]?.count ?? 0);
+      const total = totalRow[0]?.count ?? 0;
       return {
         data: rows,
         pagination: {
@@ -318,6 +318,7 @@ export class StudySetDrizzleRepository implements StudySetRepository {
       const rows = await this.dbInstance
         .select({
           createdAt: studySet.createdAt,
+          deletedAt: studySet.deletedAt,
           description: studySet.description,
           files: studySet.files,
           id: studySet.id,
@@ -340,7 +341,7 @@ export class StudySetDrizzleRepository implements StudySetRepository {
         )
         .orderBy(desc(studySetVisit.visitedAt))
         .limit(count);
-      return rows as StudySet[];
+      return rows;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;

@@ -171,7 +171,7 @@ export class ChapterDrizzleRepository implements ChapterRepository {
         .select({ count: sql<number>`count(*)` })
         .from(flashcard)
         .where(eq(flashcard.chapterId, chapterId));
-      return Number(row?.count ?? 0);
+      return row?.count ?? 0;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
