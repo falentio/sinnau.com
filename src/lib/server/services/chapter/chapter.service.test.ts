@@ -30,6 +30,7 @@ const setupService = () => {
   guard.assertVisibleByIdOrNotFound.mockResolvedValue(createChapterFixture());
   guard.assertStudySetOwnerOrForbidden.mockResolvedValue();
 
+  // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new ChapterService(repo, guard as unknown as ChapterGuard);
   return { guard, repo, service };
 };

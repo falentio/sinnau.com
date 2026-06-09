@@ -42,6 +42,7 @@ const setupService = () => {
 
   const service = new StudySetContentService(
     repo,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     guard as unknown as StudySetContentGuard
   );
   return { guard, repo, service };

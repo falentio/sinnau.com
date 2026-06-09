@@ -37,6 +37,7 @@ const setupService = () => {
   repo.findOwnedStudySets.mockResolvedValue(EMPTY_STUDY_SET_LIST);
   repo.hasUserVisitedStudySet.mockResolvedValue(false);
   repo.upsertVisit.mockImplementation(
+    // oxlint-disable-next-line promise-function-async
     (userId, studySetId, visitedAt) =>
       Promise.resolve({
         id: generateId(STUDY_SET_VISIT_ID_PREFIX),
@@ -54,6 +55,7 @@ const setupService = () => {
   guard.assertVisibleBySlugOrNotFound.mockResolvedValue(
     createStudySetFixture()
   );
+  // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new StudySetService(repo, guard as unknown as StudySetGuard);
   return { guard, repo, service };
 };

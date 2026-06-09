@@ -14,8 +14,6 @@ import type {
   MockedStudySetGuard,
 } from "./flashcard.testing.ts";
 
-type PartialForbiddenError = ORPCError<"PARTIAL_FORBIDDEN", { ids: string[] }>;
-
 const setupGuard = (
   repo?: MockedFlashcardRepository,
   studySetGuard?: MockedStudySetGuard
@@ -24,6 +22,7 @@ const setupGuard = (
   const studySet = studySetGuard ?? createMockStudySetGuard();
   const guard = new FlashcardGuard(
     flashcardRepo,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     studySet as unknown as StudySetGuard
   );
   return { guard, repo: flashcardRepo, studySet };
@@ -377,12 +376,14 @@ describe.concurrent(FlashcardGuard, () => {
       repo.findFlashcardsByIds.mockResolvedValue([
         createFlashcardFixture({ id: "a", ownerId: "owner-1" }),
       ]);
-      const err = (await guard
+      const err = await guard
         .assertFlashcardsAllOwnedOrThrow(["a", "b", "c"], "owner-1")
-        .catch((error: unknown) => error)) as PartialForbiddenError;
+        .catch((error: unknown) => error);
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err.code).toBe("PARTIAL_FORBIDDEN");
-      expect(err.data).toEqual({ ids: ["b", "c"] });
+      expect(err).toMatchObject({
+        code: "PARTIAL_FORBIDDEN",
+        data: { ids: ["b", "c"] },
+      });
     });
 
     it("includes ids owned by a different user in the blocked list", async ({
@@ -393,11 +394,13 @@ describe.concurrent(FlashcardGuard, () => {
         createFlashcardFixture({ id: "a", ownerId: "owner-1" }),
         createFlashcardFixture({ id: "b", ownerId: "other" }),
       ]);
-      const err = (await guard
+      const err = await guard
         .assertFlashcardsAllOwnedOrThrow(["a", "b"], "owner-1")
-        .catch((error: unknown) => error)) as PartialForbiddenError;
-      expect(err.code).toBe("PARTIAL_FORBIDDEN");
-      expect(err.data).toEqual({ ids: ["b"] });
+        .catch((error: unknown) => error);
+      expect(err).toMatchObject({
+        code: "PARTIAL_FORBIDDEN",
+        data: { ids: ["b"] },
+      });
     });
 
     it("throws PARTIAL_FORBIDDEN for every id when none are returned", async ({
@@ -405,10 +408,13 @@ describe.concurrent(FlashcardGuard, () => {
     }) => {
       const { repo, guard } = setupGuard();
       repo.findFlashcardsByIds.mockResolvedValue([]);
-      const err = (await guard
+      const err = await guard
         .assertFlashcardsAllOwnedOrThrow(["a", "b"], "owner-1")
-        .catch((error: unknown) => error)) as PartialForbiddenError;
-      expect(err.data).toEqual({ ids: ["a", "b"] });
+        .catch((error: unknown) => error);
+      expect(err).toMatchObject({
+        code: "PARTIAL_FORBIDDEN",
+        data: { ids: ["a", "b"] },
+      });
     });
   });
 });

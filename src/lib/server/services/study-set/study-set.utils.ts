@@ -1,7 +1,4 @@
-import type {
-  StudySet,
-  StudySetVisibility,
-} from "../../infras/db/schema/study-set.ts";
+import type { StudySet } from "../../infras/db/schema/study-set.ts";
 
 let stubs: StudySet[] | null = null;
 
@@ -17,7 +14,7 @@ const buildStubs = (count: number, ownerId: string): StudySet[] => {
     slug: `stub-study-set-${i + 1}`,
     title: `Modul Pembelajaran ${i + 1}`,
     updatedAt: new Date(now.getTime() - (count - i) * 1_800_000),
-    visibility: (i % 5 === 0 ? "PRIVATE" : "PUBLIC") as StudySetVisibility,
+    visibility: i % 5 === 0 ? "PRIVATE" : "PUBLIC",
   }));
 };
 

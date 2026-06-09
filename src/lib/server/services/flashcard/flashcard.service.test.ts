@@ -54,6 +54,7 @@ const setupService = () => {
 
   const service = new FlashcardService(
     repo,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     guard as unknown as FlashcardGuard
   );
   return { guard, repo, service };

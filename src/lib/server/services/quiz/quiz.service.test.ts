@@ -103,6 +103,7 @@ const setupService = () => {
   ]);
   guard.assertQuizVisibleByIdOrNotFound.mockResolvedValue(ownedQuiz);
 
+  // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new QuizService(repo, guard as unknown as QuizGuard);
   return { guard, ownedOption, ownedQuiz, repo, service };
 };

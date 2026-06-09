@@ -2,12 +2,16 @@ import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
-import type { Chapter } from "../../infras/db/schema/chapter.ts";
-import type { StudySet } from "../../infras/db/schema/study-set.ts";
 import type { ChapterGuard } from "../chapter/chapter.guard.ts";
+import { createChapterFixture } from "../chapter/chapter.testing.ts";
 import type { StudySetGuard } from "../study-set/study-set.guard.ts";
+import { createStudySetFixture } from "../study-set/study-set.testing.ts";
 import { QuizGuard } from "./quiz.guard.ts";
-import { createMockRepository, createQuizFixture } from "./quiz.testing.ts";
+import {
+  createMockRepository,
+  createQuizFixture,
+  createQuizOptionFixture,
+} from "./quiz.testing.ts";
 
 const createMockStudySetGuard = (): MockedStudySetGuard => ({
   assertOwnerOrForbidden: vi.fn<StudySetGuard["assertOwnerOrForbidden"]>(),
@@ -49,7 +53,9 @@ const setupGuard = () => {
 
   const guard = new QuizGuard(
     repo,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     studySetGuard as unknown as StudySetGuard,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     chapterGuard as unknown as ChapterGuard
   );
   return { chapterGuard, guard, repo, studySetGuard };
@@ -59,11 +65,11 @@ describe.concurrent(QuizGuard, () => {
   describe("assertStudySetOwnerOrForbidden", () => {
     it("returns the set when the caller is the owner", async ({ expect }) => {
       const { studySetGuard, guard } = setupGuard();
-      const set = {
+      const set = createStudySetFixture({
         id: "set-1",
         ownerId: "owner-1",
         visibility: "PUBLIC",
-      } as unknown as StudySet;
+      });
       studySetGuard.assertStudySetOwnerOrForbidden.mockResolvedValue(set);
 
       const result = await guard.assertStudySetOwnerOrForbidden(
@@ -101,7 +107,7 @@ describe.concurrent(QuizGuard, () => {
   describe("assertStudySetVisibleOrNotFound", () => {
     it("delegates to the study set guard", async ({ expect }) => {
       const { studySetGuard, guard } = setupGuard();
-      const set = { id: "set-1" } as unknown as StudySet;
+      const set = createStudySetFixture({ id: "set-1" });
       studySetGuard.assertStudySetVisibleByIdOrNotFound.mockResolvedValue(set);
 
       const result = await guard.assertStudySetVisibleOrNotFound(
@@ -118,7 +124,7 @@ describe.concurrent(QuizGuard, () => {
   describe("assertChapterOwnerOrForbidden", () => {
     it("delegates to the chapter guard", async ({ expect }) => {
       const { chapterGuard, guard } = setupGuard();
-      const ch = { id: "ch-1" } as unknown as Chapter;
+      const ch = createChapterFixture({ id: "ch-1" });
       chapterGuard.assertOwnerOrForbidden.mockResolvedValue(ch);
 
       const result = await guard.assertChapterOwnerOrForbidden(
@@ -138,11 +144,11 @@ describe.concurrent(QuizGuard, () => {
       expect,
     }) => {
       const { repo, guard } = setupGuard();
-      const ch = {
+      const ch = createChapterFixture({
         id: "ch-1",
         ownerId: "owner-1",
         studySetId: "set-1",
-      } as unknown as Chapter;
+      });
       repo.findChapterById.mockResolvedValue(ch);
 
       const result = await guard.assertChapterInStudySetOrForbidden(
@@ -176,11 +182,13 @@ describe.concurrent(QuizGuard, () => {
       expect,
     }) => {
       const { repo, guard } = setupGuard();
-      repo.findChapterById.mockResolvedValue({
-        id: "ch-1",
-        ownerId: "owner-1",
-        studySetId: "set-2",
-      } as unknown as Chapter);
+      repo.findChapterById.mockResolvedValue(
+        createChapterFixture({
+          id: "ch-1",
+          ownerId: "owner-1",
+          studySetId: "set-2",
+        })
+      );
       let err: unknown = null;
       try {
         await guard.assertChapterInStudySetOrForbidden(
@@ -199,11 +207,13 @@ describe.concurrent(QuizGuard, () => {
       expect,
     }) => {
       const { repo, guard } = setupGuard();
-      repo.findChapterById.mockResolvedValue({
-        id: "ch-1",
-        ownerId: "someone-else",
-        studySetId: "set-1",
-      } as unknown as Chapter);
+      repo.findChapterById.mockResolvedValue(
+        createChapterFixture({
+          id: "ch-1",
+          ownerId: "someone-else",
+          studySetId: "set-1",
+        })
+      );
       let err: unknown = null;
       try {
         await guard.assertChapterInStudySetOrForbidden(
@@ -329,8 +339,8 @@ describe.concurrent(QuizGuard, () => {
     }) => {
       const { repo, guard } = setupGuard();
       const owned = [
-        { id: "o-1", quizId: "q-1" } as never,
-        { id: "o-2", quizId: "q-1" } as never,
+        createQuizOptionFixture({ id: "o-1", quizId: "q-1" }),
+        createQuizOptionFixture({ id: "o-2", quizId: "q-1" }),
       ];
       repo.findOptionsByIdsForOwner.mockResolvedValue(owned);
 
@@ -347,7 +357,9 @@ describe.concurrent(QuizGuard, () => {
 
     it("throws PARTIAL_FORBIDDEN with the missing ids", async ({ expect }) => {
       const { repo, guard } = setupGuard();
-      repo.findOptionsByIdsForOwner.mockResolvedValue([{ id: "o-1" } as never]);
+      repo.findOptionsByIdsForOwner.mockResolvedValue([
+        createQuizOptionFixture({ id: "o-1" }),
+      ]);
 
       let err: unknown = null;
       try {
@@ -377,11 +389,13 @@ describe.concurrent(QuizGuard, () => {
         studySetId: "set-1",
       });
       repo.findQuizById.mockResolvedValue(quizRow);
-      studySetGuard.assertStudySetVisibleByIdOrNotFound.mockResolvedValue({
-        id: "set-1",
-        ownerId: "owner-1",
-        visibility: "PRIVATE",
-      } as unknown as StudySet);
+      studySetGuard.assertStudySetVisibleByIdOrNotFound.mockResolvedValue(
+        createStudySetFixture({
+          id: "set-1",
+          ownerId: "owner-1",
+          visibility: "PRIVATE",
+        })
+      );
 
       const result = await guard.assertQuizVisibleByIdOrNotFound(
         "q-1",
@@ -400,11 +414,13 @@ describe.concurrent(QuizGuard, () => {
         studySetId: "set-1",
       });
       repo.findQuizById.mockResolvedValue(quizRow);
-      studySetGuard.assertStudySetVisibleByIdOrNotFound.mockResolvedValue({
-        id: "set-1",
-        ownerId: "owner-1",
-        visibility: "PUBLIC",
-      } as unknown as StudySet);
+      studySetGuard.assertStudySetVisibleByIdOrNotFound.mockResolvedValue(
+        createStudySetFixture({
+          id: "set-1",
+          ownerId: "owner-1",
+          visibility: "PUBLIC",
+        })
+      );
 
       const result = await guard.assertQuizVisibleByIdOrNotFound(
         "q-1",

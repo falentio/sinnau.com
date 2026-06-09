@@ -102,7 +102,8 @@ describe.concurrent(generateSlug, () => {
       .mockResolvedValue(false);
     await generateSlug("BIOLOGY 101", exists);
 
-    const candidate = exists.mock.calls[0]?.[0] as string;
+    // oxlint-disable-next-line no-non-null-assertion, no-non-null-asserted-optional-chain
+    const candidate = exists.mock.calls[0]?.[0]!;
     expect(candidate).toBe(candidate.toLowerCase());
   });
 
