@@ -11,6 +11,7 @@ export const studySetGet = authorizedProcedure
   .errors(ERRORS)
   .input(getStudySetInputSchema)
   .output(studySetSchema)
-  .handler(({ input, context }) =>
-    studySetService.getStudySet(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetService.getStudySet(input, context.user.id)
   );

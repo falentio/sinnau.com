@@ -14,6 +14,10 @@ export const studySetContentList = authorizedProcedure
   .errors(ERRORS)
   .input(listStudySetContentInputSchema)
   .output(studySetContentListOutputSchema)
-  .handler(async ({ input, context }) =>
-    studySetContentService.listContentsByStudySet(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetContentService.listContentsByStudySet(
+        input,
+        context.user.id
+      )
   );

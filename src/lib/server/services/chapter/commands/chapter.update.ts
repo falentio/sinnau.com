@@ -12,6 +12,7 @@ export const chapterUpdate = authorizedProcedure
   .errors(ERRORS)
   .input(updateChapterInputSchema)
   .output(chapterSchema)
-  .handler(async ({ input, context }) =>
-    chapterService.updateChapter(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await chapterService.updateChapter(input, context.user.id)
   );

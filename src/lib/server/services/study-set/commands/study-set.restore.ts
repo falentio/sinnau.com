@@ -15,6 +15,7 @@ export const studySetRestore = authorizedProcedure
   .errors(ERRORS)
   .input(restoreStudySetInputSchema)
   .output(restoreStudySetOutputSchema)
-  .handler(({ input, context }) =>
-    studySetService.restoreStudySet(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetService.restoreStudySet(input, context.user.id)
   );

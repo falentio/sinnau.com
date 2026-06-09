@@ -16,6 +16,7 @@ export const chapterCreate = authorizedProcedure
   .errors(ERRORS)
   .input(createChapterInputSchema)
   .output(chapterSchema)
-  .handler(async ({ input, context }) =>
-    chapterService.createChapter(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await chapterService.createChapter(input, context.user.id)
   );

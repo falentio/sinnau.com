@@ -5,4 +5,4 @@ import { studySetService } from "../index";
 
 export const studySetAdminCleanupVisits = adminProcedure
   .output(studySetAdminCleanupVisitsOutputSchema)
-  .handler(() => studySetService.cleanupOldStudySetVisits());
+  .handler(async () => await studySetService.cleanupOldStudySetVisits());

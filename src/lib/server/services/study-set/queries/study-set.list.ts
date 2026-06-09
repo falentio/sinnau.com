@@ -9,6 +9,7 @@ import { studySetService } from "../index";
 export const studySetList = authorizedProcedure
   .input(getStudySetsInputSchema)
   .output(studySetListResultSchema)
-  .handler(({ input, context }) =>
-    studySetService.getStudySets(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetService.getStudySets(input, context.user.id)
   );

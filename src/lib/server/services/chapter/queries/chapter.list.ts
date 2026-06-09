@@ -9,6 +9,7 @@ import { chapterService } from "../index";
 export const chapterList = authorizedProcedure
   .input(getChaptersInputSchema)
   .output(chapterListOutputSchema)
-  .handler(async ({ input, context }) =>
-    chapterService.getChaptersByStudySet(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await chapterService.getChaptersByStudySet(input, context.user.id)
   );

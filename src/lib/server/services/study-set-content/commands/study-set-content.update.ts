@@ -15,6 +15,7 @@ export const studySetContentUpdate = authorizedProcedure
   .errors(ERRORS)
   .input(updateStudySetContentInputSchema)
   .output(studySetContentSchema)
-  .handler(async ({ input, context }) =>
-    studySetContentService.updateContent(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetContentService.updateContent(input, context.user.id)
   );

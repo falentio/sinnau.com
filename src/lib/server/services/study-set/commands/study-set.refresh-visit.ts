@@ -14,6 +14,7 @@ export const studySetRefreshVisit = authorizedProcedure
   .errors(ERRORS)
   .input(refreshStudySetVisitInputSchema)
   .output(studySetRefreshVisitOutputSchema)
-  .handler(({ input, context }) =>
-    studySetService.refreshStudySetVisit(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetService.refreshStudySetVisit(input, context.user.id)
   );

@@ -16,6 +16,7 @@ export const studySetCreate = authorizedProcedure
   .errors(ERRORS)
   .input(createStudySetInputSchema)
   .output(studySetSchema)
-  .handler(({ input, context }) =>
-    studySetService.createStudySet(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetService.createStudySet(input, context.user.id)
   );

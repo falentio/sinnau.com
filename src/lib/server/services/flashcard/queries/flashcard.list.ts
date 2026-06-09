@@ -14,6 +14,7 @@ export const flashcardList = authorizedProcedure
   .errors(ERRORS)
   .input(getFlashcardsInputSchema)
   .output(flashcardListOutputSchema)
-  .handler(async ({ input, context }) =>
-    flashcardService.getFlashcards(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await flashcardService.getFlashcards(input, context.user.id)
   );

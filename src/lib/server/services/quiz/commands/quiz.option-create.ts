@@ -23,6 +23,7 @@ export const quizOptionCreate = authorizedProcedure
   .errors(ERRORS)
   .input(createQuizOptionsInputSchema)
   .output(v.array(quizOptionSchema))
-  .handler(async ({ input, context }) =>
-    quizService.createQuizOptions(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await quizService.createQuizOptions(input, context.user.id)
   );

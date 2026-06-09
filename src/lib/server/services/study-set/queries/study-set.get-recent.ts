@@ -10,6 +10,7 @@ import { studySetService } from "../index";
 export const studySetGetRecent = authorizedProcedure
   .input(getRecentStudySetsInputSchema)
   .output(v.array(studySetSchema))
-  .handler(({ input, context }) =>
-    studySetService.getRecentStudySets(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await studySetService.getRecentStudySets(input, context.user.id)
   );
