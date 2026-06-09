@@ -366,8 +366,8 @@ describe.concurrent("StudySetContentDrizzleRepository (schema constraints)", () 
       expect,
     }) => {
       await using env = new StudySetContentTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertContent({
+      const insertOrphan = async () =>
+        await env.repo.insertContent({
           content: "Orphan",
           id: "ssc-orphan",
           studySetId: "does-not-exist",

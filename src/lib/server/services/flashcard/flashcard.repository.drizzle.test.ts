@@ -241,8 +241,8 @@ describe.concurrent("FlashcardDrizzleRepository (schema constraints)", () => {
       expect,
     }) => {
       await using env = new FlashcardTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertFlashcards([
+      const insertOrphan = async () =>
+        await env.repo.insertFlashcards([
           {
             back: "B",
             chapterId: null,
@@ -262,8 +262,8 @@ describe.concurrent("FlashcardDrizzleRepository (schema constraints)", () => {
     }) => {
       await using env = new FlashcardTestEnv();
       await env.seedOwnedStudySet();
-      const insertOrphan = () =>
-        env.repo.insertFlashcards([
+      const insertOrphan = async () =>
+        await env.repo.insertFlashcards([
           {
             back: "B",
             chapterId: null,
@@ -283,8 +283,8 @@ describe.concurrent("FlashcardDrizzleRepository (schema constraints)", () => {
     }) => {
       await using env = new FlashcardTestEnv();
       await env.seedOwnedStudySet();
-      const insertOrphan = () =>
-        env.repo.insertFlashcards([
+      const insertOrphan = async () =>
+        await env.repo.insertFlashcards([
           {
             back: "B",
             chapterId: "missing-chapter",

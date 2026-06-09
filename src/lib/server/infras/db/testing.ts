@@ -4,4 +4,6 @@ import { createDb } from "$lib/server/infras/db/client";
 
 export const getTestingDb = () => createDb({ fileName: ":memory:" });
 
-export const sleep = (ms: number): Promise<void> => nodeSetTimeout(ms);
+export const sleep = async (ms: number): Promise<void> => {
+  await nodeSetTimeout(ms);
+};

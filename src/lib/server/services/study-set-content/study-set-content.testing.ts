@@ -202,10 +202,10 @@ export class StudySetContentTestEnv implements AsyncDisposable {
       .run();
   }
 
-  seedContent(
+  async seedContent(
     overrides: Partial<StudySetContent> = {}
   ): Promise<StudySetContent> {
-    return this.repo.insertContent({
+    return await this.repo.insertContent({
       content: overrides.content ?? "Default content text",
       id: overrides.id ?? generateId(STUDY_SET_CONTENT_ID_PREFIX),
       studySetId: overrides.studySetId ?? this.studySetId,

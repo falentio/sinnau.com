@@ -619,8 +619,8 @@ describe.concurrent("StudySetDrizzleRepository (schema constraints)", () => {
         ownerId: env.ownerId,
         slug: "same-slug",
       });
-      const insertDuplicate = () =>
-        env.repo.insertStudySet({
+      const insertDuplicate = async () =>
+        await env.repo.insertStudySet({
           description: null,
           files: [],
           id: "b",
@@ -638,8 +638,8 @@ describe.concurrent("StudySetDrizzleRepository (schema constraints)", () => {
       expect,
     }) => {
       await using env = new StudySetTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertStudySet({
+      const insertOrphan = async () =>
+        await env.repo.insertStudySet({
           description: null,
           files: [],
           id: "orphan",

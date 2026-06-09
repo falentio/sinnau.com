@@ -396,8 +396,8 @@ describe.concurrent("ChapterDrizzleRepository (schema constraints)", () => {
         ownerId: env.ownerId,
         slug: "same-slug",
       });
-      const insertDuplicate = () =>
-        env.repo.insertChapter({
+      const insertDuplicate = async () =>
+        await env.repo.insertChapter({
           description: null,
           id: "second",
           ownerId: env.ownerId,
@@ -439,8 +439,8 @@ describe.concurrent("ChapterDrizzleRepository (schema constraints)", () => {
       expect,
     }) => {
       await using env = new ChapterTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertChapter({
+      const insertOrphan = async () =>
+        await env.repo.insertChapter({
           description: null,
           id: "orphan",
           ownerId: env.ownerId,
@@ -455,8 +455,8 @@ describe.concurrent("ChapterDrizzleRepository (schema constraints)", () => {
       expect,
     }) => {
       await using env = new ChapterTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertChapter({
+      const insertOrphan = async () =>
+        await env.repo.insertChapter({
           description: null,
           id: "orphan",
           ownerId: "does-not-exist",

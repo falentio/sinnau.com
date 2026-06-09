@@ -117,9 +117,9 @@ export class StudySetTestEnv implements AsyncDisposable {
     return id;
   }
 
-  seedStudySet(overrides: Partial<StudySet> = {}): Promise<StudySet> {
+  async seedStudySet(overrides: Partial<StudySet> = {}): Promise<StudySet> {
     const id = overrides.id ?? generateId(STUDY_SET_ID_PREFIX);
-    return this.repo.insertStudySet({
+    return await this.repo.insertStudySet({
       description: overrides.description ?? null,
       files: overrides.files ?? [],
       id,

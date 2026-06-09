@@ -147,7 +147,8 @@ export class QuizTestEnv implements AsyncDisposable {
     return id;
   }
 
-  seedStudySet(overrides: SeedStudySetOptions = {}): Promise<StudySet> {
+  // oxlint-disable-next-line require-await
+  async seedStudySet(overrides: SeedStudySetOptions = {}): Promise<StudySet> {
     const id = overrides.id ?? generateId(STUDY_SET_ID_PREFIX);
     this.db
       .insert(studySet)
@@ -169,7 +170,7 @@ export class QuizTestEnv implements AsyncDisposable {
     if (!row) {
       throw new Error("Failed to seed study set");
     }
-    return Promise.resolve(row);
+    return row;
   }
 
   private async resolveStudySetId(
@@ -216,7 +217,7 @@ export class QuizTestEnv implements AsyncDisposable {
       overrides.ownerId
     );
     const id = overrides.id ?? generateId(QUIZ_ID_PREFIX);
-    return this.repo.insertQuiz(
+    return await this.repo.insertQuiz(
       {
         chapterId: overrides.chapterId ?? null,
         id,

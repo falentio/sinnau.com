@@ -18,14 +18,14 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
     }
     return event.locals.user;
   };
-  return svelteKitHandler({ auth, building, event, resolve });
+  return await svelteKitHandler({ auth, building, event, resolve });
 };
 
 const guardedRoutes: ((routeId: string) => boolean)[] = [
   (routeId) => routeId.includes("/(app)/"),
 ];
 
-const authGuardHandle: Handle = ({ event, resolve }) => {
+const authGuardHandle: Handle = async ({ event, resolve }) => {
   const routeId = event.route.id ?? "";
   const requiresAuth = guardedRoutes.some((guard) => guard(routeId));
   const loggedIn = !!event.locals.session;
@@ -34,7 +34,7 @@ const authGuardHandle: Handle = ({ event, resolve }) => {
     redirect(302, "/login");
   }
 
-  return resolve(event);
+  return await resolve(event);
 };
 
 export const handle = sequence(betterAuthHandle, authGuardHandle);

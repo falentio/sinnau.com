@@ -574,8 +574,8 @@ describe.concurrent("QuizDrizzleRepository (schema constraints)", () => {
       expect,
     }) => {
       await using env = new QuizTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertQuiz(
+      const insertOrphan = async () =>
+        await env.repo.insertQuiz(
           {
             chapterId: null,
             id: "orphan-quiz",
@@ -594,8 +594,8 @@ describe.concurrent("QuizDrizzleRepository (schema constraints)", () => {
     }) => {
       await using env = new QuizTestEnv();
       const studySet = await env.seedStudySet({ ownerId: env.ownerId });
-      const insertOrphan = () =>
-        env.repo.insertQuiz(
+      const insertOrphan = async () =>
+        await env.repo.insertQuiz(
           {
             chapterId: null,
             id: "orphan-owner",
@@ -613,8 +613,8 @@ describe.concurrent("QuizDrizzleRepository (schema constraints)", () => {
       expect,
     }) => {
       await using env = new QuizTestEnv();
-      const insertOrphan = () =>
-        env.repo.insertQuizOptions([
+      const insertOrphan = async () =>
+        await env.repo.insertQuizOptions([
           {
             explanation: null,
             id: "orphan-option",
