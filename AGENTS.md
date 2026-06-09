@@ -4,22 +4,24 @@ Try to fetch this docs if your work or task is related to some of these techs.
 If you still have lack of information after get the docs, you should either use context7 or exa websearch.
 But if you found `skills` for related techs, you should use that skills first, docs should take less priority than skills.
 
-[`https://shadcn-svelte.com/llms.txt`](shadcn-svelte)
-[`https://svelte.dev/docs/kit/llms.txt`](svelte-kit)
-[`https://svelte.dev/docs/svelte/llms.txt`](svelte)
-[`https://orpc.dev/llms.txt`](oprc)
-[`https://better-auth.com/llms.txt`](better-auth)
-[`https://better-auth.com/llms.txt/docs/integrations/svelte-kit.md`](better-auth-svelte)
-[`https://valibot.dev/llms.txt`](valibot)
+[shadcn-svelte](https://shadcn-svelte.com/llms.txt)
+[svelte-kit](https://svelte.dev/docs/kit/llms.txt)
+[svelte](https://svelte.dev/docs/svelte/llms.txt)
+[oprc](https://orpc.dev/llms.txt)
+[better-auth](https://better-auth.com/llms.txt)
+[better-auth-svelte](https://better-auth.com/llms.txt/docs/integrations/svelte-kit.md)
+[valibot](https://valibot.dev/llms.txt)
 
 always fetch the shadcn-svelte docs whenever work with `$lib/components/ui/**/*`.
 
 ## Docs Retrieval Priority
 
 This are ordered by most prioritized to least prioritized.
+Always assume your knowledge are outdated and never do optimize editting before you have any documentations before hand.
+Retrieve docs are mandatory, we dont tollerate with "Maybe I know how to work with this library, lets just plan and work the task immidately", you must "I did not read any docs yet, let me read that related docs first before planing the task I would work with.".
 
 1. Svelte mcp (if it related to svelte)
-2. Skills
+2. Skills (valibot, vite, vitest, etc.)
 3. Docs website on above, dont search by your self for other techs.
 4. Context7 mcp for code docs, Exa websearch mcp for other.
 5. node_modules, this is last resort, never search from node_modules before any of above approach.
