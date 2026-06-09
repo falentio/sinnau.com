@@ -8,6 +8,7 @@
   import Button from "$lib/components/ui/button/button.svelte";
   import { navigateWithParams } from "$lib/utils/url";
   import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { tick } from "svelte";
 
   import type { PageData } from "./$types";
 
@@ -63,12 +64,6 @@
             <Button
               onclick={(e) => {
                 openExplanation = !openExplanation;
-                requestAnimationFrame(() => {
-                  e.currentTarget.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  });
-                });
               }}
               variant={openExplanation ? "outline" : "ghost"}
               size="icon-sm"

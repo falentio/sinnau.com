@@ -24,8 +24,10 @@ export const createMockRepository = (): MockedStudySetRepository => ({
   findRecentVisits: vi.fn<StudySetRepository["findRecentVisits"]>(),
   findStudySetById: vi.fn<StudySetRepository["findStudySetById"]>(),
   findStudySetBySlug: vi.fn<StudySetRepository["findStudySetBySlug"]>(),
+  hasUserVisitedStudySet: vi.fn<StudySetRepository["hasUserVisitedStudySet"]>(),
   insertStudySet: vi.fn<StudySetRepository["insertStudySet"]>(),
   isSlugTaken: vi.fn<StudySetRepository["isSlugTaken"]>(),
+  restoreStudySet: vi.fn<StudySetRepository["restoreStudySet"]>(),
   updateStudySet: vi.fn<StudySetRepository["updateStudySet"]>(),
   upsertVisit: vi.fn<StudySetRepository["upsertVisit"]>(),
 });
@@ -51,6 +53,7 @@ export const createStudySetFixture = (
   overrides: Partial<StudySet> = {}
 ): StudySet => ({
   createdAt: new Date(),
+  deletedAt: null,
   description: null,
   files: [],
   id: generateId(STUDY_SET_ID_PREFIX),

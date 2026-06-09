@@ -101,6 +101,7 @@ const visibilityOutputSchema = v.picklist(STUDY_SET_VISIBILITIES);
 
 export const studySetSchema = v.object({
   createdAt: v.date(),
+  deletedAt: v.nullable(v.date()),
   description: v.nullable(v.string()),
   files: v.array(v.string()),
   id: v.string(),
@@ -126,6 +127,13 @@ export const studySetListResultSchema = v.object({
 export const studySetDeleteOutputSchema = v.object({
   success: v.literal(true),
 });
+
+export const restoreStudySetInputSchema = v.object({
+  id: studySetIdSchema,
+});
+
+export const restoreStudySetOutputSchema = studySetSchema;
+
 export const studySetRefreshVisitOutputSchema = v.object({
   visitedAt: v.number(),
 });
@@ -141,6 +149,9 @@ export type UpdateStudySetInput = v.InferOutput<
 >;
 export type DeleteStudySetInput = v.InferOutput<
   typeof deleteStudySetInputSchema
+>;
+export type RestoreStudySetInput = v.InferOutput<
+  typeof restoreStudySetInputSchema
 >;
 export type GetStudySetsInput = v.InferOutput<typeof getStudySetsInputSchema>;
 export type GetStudySetInput = v.InferOutput<typeof getStudySetInputSchema>;

@@ -25,6 +25,7 @@ const setupService = () => {
 
   const ownedStudySet: StudySet = {
     createdAt: new Date(),
+    deletedAt: null,
     description: null,
     files: [],
     id: STUDY_SET_ID,

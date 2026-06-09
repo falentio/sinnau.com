@@ -90,56 +90,124 @@ describe.concurrent("StudySetDrizzleRepository", () => {
   });
 
   describe("deleteStudySet", () => {
-    it("returns true and removes the row when id and ownerId match", async ({
+    it("soft-deletes by setting deletedAt when id and ownerId match", async ({
       expect,
     }) => {
       await using env = new StudySetTestEnv();
       await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
-      const ok = await env.repo.deleteStudySet("set-1", env.ownerId);
-      expect(ok).toBe(true);
-      expect(
-        env.db.select().from(studySet).where(eq(studySet.id, "set-1")).all()
-      ).toHaveLength(0);
+      const before = Date.now();
+      const result = await env.repo.deleteStudySet("set-1", env.ownerId);
+      const after = Date.now();
+      expect(result).not.toBeNull();
+      expect(result?.deletedAt).toBeInstanceOf(Date);
+      expect(result?.deletedAt?.getTime()).toBeGreaterThanOrEqual(before);
+      expect(result?.deletedAt?.getTime()).toBeLessThanOrEqual(after);
+      // Row still exists
+      const rows = env.db
+        .select()
+        .from(studySet)
+        .where(eq(studySet.id, "set-1"))
+        .all();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.deletedAt).toBeInstanceOf(Date);
     });
 
-    it("returns false when the id does not exist", async ({ expect }) => {
+    it("returns null when the id does not exist", async ({ expect }) => {
       await using env = new StudySetTestEnv();
-      expect(await env.repo.deleteStudySet("missing", env.ownerId)).toBe(false);
+      expect(await env.repo.deleteStudySet("missing", env.ownerId)).toBeNull();
     });
 
-    it("returns false when ownerId does not match", async ({ expect }) => {
+    it("returns null when ownerId does not match", async ({ expect }) => {
       await using env = new StudySetTestEnv();
       await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
-      expect(await env.repo.deleteStudySet("set-1", env.otherId)).toBe(false);
-      expect(
-        env.db.select().from(studySet).where(eq(studySet.id, "set-1")).all()
-      ).toHaveLength(1);
+      expect(await env.repo.deleteStudySet("set-1", env.otherId)).toBeNull();
+      // Row still exists and is not deleted
+      const [row] = env.db
+        .select()
+        .from(studySet)
+        .where(eq(studySet.id, "set-1"))
+        .all();
+      expect(row?.deletedAt).toBeNull();
     });
 
-    it("cascades to study set visits", async ({ expect }) => {
+    it("does not re-delete an already soft-deleted set", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
+      const first = await env.repo.deleteStudySet("set-1", env.ownerId);
+      expect(first).not.toBeNull();
+      const second = await env.repo.deleteStudySet("set-1", env.ownerId);
+      expect(second).toBeNull();
+    });
+  });
+
+  describe("restoreStudySet", () => {
+    it("clears deletedAt when id and ownerId match a soft-deleted set", async ({
+      expect,
+    }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
+      await env.repo.deleteStudySet("set-1", env.ownerId);
+      const result = await env.repo.restoreStudySet("set-1", env.ownerId);
+      expect(result).not.toBeNull();
+      expect(result?.deletedAt).toBeNull();
+      const [row] = env.db
+        .select()
+        .from(studySet)
+        .where(eq(studySet.id, "set-1"))
+        .all();
+      expect(row?.deletedAt).toBeNull();
+    });
+
+    it("returns null when the id does not exist", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      expect(await env.repo.restoreStudySet("missing", env.ownerId)).toBeNull();
+    });
+
+    it("returns null when ownerId does not match", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
+      await env.repo.deleteStudySet("set-1", env.ownerId);
+      expect(await env.repo.restoreStudySet("set-1", env.otherId)).toBeNull();
+    });
+
+    it("returns null for a non-deleted set", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
+      expect(await env.repo.restoreStudySet("set-1", env.ownerId)).toBeNull();
+    });
+  });
+
+  describe("hasUserVisitedStudySet", () => {
+    it("returns true when a visit exists", async ({ expect }) => {
       await using env = new StudySetTestEnv();
       const created = await env.seedStudySet({
         id: "set-1",
         ownerId: env.ownerId,
       });
       await env.repo.upsertVisit(env.ownerId, created.id, Date.now());
-      expect(
-        env.db
-          .select()
-          .from(studySetVisit)
-          .where(eq(studySetVisit.studySetId, "set-1"))
-          .all()
-      ).toHaveLength(1);
+      expect(await env.repo.hasUserVisitedStudySet(env.ownerId, "set-1")).toBe(
+        true
+      );
+    });
 
-      await env.repo.deleteStudySet("set-1", env.ownerId);
+    it("returns false when no visit exists", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "set-1", ownerId: env.ownerId });
+      expect(await env.repo.hasUserVisitedStudySet(env.ownerId, "set-1")).toBe(
+        false
+      );
+    });
 
-      expect(
-        env.db
-          .select()
-          .from(studySetVisit)
-          .where(eq(studySetVisit.studySetId, "set-1"))
-          .all()
-      ).toHaveLength(0);
+    it("returns false for a different user", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      const created = await env.seedStudySet({
+        id: "set-1",
+        ownerId: env.ownerId,
+      });
+      await env.repo.upsertVisit(env.ownerId, created.id, Date.now());
+      expect(await env.repo.hasUserVisitedStudySet(env.otherId, "set-1")).toBe(
+        false
+      );
     });
   });
 
@@ -277,6 +345,22 @@ describe.concurrent("StudySetDrizzleRepository", () => {
         1
       );
       expect(result.data[0]?.id).toBe(b.id);
+    });
+
+    it("excludes soft-deleted sets", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "a", ownerId: env.ownerId });
+      await env.seedStudySet({ id: "b", ownerId: env.ownerId });
+      await env.repo.deleteStudySet("b", env.ownerId);
+
+      const result = await env.repo.findOwnedStudySets(
+        env.ownerId,
+        "createdAt",
+        "desc",
+        1
+      );
+      expect(result.data.map((s) => s.id)).toEqual(["a"]);
+      expect(result.pagination.total).toBe(1);
     });
   });
 
@@ -504,6 +588,22 @@ describe.concurrent("StudySetDrizzleRepository", () => {
       await using env = new StudySetTestEnv();
       const recent = await env.repo.findRecentVisits(env.otherId, 10);
       expect(recent).toEqual([]);
+    });
+
+    it("includes soft-deleted sets the user has visited", async ({
+      expect,
+    }) => {
+      await using env = new StudySetTestEnv();
+      const set = await env.seedStudySet({
+        id: "set-1",
+        ownerId: env.ownerId,
+        visibility: "PUBLIC",
+      });
+      await env.repo.upsertVisit(env.otherId, set.id, Date.now());
+      await env.repo.deleteStudySet("set-1", env.ownerId);
+
+      const recent = await env.repo.findRecentVisits(env.otherId, 10);
+      expect(recent.map((s) => s.id)).toEqual(["set-1"]);
     });
   });
 });

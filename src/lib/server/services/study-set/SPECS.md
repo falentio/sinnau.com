@@ -16,10 +16,10 @@ StudySet is the top-level container for learning content. It owns visibility, sh
 
 StudySet is responsible for:
 
-- study set creation, updates, reads, and deletion
+- study set creation, updates, reads, soft-deletion, and restoration
 - title, description, visibility, ownership, and slug rules
 - visibility rules inherited by child entities
-- cascade deletion of the whole study set content tree
+- soft-deletion with access preserved for linked users
 
 StudySet is not responsible for:
 
@@ -43,6 +43,7 @@ interface StudySet {
   files: string[];
   createdAt: number;
   updatedAt: number;
+  deletedAt?: number;
 }
 ```
 
@@ -84,9 +85,11 @@ interface StudySet {
 - Private study sets are visible only to the owner.
 - Public study sets are visible to authenticated users who can access the study set by ID or slug.
 - Public listing/search is not supported; public study sets are direct-access only and must not be enumerated by `GetStudySets` solely because they are public.
-- List queries return study sets owned by the authenticated user.
+- List queries return study sets owned by the authenticated user, excluding soft-deleted sets.
 - Read-by-ID/slug queries return owned study sets and directly requested public study sets.
 - Non-owner modification attempts return `FORBIDDEN`.
+- Soft-deleted study sets are visible only to the owner and users who have a `studySetVisit` record.
+- Soft-deleted study sets do not appear in the owner's listing (`GetStudySets`).
 
 ## Commands
 
@@ -131,9 +134,28 @@ interface DeleteStudySetCommand {
 }
 ```
 
-- Deletes only study sets owned by the authenticated user.
-- Cascades deletion through chapters, flashcards, quizzes, and quiz options.
-- Returns `{ success: true }`.
+- Soft-deletes only study sets owned by the authenticated user.
+- Sets `deletedAt` timestamp instead of removing the row.
+- Previously deleted study sets are ignored (cannot be re-deleted).
+- Returns the updated study set with `deletedAt` set.
+- Soft-deleted study sets remain accessible to:
+  - The owner (for restore purposes).
+  - Users who have previously visited the study set (have a `studySetVisit` record).
+- Soft-deleted study sets are invisible to other users (return `NOT_FOUND`).
+
+### RestoreStudySet
+
+```typescript
+interface RestoreStudySetCommand {
+  id: UUID;
+}
+```
+
+- Restores a soft-deleted study set owned by the authenticated user.
+- Clears the `deletedAt` timestamp.
+- Throws `FORBIDDEN` if the caller is not the owner.
+- Throws `NOT_FOUND` if the study set does not exist or is not soft-deleted.
+- Returns the restored study set with `deletedAt` set to `null`.
 
 ## Queries
 
@@ -246,7 +268,7 @@ interface GetRecentStudySetsQuery {
 
 - Returns up to `count` study sets recently visited by authenticated user.
 - `count` must be between 1 and 100.
-- Returns only study sets the user can currently access (public or owned).
+- Returns only study sets the user can currently access (public or owned, including soft-deleted sets the user has visited).
 - Ordered by `visitedAt` descending.
 - Returns `{ success: true, data: StudySet[] }`.
 
@@ -254,4 +276,4 @@ interface GetRecentStudySetsQuery {
 
 - `studySetVisit` table with indexes on `userId`, `studySetId`, `visitedAt`.
 - Unique index on `(userId, studySetId)` for upsert.
-- Cascade delete when study set is deleted.
+- Cascade delete when study set is deleted (soft-delete only — rows are preserved via `deletedAt`; no cascade removal of visits or child entities on soft-delete).

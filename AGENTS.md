@@ -12,6 +12,8 @@ But if you found `skills` for related techs, you should use that skills first, d
 [`https://better-auth.com/llms.txt/docs/integrations/svelte-kit.md`](better-auth-svelte)
 [`https://valibot.dev/llms.txt`](valibot)
 
+always fetch the shadcn-svelte docs whenever work with `$lib/components/ui/**/*`.
+
 ## Docs Retrieval Priority
 
 This are ordered by most prioritized to least prioritized.
@@ -56,9 +58,9 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 ## Script
 
-- use `pnpm run check` for formatting check, linting check, typecheck all files
-- use `rtk pnpm run test:unit` for testing without coverage
-- use `rtk pnpm run test:coverage` if you need test with coverage
+- use `pnpm run check:agent` for formatting check, linting check, typecheck all files with output format optimized for agents
+- use `pnpm run test:unit` for testing without coverage
+- use `pnpm run test:coverage` if you need test with coverage
 
 always run pnpm run check before finalize your tasks
 

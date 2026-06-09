@@ -15,9 +15,11 @@ const setupGuard = () => {
   repo.findStudySetById.mockResolvedValue(null);
   repo.findStudySetBySlug.mockResolvedValue(null);
   repo.findOwnedStudySets.mockResolvedValue(EMPTY_STUDY_SET_LIST);
-  repo.deleteStudySet.mockResolvedValue(false);
+  repo.deleteStudySet.mockResolvedValue(null);
+  repo.restoreStudySet.mockResolvedValue(null);
   repo.deleteOldVisits.mockResolvedValue(0);
   repo.findRecentVisits.mockResolvedValue([]);
+  repo.hasUserVisitedStudySet.mockResolvedValue(false);
   const guard = new StudySetGuard(repo);
   return { guard, repo };
 };
@@ -139,6 +141,69 @@ describe.concurrent(StudySetGuard, () => {
       expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
+    it("returns a soft-deleted set to the owner", async ({ expect }) => {
+      const { repo, guard } = setupGuard();
+      const set = createStudySetFixture({
+        deletedAt: new Date(),
+        id: "set-1",
+        ownerId: "owner-1",
+        visibility: "PRIVATE",
+      });
+      repo.findStudySetById.mockResolvedValue(set);
+
+      const result = await guard.assertVisibleByIdOrNotFound(
+        "set-1",
+        "owner-1"
+      );
+      expect(result).toBe(set);
+      expect(repo.hasUserVisitedStudySet).not.toHaveBeenCalled();
+    });
+
+    it("returns a soft-deleted PUBLIC set to a non-owner who has visited it", async ({
+      expect,
+    }) => {
+      const { repo, guard } = setupGuard();
+      const set = createStudySetFixture({
+        deletedAt: new Date(),
+        id: "set-1",
+        ownerId: "owner-1",
+        visibility: "PUBLIC",
+      });
+      repo.findStudySetById.mockResolvedValue(set);
+      repo.hasUserVisitedStudySet.mockResolvedValue(true);
+
+      const result = await guard.assertVisibleByIdOrNotFound(
+        "set-1",
+        "someone-else"
+      );
+      expect(result).toBe(set);
+      expect(repo.hasUserVisitedStudySet).toHaveBeenCalledWith(
+        "someone-else",
+        "set-1"
+      );
+    });
+
+    it("throws NOT_FOUND for a soft-deleted PUBLIC set when the caller has never visited", async ({
+      expect,
+    }) => {
+      const { repo, guard } = setupGuard();
+      repo.findStudySetById.mockResolvedValue(
+        createStudySetFixture({
+          deletedAt: new Date(),
+          id: "set-1",
+          ownerId: "owner-1",
+          visibility: "PUBLIC",
+        })
+      );
+      repo.hasUserVisitedStudySet.mockResolvedValue(false);
+
+      const err = await captureError(
+        guard.assertVisibleByIdOrNotFound("set-1", "someone-else")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
     it("does not look up by slug", async ({ expect }) => {
       const { repo, guard } = setupGuard();
       repo.findStudySetById.mockResolvedValue(
@@ -213,6 +278,47 @@ describe.concurrent(StudySetGuard, () => {
           "private-slug-abc123",
           "someone-else"
         )
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("returns a soft-deleted set by slug to the owner", async ({
+      expect,
+    }) => {
+      const { repo, guard } = setupGuard();
+      const set = createStudySetFixture({
+        deletedAt: new Date(),
+        ownerId: "owner-1",
+        slug: "deleted-slug",
+        visibility: "PRIVATE",
+      });
+      repo.findStudySetBySlug.mockResolvedValue(set);
+
+      const result = await guard.assertVisibleBySlugOrNotFound(
+        "deleted-slug",
+        "owner-1"
+      );
+      expect(result).toBe(set);
+      expect(repo.hasUserVisitedStudySet).not.toHaveBeenCalled();
+    });
+
+    it("throws NOT_FOUND for a soft-deleted PUBLIC set by slug when the caller has never visited", async ({
+      expect,
+    }) => {
+      const { repo, guard } = setupGuard();
+      repo.findStudySetBySlug.mockResolvedValue(
+        createStudySetFixture({
+          deletedAt: new Date(),
+          ownerId: "owner-1",
+          slug: "deleted-public",
+          visibility: "PUBLIC",
+        })
+      );
+      repo.hasUserVisitedStudySet.mockResolvedValue(false);
+
+      const err = await captureError(
+        guard.assertVisibleBySlugOrNotFound("deleted-public", "someone-else")
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "NOT_FOUND" });

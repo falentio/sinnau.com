@@ -21,14 +21,16 @@ export type StudySetUpdatePatch = Partial<
 
 export interface StudySetRepository {
   insertStudySet(
-    row: Omit<StudySet, "createdAt" | "updatedAt">
+    row: Omit<StudySet, "createdAt" | "updatedAt" | "deletedAt">
   ): Promise<StudySet>;
   updateStudySet(
     id: string,
     ownerId: string,
     patch: StudySetUpdatePatch
   ): Promise<StudySet | null>;
-  deleteStudySet(id: string, ownerId: string): Promise<boolean>;
+  deleteStudySet(id: string, ownerId: string): Promise<StudySet | null>;
+  restoreStudySet(id: string, ownerId: string): Promise<StudySet | null>;
+  hasUserVisitedStudySet(userId: string, studySetId: string): Promise<boolean>;
   findStudySetById(id: string): Promise<StudySet | null>;
   findStudySetBySlug(slug: string): Promise<StudySet | null>;
   findOwnedStudySets(

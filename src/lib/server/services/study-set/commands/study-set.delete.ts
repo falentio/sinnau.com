@@ -1,6 +1,6 @@
 import {
   deleteStudySetInputSchema,
-  studySetDeleteOutputSchema,
+  studySetSchema,
 } from "$lib/schemas/study-set";
 import { authorizedProcedure } from "$lib/server/api/base";
 
@@ -13,8 +13,7 @@ const ERRORS = {
 export const studySetDelete = authorizedProcedure
   .errors(ERRORS)
   .input(deleteStudySetInputSchema)
-  .output(studySetDeleteOutputSchema)
-  .handler(async ({ input, context }) => {
-    await studySetService.deleteStudySet(input, context.user.id);
-    return { success: true } as const;
-  });
+  .output(studySetSchema)
+  .handler(({ input, context }) =>
+    studySetService.deleteStudySet(input, context.user.id)
+  );

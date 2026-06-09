@@ -1,9 +1,25 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
+import type { TestUserConfig } from "vitest/config";
+
+type Reporters = TestUserConfig["reporters"];
+
+const getReporters = (): Reporters => {
+  if (process.env.GITHUB_ACTIONS === "true") {
+    return ["dot", "github-actions"];
+  }
+  if (process.env.OPENCODE === "1") {
+    return ["agent"];
+  }
+  return ["default"];
+};
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  server: {
+    allowedHosts: ["*.localhost", "localhost"],
+  },
   test: {
     coverage: {
       enabled: false,
@@ -16,7 +32,6 @@ export default defineConfig({
         "src/lib/vitest-examples/**",
         "src/lib/server/infras/db/schema/**",
         "src/lib/server/infras/db/testing.ts",
-        "src/lib/server/services/study-set/study-set.testing.ts",
         "src/lib/components/ui/**",
       ],
       include: ["src/**/*.{js,ts,svelte}"],
@@ -39,9 +54,6 @@ export default defineConfig({
         },
       },
     ],
-    reporters:
-      process.env.GITHUB_ACTIONS === "true"
-        ? ["dot", "github-actions"]
-        : ["dot"],
+    reporters: getReporters(),
   },
 });

@@ -12,6 +12,7 @@ import type {
   GetStudySetInput,
   GetStudySetsInput,
   RefreshStudySetVisitInput,
+  RestoreStudySetInput,
   UpdateStudySetInput,
 } from "../../../schemas/study-set.ts";
 import type {
@@ -101,11 +102,24 @@ export class StudySetService {
   async deleteStudySet(
     input: DeleteStudySetInput,
     ownerId: string
-  ): Promise<void> {
-    const ok = await this.repo.deleteStudySet(input.id, ownerId);
-    if (!ok) {
+  ): Promise<StudySet> {
+    const result = await this.repo.deleteStudySet(input.id, ownerId);
+    if (!result) {
       throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
     }
+    return result;
+  }
+
+  async restoreStudySet(
+    input: RestoreStudySetInput,
+    ownerId: string
+  ): Promise<StudySet> {
+    await this.guard.assertOwnerOrForbidden(input.id, ownerId);
+    const result = await this.repo.restoreStudySet(input.id, ownerId);
+    if (!result) {
+      throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+    }
+    return result;
   }
 
   getStudySets(

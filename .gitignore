@@ -29,3 +29,5 @@ vite.config.ts.timestamp-*
 # Per-skill isolated worktrees
 .worktrees/
 worktrees/
+
+**/*.pdf

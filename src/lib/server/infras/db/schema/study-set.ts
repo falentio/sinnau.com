@@ -18,6 +18,7 @@ export const studySet = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
     description: text("description"),
     files: text("files", { mode: "json" })
       .$type<string[]>()

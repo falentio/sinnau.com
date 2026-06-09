@@ -30,10 +30,12 @@ const setupService = () => {
     ...row,
   }));
   repo.updateStudySet.mockResolvedValue(null);
-  repo.deleteStudySet.mockResolvedValue(false);
+  repo.deleteStudySet.mockResolvedValue(null);
+  repo.restoreStudySet.mockResolvedValue(null);
   repo.findStudySetById.mockResolvedValue(null);
   repo.findStudySetBySlug.mockResolvedValue(null);
   repo.findOwnedStudySets.mockResolvedValue(EMPTY_STUDY_SET_LIST);
+  repo.hasUserVisitedStudySet.mockResolvedValue(false);
   repo.upsertVisit.mockImplementation(
     // oxlint-disable-next-line require-await
     async (userId, studySetId, visitedAt) =>
@@ -268,9 +270,7 @@ describe.concurrent(StudySetService, () => {
   });
 
   describe("deleteStudySet", () => {
-    it("throws NOT_FOUND when repo reports nothing was deleted", async ({
-      expect,
-    }) => {
+    it("throws NOT_FOUND when repo returns null", async ({ expect }) => {
       const { service } = setupService();
       const err = await captureError(
         service.deleteStudySet(
@@ -282,13 +282,69 @@ describe.concurrent(StudySetService, () => {
       expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("passes the id and owner to the repo when owner matches", async ({
+    it("soft-deletes by passing id and owner to the repo and returns the updated set", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.deleteStudySet.mockResolvedValue(true);
-      await service.deleteStudySet({ id: "set-1" }, "owner-1");
+      const deleted = createStudySetFixture({
+        deletedAt: new Date(),
+        id: "set-1",
+        ownerId: "owner-1",
+      });
+      repo.deleteStudySet.mockResolvedValue(deleted);
+      const result = await service.deleteStudySet({ id: "set-1" }, "owner-1");
       expect(repo.deleteStudySet).toHaveBeenCalledWith("set-1", "owner-1");
+      expect(result.deletedAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("restoreStudySet", () => {
+    it("propagates FORBIDDEN from guard.assertOwnerOrForbidden", async ({
+      expect,
+    }) => {
+      const { guard, repo, service } = setupService();
+      guard.assertOwnerOrForbidden.mockImplementation(throwForbidden);
+      const err = await captureError(
+        service.restoreStudySet({ id: "set-1" }, "owner-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(guard.assertOwnerOrForbidden).toHaveBeenCalledWith(
+        "set-1",
+        "owner-1"
+      );
+      expect(repo.restoreStudySet).not.toHaveBeenCalled();
+    });
+
+    it("restores a soft-deleted set and returns it", async ({ expect }) => {
+      const { guard, repo, service } = setupService();
+      guard.assertOwnerOrForbidden.mockResolvedValue(
+        createStudySetFixture({
+          id: "set-1",
+          ownerId: "owner-1",
+        })
+      );
+      const restored = createStudySetFixture({
+        deletedAt: null,
+        id: "set-1",
+        ownerId: "owner-1",
+      });
+      repo.restoreStudySet.mockResolvedValue(restored);
+      const result = await service.restoreStudySet({ id: "set-1" }, "owner-1");
+      expect(repo.restoreStudySet).toHaveBeenCalledWith("set-1", "owner-1");
+      expect(result.deletedAt).toBeNull();
+    });
+
+    it("throws NOT_FOUND when the repo returns null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.assertOwnerOrForbidden.mockResolvedValue(
+        createStudySetFixture({ id: "set-1", ownerId: "owner-1" })
+      );
+      const err = await captureError(
+        service.restoreStudySet({ id: "set-1" }, "owner-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
   });
 

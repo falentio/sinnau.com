@@ -58,7 +58,7 @@
     </InputGroup>
 
     <ScrollArea class="w-full rounded-2xl" orientation="horizontal">
-      <div class="flex flex-nowrap gap-3">
+      <div class="flex flex-nowrap gap-2">
         <Button href="/study/generate">
           <HugeiconsIcon icon={AiBeautifyIcon} />
           Buat dengan AI

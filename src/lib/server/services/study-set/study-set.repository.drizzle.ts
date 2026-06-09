@@ -31,7 +31,7 @@ export class StudySetDrizzleRepository implements StudySetRepository {
   }
 
   async insertStudySet(
-    row: Omit<StudySet, "createdAt" | "updatedAt">
+    row: Omit<StudySet, "createdAt" | "updatedAt" | "deletedAt">
   ): Promise<StudySet> {
     try {
       const [created] = await this.dbInstance
@@ -76,13 +76,70 @@ export class StudySetDrizzleRepository implements StudySetRepository {
     }
   }
 
-  async deleteStudySet(id: string, ownerId: string): Promise<boolean> {
+  async deleteStudySet(id: string, ownerId: string): Promise<StudySet | null> {
     try {
-      const deleted = await this.dbInstance
-        .delete(studySet)
-        .where(and(eq(studySet.id, id), eq(studySet.ownerId, ownerId)))
-        .returning({ id: studySet.id });
-      return deleted.length > 0;
+      const [updated] = await this.dbInstance
+        .update(studySet)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(studySet.id, id),
+            eq(studySet.ownerId, ownerId),
+            sql`${studySet.deletedAt} IS NULL`
+          )
+        )
+        .returning();
+      return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async restoreStudySet(id: string, ownerId: string): Promise<StudySet | null> {
+    try {
+      const [updated] = await this.dbInstance
+        .update(studySet)
+        .set({ deletedAt: null })
+        .where(
+          and(
+            eq(studySet.id, id),
+            eq(studySet.ownerId, ownerId),
+            sql`${studySet.deletedAt} IS NOT NULL`
+          )
+        )
+        .returning();
+      return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async hasUserVisitedStudySet(
+    userId: string,
+    studySetId: string
+  ): Promise<boolean> {
+    try {
+      const [row] = await this.dbInstance
+        .select({ id: studySetVisit.id })
+        .from(studySetVisit)
+        .where(
+          and(
+            eq(studySetVisit.userId, userId),
+            eq(studySetVisit.studySetId, studySetId)
+          )
+        )
+        .limit(1);
+      return row !== undefined;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -146,14 +203,24 @@ export class StudySetDrizzleRepository implements StudySetRepository {
         this.dbInstance
           .select()
           .from(studySet)
-          .where(eq(studySet.ownerId, ownerId))
+          .where(
+            and(
+              eq(studySet.ownerId, ownerId),
+              sql`${studySet.deletedAt} IS NULL`
+            )
+          )
           .orderBy(direction(orderColumn))
           .limit(STUDY_SET_PAGE_LIMIT)
           .offset(offset),
         this.dbInstance
           .select({ count: sql<number>`count(*)` })
           .from(studySet)
-          .where(eq(studySet.ownerId, ownerId)),
+          .where(
+            and(
+              eq(studySet.ownerId, ownerId),
+              sql`${studySet.deletedAt} IS NULL`
+            )
+          ),
       ]);
 
       const total = Number(totalRow[0]?.count ?? 0);
@@ -265,7 +332,10 @@ export class StudySetDrizzleRepository implements StudySetRepository {
         .where(
           and(
             eq(studySetVisit.userId, userId),
-            sql`(${studySet.visibility} = 'PUBLIC' OR ${studySet.ownerId} = ${userId})`
+            sql`(
+              (${studySet.deletedAt} IS NULL AND (${studySet.visibility} = 'PUBLIC' OR ${studySet.ownerId} = ${userId}))
+              OR ${studySet.deletedAt} IS NOT NULL
+            )`
           )
         )
         .orderBy(desc(studySetVisit.visitedAt))

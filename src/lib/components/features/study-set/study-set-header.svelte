@@ -18,6 +18,7 @@
     Settings02Icon,
     Share01Icon,
   } from "$lib/components/features/icons";
+  import DeleteStudySetDialog from "$lib/components/features/study-set/delete-study-set-dialog.svelte";
   import StudySetIcon from "$lib/components/features/study-set/study-set-icon.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
@@ -43,6 +44,7 @@
   let flashcardDialogOpen = $state(false);
   let chapterDialogOpen = $state(false);
   let quizDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
 
   const chapterQuery = $derived.by(() => {
     const chapter = page.url.searchParams.get("chapter");
@@ -79,7 +81,10 @@
               <HugeiconsIcon icon={Edit01Icon} />
               Edit set
             </DropdownMenu.Item>
-            <DropdownMenu.Item>
+            <DropdownMenu.Item
+              variant="destructive"
+              onSelect={() => (deleteDialogOpen = true)}
+            >
               <HugeiconsIcon icon={Delete02Icon} />
               Hapus set
             </DropdownMenu.Item>
@@ -116,6 +121,12 @@
           {chapters}
         />
         <CreateChapterDialog />
+        <DeleteStudySetDialog
+          open={deleteDialogOpen}
+          {studySetId}
+          studySetTitle={studySet.title}
+          onOpenChange={(open) => (deleteDialogOpen = open)}
+        />
       </div>
     </div>
     <StudySetIcon {studySetId} size="lg" />

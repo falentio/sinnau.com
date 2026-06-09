@@ -3,6 +3,9 @@ import { ORPCError } from "@orpc/server";
 import type { StudySet } from "../../infras/db/schema/study-set.ts";
 import type { StudySetRepository } from "./study-set.repository.ts";
 
+const canViewStudySet = (set: StudySet, userId: string): boolean =>
+  set.visibility === "PUBLIC" || set.ownerId === userId;
+
 export class StudySetGuard {
   private readonly repo: StudySetRepository;
 
@@ -38,7 +41,17 @@ export class StudySetGuard {
     userId: string
   ): Promise<StudySet> {
     const set = await this.repo.findStudySetById(id);
-    if (!set || !this.canView(set, userId)) {
+    if (!set) {
+      throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+    }
+    if (set.deletedAt) {
+      if (
+        set.ownerId !== userId &&
+        !(await this.repo.hasUserVisitedStudySet(userId, set.id))
+      ) {
+        throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+      }
+    } else if (!canViewStudySet(set, userId)) {
       throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
     }
     return set;
@@ -49,7 +62,17 @@ export class StudySetGuard {
     userId: string
   ): Promise<StudySet> {
     const set = await this.repo.findStudySetById(studySetId);
-    if (!set || !this.canView(set, userId)) {
+    if (!set) {
+      throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+    }
+    if (set.deletedAt) {
+      if (
+        set.ownerId !== userId &&
+        !(await this.repo.hasUserVisitedStudySet(userId, set.id))
+      ) {
+        throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+      }
+    } else if (!canViewStudySet(set, userId)) {
       throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
     }
     return set;
@@ -60,7 +83,17 @@ export class StudySetGuard {
     userId: string
   ): Promise<StudySet> {
     const set = await this.repo.findStudySetBySlug(slug);
-    if (!set || !this.canView(set, userId)) {
+    if (!set) {
+      throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+    }
+    if (set.deletedAt) {
+      if (
+        set.ownerId !== userId &&
+        !(await this.repo.hasUserVisitedStudySet(userId, set.id))
+      ) {
+        throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
+      }
+    } else if (!canViewStudySet(set, userId)) {
       throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
     }
     return set;
@@ -68,6 +101,6 @@ export class StudySetGuard {
 
   // oxlint-disable-next-line class-methods-use-this
   canView(set: StudySet, userId: string): boolean {
-    return set.visibility === "PUBLIC" || set.ownerId === userId;
+    return canViewStudySet(set, userId);
   }
 }

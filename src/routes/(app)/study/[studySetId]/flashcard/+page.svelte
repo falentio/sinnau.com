@@ -52,7 +52,7 @@
 {#if filteredFlashcards.length === 0}
   <FlashcardEmpty {currentFilter} {chapterParam} />
 {:else}
-  <div class="rounded-4xl bg-card text-card-foreground">
+  <div class="rounded-4xl bg-card shadow-xs text-card-foreground">
     {#each displayedFlashcards as flashcard, i (flashcard.id)}
       <div class="border-b p-6 last:border-b-0">
         <div class="flex items-center gap-2">
