@@ -28,7 +28,7 @@ const resolveThunk = <T extends object>(src: MaybeThunk<T>): T | undefined =>
 export const mergeObjects = <Sources extends readonly MaybeThunk<any>[]>(
   ...sources: Sources
 ): Intersection<{ [K in keyof Sources]: Sources[K] }> => {
-  // oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+  // oxlint-disable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call, no-unsafe-type-assertion, no-useless-undefined, strict-boolean-expressions, no-unnecessary-type-assertion
   const findSourceWithKey = (key: PropertyKey) => {
     for (let i = sources.length - 1; i >= 0; i -= 1) {
       const obj = resolveThunk(sources[i]);
@@ -36,6 +36,7 @@ export const mergeObjects = <Sources extends readonly MaybeThunk<any>[]>(
         return obj;
       }
     }
+    return undefined;
   };
 
   return new Proxy(Object.create(null), {
@@ -47,7 +48,7 @@ export const mergeObjects = <Sources extends readonly MaybeThunk<any>[]>(
     getOwnPropertyDescriptor(_, key) {
       const src = findSourceWithKey(key);
       if (!src) {
-        return;
+        return undefined;
       }
       return {
         configurable: true,
@@ -67,7 +68,7 @@ export const mergeObjects = <Sources extends readonly MaybeThunk<any>[]>(
       for (const s of sources) {
         const obj = resolveThunk(s);
         if (obj) {
-          for (const k of Reflect.ownKeys(obj) as (string | symbol)[]) {
+          for (const k of Reflect.ownKeys(obj)) {
             all.add(k);
           }
         }
@@ -75,7 +76,7 @@ export const mergeObjects = <Sources extends readonly MaybeThunk<any>[]>(
       return [...all];
     },
   }) as Intersection<{ [K in keyof Sources]: Sources[K] }>;
-  // oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call
+  // oxlint-enable no-unsafe-assignment, no-unsafe-return, no-unsafe-member-access, no-unsafe-argument, no-unsafe-call, no-unsafe-type-assertion, no-useless-undefined, strict-boolean-expressions, no-unnecessary-type-assertion
 };
 
 /**

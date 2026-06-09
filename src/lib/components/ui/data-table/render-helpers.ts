@@ -57,6 +57,7 @@ export const renderComponent = <
   Props extends ComponentProps<T>,
 >(
   component: T,
+  // oxlint-disable-next-line no-unsafe-type-assertion
   props: Props = {} as Props
 ) => new RenderComponentConfig(component, props);
 
@@ -88,6 +89,7 @@ export const renderSnippet = <TProps>(
   /** The snippet to render. */
   snippet: Snippet<[TProps]>,
   /** The parameters to pass to the snippet. */
+  // oxlint-disable-next-line no-unsafe-type-assertion
   params: TProps = {} as TProps
 ) => new RenderSnippetConfig(snippet, params);
 

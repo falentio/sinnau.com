@@ -37,14 +37,18 @@ export const getPayloadConfigFromPayload = (
     configLabelKey = payload.label;
   } else if (
     key in payload &&
+    // oxlint-disable-next-line no-unsafe-type-assertion
     typeof payload[key as keyof typeof payload] === "string"
   ) {
+    // oxlint-disable-next-line no-unsafe-type-assertion
     configLabelKey = payload[key as keyof typeof payload] as string;
   } else if (
     payloadConfig !== undefined &&
     key in payloadConfig &&
+    // oxlint-disable-next-line no-unsafe-type-assertion
     typeof payloadConfig[key as keyof typeof payloadConfig] === "string"
   ) {
+    // oxlint-disable-next-line no-unsafe-type-assertion
     configLabelKey = payloadConfig[key as keyof typeof payloadConfig] as string;
   } else if (
     data !== null &&
@@ -52,12 +56,10 @@ export const getPayloadConfigFromPayload = (
     key in data &&
     typeof data[key] === "string"
   ) {
-    configLabelKey = data[key] as string;
+    configLabelKey = data[key];
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config];
+  return configLabelKey in config ? config[configLabelKey] : config[key];
 };
 
 interface ChartContextValue {
