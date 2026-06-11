@@ -55,7 +55,7 @@ Formsnap requires `FormPath` for the `Field` component and `FormPathLeaves` for 
 ```svelte
 <Form.Fieldset {form} name="items">
   {#each $formData.items as _, i}
-    <Form.ElementField {form} name={`items[${i}].text` as any}>
+    <Form.ElementField {form} name={`items[${i}].text`}>
       <Form.Control>
         {#snippet children({ props })}
           <input {...props} bind:value={$formData.items[i].text} />
