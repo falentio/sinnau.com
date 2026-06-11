@@ -4,12 +4,6 @@ Source specs:
 
 - `docs/superpowers/specs/2026-05-05-quiz-flashcard-domain-specs.md`
 - `src/lib/server/services/quiz/SPECS.md`
-- `src/lib/server/services/quiz-session/SPECS_QUESTIONS.md`
-- `src/lib/server/services/quiz-session/SPECS_QUESTIONS_FOLLOWUP.md`
-- `src/lib/server/services/quiz-session/SPECS_QUESTIONS_CRITIQUE.md`
-- `src/lib/server/services/quiz-session/SPECS_QUESTIONS_CRITIQUE2.md`
-- `src/lib/server/services/quiz-session/SPECS_REGRESSIONS.md`
-- `src/lib/server/services/quiz-session/SPECS_REGRESSIONS_FINAL.md`
 
 ## Domain Boundary
 
