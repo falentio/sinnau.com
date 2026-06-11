@@ -1,23 +1,31 @@
 import { ORPCError } from "@orpc/server";
 
-import { validateQuizOptions } from "../../../schemas/quiz.ts";
+import {
+  QUIZ_ID_PREFIX,
+  QUIZ_OPTION_ID_PREFIX,
+  validateQuizOptions,
+} from "../../../schemas/quiz.ts";
 import type {
   CreateQuizInput,
-  CreateQuizOptionsInput,
   DeleteQuizOptionsInput,
   DeleteQuizzesInput,
   GetQuizInput,
   GetQuizzesInput,
   UpdateQuizInput,
-  UpdateQuizOptionInput,
 } from "../../../schemas/quiz.ts";
 import type {
   Quiz,
   QuizOption,
   QuizType,
 } from "../../infras/db/schema/quiz.ts";
+import { generateId } from "../../utils/nanoid.ts";
 import type { QuizGuard } from "./quiz.guard.ts";
-import type { QuizRepository, QuizWithOptions } from "./quiz.repository.ts";
+import type {
+  NewQuizOptionRow,
+  QuizOptionUpdatePatch,
+  QuizRepository,
+  QuizWithOptions,
+} from "./quiz.repository.ts";
 
 export type { Quiz, QuizOption, QuizType };
 
@@ -44,11 +52,11 @@ export class QuizService {
       );
     }
 
-    const id = crypto.randomUUID();
+    const id = generateId(QUIZ_ID_PREFIX);
     const now = new Date();
     const optionRows = input.options.map((opt) => ({
       explanation: opt.explanation ?? null,
-      id: crypto.randomUUID(),
+      id: generateId(QUIZ_OPTION_ID_PREFIX),
       isCorrect: opt.isCorrect,
       optionText: opt.optionText,
       quizId: id,
@@ -81,14 +89,170 @@ export class QuizService {
   ): Promise<QuizWithOptions> {
     await this.guard.assertQuizOwnerOrForbidden(input.id, ownerId);
 
-    const updated = await this.repo.updateQuiz(input.id, ownerId, {
-      questionText: input.questionText,
-    });
-    if (!updated) {
-      throw new ORPCError("NOT_FOUND", { message: "Quiz not found" });
+    if (input.chapterId !== undefined && input.chapterId !== null) {
+      const quizRow = await this.repo.findQuizById(input.id);
+      if (!quizRow) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Cannot modify a quiz you do not own",
+        });
+      }
+      await this.guard.assertChapterInStudySetOrForbidden(
+        input.chapterId,
+        ownerId,
+        quizRow.studySetId
+      );
     }
 
-    return await this.hydrateQuiz(updated);
+    const quizPatch: {
+      chapterId?: string | null;
+      questionText?: string;
+      updatedAt?: Date;
+    } = {
+      updatedAt: new Date(),
+    };
+
+    if (input.questionText !== undefined) {
+      quizPatch.questionText = input.questionText;
+    }
+    if (input.chapterId !== undefined) {
+      quizPatch.chapterId = input.chapterId;
+    }
+
+    let optionsToDelete: string[] = [];
+    let optionsToUpdate: { id: string; patch: QuizOptionUpdatePatch }[] = [];
+    let optionsToCreate: NewQuizOptionRow[] = [];
+
+    if (input.options) {
+      const processed = await this.processOptions(input.id, input.options);
+      ({ optionsToDelete } = processed);
+      ({ optionsToUpdate } = processed);
+      ({ optionsToCreate } = processed);
+    }
+
+    const result = await this.repo.updateQuizWithOptions(
+      input.id,
+      ownerId,
+      quizPatch,
+      optionsToDelete,
+      optionsToUpdate,
+      optionsToCreate
+    );
+
+    if (!result) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Cannot modify a quiz you do not own",
+      });
+    }
+
+    return result;
+  }
+
+  async processOptions(
+    quizId: string,
+    inputOptions: NonNullable<UpdateQuizInput["options"]>
+  ): Promise<{
+    optionsToDelete: string[];
+    optionsToUpdate: { id: string; patch: QuizOptionUpdatePatch }[];
+    optionsToCreate: NewQuizOptionRow[];
+  }> {
+    const existingOptions = await this.repo.findOptionsByQuizIds([quizId]);
+
+    const inputOptionIds: string[] = [];
+    for (const o of inputOptions) {
+      if (o.id !== undefined) {
+        inputOptionIds.push(o.id);
+      }
+    }
+    if (inputOptionIds.length > 0) {
+      await this.guard.assertQuizOptionsBelongToQuizOrNotFound(
+        quizId,
+        inputOptionIds
+      );
+    }
+
+    const inputIds = new Set<string>();
+    for (const o of inputOptions) {
+      if (o.id !== undefined) {
+        inputIds.add(o.id);
+      }
+    }
+
+    const optionsToDelete = existingOptions
+      .filter((o) => !inputIds.has(o.id))
+      .map((o) => o.id);
+
+    const optionsToUpdate: { id: string; patch: QuizOptionUpdatePatch }[] = [];
+    const optionsToCreate: NewQuizOptionRow[] = [];
+
+    for (const inputOpt of inputOptions) {
+      if (inputOpt.id === undefined) {
+        optionsToCreate.push({
+          explanation: inputOpt.explanation ?? null,
+          id: generateId(QUIZ_OPTION_ID_PREFIX),
+          isCorrect: inputOpt.isCorrect,
+          optionText: inputOpt.optionText,
+          quizId,
+        });
+      } else {
+        const patch: QuizOptionUpdatePatch = {
+          updatedAt: new Date(),
+        };
+        if (inputOpt.optionText !== undefined) {
+          patch.optionText = inputOpt.optionText;
+        }
+        patch.isCorrect = inputOpt.isCorrect;
+        if (inputOpt.explanation !== undefined) {
+          patch.explanation =
+            inputOpt.explanation === "" || inputOpt.explanation === null
+              ? null
+              : inputOpt.explanation;
+        }
+        optionsToUpdate.push({ id: inputOpt.id, patch });
+      }
+    }
+
+    const existingByIdMap = new Map(existingOptions.map((o) => [o.id, o]));
+    const projected = inputOptions.map((o) => {
+      if (o.id === undefined) {
+        return {
+          explanation: o.explanation ?? null,
+          id: "new",
+          isCorrect: o.isCorrect,
+          optionText: o.optionText,
+          quizId,
+        };
+      }
+      const existing = existingByIdMap.get(o.id);
+      if (!existing) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Internal server error",
+        });
+      }
+      let explanation: string | null;
+      if (o.explanation === undefined) {
+        ({ explanation } = existing);
+      } else if (o.explanation === "" || o.explanation === null) {
+        explanation = null;
+      } else {
+        ({ explanation } = o);
+      }
+      return {
+        ...existing,
+        explanation,
+        isCorrect: o.isCorrect,
+        optionText: o.optionText,
+      };
+    });
+
+    const quizRow = await this.repo.findQuizById(quizId);
+    if (!quizRow) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Cannot modify a quiz you do not own",
+      });
+    }
+    QuizService.validateMergedOptionsForType(quizRow.type, projected);
+
+    return { optionsToCreate, optionsToDelete, optionsToUpdate };
   }
 
   async deleteQuizzes(
@@ -103,107 +267,6 @@ export class QuizService {
         message: "Some quizzes could not be deleted",
       });
     }
-  }
-
-  async createQuizOptions(
-    input: CreateQuizOptionsInput,
-    ownerId: string
-  ): Promise<QuizOption[]> {
-    const quizIds = [...new Set(input.options.map((o) => o.quizId))];
-    const quizzes = await Promise.all(
-      quizIds.map(
-        async (id) => await this.guard.assertQuizOwnerOrForbidden(id, ownerId)
-      )
-    );
-
-    const existingOptions = await this.repo.findOptionsByQuizIds(quizIds);
-    const existingByQuiz = new Map<string, QuizOption[]>();
-    for (const opt of existingOptions) {
-      const list = existingByQuiz.get(opt.quizId) ?? [];
-      list.push(opt);
-      existingByQuiz.set(opt.quizId, list);
-    }
-
-    for (const quizRow of quizzes) {
-      const newOptions = input.options.filter((o) => o.quizId === quizRow.id);
-      const existing = existingByQuiz.get(quizRow.id) ?? [];
-      const merged = [...existing, ...newOptions];
-      QuizService.validateMergedOptionsForType(quizRow.type, merged);
-    }
-
-    const rows = input.options.map((opt) => ({
-      explanation: opt.explanation ?? null,
-      id: crypto.randomUUID(),
-      isCorrect: opt.isCorrect,
-      optionText: opt.optionText,
-      quizId: opt.quizId,
-    }));
-
-    return await this.repo.insertQuizOptions(rows);
-  }
-
-  async updateQuizOption(
-    input: UpdateQuizOptionInput,
-    ownerId: string
-  ): Promise<QuizOption> {
-    const existing = await this.repo.findOptionByIdForOwner(input.id, ownerId);
-    if (!existing) {
-      throw new ORPCError("NOT_FOUND", { message: "Quiz option not found" });
-    }
-
-    const quizRow = await this.repo.findQuizById(existing.quizId);
-    if (!quizRow) {
-      throw new ORPCError("NOT_FOUND", { message: "Quiz not found" });
-    }
-
-    const nextIsCorrect = input.isCorrect ?? existing.isCorrect;
-    let nextExplanation: string | null;
-    if (input.explanation === undefined) {
-      nextExplanation = existing.explanation;
-    } else if (input.explanation === "" || input.explanation === null) {
-      nextExplanation = null;
-    } else {
-      nextExplanation = input.explanation;
-    }
-    const projected = {
-      ...existing,
-      explanation: nextExplanation,
-      isCorrect: nextIsCorrect,
-      optionText: input.optionText ?? existing.optionText,
-    };
-
-    const allOptions = await this.repo.findOptionsByQuizIds([existing.quizId]);
-    const others = allOptions.filter((o) => o.id !== existing.id);
-    const merged = [...others, projected];
-    QuizService.validateMergedOptionsForType(quizRow.type, merged);
-
-    const patch: {
-      optionText?: string;
-      isCorrect?: boolean;
-      explanation?: string | null;
-    } = {};
-    if (input.optionText !== undefined) {
-      patch.optionText = input.optionText;
-    }
-    if (input.isCorrect !== undefined) {
-      patch.isCorrect = input.isCorrect;
-    }
-    if (input.explanation !== undefined) {
-      patch.explanation =
-        input.explanation === "" || input.explanation === null
-          ? null
-          : input.explanation;
-    }
-
-    const updated = await this.repo.updateQuizOption(
-      existing.id,
-      ownerId,
-      patch
-    );
-    if (!updated) {
-      throw new ORPCError("NOT_FOUND", { message: "Quiz option not found" });
-    }
-    return updated;
   }
 
   async deleteQuizOptions(

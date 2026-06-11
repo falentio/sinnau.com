@@ -8,7 +8,6 @@ import {
   MCQ_OPTION_MIN,
   MS_OPTION_MAX,
   MS_OPTION_MIN,
-  QUIZ_OPTION_BATCH_MAX,
   QUIZ_OPTION_EXPLANATION_MAX_LENGTH,
   QUIZ_OPTION_TEXT_MAX_LENGTH,
   QUIZ_OPTION_TEXT_MIN_LENGTH,
@@ -62,26 +61,6 @@ const embeddedCreateOptionInputSchema = v.object({
   optionText: optionTextSchema,
 });
 
-const createQuizOptionInputSchema = v.object({
-  explanation: optionExplanationSchema,
-  isCorrect: v.boolean(),
-  optionText: optionTextSchema,
-  quizId: quizIdSchema,
-});
-
-export const updateQuizOptionInputSchema = v.object({
-  explanation: v.optional(
-    v.union([
-      v.pipe(v.string(), v.maxLength(QUIZ_OPTION_EXPLANATION_MAX_LENGTH)),
-      v.literal(""),
-      v.null(),
-    ])
-  ),
-  id: quizOptionIdSchema,
-  isCorrect: v.optional(v.boolean()),
-  optionText: v.optional(optionTextSchema),
-});
-
 export const validateQuizOptions = (
   type: QuizType,
   options: { isCorrect: boolean }[]
@@ -130,8 +109,25 @@ export const createQuizInputSchema = v.pipe(
 );
 
 export const updateQuizInputSchema = v.object({
+  chapterId: v.optional(v.union([chapterIdSchema, v.null()])),
   id: quizIdSchema,
-  questionText: questionTextSchema,
+  options: v.optional(
+    v.array(
+      v.object({
+        explanation: v.optional(
+          v.union([
+            v.pipe(v.string(), v.maxLength(QUIZ_OPTION_EXPLANATION_MAX_LENGTH)),
+            v.literal(""),
+            v.null(),
+          ])
+        ),
+        id: v.optional(quizOptionIdSchema),
+        isCorrect: v.boolean(),
+        optionText: optionTextSchema,
+      })
+    )
+  ),
+  questionText: v.optional(questionTextSchema),
 });
 
 export const deleteQuizzesInputSchema = v.object({
@@ -139,17 +135,6 @@ export const deleteQuizzesInputSchema = v.object({
     v.array(quizIdSchema),
     v.minLength(1, "Minimal satu id diperlukan"),
     v.maxLength(100, "Maksimal 100 id per batch")
-  ),
-});
-
-export const createQuizOptionsInputSchema = v.object({
-  options: v.pipe(
-    v.array(createQuizOptionInputSchema),
-    v.minLength(1, "Minimal satu opsi diperlukan"),
-    v.maxLength(
-      QUIZ_OPTION_BATCH_MAX,
-      `Maksimal ${QUIZ_OPTION_BATCH_MAX} opsi per batch`
-    )
   ),
 });
 
@@ -213,12 +198,6 @@ export const quizOptionWithErrorsSchema = v.object({
 export type CreateQuizInput = v.InferOutput<typeof createQuizInputSchema>;
 export type UpdateQuizInput = v.InferOutput<typeof updateQuizInputSchema>;
 export type DeleteQuizzesInput = v.InferOutput<typeof deleteQuizzesInputSchema>;
-export type CreateQuizOptionsInput = v.InferOutput<
-  typeof createQuizOptionsInputSchema
->;
-export type UpdateQuizOptionInput = v.InferOutput<
-  typeof updateQuizOptionInputSchema
->;
 export type DeleteQuizOptionsInput = v.InferOutput<
   typeof deleteQuizOptionsInputSchema
 >;

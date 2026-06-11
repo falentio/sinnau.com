@@ -143,6 +143,32 @@ export class QuizGuard {
     return owned;
   }
 
+  async assertQuizOptionsBelongToQuizOrNotFound(
+    quizId: string,
+    optionIds: string[]
+  ): Promise<QuizOption[]> {
+    const options = await this.repo.findOptionsByIds(optionIds);
+    const foundIds = new Set(options.map((o) => o.id));
+
+    const notFound = optionIds.filter((id) => !foundIds.has(id));
+    if (notFound.length > 0) {
+      throw new ORPCError("OPTION_NOT_FOUND", {
+        message: "Quiz option not found",
+        status: 404,
+      });
+    }
+
+    const notBelong = options.filter((o) => o.quizId !== quizId);
+    if (notBelong.length > 0) {
+      throw new ORPCError("OPTION_NOT_BELONG_TO_QUIZ", {
+        message: "Option does not belong to this quiz",
+        status: 400,
+      });
+    }
+
+    return options;
+  }
+
   async assertQuizVisibleByIdOrNotFound(
     quizId: string,
     userId: string

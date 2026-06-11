@@ -1,12 +1,15 @@
+import { QUIZ_OPTION_ID_PREFIX } from "$lib/schemas/quiz";
 import { chapter as chapterTable } from "$lib/server/infras/db/schema/chapter";
 import { quiz, quizOption } from "$lib/server/infras/db/schema/quiz";
 import { sleep } from "$lib/server/infras/db/testing";
 import { eq } from "drizzle-orm";
 import { describe, it } from "vitest";
 
+import { generateId } from "../../utils/nanoid";
+import { QuizDrizzleRepository } from "./quiz.repository.drizzle";
 import { QuizTestEnv } from "./quiz.testing";
 
-describe.concurrent("QuizDrizzleRepository", () => {
+describe.concurrent(QuizDrizzleRepository, () => {
   describe("insertQuiz", () => {
     it("persists the row, inserts embedded options, and returns timestamps", async ({
       expect,
@@ -330,6 +333,169 @@ describe.concurrent("QuizDrizzleRepository", () => {
     it("returns an empty array when the input is empty", async ({ expect }) => {
       await using env = new QuizTestEnv();
       expect(await env.repo.findOptionsByQuizIds([])).toEqual([]);
+    });
+  });
+
+  describe("findOptionsByIds", () => {
+    it("returns options for given ids", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const option1 = await env.seedQuizOption({ quizId: q.id });
+      const option2 = await env.seedQuizOption({ quizId: q.id });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.findOptionsByIds([option1.id, option2.id]);
+      expect(result).toHaveLength(2);
+    });
+
+    it("returns empty array for empty input", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.findOptionsByIds([]);
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe("updateQuizWithOptions", () => {
+    it("updates quiz and options atomically", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const option = await env.seedQuizOption({ quizId: q.id });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        { questionText: "Updated?" },
+        [],
+        [{ id: option.id, patch: { optionText: "Updated Option" } }],
+        []
+      );
+      expect(result).toBeDefined();
+      expect(result?.questionText).toBe("Updated?");
+      expect(result?.options).toHaveLength(1);
+      expect(result?.options[0]?.optionText).toBe("Updated Option");
+    });
+
+    it("creates new options", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        {},
+        [],
+        [],
+        [
+          {
+            explanation: null,
+            id: generateId(QUIZ_OPTION_ID_PREFIX),
+            isCorrect: true,
+            optionText: "New Option",
+            quizId: q.id,
+          },
+        ]
+      );
+      expect(result).toBeDefined();
+      expect(result?.options).toHaveLength(1);
+      expect(result?.options[0]?.optionText).toBe("New Option");
+    });
+
+    it("deletes options", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const option1 = await env.seedQuizOption({ quizId: q.id });
+      const option2 = await env.seedQuizOption({ quizId: q.id });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        {},
+        [option2.id],
+        [],
+        []
+      );
+      expect(result).toBeDefined();
+      expect(result?.options).toHaveLength(1);
+      expect(result?.options[0]?.id).toBe(option1.id);
+    });
+
+    it("handles chapterId update", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const chapter = await env.seedChapter();
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        { chapterId: chapter.id },
+        [],
+        [],
+        []
+      );
+      expect(result?.chapterId).toBe(chapter.id);
+    });
+
+    it("combines create, update, and delete in one call", async ({
+      expect,
+    }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const keep = await env.seedQuizOption({ quizId: q.id });
+      const remove = await env.seedQuizOption({ quizId: q.id });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        { questionText: "All three ops" },
+        [remove.id],
+        [{ id: keep.id, patch: { optionText: "Updated Keep" } }],
+        [
+          {
+            explanation: null,
+            id: crypto.randomUUID(),
+            isCorrect: false,
+            optionText: "Brand New",
+            quizId: q.id,
+          },
+        ]
+      );
+      expect(result?.questionText).toBe("All three ops");
+      expect(result?.options).toHaveLength(2);
+      const texts = result?.options.map((o) => o.optionText).toSorted();
+      expect(texts).toEqual(["Brand New", "Updated Keep"]);
+    });
+
+    it("returns null when ownerId does not match with a patch", async ({
+      expect,
+    }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz({ ownerId: env.ownerId });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.otherId,
+        { questionText: "Hacked" },
+        [],
+        [],
+        []
+      );
+      expect(result).toBeNull();
+      const [row] = env.db.select().from(quiz).where(eq(quiz.id, q.id)).all();
+      expect(row?.questionText).toBe("Seeded question?");
+    });
+
+    it("returns null when quiz not found", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        "non-existent",
+        env.ownerId,
+        {},
+        [],
+        [],
+        []
+      );
+      expect(result).toBeNull();
     });
   });
 

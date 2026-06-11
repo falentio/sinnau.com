@@ -26,6 +26,7 @@ export const createMockRepository = (): MockedQuizRepository => ({
   deleteQuizzes: vi.fn<QuizRepository["deleteQuizzes"]>(),
   findChapterById: vi.fn<QuizRepository["findChapterById"]>(),
   findOptionByIdForOwner: vi.fn<QuizRepository["findOptionByIdForOwner"]>(),
+  findOptionsByIds: vi.fn<QuizRepository["findOptionsByIds"]>(),
   findOptionsByIdsForOwner: vi.fn<QuizRepository["findOptionsByIdsForOwner"]>(),
   findOptionsByQuizIds: vi.fn<QuizRepository["findOptionsByQuizIds"]>(),
   findQuizById: vi.fn<QuizRepository["findQuizById"]>(),
@@ -35,6 +36,7 @@ export const createMockRepository = (): MockedQuizRepository => ({
   insertQuizOptions: vi.fn<QuizRepository["insertQuizOptions"]>(),
   updateQuiz: vi.fn<QuizRepository["updateQuiz"]>(),
   updateQuizOption: vi.fn<QuizRepository["updateQuizOption"]>(),
+  updateQuizWithOptions: vi.fn<QuizRepository["updateQuizWithOptions"]>(),
 });
 
 export type MockedQuizGuard = {
@@ -48,6 +50,8 @@ export const createMockGuard = (): MockedQuizGuard => ({
     vi.fn<QuizGuard["assertChapterOwnerOrForbidden"]>(),
   assertQuizOptionOwnerBatchOrPartialForbidden:
     vi.fn<QuizGuard["assertQuizOptionOwnerBatchOrPartialForbidden"]>(),
+  assertQuizOptionsBelongToQuizOrNotFound:
+    vi.fn<QuizGuard["assertQuizOptionsBelongToQuizOrNotFound"]>(),
   assertQuizOwnerBatchOrPartialForbidden:
     vi.fn<QuizGuard["assertQuizOwnerBatchOrPartialForbidden"]>(),
   assertQuizOwnerOrForbidden: vi.fn<QuizGuard["assertQuizOwnerOrForbidden"]>(),
