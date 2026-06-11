@@ -87,6 +87,7 @@ export const chapterListOutputSchema = v.array(chapterSchema);
 
 export const chapterDeleteOutputSchema = v.object({ success: v.literal(true) });
 
+export type Chapter = v.InferOutput<typeof chapterSchema>;
 export type CreateChapterInput = v.InferOutput<typeof createChapterInputSchema>;
 export type UpdateChapterInput = v.InferOutput<typeof updateChapterInputSchema>;
 export type DeleteChapterInput = v.InferOutput<typeof deleteChapterInputSchema>;
