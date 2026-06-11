@@ -1,9 +1,11 @@
+import { QUIZ_OPTION_ID_PREFIX } from "$lib/schemas/quiz";
 import { chapter as chapterTable } from "$lib/server/infras/db/schema/chapter";
 import { quiz, quizOption } from "$lib/server/infras/db/schema/quiz";
 import { sleep } from "$lib/server/infras/db/testing";
 import { eq } from "drizzle-orm";
 import { describe, it } from "vitest";
 
+import { generateId } from "../../utils/nanoid";
 import { QuizDrizzleRepository } from "./quiz.repository.drizzle";
 import { QuizTestEnv } from "./quiz.testing";
 
@@ -386,7 +388,7 @@ describe.concurrent(QuizDrizzleRepository, () => {
         [
           {
             explanation: null,
-            id: crypto.randomUUID(),
+            id: generateId(QUIZ_OPTION_ID_PREFIX),
             isCorrect: true,
             optionText: "New Option",
             quizId: q.id,

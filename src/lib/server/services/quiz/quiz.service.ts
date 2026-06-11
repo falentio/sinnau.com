@@ -1,6 +1,10 @@
 import { ORPCError } from "@orpc/server";
 
-import { validateQuizOptions } from "../../../schemas/quiz.ts";
+import {
+  QUIZ_ID_PREFIX,
+  QUIZ_OPTION_ID_PREFIX,
+  validateQuizOptions,
+} from "../../../schemas/quiz.ts";
 import type {
   CreateQuizInput,
   DeleteQuizOptionsInput,
@@ -14,6 +18,7 @@ import type {
   QuizOption,
   QuizType,
 } from "../../infras/db/schema/quiz.ts";
+import { generateId } from "../../utils/nanoid.ts";
 import type { QuizGuard } from "./quiz.guard.ts";
 import type {
   NewQuizOptionRow,
@@ -47,11 +52,11 @@ export class QuizService {
       );
     }
 
-    const id = crypto.randomUUID();
+    const id = generateId(QUIZ_ID_PREFIX);
     const now = new Date();
     const optionRows = input.options.map((opt) => ({
       explanation: opt.explanation ?? null,
-      id: crypto.randomUUID(),
+      id: generateId(QUIZ_OPTION_ID_PREFIX),
       isCorrect: opt.isCorrect,
       optionText: opt.optionText,
       quizId: id,
@@ -183,7 +188,7 @@ export class QuizService {
       if (inputOpt.id === undefined) {
         optionsToCreate.push({
           explanation: inputOpt.explanation ?? null,
-          id: crypto.randomUUID(),
+          id: generateId(QUIZ_OPTION_ID_PREFIX),
           isCorrect: inputOpt.isCorrect,
           optionText: inputOpt.optionText,
           quizId,
