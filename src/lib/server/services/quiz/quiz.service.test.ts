@@ -394,6 +394,358 @@ describe.concurrent(QuizService, () => {
     });
   });
 
+  describe("processOptions", () => {
+    it("creates new options when input has no ids", async ({ expect }) => {
+      const { guard, service } = setupService();
+      const result = await service.processOptions(QUIZ_ID, [
+        { isCorrect: true, optionText: "A" },
+        { isCorrect: false, optionText: "B" },
+      ]);
+      expect(result.optionsToCreate).toHaveLength(2);
+      expect(result.optionsToCreate[0]?.optionText).toBe("A");
+      expect(result.optionsToCreate[0]?.isCorrect).toBe(true);
+      expect(result.optionsToDelete).toHaveLength(0);
+      expect(result.optionsToUpdate).toHaveLength(0);
+      expect(
+        guard.assertQuizOptionsBelongToQuizOrNotFound
+      ).not.toHaveBeenCalled();
+    });
+
+    it("updates existing options when input has ids", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          id: "opt-1",
+          isCorrect: false,
+          optionText: "Old",
+          quizId: QUIZ_ID,
+        }),
+        createQuizOptionFixture({
+          id: "opt-2",
+          isCorrect: true,
+          optionText: "Keep",
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { id: "opt-1", isCorrect: false, optionText: "New" },
+        { id: "opt-2", isCorrect: true, optionText: "Keep" },
+      ]);
+      expect(result.optionsToUpdate).toHaveLength(2);
+      expect(result.optionsToUpdate[0]?.patch.isCorrect).toBe(false);
+      expect(result.optionsToUpdate[0]?.patch.optionText).toBe("New");
+    });
+
+    it("deletes options not included in input", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({ id: "opt-1", quizId: QUIZ_ID }),
+        createQuizOptionFixture({ id: "opt-2", quizId: QUIZ_ID }),
+        createQuizOptionFixture({ id: "opt-3", quizId: QUIZ_ID }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { id: "opt-1", isCorrect: true, optionText: "A" },
+        { id: "opt-2", isCorrect: false, optionText: "B" },
+      ]);
+      expect(result.optionsToDelete).toEqual(["opt-3"]);
+      expect(result.optionsToUpdate).toHaveLength(2);
+      expect(result.optionsToCreate).toHaveLength(0);
+    });
+
+    it("validates option ids via guard", async ({ expect }) => {
+      const { guard, repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({ id: "opt-1", quizId: QUIZ_ID }),
+        createQuizOptionFixture({
+          id: "opt-2",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      await service.processOptions(QUIZ_ID, [
+        { id: "opt-1", isCorrect: false, optionText: "A" },
+        { id: "opt-2", isCorrect: true, optionText: "B" },
+      ]);
+      expect(
+        guard.assertQuizOptionsBelongToQuizOrNotFound
+      ).toHaveBeenCalledWith(QUIZ_ID, ["opt-1", "opt-2"]);
+    });
+
+    it("skips guard when no ids in input", async ({ expect }) => {
+      const { guard, service } = setupService();
+      await service.processOptions(QUIZ_ID, [
+        { isCorrect: true, optionText: "A" },
+        { isCorrect: false, optionText: "B" },
+      ]);
+      expect(
+        guard.assertQuizOptionsBelongToQuizOrNotFound
+      ).not.toHaveBeenCalled();
+    });
+
+    it("combines create, update, and delete", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          id: "keep",
+          isCorrect: false,
+          optionText: "Keep",
+          quizId: QUIZ_ID,
+        }),
+        createQuizOptionFixture({
+          id: "remove",
+          isCorrect: false,
+          optionText: "Remove",
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { id: "keep", isCorrect: true, optionText: "Updated Keep" },
+        { isCorrect: false, optionText: "New" },
+      ]);
+      expect(result.optionsToDelete).toEqual(["remove"]);
+      expect(result.optionsToUpdate).toHaveLength(1);
+      expect(result.optionsToUpdate[0]?.id).toBe("keep");
+      expect(result.optionsToUpdate[0]?.patch.optionText).toBe("Updated Keep");
+      expect(result.optionsToCreate).toHaveLength(1);
+      expect(result.optionsToCreate[0]?.optionText).toBe("New");
+    });
+
+    it("preserves explanation when not provided", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          explanation: "Original explanation",
+          id: "opt-1",
+          quizId: QUIZ_ID,
+        }),
+        createQuizOptionFixture({
+          id: "opt-2",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { id: "opt-1", isCorrect: false, optionText: "A" },
+        { id: "opt-2", isCorrect: true, optionText: "B" },
+      ]);
+      expect(result.optionsToUpdate[0]?.patch.explanation).toBeUndefined();
+    });
+
+    it("clears explanation when null", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          explanation: "Original",
+          id: "opt-1",
+          quizId: QUIZ_ID,
+        }),
+        createQuizOptionFixture({
+          id: "opt-2",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        {
+          explanation: null,
+          id: "opt-1",
+          isCorrect: false,
+          optionText: "A",
+        },
+        { id: "opt-2", isCorrect: true, optionText: "B" },
+      ]);
+      expect(result.optionsToUpdate[0]?.patch.explanation).toBeNull();
+    });
+
+    it("clears explanation when empty string", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          explanation: "Original",
+          id: "opt-1",
+          quizId: QUIZ_ID,
+        }),
+        createQuizOptionFixture({
+          id: "opt-2",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        {
+          explanation: "",
+          id: "opt-1",
+          isCorrect: false,
+          optionText: "A",
+        },
+        { id: "opt-2", isCorrect: true, optionText: "B" },
+      ]);
+      expect(result.optionsToUpdate[0]?.patch.explanation).toBeNull();
+    });
+
+    it("sets explanation when non-empty string", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({ id: "opt-1", quizId: QUIZ_ID }),
+        createQuizOptionFixture({
+          id: "opt-2",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const result = await service.processOptions(QUIZ_ID, [
+        {
+          explanation: "New explanation",
+          id: "opt-1",
+          isCorrect: false,
+          optionText: "A",
+        },
+        { id: "opt-2", isCorrect: true, optionText: "B" },
+      ]);
+      expect(result.optionsToUpdate[0]?.patch.explanation).toBe(
+        "New explanation"
+      );
+    });
+
+    it("rejects MCQ with second correct option", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "MULTIPLE_CHOICE";
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          id: "opt-1",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const err = await captureError(
+        service.processOptions(QUIZ_ID, [
+          { id: "opt-1", isCorrect: true, optionText: "A" },
+          { isCorrect: true, optionText: "B" },
+        ])
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+
+    it("rejects MCQ with no correct option after deletion", async ({
+      expect,
+    }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "MULTIPLE_CHOICE";
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          id: "opt-1",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const err = await captureError(
+        service.processOptions(QUIZ_ID, [{ isCorrect: false, optionText: "B" }])
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+
+    it("rejects MS with all incorrect", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "MULTIPLE_SELECT";
+      repo.findOptionsByQuizIds.mockResolvedValue([]);
+      const err = await captureError(
+        service.processOptions(QUIZ_ID, [
+          { isCorrect: false, optionText: "A" },
+          { isCorrect: false, optionText: "B" },
+        ])
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+
+    it("accepts MS with at least one correct", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "MULTIPLE_SELECT";
+      repo.findOptionsByQuizIds.mockResolvedValue([]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { isCorrect: true, optionText: "A" },
+        { isCorrect: false, optionText: "B" },
+      ]);
+      expect(result.optionsToCreate).toHaveLength(2);
+    });
+
+    it("rejects FITB with multiple options", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "FILL_IN_THE_BLANK";
+      repo.findOptionsByQuizIds.mockResolvedValue([]);
+      const err = await captureError(
+        service.processOptions(QUIZ_ID, [
+          { isCorrect: true, optionText: "A" },
+          { isCorrect: true, optionText: "B" },
+        ])
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+
+    it("rejects FITB with incorrect answer", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "FILL_IN_THE_BLANK";
+      repo.findOptionsByQuizIds.mockResolvedValue([]);
+      const err = await captureError(
+        service.processOptions(QUIZ_ID, [{ isCorrect: false, optionText: "A" }])
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+
+    it("accepts FITB with one correct option", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "FILL_IN_THE_BLANK";
+      repo.findOptionsByQuizIds.mockResolvedValue([]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { isCorrect: true, optionText: "Answer" },
+      ]);
+      expect(result.optionsToCreate).toHaveLength(1);
+    });
+
+    it("accepts valid MCQ configuration", async ({ expect }) => {
+      const { repo, service, ownedQuiz } = setupService();
+      ownedQuiz.type = "MULTIPLE_CHOICE";
+      repo.findOptionsByQuizIds.mockResolvedValue([]);
+      const result = await service.processOptions(QUIZ_ID, [
+        { isCorrect: true, optionText: "A" },
+        { isCorrect: false, optionText: "B" },
+        { isCorrect: false, optionText: "C" },
+      ]);
+      expect(result.optionsToCreate).toHaveLength(3);
+      expect(result.optionsToDelete).toHaveLength(0);
+    });
+
+    it("throws FORBIDDEN when quiz not found", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findQuizById.mockResolvedValue(null);
+      const err = await captureError(
+        service.processOptions(QUIZ_ID, [{ isCorrect: true, optionText: "A" }])
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("rejects empty input when quiz type requires options", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOptionsByQuizIds.mockResolvedValue([
+        createQuizOptionFixture({
+          id: "existing",
+          isCorrect: true,
+          quizId: QUIZ_ID,
+        }),
+      ]);
+      const err = await captureError(service.processOptions(QUIZ_ID, []));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+  });
+
   describe("deleteQuizzes", () => {
     it("propagates PARTIAL_FORBIDDEN from the guard", async ({ expect }) => {
       const { repo, guard, service } = setupService();

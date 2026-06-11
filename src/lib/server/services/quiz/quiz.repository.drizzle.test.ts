@@ -417,6 +417,71 @@ describe.concurrent(QuizDrizzleRepository, () => {
       expect(result?.options[0]?.id).toBe(option1.id);
     });
 
+    it("handles chapterId update", async ({ expect }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const chapter = await env.seedChapter();
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        { chapterId: chapter.id },
+        [],
+        [],
+        []
+      );
+      expect(result?.chapterId).toBe(chapter.id);
+    });
+
+    it("combines create, update, and delete in one call", async ({
+      expect,
+    }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz();
+      const keep = await env.seedQuizOption({ quizId: q.id });
+      const remove = await env.seedQuizOption({ quizId: q.id });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.ownerId,
+        { questionText: "All three ops" },
+        [remove.id],
+        [{ id: keep.id, patch: { optionText: "Updated Keep" } }],
+        [
+          {
+            explanation: null,
+            id: crypto.randomUUID(),
+            isCorrect: false,
+            optionText: "Brand New",
+            quizId: q.id,
+          },
+        ]
+      );
+      expect(result?.questionText).toBe("All three ops");
+      expect(result?.options).toHaveLength(2);
+      const texts = result?.options.map((o) => o.optionText).toSorted();
+      expect(texts).toEqual(["Brand New", "Updated Keep"]);
+    });
+
+    it("returns null when ownerId does not match with a patch", async ({
+      expect,
+    }) => {
+      await using env = new QuizTestEnv();
+      const q = await env.seedQuiz({ ownerId: env.ownerId });
+      const repo = new QuizDrizzleRepository(env.db);
+      const result = await repo.updateQuizWithOptions(
+        q.id,
+        env.otherId,
+        { questionText: "Hacked" },
+        [],
+        [],
+        []
+      );
+      expect(result).toBeNull();
+      const [row] = env.db.select().from(quiz).where(eq(quiz.id, q.id)).all();
+      expect(row?.questionText).toBe("Seeded question?");
+    });
+
     it("returns null when quiz not found", async ({ expect }) => {
       await using env = new QuizTestEnv();
       const repo = new QuizDrizzleRepository(env.db);

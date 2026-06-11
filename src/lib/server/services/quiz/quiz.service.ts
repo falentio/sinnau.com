@@ -142,7 +142,7 @@ export class QuizService {
     return result;
   }
 
-  private async processOptions(
+  async processOptions(
     quizId: string,
     inputOptions: NonNullable<UpdateQuizInput["options"]>
   ): Promise<{
