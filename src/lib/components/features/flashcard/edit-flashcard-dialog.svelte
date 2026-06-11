@@ -21,6 +21,7 @@
 
   interface Props {
     open: boolean;
+    studySetId: string;
     flashcard: {
       back: string;
       front: string;
@@ -30,7 +31,7 @@
     };
   }
 
-  let { open = $bindable(false), flashcard }: Props = $props();
+  let { open = $bindable(false), studySetId, flashcard }: Props = $props();
 
   const formSchema = v.omit(updateFlashcardInputSchema, ["id", "importance"]);
 
@@ -58,6 +59,7 @@
             position: "top-right",
           });
           await invalidate(`flashcard:${flashcard.id}`);
+          await invalidate(`flashcard:list:${studySetId}`);
           open = false;
         } catch (error) {
           if (error instanceof ORPCError) {

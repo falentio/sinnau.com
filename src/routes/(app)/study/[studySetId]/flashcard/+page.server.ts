@@ -8,9 +8,16 @@ import type { PageServerLoad } from "./$types";
 const VALID_FILTERS = new Set(["latest"]);
 const DEV_STUB_FILTERS = new Set(["empty", "paginated", "unpaginated", "500"]);
 
-export const load: PageServerLoad = async ({ url, params, locals }) => {
+export const load: PageServerLoad = async ({
+  depends,
+  url,
+  params,
+  locals,
+}) => {
   const user = locals.mustGetUser();
   const filter = url.searchParams.get("filter");
+
+  depends(`flashcard:list:${params.studySetId}`);
 
   if (
     filter !== null &&

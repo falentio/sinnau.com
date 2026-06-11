@@ -11,12 +11,14 @@
     open: boolean;
     flashcardFront: string;
     flashcardId: string;
+    studySetId: string;
   }
 
   let {
     open = $bindable(false),
     flashcardFront,
     flashcardId,
+    studySetId,
   }: Props = $props();
 
   let submitting = $state(false);
@@ -29,6 +31,7 @@
         position: "top-right",
       });
       await invalidate(`flashcard:${flashcardId}`);
+      await invalidate(`flashcard:list:${studySetId}`);
       open = false;
     } catch (error) {
       if (error instanceof ORPCError) {

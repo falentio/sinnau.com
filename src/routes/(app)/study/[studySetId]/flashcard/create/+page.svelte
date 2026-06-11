@@ -14,7 +14,9 @@
     hintSchema,
     importanceSchema,
     trimmedTextSchema,
+    createFlashcardsInputSchema,
   } from "$lib/schemas/flashcard";
+  import type { CreateFlashcardsInput } from "$lib/schemas/flashcard";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
@@ -22,6 +24,7 @@
   import { valibotClient } from "sveltekit-superforms/adapters";
   import * as v from "valibot";
 
+  // TODO: use createFlashcardsInputSchema and CreateFlashcardsInput
   const formSchema = v.object({
     back: trimmedTextSchema,
     front: trimmedTextSchema,
