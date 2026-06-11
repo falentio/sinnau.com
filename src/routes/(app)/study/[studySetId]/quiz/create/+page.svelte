@@ -1,55 +1,32 @@
-<script lang="ts" module>
-  import * as v from "valibot";
-
-  const optionSchema = v.object({
-    explanation: v.optional(
-      v.pipe(v.string(), v.maxLength(500, "Maksimal 500 karakter."))
-    ),
-    isCorrect: v.boolean(),
-    optionText: v.pipe(
-      v.string(),
-      v.trim(),
-      v.nonEmpty("Opsi tidak boleh kosong."),
-      v.maxLength(500, "Maksimal 500 karakter.")
-    ),
-  });
-
-  const formSchema = v.object({
-    options: v.array(optionSchema),
-    questionText: v.pipe(
-      v.string(),
-      v.trim(),
-      v.nonEmpty("Soal tidak boleh kosong.")
-    ),
-    type: v.picklist([
-      "MULTIPLE_CHOICE",
-      "MULTIPLE_SELECT",
-      "FILL_IN_THE_BLANK",
-    ] as const),
-  });
-
-  type QuizForm = v.InferOutput<typeof formSchema>;
-  type QuizOptionForm = QuizForm["options"][number];
-</script>
-
 <script lang="ts">
-  import { Add01Icon, Delete02Icon } from "$lib/components/features/icons";
+  import { page } from "$app/state";
+  import {
+    createQuizForm,
+    getDefaultOptions,
+  } from "$lib/components/features/quiz/create-quiz-form";
+  import FillInTheBlankFields from "$lib/components/features/quiz/fill-in-the-blank-fields.svelte";
+  import MultipleChoiceFields from "$lib/components/features/quiz/multiple-choice-fields.svelte";
+  import MultipleSelectFields from "$lib/components/features/quiz/multiple-select-fields.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
-  import Input from "$lib/components/ui/input/input.svelte";
+  import { Label } from "$lib/components/ui/label/index.js";
   import * as Select from "$lib/components/ui/select/index.js";
+  import { Switch } from "$lib/components/ui/switch/index.js";
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import { HugeiconsIcon } from "@hugeicons/svelte";
-  import { tick } from "svelte";
-  import { toast } from "svelte-sonner";
-  import { defaults, superForm } from "sveltekit-superforms";
-  import { valibotClient } from "sveltekit-superforms/adapters";
+  import type { Chapter } from "$lib/schemas/chapter";
+  import type { CreateQuizInput } from "$lib/schemas/quiz";
+  import { untrack } from "svelte";
 
-  type FormQuizType = QuizForm["type"];
+  const { form, quizListHref } = createQuizForm();
+  const { form: formData, enhance, submitting } = form;
 
-  let serverError = $state("");
-  let pending = $state(false);
-  let showExplanation = $state(false);
+  const chapters = $derived((page.data.chapters ?? []) as Chapter[]);
+
+  let showExplanations = $state(false);
+
+  const currentChapter = $derived(
+    chapters.find((c) => c.id === $formData.chapterId)
+  );
 
   const quizTypeItems = [
     { label: "Pilihan Ganda", value: "MULTIPLE_CHOICE" },
@@ -57,211 +34,10 @@
     { label: "Isian Singkat", value: "FILL_IN_THE_BLANK" },
   ];
 
-  const emptyOption = (isCorrect = false): QuizOptionForm => ({
-    explanation: "",
-    isCorrect,
-    optionText: "",
-  });
-
-  const getOptionBounds = (type: FormQuizType) => {
-    if (type === "FILL_IN_THE_BLANK") {
-      return { max: 1, min: 1 };
-    }
-    if (type === "MULTIPLE_SELECT") {
-      return { max: 10, min: 2 };
-    }
-    return { max: 6, min: 2 };
-  };
-
-  const normalizeOptions = (type: FormQuizType, options: QuizOptionForm[]) => {
-    if (type === "FILL_IN_THE_BLANK") {
-      const correct =
-        options.find((opt) => opt.isCorrect) ?? options[0] ?? emptyOption();
-      return [{ ...correct, isCorrect: true }];
-    }
-
-    const { min, max } = getOptionBounds(type);
-    const normalized = options.slice(0, max);
-
-    while (normalized.length < min) {
-      normalized.push(emptyOption());
-    }
-
-    if (type === "MULTIPLE_CHOICE") {
-      const correctIndex = Math.max(
-        0,
-        normalized.findIndex((option) => option.isCorrect)
-      );
-      return normalized.map((option, index) => ({
-        ...option,
-        isCorrect: index === correctIndex,
-      }));
-    }
-
-    return normalized;
-  };
-
-  const getQuizType = () => $formData.type;
-
-  const setQuizType = (type: string | undefined) => {
-    if (!type) {
-      return;
-    }
-    const quizType = type as FormQuizType;
-
-    $formData.type = quizType;
-    $formData.options = normalizeOptions(quizType, $formData.options);
-    serverError = "";
-  };
-
-  const validateOptions = (type: FormQuizType, options: QuizOptionForm[]) => {
-    const correctCount = options.filter((option) => option.isCorrect).length;
-
-    if (type === "MULTIPLE_CHOICE") {
-      if (options.length < 2 || options.length > 6) {
-        return "Pilihan ganda harus memiliki 2-6 opsi.";
-      }
-      if (correctCount !== 1) {
-        return "Pilihan ganda harus memiliki tepat satu jawaban benar.";
-      }
-    }
-
-    if (type === "MULTIPLE_SELECT") {
-      if (options.length < 2 || options.length > 10) {
-        return "Pilihan banyak harus memiliki 2-10 opsi.";
-      }
-      if (correctCount < 1) {
-        return "Pilih setidaknya satu jawaban benar.";
-      }
-    }
-
-    if (
-      type === "FILL_IN_THE_BLANK" &&
-      (options.length !== 1 || correctCount !== 1)
-    ) {
-      return "Isian singkat harus memiliki tepat satu jawaban benar.";
-    }
-
-    return "";
-  };
-
-  const getErrorMessage = (error: unknown) => {
-    if (error instanceof Error && error.message) {
-      return error.message;
-    }
-    return "Quiz belum bisa dibuat. Coba lagi sebentar.";
-  };
-
-  const submitQuiz = async (data: QuizForm) => {
-    pending = true;
-
-    try {
-      const options = normalizeOptions(data.type, data.options);
-      const validationError = validateOptions(data.type, options);
-
-      if (validationError) {
-        serverError = validationError;
-        return;
-      }
-
-      serverError =
-        "Pembuatan quiz belum tersedia. Backend belum diimplementasikan.";
-      toast.error("Backend belum diimplementasikan.");
-
-      $formData.questionText = "";
-      $formData.options = normalizeOptions(data.type, [
-        emptyOption(),
-        emptyOption(),
-        emptyOption(),
-        emptyOption(),
-      ]);
-
-      await tick();
-      const firstInput = document.querySelector(
-        'input[name="questionText"]'
-      ) as HTMLInputElement | null;
-      firstInput?.focus();
-    } catch (error) {
-      serverError = getErrorMessage(error);
-    } finally {
-      pending = false;
-    }
-  };
-
-  const form = superForm(
-    defaults<QuizForm>(
-      {
-        options: [
-          emptyOption(true),
-          emptyOption(),
-          emptyOption(),
-          emptyOption(),
-        ],
-        questionText: "",
-        type: "MULTIPLE_CHOICE",
-      },
-      valibotClient(formSchema)
-    ),
-    {
-      SPA: true,
-      dataType: "json",
-      onUpdate: async ({ form: submittedForm }) => {
-        serverError = "";
-        if (!submittedForm.valid) {
-          return;
-        }
-        await submitQuiz(submittedForm.data);
-      },
-      resetForm: false,
-      validators: valibotClient(formSchema),
-    }
-  );
-
-  const { form: formData, enhance, submitting, errors } = form;
-  const selectedTypeLabel = $derived(
-    quizTypeItems.find((item) => item.value === $formData.type)?.label ??
-      "Pilih tipe"
-  );
-  const optionBounds = $derived(getOptionBounds($formData.type));
-  const isFillInTheBlank = $derived($formData.type === "FILL_IN_THE_BLANK");
-  const canAddOption = $derived(
-    !isFillInTheBlank && $formData.options.length < optionBounds.max
-  );
-  const canRemoveOption = $derived(
-    !isFillInTheBlank && $formData.options.length > optionBounds.min
-  );
-
-  const addOption = () => {
-    if (!canAddOption) {
-      return;
-    }
-    $formData.options = [...$formData.options, emptyOption()];
-  };
-
-  const removeOption = (index: number) => {
-    if (!canRemoveOption) {
-      return;
-    }
-    $formData.options = normalizeOptions(
-      $formData.type,
-      $formData.options.filter((_, i) => i !== index)
-    );
-  };
-
-  const toggleCorrectOption = (index: number) => {
-    if ($formData.type === "MULTIPLE_SELECT") {
-      const option = $formData.options[index];
-      if (!option) {
-        return;
-      }
-      option.isCorrect = !option.isCorrect;
-      return;
-    }
-
-    $formData.options = $formData.options.map((opt, i) => ({
-      ...opt,
-      isCorrect: i === index,
-    }));
+  const handleTypeChange = (value: string) => {
+    const type = value as CreateQuizInput["type"];
+    $formData.type = type;
+    $formData.options = getDefaultOptions(type);
   };
 </script>
 
@@ -269,19 +45,16 @@
   <title>Buat Quiz</title>
 </svelte:head>
 
+<div class="whitespace-pre">
+  {JSON.stringify($formData, null, 2)}
+</div>
+
 <form
   method="POST"
   class="mx-auto flex w-full max-w-2xl flex-col gap-5 bg-card text-card-foreground px-6 shadow-xs rounded-4xl py-6"
   novalidate
+  use:enhance
 >
-  {#if serverError}
-    <div
-      class="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive"
-    >
-      {serverError}
-    </div>
-  {/if}
-
   <Form.Field {form} name="type">
     <Form.Control>
       {#snippet children({ props })}
@@ -290,8 +63,8 @@
           type="single"
           name="type"
           items={quizTypeItems}
-          bind:value={getQuizType, setQuizType}
-          disabled={$submitting || pending}
+          onValueChange={handleTypeChange}
+          disabled={$submitting}
         >
           <Select.Trigger
             {...props}
@@ -299,7 +72,8 @@
             aria-label="Pilih tipe soal"
           >
             <span class="min-w-0 flex-1 truncate text-left"
-              >{selectedTypeLabel}</span
+              >{quizTypeItems.find((item) => item.value === $formData.type)
+                ?.label ?? "Pilih tipe"}</span
             >
           </Select.Trigger>
           <Select.Content>
@@ -308,6 +82,52 @@
               {#each quizTypeItems as item (item.value)}
                 <Select.Item value={item.value} label={item.label}>
                   {item.label}
+                </Select.Item>
+              {/each}
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>
+      {/snippet}
+    </Form.Control>
+    <Form.FieldErrors />
+  </Form.Field>
+
+  <Form.Field {form} name="chapterId">
+    <Form.Control>
+      {#snippet children({ props })}
+        <Form.Label>Chapter (opsional)</Form.Label>
+        <Select.Root
+          type="single"
+          name="chapterId"
+          items={[
+            { label: "Tanpa chapter", value: "" },
+            ...untrack(() => page.data.chapters ?? []).map((c: Chapter) => ({
+              label: c.title,
+              value: c.id,
+            })),
+          ]}
+          onValueChange={(value: string) => {
+            $formData.chapterId = value || undefined;
+          }}
+          disabled={$submitting}
+        >
+          <Select.Trigger {...props} class="w-full" aria-label="Pilih chapter">
+            <span class="min-w-0 flex-1 truncate text-left"
+              >{currentChapter?.title || "Tanpa Chapter"}</span
+            >
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              <Select.Label>Tanpa Chapter</Select.Label>
+              <Select.Item value="" label="Tanpa Chapter">
+                Tanpa Chapter
+              </Select.Item>
+            </Select.Group>
+            <Select.Group>
+              <Select.Label>Chapter</Select.Label>
+              {#each untrack(() => page.data.chapters ?? []) as chapter (chapter.id)}
+                <Select.Item value={chapter.id} label={chapter.title}>
+                  {chapter.title}
                 </Select.Item>
               {/each}
             </Select.Group>
@@ -327,127 +147,58 @@
           bind:value={$formData.questionText}
           placeholder="Tulis pertanyaan..."
           rows={3}
-          disabled={$submitting || pending}
+          disabled={$submitting}
         />
       {/snippet}
     </Form.Control>
     <Form.FieldErrors />
   </Form.Field>
 
-  <div class="flex items-center justify-between">
-    <div class="text-sm leading-none font-medium">Pilihan Jawaban</div>
-    {#if !isFillInTheBlank}
-      <Button
-        type="button"
-        variant="outline"
-        size="icon-sm"
-        onclick={addOption}
-        disabled={$submitting || pending || !canAddOption}
-      >
-        <HugeiconsIcon icon={Add01Icon} />
-      </Button>
-    {/if}
+  <div class="flex items-center gap-3 rounded-2xl border bg-background/50 p-3">
+    <Switch
+      id="show-explanations"
+      bind:checked={showExplanations}
+      disabled={$submitting}
+    />
+    <Label for="show-explanations">
+      Tampilkan penjelasan untuk setiap opsi
+    </Label>
   </div>
 
-  {#each $formData.options as option, i (i)}
-    <div class="flex items-start gap-3 rounded-2xl border bg-background/50 p-3">
-      <div
-        class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold"
-      >
-        {String.fromCharCode(65 + i)}
-      </div>
-      <div class="min-w-0 flex-1 space-y-2">
-        <Form.Field {form} name={`options[${i}].optionText`}>
-          <Form.Control>
-            {#snippet children({ props })}
-              {#if isFillInTheBlank}
-                <Form.Label>Jawaban Benar</Form.Label>
-              {/if}
-              <Input
-                {...props}
-                bind:value={option.optionText}
-                placeholder={isFillInTheBlank
-                  ? "Tulis jawaban yang benar..."
-                  : `Opsi ${String.fromCharCode(65 + i)}`}
-                maxlength={500}
-                disabled={$submitting || pending}
-              />
-            {/snippet}
-          </Form.Control>
-          <Form.FieldErrors />
-        </Form.Field>
-
-        {#if !isFillInTheBlank}
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              onclick={() => toggleCorrectOption(i)}
-              class="rounded-full border px-3 py-1 text-xs font-medium transition-colors {option.isCorrect
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-input text-muted-foreground hover:bg-accent'}"
-              disabled={$submitting || pending}
-            >
-              {option.isCorrect ? "✓ Jawaban Benar" : "Jawaban Benar"}
-            </button>
-            {#if canRemoveOption}
-              <button
-                type="button"
-                onclick={() => removeOption(i)}
-                class="ml-auto text-muted-foreground hover:text-destructive disabled:opacity-50"
-                disabled={$submitting || pending}
-              >
-                <HugeiconsIcon icon={Delete02Icon} class="size-4" />
-              </button>
-            {/if}
-          </div>
-        {/if}
-
-        {#if showExplanation}
-          <Form.Field {form} name={`options[${i}].explanation`}>
-            <Form.Control>
-              {#snippet children({ props })}
-                <Input
-                  {...props}
-                  bind:value={option.explanation}
-                  placeholder="Penjelasan (opsional)"
-                  disabled={$submitting || pending}
-                />
-              {/snippet}
-            </Form.Control>
-            <Form.FieldErrors />
-          </Form.Field>
-        {/if}
-      </div>
-    </div>
-  {/each}
-
-  <button
-    type="button"
-    onclick={() => (showExplanation = !showExplanation)}
-    class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-  >
-    <span>{showExplanation ? "Sembunyikan" : "Tampilkan"} penjelasan</span>
-  </button>
-
-  {#if $errors.options?._errors}
-    <div
-      class="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive"
-    >
-      {$errors.options._errors}
-    </div>
+  {#if $formData.type === "MULTIPLE_CHOICE"}
+    <MultipleChoiceFields
+      {form}
+      {formData}
+      disabled={$submitting}
+      showExplanation={showExplanations}
+    />
+  {:else if $formData.type === "MULTIPLE_SELECT"}
+    <MultipleSelectFields
+      {form}
+      {formData}
+      disabled={$submitting}
+      showExplanation={showExplanations}
+    />
+  {:else if $formData.type === "FILL_IN_THE_BLANK"}
+    <FillInTheBlankFields
+      {form}
+      {formData}
+      disabled={$submitting}
+      showExplanation={showExplanations}
+    />
   {/if}
 
   <div class="mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end">
     <Button
       class="w-full sm:w-auto"
       variant="outline"
-      href="/home"
-      disabled={$submitting || pending}
+      href={quizListHref}
+      disabled={$submitting}
     >
       Batal
     </Button>
-    <Form.Button class="w-full sm:w-auto" disabled={$submitting || pending}>
-      {$submitting || pending ? "Membuat..." : "Buat Quiz"}
+    <Form.Button class="w-full sm:w-auto" disabled={$submitting}>
+      {$submitting ? "Membuat..." : "Buat Quiz"}
     </Form.Button>
   </div>
 </form>
