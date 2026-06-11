@@ -1,5 +1,6 @@
 import { chapterRouter } from "$lib/server/services/chapter/chapter.router";
 import { flashcardRouter } from "$lib/server/services/flashcard/flashcard.router";
+import { quizSessionRouter } from "$lib/server/services/quiz-session/quiz-session.router";
 import { quizRouter } from "$lib/server/services/quiz/quiz.router";
 import { studySetRouter } from "$lib/server/services/study-set/study-set.router";
 import { ORPCError } from "@orpc/client";
@@ -21,6 +22,7 @@ export const router = {
     timestamp: Date.now(),
   })),
   quiz: quizRouter,
+  quizSession: quizSessionRouter,
   studySet: studySetRouter,
   unimplemented: publicProcedure.handler(() => {
     throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "unimplemented" });
