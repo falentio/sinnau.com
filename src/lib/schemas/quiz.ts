@@ -120,9 +120,12 @@ export const createQuizInputSchema = v.pipe(
     studySetId: studySetIdSchema,
     type: quizTypeSchema,
   }),
-  v.check(
-    (input) => validateQuizOptions(input.type, input.options),
-    "Quiz options violate type constraints"
+  v.forward(
+    v.check(
+      (input) => validateQuizOptions(input.type, input.options),
+      "Quiz options violate type constraints"
+    ),
+    ["options"]
   )
 );
 
