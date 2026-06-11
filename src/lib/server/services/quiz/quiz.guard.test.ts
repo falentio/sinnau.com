@@ -13,6 +13,9 @@ import {
   createQuizOptionFixture,
 } from "./quiz.testing.ts";
 
+const QUIZ_ID = "quiz-id";
+const OPTION_ID = "option-id";
+
 const createMockStudySetGuard = (): MockedStudySetGuard => ({
   assertOwnerOrForbidden: vi.fn<StudySetGuard["assertOwnerOrForbidden"]>(),
   assertStudySetOwnerOrForbidden:
@@ -47,6 +50,7 @@ const setupGuard = () => {
   const chapterGuard = createMockChapterGuard();
 
   repo.findQuizById.mockResolvedValue(null);
+  repo.findOptionsByIds.mockResolvedValue([]);
   repo.findOptionsByIdsForOwner.mockResolvedValue([]);
   repo.findOptionByIdForOwner.mockResolvedValue(null);
   repo.findChapterById.mockResolvedValue(null);
@@ -374,6 +378,64 @@ describe.concurrent(QuizGuard, () => {
       expect(err).toMatchObject({
         code: "PARTIAL_FORBIDDEN",
         data: { ids: ["o-2"] },
+      });
+    });
+  });
+
+  describe("assertQuizOptionsBelongToQuizOrNotFound", () => {
+    it("returns options when all belong to the quiz", async ({ expect }) => {
+      const { repo, guard } = setupGuard();
+      const options = [
+        createQuizOptionFixture({ quizId: QUIZ_ID }),
+        createQuizOptionFixture({ quizId: QUIZ_ID }),
+      ];
+      repo.findOptionsByIds.mockResolvedValue(options);
+      const result = await guard.assertQuizOptionsBelongToQuizOrNotFound(
+        QUIZ_ID,
+        options.map((o) => o.id)
+      );
+      expect(result).toHaveLength(2);
+    });
+
+    it("throws OPTION_NOT_FOUND when an option does not exist", async ({
+      expect,
+    }) => {
+      const { repo, guard } = setupGuard();
+      repo.findOptionsByIds.mockResolvedValue([
+        createQuizOptionFixture({ quizId: QUIZ_ID }),
+      ]);
+      let err: unknown = null;
+      try {
+        await guard.assertQuizOptionsBelongToQuizOrNotFound(QUIZ_ID, [
+          OPTION_ID,
+          "other-id",
+        ]);
+      } catch (error) {
+        err = error;
+      }
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "OPTION_NOT_FOUND", status: 404 });
+    });
+
+    it("throws OPTION_NOT_BELONG_TO_QUIZ when option belongs to another quiz", async ({
+      expect,
+    }) => {
+      const { repo, guard } = setupGuard();
+      repo.findOptionsByIds.mockResolvedValue([
+        createQuizOptionFixture({ id: OPTION_ID, quizId: "other-quiz" }),
+      ]);
+      let err: unknown = null;
+      try {
+        await guard.assertQuizOptionsBelongToQuizOrNotFound(QUIZ_ID, [
+          OPTION_ID,
+        ]);
+      } catch (error) {
+        err = error;
+      }
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({
+        code: "OPTION_NOT_BELONG_TO_QUIZ",
+        status: 400,
       });
     });
   });

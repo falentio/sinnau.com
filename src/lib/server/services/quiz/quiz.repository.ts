@@ -6,7 +6,9 @@ export type QuizWithOptions = Quiz & { options: QuizOption[] };
 export type NewQuizRow = Omit<Quiz, "createdAt" | "updatedAt">;
 export type NewQuizOptionRow = Omit<QuizOption, "createdAt" | "updatedAt">;
 
-export type QuizUpdatePatch = Partial<Pick<Quiz, "questionText" | "updatedAt">>;
+export type QuizUpdatePatch = Partial<
+  Pick<Quiz, "questionText" | "chapterId" | "updatedAt">
+>;
 export type QuizOptionUpdatePatch = Partial<
   Pick<QuizOption, "optionText" | "isCorrect" | "explanation" | "updatedAt">
 >;
@@ -39,4 +41,13 @@ export interface QuizRepository {
     patch: QuizOptionUpdatePatch
   ): Promise<QuizOption | null>;
   deleteQuizOptions(ids: string[], ownerId: string): Promise<boolean>;
+  findOptionsByIds(ids: string[]): Promise<QuizOption[]>;
+  updateQuizWithOptions(
+    quizId: string,
+    ownerId: string,
+    quizPatch: QuizUpdatePatch,
+    optionsToDelete: string[],
+    optionsToUpdate: { id: string; patch: QuizOptionUpdatePatch }[],
+    optionsToCreate: NewQuizOptionRow[]
+  ): Promise<QuizWithOptions | null>;
 }

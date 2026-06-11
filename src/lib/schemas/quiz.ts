@@ -109,8 +109,8 @@ export const createQuizInputSchema = v.pipe(
 );
 
 export const updateQuizInputSchema = v.object({
-  id: quizIdSchema,
   chapterId: v.optional(v.union([chapterIdSchema, v.null()])),
+  id: quizIdSchema,
   options: v.optional(
     v.array(
       v.object({
