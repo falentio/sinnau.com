@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import ChapterScopePicker from "$lib/components/features/quiz-session/chapter-scope-picker.svelte";
+  import NewSessionDialog from "$lib/components/features/quiz-session/new-session-dialog.svelte";
   import QuizSessionCard from "$lib/components/features/quiz-session/quiz-session-card.svelte";
   import QuizSessionEmpty from "$lib/components/features/quiz-session/quiz-session-empty.svelte";
   import QuizSessionListFilter from "$lib/components/features/quiz-session/quiz-session-list-filter.svelte";
@@ -16,19 +15,10 @@
   }
   let { data }: Props = $props();
 
-  const chapters = $derived(data.chapters);
   const firstActive = $derived(data.activeSessions[0]);
-  const startDisabled = $derived(data.totalScopeCount === 0);
+  const showNewSessionButton = $derived(data.totalScopeCount > 0);
 
-  const handleChapterPick = (chapterId: string | null) => {
-    const url = new URL(page.url);
-    if (chapterId === null) {
-      url.searchParams.delete("chapter");
-    } else {
-      url.searchParams.set("chapter", chapterId);
-    }
-    void goto(url, { keepFocus: true, noScroll: true });
-  };
+  let newSessionOpen = $state(false);
 
   const handleStatusFilter = (value: "all" | "active" | "completed") => {
     const url = new URL(page.url);
@@ -42,29 +32,8 @@
     <QuizSessionCard mode="active" session={firstActive} />
   {/if}
 
-  {#if data.totalScopeCount > 0}
-    <QuizSessionCard mode="start">
-      <div class="flex flex-col gap-4">
-        <h2 class="text-base font-semibold">Mulai Sesi Baru</h2>
-        <ChapterScopePicker
-          value={data.scope.chapterId}
-          {chapters}
-          counts={{
-            all: data.totalScopeCount,
-            byChapter: data.chapterQuizCounts,
-          }}
-          onChange={handleChapterPick}
-        />
-        <form method="POST" action="?/createSession" use:enhance>
-          <input
-            type="hidden"
-            name="chapterId"
-            value={data.scope.chapterId ?? ""}
-          />
-          <Button type="submit" disabled={startDisabled}>Mulai</Button>
-        </form>
-      </div>
-    </QuizSessionCard>
+  {#if showNewSessionButton}
+    <Button onclick={() => (newSessionOpen = true)}>Mulai Sesi Baru</Button>
   {:else}
     <QuizSessionEmpty />
   {/if}
@@ -85,3 +54,10 @@
     </section>
   {/if}
 </div>
+
+<NewSessionDialog
+  bind:open={newSessionOpen}
+  chapters={data.chapters}
+  chapterQuizCounts={data.chapterQuizCounts}
+  totalScopeCount={data.totalScopeCount}
+/>

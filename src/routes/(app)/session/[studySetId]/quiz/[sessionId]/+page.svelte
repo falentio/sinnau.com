@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import CompleteSessionSheet from "$lib/components/features/quiz-session/complete-session-sheet.svelte";
+  import CompleteSessionDialog from "$lib/components/features/quiz-session/complete-session-dialog.svelte";
   import ProgressPills from "$lib/components/features/quiz-session/progress-pills.svelte";
   import QuestionCard from "$lib/components/features/quiz-session/question-card.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
@@ -245,7 +245,7 @@
   {/if}
 </div>
 
-<CompleteSessionSheet
+<CompleteSessionDialog
   bind:open={sheetOpen}
   {unansweredCount}
   onConfirm={handleComplete}
