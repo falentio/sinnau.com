@@ -4,5 +4,6 @@ import { ChapterDrizzleRepository } from "./chapter.repository.drizzle.ts";
 import { ChapterService } from "./chapter.service.ts";
 
 const chapterRepo = new ChapterDrizzleRepository();
+export { chapterRepo };
 export const chapterGuard = new ChapterGuard(chapterRepo, studySetGuard);
 export const chapterService = new ChapterService(chapterRepo, chapterGuard);

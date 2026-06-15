@@ -5,5 +5,6 @@ import { QuizDrizzleRepository } from "./quiz.repository.drizzle.ts";
 import { QuizService } from "./quiz.service.ts";
 
 const quizRepo = new QuizDrizzleRepository();
+export { quizRepo };
 export const quizGuard = new QuizGuard(quizRepo, studySetGuard, chapterGuard);
 export const quizService = new QuizService(quizRepo, quizGuard);
