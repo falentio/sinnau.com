@@ -45,10 +45,6 @@
   <title>Buat Quiz</title>
 </svelte:head>
 
-<div class="whitespace-pre">
-  {JSON.stringify($formData, null, 2)}
-</div>
-
 <form
   method="POST"
   class="mx-auto flex w-full max-w-2xl flex-col gap-5 bg-card text-card-foreground px-6 shadow-xs rounded-4xl py-6"
