@@ -43,6 +43,13 @@
       "when": 1780940160134,
       "tag": "0005_melodic_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1781366366113,
+      "tag": "0006_woozy_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }

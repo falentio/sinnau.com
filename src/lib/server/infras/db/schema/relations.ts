@@ -3,6 +3,12 @@ import { relations } from "drizzle-orm";
 import { user } from "./auth-schema.ts";
 import { chapter } from "./chapter.ts";
 import { flashcard } from "./flashcard.ts";
+import {
+  quizSession,
+  quizSessionAnswer,
+  quizSessionQuiz,
+  quizSessionQuizOption,
+} from "./quiz-session.ts";
 import { quiz, quizOption } from "./quiz.ts";
 import {
   studySetContent,
@@ -106,6 +112,62 @@ export const studySetContentToChapterRelations = relations(
     content: one(studySetContent, {
       fields: [studySetContentToChapter.contentId],
       references: [studySetContent.id],
+    }),
+  })
+);
+
+export const quizSessionRelations = relations(quizSession, ({ one, many }) => ({
+  chapter: one(chapter, {
+    fields: [quizSession.chapterId],
+    references: [chapter.id],
+  }),
+  quizzes: many(quizSessionQuiz),
+  studySet: one(studySet, {
+    fields: [quizSession.studySetId],
+    references: [studySet.id],
+  }),
+  user: one(user, {
+    fields: [quizSession.userId],
+    references: [user.id],
+  }),
+}));
+
+export const quizSessionQuizRelations = relations(
+  quizSessionQuiz,
+  ({ one, many }) => ({
+    answers: many(quizSessionAnswer),
+    options: many(quizSessionQuizOption),
+    originalQuiz: one(quiz, {
+      fields: [quizSessionQuiz.originalQuizId],
+      references: [quiz.id],
+    }),
+    session: one(quizSession, {
+      fields: [quizSessionQuiz.sessionId],
+      references: [quizSession.id],
+    }),
+  })
+);
+
+export const quizSessionQuizOptionRelations = relations(
+  quizSessionQuizOption,
+  ({ one }) => ({
+    sessionQuiz: one(quizSessionQuiz, {
+      fields: [quizSessionQuizOption.sessionQuizId],
+      references: [quizSessionQuiz.id],
+    }),
+  })
+);
+
+export const quizSessionAnswerRelations = relations(
+  quizSessionAnswer,
+  ({ one }) => ({
+    session: one(quizSession, {
+      fields: [quizSessionAnswer.sessionId],
+      references: [quizSession.id],
+    }),
+    sessionQuiz: one(quizSessionQuiz, {
+      fields: [quizSessionAnswer.sessionQuizId],
+      references: [quizSessionQuiz.id],
     }),
   })
 );
