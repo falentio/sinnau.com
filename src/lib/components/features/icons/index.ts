@@ -28,4 +28,5 @@ export {
   Search02Icon,
   Settings02Icon,
   Share01Icon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
