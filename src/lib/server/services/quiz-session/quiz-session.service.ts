@@ -1,5 +1,6 @@
 import type {
   CompleteQuizSessionInput,
+  CountQuizSessionInScopeInput,
   CreateQuizSessionInput,
   GetQuizSessionInput,
   GetQuizSessionQuestionsInput,
@@ -352,6 +353,21 @@ export class QuizSessionService {
   ): Promise<QuizSession[]> {
     const ownerId = this.guard.requireUser(userId);
     return await this.repo.findSessionsByStudySet(input.studySetId, ownerId);
+  }
+
+  async countInScope(
+    input: CountQuizSessionInScopeInput,
+    userId: string | null | undefined
+  ): Promise<{ count: number }> {
+    const ownerId = this.guard.requireUser(userId);
+    await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, ownerId);
+
+    return {
+      count: await this.repo.countQuizzesInScope(
+        input.studySetId,
+        input.chapterId
+      ),
+    };
   }
 
   async adminDeleteExpiredSessions(): Promise<{

@@ -54,6 +54,15 @@ export const listQuizSessionsInputSchema = v.object({
   studySetId: studySetIdSchema,
 });
 
+export const countQuizSessionInScopeInputSchema = v.object({
+  chapterId: v.optional(chapterIdSchema),
+  studySetId: studySetIdSchema,
+});
+
+export const countQuizSessionInScopeOutputSchema = v.object({
+  count: v.number(),
+});
+
 export const quizSessionSchema = v.object({
   chapterId: v.nullable(v.string()),
   completedAt: v.nullable(v.date()),
@@ -160,6 +169,12 @@ export type GetQuizSessionResultsInput = v.InferOutput<
 >;
 export type ListQuizSessionsInput = v.InferOutput<
   typeof listQuizSessionsInputSchema
+>;
+export type CountQuizSessionInScopeInput = v.InferOutput<
+  typeof countQuizSessionInScopeInputSchema
+>;
+export type CountQuizSessionInScopeOutput = v.InferOutput<
+  typeof countQuizSessionInScopeOutputSchema
 >;
 export type QuizSession = v.InferOutput<typeof quizSessionSchema>;
 export type QuizSessionQuizOption = v.InferOutput<
