@@ -48,6 +48,34 @@
 
 ---
 
+## Required Skills (Mandatory)
+
+Before working on **any** frontend/Svelte task (Tasks 4, 5, 6, 7), the engineer MUST load the listed sub-skills and follow the Svelte MCP workflow below. These skills take priority over any code sample in this plan when they conflict — the plan's Svelte templates are starting points, not final decisions.
+
+### Required sub-skills (load via `skill` tool BEFORE any UI work)
+
+1. **`design-taste-frontend`** — Anti-slop frontend skill. Reads the brief, infers the right design direction, ships interfaces that do not look templated. Audit-first on redesigns, strict pre-flight check.
+2. **`high-end-visual-design`** — High-end-agency rules for fonts, spacing, shadows, card structures, and animations. Blocks AI defaults that make designs look cheap or generic.
+
+### Required documentation (per project `AGENTS.md`)
+
+- **shadcn-svelte** — fetch `https://shadcn-svelte.com/llms.txt` whenever working with `$lib/components/ui/**/*` (Button, Sheet, Badge, etc.).
+- **Svelte 5 / SvelteKit** — use the Svelte MCP server (`Svelte_list-sections` → `Svelte_get-documentation`) before writing runes (`$state`, `$derived`, `$props`, `$effect`, `$bindable`, snippets, callback props).
+
+### Per-step Svelte workflow
+
+1. Read the task's "Read first" callout.
+2. Load the required sub-skills.
+3. Read the relevant Svelte 5 / SvelteKit sections for the runes you'll use.
+4. Write the component.
+5. Run `svelte_svelte-autofixer` and iterate until it returns no issues or suggestions.
+6. Run `rtk pnpm run check`, `rtk pnpm run lint:agent`, `rtk pnpm run format` (in that order).
+7. Visually verify in `pnpm dev` against the dev-stub URL pattern.
+
+**Skilled-enforcement check**: a step is not done until the autofixer is clean **AND** the visual smoke test in `pnpm dev` matches the design direction implied by `design-taste-frontend` + `high-end-visual-design`. Silent autofixer + templated look (uniform border-radius, generic gray, copy-paste shadcn defaults) = re-run the design skills before claiming the step is complete.
+
+---
+
 ## Task 1: Backend `countInScope` query
 
 **Files:**
@@ -738,6 +766,8 @@ git commit -m "feat(quiz-session): add dev stub fixtures for hub/taking/results"
 
 ## Task 4: Shared layout + session-header component
 
+> **Required sub-skills** (load BEFORE writing any Svelte code): `design-taste-frontend` and `high-end-visual-design`. Fetch the shadcn-svelte docs for the `Button` primitive under `$lib/components/ui/button/`. Read the Svelte 5 sections on `$props()`, snippets (`children`), and `$bindable`. Run `svelte_svelte-autofixer` on every `.svelte` file and iterate until clean. See "Required Skills (Mandatory)" at the top of this plan for the full workflow.
+
 **Files:**
 
 - Create: `src/lib/components/features/quiz-session/session-header.svelte`
@@ -851,6 +881,8 @@ git commit -m "feat(quiz-session): add shared layout and session-header for quiz
 ---
 
 ## Task 5: Hub — atomic components, page, server
+
+> **Required sub-skills** (load BEFORE writing any Svelte code): `design-taste-frontend` and `high-end-visual-design`. Fetch the shadcn-svelte docs for `Button` and any other `$lib/components/ui/**/*` primitives used. Read the Svelte 5 sections on `$state`, `$derived`, `$props`, snippets (`children`), and callback props. Run `svelte_svelte-autofixer` on every `.svelte` file and iterate until clean. See "Required Skills (Mandatory)" at the top of this plan for the full workflow.
 
 **Files:**
 
@@ -1338,6 +1370,8 @@ git commit -m "feat(quiz-session): build hub page with cards, picker, and filter
 ---
 
 ## Task 6: Taking — components, page, server
+
+> **Required sub-skills** (load BEFORE writing any Svelte code): `design-taste-frontend` and `high-end-visual-design`. Fetch the shadcn-svelte docs for `Button` and `Sheet` (`$lib/components/ui/sheet/`) — verify the `bind:open` pattern and `side="bottom"` API against the current shadcn-svelte version. Read the Svelte 5 sections on `$state`, `$derived`, `$derived.by`, `$effect`, `$bindable`, snippets, and callback props. Run `svelte_svelte-autofixer` on every `.svelte` file and iterate until clean. The progress-pills `chapterColorById` lookup and the 4-state pill design are the highest-risk visual artifacts in this task — design skills must inform both the chapter-color application (per Q14) and the diagonal-stripe `repeating-linear-gradient` pattern. See "Required Skills (Mandatory)" at the top of this plan for the full workflow.
 
 **Files:**
 
@@ -1943,6 +1977,8 @@ git commit -m "feat(quiz-session): build taking page with clickable pills and di
 ---
 
 ## Task 7: Results — components, page, server
+
+> **Required sub-skills** (load BEFORE writing any Svelte code): `design-taste-frontend` and `high-end-visual-design`. Fetch the shadcn-svelte docs for `Button` if used. Read the Svelte 5 sections on `$state`, `$derived`, `$props`, snippets, and callback props. Run `svelte_svelte-autofixer` on every `.svelte` file and iterate until clean. The results hero (massive score with `tweenedScore` count-up + `cubic-bezier(0.16, 1, 0.3, 1)` easing), the Penjelasan block (expanded by default — no click-to-expand per Q17), and the chapter analysis chips (informational only, no per-chapter CTAs per Q15) are the highest-risk visual artifacts in this task — design skills must inform typography, the count-up tween, and the card hierarchy. The `tweenedScore` utility already short-circuits under `prefers-reduced-motion`, but verify the `tweenedScore` Svelte motion API is current in your Svelte version. See "Required Skills (Mandatory)" at the top of this plan for the full workflow.
 
 **Files:**
 
