@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import {
+    Delete02Icon,
+    Edit01Icon,
     Quiz01Icon,
     Settings02Icon,
-    Delete02Icon,
   } from "$lib/components/features/icons";
   import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
@@ -23,10 +25,11 @@
       }[];
     };
     chapterTitle: string | null;
+    editHref: string;
     onDelete: (quizId: string, questionText: string) => void;
   }
 
-  let { quiz, chapterTitle, onDelete }: Props = $props();
+  let { quiz, chapterTitle, editHref, onDelete }: Props = $props();
 
   let openExplanation = $state(false);
 
@@ -76,6 +79,10 @@
           {/snippet}
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => goto(editHref)}>
+            <HugeiconsIcon icon={Edit01Icon} />
+            Edit
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             variant="destructive"
             onSelect={() => onDelete(quiz.id, quiz.questionText)}

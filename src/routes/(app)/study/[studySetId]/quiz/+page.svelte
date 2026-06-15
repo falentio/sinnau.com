@@ -69,9 +69,11 @@
 {:else}
   <div class="space-y-3">
     {#each displayedQuizzes as quiz (quiz.id)}
+      {@const editHref = `./edit?quizId=${quiz.id}`}
       <QuizCard
         {quiz}
         chapterTitle={chapterMap.get(quiz.chapterId ?? "") ?? null}
+        {editHref}
         onDelete={handleDelete}
       />
     {/each}
