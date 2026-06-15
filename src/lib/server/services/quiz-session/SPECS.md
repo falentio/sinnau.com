@@ -7,28 +7,41 @@ Source specs:
 
 ## Domain Boundary
 
-Quiz Session tracks a user's attempt at answering quizzes scoped by a filter (`studySetId` + optional `chapterId`). It records per-quiz answers, computes a score on completion, and provides results with incorrect questions and failing chapter analysis.
+Quiz Session tracks a user's attempt at answering quizzes scoped by a filter (`studySetId` + optional `chapterId`). On creation, quizzes matching the filter are deep-copied into a session-scoped snapshot (`quiz_session_quiz` + `quiz_session_quiz_option` tables). All subsequent operations (answer submission, scoring, results) work against this frozen copy — original quiz edits or deletions do not affect in-progress or completed sessions.
 
 Quiz Session is responsible for:
 
-- session creation with studySet/chapter filters
-- answer submission (upsert per quiz within a session, cross-device sync)
-- answer validation (option IDs must belong to the quiz, quiz must be in scope)
+- session creation with studySet/chapter filters, deep-copying quizzes into a session-scoped snapshot
+- answer submission (upsert per session-quiz, cross-device sync)
+- answer validation (option IDs must belong to the session's quiz copy)
 - session completion with immutable sealed results
 - live-scored `getResults` on ACTIVE sessions and stored-snapshot `getResults` on COMPLETED sessions
 - returning incorrect questions with full options for review
 - failing chapter analysis (top 3 by incorrect count) for studySet-scoped sessions
 - listing user sessions scoped by studySet
-- admin deletion of expired sessions (90-day TTL) including orphaned answer cleanup
+- admin deletion of expired sessions (90-day TTL) including cascade cleanup
 
 Quiz Session is not responsible for:
 
 - quiz creation, updates, or option management (delegated to quiz domain)
-- generating quiz content or selecting questions (dynamic resolution queries the quiz repository)
+- generating quiz content or selecting questions (done once at creation via quiz repository)
 - studySet or chapter lifecycle management
 - spaced repetition scheduling
 - multi-user session sharing (each session is personal to its creator)
 - anonymous/public quiz-taking (sessions require authentication)
+
+## Architecture Decisions (from grill)
+
+1. **QuizSessionService** depends on `QuizSessionRepository`, `QuizSessionGuard`, and `QuizRepository`.
+2. **QuizSessionGuard** handles all validation — auth/visibility (`UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`) plus business validation (`VALIDATION_FAILED`). Guard depends on `QuizSessionRepository`, `StudySetGuard`, and `ChapterRepository`.
+3. **QuizSessionDrizzleRepository** takes only a DB instance. Repository touches both `quiz_session*` and `quiz*` tables directly.
+4. **Repository returns sorted, service shuffles** — repo returns data sorted by `position` ASC. Service calls `new Rng(sessionId).shuffle(data)`.
+5. **Full validation on every submitAnswer** — fetch session quiz + options each time, no caching.
+6. **Scoring + failing chapter analysis** extracted to `quiz-session.scoring.ts` utility.
+7. **`QuizSessionQuestionItem`** = `QuizWithOptions & { currentAnswer: string[] | null }` defined in quiz-session types.
+8. **Chapter validation on creation** uses `ChapterRepository` (exported from `chapter/index.ts`), not `ChapterGuard`.
+9. **Frozen snapshot** — quizzes are deep-copied at session creation. No dynamic resolution. Original quiz edits/deletions never affect sessions.
+10. **Copy-on-create, immutable** — `quiz_session_quiz` + `quiz_session_quiz_option` tables hold the session's immutable quiz data.
 
 ## Entities
 
@@ -54,10 +67,29 @@ interface QuizSession {
   updatedAt: number;
 }
 
+interface QuizSessionQuiz {
+  id: string;
+  sessionId: string;
+  originalQuizId: string | null;
+  questionText: string;
+  type: QuizType;
+  chapterId: string | null;
+  position: number;
+}
+
+interface QuizSessionQuizOption {
+  id: string;
+  sessionQuizId: string;
+  optionText: string;
+  isCorrect: boolean;
+  explanation: string | null;
+  position: number;
+}
+
 interface QuizSessionAnswer {
   id: string;
   sessionId: string;
-  quizId: string | null;
+  sessionQuizId: string;
   selectedOptionIds: string[];
   createdAt: number;
   updatedAt: number;
@@ -71,55 +103,81 @@ interface QuizSessionAnswer {
 - `studySetId` is required and must reference a StudySet visible to the authenticated user.
 - `chapterId` is optional; when provided must reference a Chapter that belongs to the given `studySetId`.
 - `status` is `"ACTIVE"` on creation, transitions to `"COMPLETED"` on completion. Immutable after COMPLETED.
-- `quizCount` is populated at creation as a point-in-time snapshot of quizzes in scope.
+- `quizCount` is computed at creation time as the number of quizzes copied into the session snapshot.
 - `score` is `null` until completion, then set to `Math.round(correctCount / totalQuestions * 100)` (integer 0–100).
-- `totalQuestions` is `null` until completion, then set to the number of quizzes in scope at completion time.
+- `totalQuestions` is `null` until completion, then set to `quizCount` (the number of quizzes in the snapshot).
 - `correctCount` is `null` until completion.
-- `incorrectQuizIds` is `null` until completion, then set to an array of quiz IDs that were answered incorrectly or unanswered.
-- `failingChapterIds` is `null` until completion, then set to the top 3 chapter IDs with the most incorrect answers (empty `[]` when session has a `chapterId` filter, empty if only unassigned quizzes).
-- `lastQuestionText` is a denormalized copy of the most recently answered quiz's `questionText`. Set on each `submitAnswer`.
+- `incorrectQuizIds` is `null` until completion, then set to an array of `quizSessionQuiz.id` values that were answered incorrectly or unanswered.
+- `failingChapterIds` is `null` until completion, then set to the top 3 chapter IDs with the most incorrect answers (computed only for chapter-filtered sessions; empty `[]` when session has no `chapterId` filter, empty if only unassigned quizzes).
+- `lastQuestionText` is a denormalized copy of the most recently answered quiz's `questionText` from `quizSessionQuiz`. Set on each `submitAnswer`.
 - `lastAnsweredAt` is a Unix timestamp in milliseconds set on each `submitAnswer`.
 - `createdAt`, `completedAt`, and `updatedAt` are Unix timestamps in milliseconds.
 - `completedAt` is set on completion.
-- Unknown fields are ignored for all QuizSession and QuizSessionAnswer request payloads.
+- Unknown fields are ignored for all request payloads.
+
+## QuizSessionQuiz Field Rules
+
+- `id` is server-generated with `generateId("qsg")`; clients never provide IDs.
+- `sessionId` references the parent `QuizSession`. Cascade-deleted with the session.
+- `originalQuizId` references the source `quiz.id`. Set to `NULL` via FK `ON DELETE SET NULL` if the original quiz is deleted — the session copy data (`questionText`, `type`, `chapterId`) is preserved.
+- `questionText`, `type`, `chapterId` are deep-copied from the original quiz at creation time. Immutable after creation.
+- `position` is the insertion order (0-based). Used for deterministic pre-shuffle ordering (by `position` ASC, not original `quiz.id`).
+
+## QuizSessionQuizOption Field Rules
+
+- `id` is server-generated with `generateId("qso")`; clients never provide IDs.
+- `sessionQuizId` references the parent `QuizSessionQuiz`. Cascade-deleted with the session quiz.
+- `optionText`, `isCorrect`, `explanation` are deep-copied from the original quiz option at creation time. Immutable after creation.
+- `position` preserves the original option ordering.
 
 ## QuizSessionAnswer Field Rules
 
 - `id` is server-generated with `generateId("qsa")`; clients never provide IDs.
 - `sessionId` is required and must reference an existing QuizSession owned by the authenticated user.
-- `quizId` is required on submission; may become `null` if the referenced quiz is deleted (FK `ON DELETE SET NULL`).
-- `selectedOptionIds` is an array of quiz option IDs. Empty array (`[]`) means the user submitted without selecting anything — treated as incorrect.
-- `(sessionId, quizId)` has a unique constraint — a user can only have one answer per quiz per session. Re-submissions upsert (overwrite) the existing answer.
+- `sessionQuizId` is required on submission. References a `quiz_session_quiz.id` that belongs to the session (validated by the guard).
+- `selectedOptionIds` is an array of `quiz_session_quiz_option.id` values. Empty array (`[]`) means the user submitted without selecting anything — treated as incorrect.
+- `(sessionId, sessionQuizId)` has a unique constraint — a user can only have one answer per quiz per session. Re-submissions upsert (overwrite) the existing answer.
 - `createdAt` and `updatedAt` are Unix timestamps in milliseconds.
 
-## Question Set Resolution (Dynamic)
+## Session Creation (Frozen Snapshot)
 
-The set of quizzes for a session is resolved dynamically on each call — not frozen at creation time.
+On `createSession`:
 
-- Quizzes added to the scope after session creation appear in `getQuestions`.
-- Quizzes deleted from the scope disappear from `getQuestions`. Their answer rows get `quizId = NULL` (FK SET NULL).
-- `getQuestions` sorts quizzes by `id` ascending (deterministic), then shuffles using `Rng(sessionId)` as seed. Same seed → same order across devices and calls.
-- Orphaned answers (`quizId IS NULL`) are skipped during live scoring and do not count toward any total.
+1. Guard validates studySet visibility via `studySetGuard.assertStudySetVisibleByIdOrNotFound`.
+2. If `chapterId` provided, guard validates chapter belongs to studySet via `ChapterRepository.findChapterById(chapterId)` — rejects with `VALIDATION_FAILED` if `ch.studySetId !== studySetId`.
+3. Service calls `quizRepo.findQuizzesByStudySetId(studySetId)` to get all quizzes with options.
+4. If `chapterId` is set, filters quizzes to only those with matching `chapterId`.
+5. Creates `QuizSession` row with `quizCount` = number of matching quizzes.
+6. For each matching quiz, deep-copies into `quiz_session_quiz` + `quiz_session_quiz_option` rows.
+
+## Question Set Resolution (Frozen)
+
+The set of quizzes for a session is the frozen snapshot — not dynamically resolved.
+
+- `getQuestions` fetches from `quiz_session_quiz` + `quiz_session_quiz_option` (ordered by `position` ASC), then shuffles using `Rng(sessionId)` as seed.
+- New quizzes added to the studySet after session creation do NOT appear in existing sessions.
+- Quizzes deleted from the original quiz table do NOT affect the session — the session copy is preserved (with `originalQuizId` set to NULL if FK ON DELETE SET NULL fires).
+- Same seed → same order across devices and calls.
 
 ## Scoring
 
 - **Correct**: For MULTIPLE_CHOICE and FILL_IN_THE_BLANK, the single correct option ID matches exactly. For MULTIPLE_SELECT, the set of selected option IDs matches the set of correct option IDs exactly (no missing, no extra).
 - **Incorrect**: Any answer that does not match the correct set, including empty `[]` submissions.
-- **Unanswered**: Quizzes in scope with no `quiz_session_answer` row. Counted as incorrect in scoring, shown with `selectedOptionIds: null`.
-- **Empty session completion**: If zero answers exist, score = 0, totalQuestions = quizzes in scope, correctCount = 0.
+- **Unanswered**: Quizzes in the session snapshot with no `quiz_session_answer` row. Counted as incorrect in scoring, shown with `selectedOptionIds: null`.
+- **Empty session completion**: If zero answers exist, score = 0, totalQuestions = quizCount, correctCount = 0.
 - **Score formula**: `Math.round(correctCount / totalQuestions * 100)`.
 
 ## Failing Chapter Analysis
 
-Only computed for sessions without a `chapterId` filter:
+Only computed for sessions with a `chapterId` filter:
 
-1. Collect all incorrect quiz IDs.
-2. Look up each quiz's `chapterId`.
+1. Collect all incorrect `quizSessionQuiz.id` values.
+2. Look up each quiz's `chapterId` from the `quiz_session_quiz` table.
 3. Group by `chapterId`, count incorrects per chapter.
 4. Sort descending by count, take top 3.
 5. Exclude `null` chapterId (unassigned quizzes).
 
-For chapter-filtered sessions, `failingChapterIds` is always `[]`.
+For studySet-scoped sessions (no chapterId filter), `failingChapterIds` is always `[]`.
 
 ## Completion
 
@@ -128,8 +186,8 @@ For chapter-filtered sessions, `failingChapterIds` is always `[]`.
 On completion, the service:
 
 1. Fetches all answers for the session.
-2. Fetches all quizzes in scope (current scope at completion time).
-3. Scores each answer against the correct options.
+2. Fetches all quizzes in the session snapshot (with options).
+3. Scores each answer against the copied correct options.
 4. Computes failing chapter analysis (if applicable).
 5. Writes `score`, `totalQuestions`, `correctCount`, `incorrectQuizIds`, `failingChapterIds`, `completedAt` to the session row.
 6. Sets `status = COMPLETED`.
@@ -163,7 +221,8 @@ interface CreateQuizSessionCommand {
 - Creates a quiz session with the given filter.
 - Required: `studySetId` must be visible to the authenticated user.
 - When `chapterId` is provided: validates the chapter belongs to `studySetId`. Rejects with `VALIDATION_FAILED` if mismatched.
-- `quizCount` is computed at creation time by counting quizzes matching the filter.
+- Deep-copies matching quizzes + options into the session snapshot.
+- `quizCount` is set to the number of quizzes copied.
 - Returns `QuizSession` with embedded `quizCount`.
 
 ### SubmitAnswer
@@ -171,16 +230,16 @@ interface CreateQuizSessionCommand {
 ```typescript
 interface SubmitAnswerCommand {
   sessionId: string;
-  quizId: string;
+  sessionQuizId: string;
   selectedOptionIds: string[];
 }
 ```
 
-- Upserts an answer for the given quiz within the session.
-- Validates the quiz belongs in the session's scope (`studySetId` match, and if session has `chapterId`, the quiz's `chapterId` must match). Rejects with `VALIDATION_FAILED` if outside scope.
-- Validates all `selectedOptionIds` reference options belonging to the quiz. Rejects with `VALIDATION_FAILED` if any ID is invalid.
+- Upserts an answer for the given session-quiz within the session.
+- Validates `sessionQuizId` belongs to the session (guard checks `quiz_session_quiz.sessionId === sessionId`). Rejects with `VALIDATION_FAILED` if not.
+- Validates all `selectedOptionIds` reference options belonging to the session-quiz (guard checks `quiz_session_quiz_option.sessionQuizId === sessionQuizId`). Rejects with `VALIDATION_FAILED` if any ID is invalid.
 - Rejects with `SESSION_ALREADY_COMPLETED` if the session is COMPLETED.
-- On success, also updates `lastAnsweredAt` and `lastQuestionText` on the session row (two writes: answer upsert + session update).
+- On success, also updates `lastAnsweredAt` and `lastQuestionText` on the session row.
 - Last-write-wins: re-submissions overwrite previous answers (cross-device sync).
 - Empty `selectedOptionIds` (`[]`) is a valid submission treated as incorrect.
 - Returns `QuizSessionAnswer`.
@@ -195,7 +254,7 @@ interface CompleteQuizSessionCommand {
 
 - Transitions session from ACTIVE to COMPLETED and snapshots results.
 - Idempotent: calling on an already-COMPLETED session returns the stored results without error.
-- Computes score, totalQuestions, correctCount, incorrectQuizIds, failingChapterIds.
+- Computes score, totalQuestions, correctCount, incorrectQuizIds, failingChapterIds using the session's frozen quiz data.
 - Writes results columns to the session row.
 - Returns `QuizSession` with populated results.
 
@@ -208,8 +267,7 @@ interface AdminDeleteExpiredSessionsCommand {
 ```
 
 - Deletes all sessions where `createdAt < Date.now() - QUIZ_SESSION_TTL_MS` (90 days).
-- Cascade-deletes all associated answer rows.
-- Also deletes orphaned answer rows where `quizId IS NULL` (cleanup from quiz deletions).
+- Cascade-deletes all associated `quiz_session_quiz`, `quiz_session_quiz_option`, and `quiz_session_answer` rows. No orphaned cleanup needed — all child rows cascade cleanly.
 - Admin-only procedure.
 - Returns `{ deletedCount: number }`.
 
@@ -234,11 +292,11 @@ interface GetQuizSessionQuestionsQuery {
 }
 ```
 
-- Resolves quizzes in scope dynamically (current state of the quiz table).
-- Sorts quizzes by `id` ascending, then shuffles using `Rng(sessionId)`.
-- Returns full `QuizWithOptions` (including `isCorrect` on options) plus `currentAnswer: string[] | null` per quiz.
+- Fetches all quizzes from the frozen session snapshot (`quiz_session_quiz` + `quiz_session_quiz_option`).
+- Sorts by `position` ASC, then shuffles using `Rng(sessionId)`.
+- Returns `QuizSessionQuestionItem[]` (session quiz with options + `currentAnswer: string[] | null`).
 - `currentAnswer` is `null` if no answer has been submitted for that quiz; `[]` if an empty submission exists; the stored `selectedOptionIds` otherwise.
-- Empty scope returns `[]`.
+- Empty session returns `[]`.
 - No pagination (v1: all quizzes returned).
 
 ### GetQuizSessionResults
@@ -249,9 +307,9 @@ interface GetQuizSessionResultsQuery {
 }
 ```
 
-- On ACTIVE sessions: computes live score from current answers and current scope. Returns `totalQuestions` = current scope count, unanswered quizzes shown as incorrect with `selectedOptionIds: null`.
+- On ACTIVE sessions: computes live score from current answers and session-quiz snapshot. Returns `totalQuestions` = quizCount, unanswered quizzes shown as incorrect with `selectedOptionIds: null`.
 - On COMPLETED sessions: returns the stored immutable snapshot.
-- Returns `{ score, totalQuestions, correctCount, incorrectQuestions: QuizWithOptions & { selectedOptionIds: string[] | null }[], failingChapterIds: string[] }`.
+- Returns `{ score, totalQuestions, correctCount, incorrectQuestions: QuizSessionQuestionItem[], failingChapterIds: string[] }`.
 - `incorrectQuestions` includes full quiz data with options (`isCorrect` included) so the client can render a review UI in one round-trip.
 
 ### ListQuizSessions
@@ -273,28 +331,62 @@ interface ListQuizSessionsQuery {
 - Use standard Drizzle schema definitions.
 - Store `status` as an uppercase string and validate allowed values in TypeScript/Valibot.
 - Store `incorrectQuizIds` and `failingChapterIds` as JSON text columns.
-- Quiz FK on `quiz_session_answer`: `ON DELETE SET NULL`.
-- Session FK on `quiz_session_answer`: `ON DELETE CASCADE`.
-- User FK on `quiz_session`: `ON DELETE CASCADE`.
-- Chapter FK on `quiz_session`: `ON DELETE SET NULL`.
-- StudySet FK on `quiz_session`: `ON DELETE CASCADE`.
-- Index `userId`, `studySetId`, `status`, `createdAt` on `quiz_session`.
-- Index `sessionId` on `quiz_session_answer`.
-- Unique constraint on `quiz_session_answer(sessionId, quizId)`.
+- FK cascades:
+  - `quiz_session_quiz.sessionId` → `quiz_session.id`: `ON DELETE CASCADE`
+  - `quiz_session_quiz_option.sessionQuizId` → `quiz_session_quiz.id`: `ON DELETE CASCADE`
+  - `quiz_session_quiz.originalQuizId` → `quiz.id`: `ON DELETE SET NULL`
+  - `quiz_session_answer.sessionId` → `quiz_session.id`: `ON DELETE CASCADE`
+  - `quiz_session_answer.sessionQuizId` → `quiz_session_quiz.id`: `ON DELETE CASCADE`
+  - `quiz_session.userId` → `user.id`: `ON DELETE CASCADE`
+  - `quiz_session.chapterId` → `chapter.id`: `ON DELETE SET NULL`
+  - `quiz_session.studySetId` → `studySet.id`: `ON DELETE CASCADE`
+- Indexes:
+  - `quiz_session`: `userId`, `studySetId`, `status`, `createdAt`
+  - `quiz_session_quiz`: `sessionId`, `originalQuizId`
+  - `quiz_session_quiz_option`: `sessionQuizId`
+  - `quiz_session_answer`: `sessionId`, `(sessionId, sessionQuizId)` (unique)
+- Unique constraint on `quiz_session_answer(sessionId, sessionQuizId)`.
 
 ## Errors
 
 - `UNAUTHORIZED`: missing authenticated user.
 - `FORBIDDEN`: authenticated user cannot view the studySet for session creation.
 - `NOT_FOUND`: session, studySet, chapter, or quiz not found or not visible to the user.
-- `VALIDATION_FAILED`: invalid input payload, chapter does not belong to studySet, quiz not in session scope, option IDs do not belong to the quiz.
+- `VALIDATION_FAILED`: invalid input payload, chapter does not belong to studySet, session-quiz not in session, option IDs do not belong to the session-quiz.
 - `SESSION_ALREADY_COMPLETED`: attempt to submit an answer to a completed session.
+
+## Dependency Wiring
+
+Following decisions from the grill:
+
+```
+QuizSessionService(repo: QuizSessionRepository, guard: QuizSessionGuard, quizRepo: QuizRepository)
+QuizSessionGuard(repo: QuizSessionRepository, studySetGuard: StudySetGuard, chapterRepo: ChapterRepository)
+QuizSessionDrizzleRepository()
+
+index.ts:
+  const quizRepo = new QuizDrizzleRepository()
+  const chapterRepo = new ChapterDrizzleRepository()
+  const quizSessionRepo = new QuizSessionDrizzleRepository()
+  export const quizSessionGuard = new QuizSessionGuard(quizSessionRepo, studySetGuard, chapterRepo)
+  export const quizSessionService = new QuizSessionService(quizSessionRepo, quizSessionGuard, quizRepo)
+```
+
+- `ChapterRepository` must be exported from `chapter/index.ts`.
+- Guard handles all validation (auth + business), throws `UNAUTHORIZED | FORBIDDEN | NOT_FOUND | VALIDATION_FAILED | SESSION_ALREADY_COMPLETED`.
+- Service orchestrates, calls guard for all validation, delegates to repos.
+- Scoring logic lives in `quiz-session.scoring.ts` utility.
 
 ## ID Prefixes
 
-- QuizSession: `qse_` (generated via `generateId("qse")`)
-- QuizSessionAnswer: `qsa_` (generated via `generateId("qsa")`)
-- Validated via `createPrefixedIdSchema("qse")` / `createPrefixedIdSchema("qsa")` in schemas.
+| Entity                | Prefix | Generator           |
+| --------------------- | ------ | ------------------- |
+| QuizSession           | `qse`  | `generateId("qse")` |
+| QuizSessionQuiz       | `qsg`  | `generateId("qsg")` |
+| QuizSessionQuizOption | `qso`  | `generateId("qso")` |
+| QuizSessionAnswer     | `qsa`  | `generateId("qsa")` |
+
+Validated via `createPrefixedIdSchema("qse")` / etc. in schemas.
 
 ## Constants
 
