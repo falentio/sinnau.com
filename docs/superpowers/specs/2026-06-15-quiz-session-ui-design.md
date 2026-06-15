@@ -20,6 +20,8 @@ The design system uses shadcn-svelte + Tailwind v4, `rounded-4xl bg-card shadow-
 
 Three new routes, one new layout, thirteen new feature components, one new backend query. The hub is a combined dashboard (resume-active-session card + start-new-session card with inline chapter picker + recent-sessions list with status filter). The taking page is one-question-per-screen with highlight-only, deferred-feedback selection, clickable progress pills, and client-side direct-oRPC auto-save (per-type timing). The results page is a hero score + chapter analysis (informational, when applicable) + incorrect-question review.
 
+**Motion choreography (Q16):** static. The question card swaps content instantly on navigation — no `fly` or `fade` transition. No SvelteKit page transitions between hub/taking/results. The only choreographed motions are the count-up on the results hero (1.2s tween) and the pulse on the current progress pill (CSS keyframes). All gated by `prefers-reduced-motion`. The progress pills are the visual feedback for question-change events.
+
 ## URL Structure & Layout
 
 ```
@@ -254,8 +256,8 @@ The hero stays neutral — no green/red, no confetti, no color-shifting score. O
 - Double-bezel outer + `border-l-4 border-primary/20` accent stripe
 - Type badge
 - Question text
-- For MC/MS: "Jawaban kamu" list with `✕` next to the user's selected option(s), "Jawaban benar" list with `✓` next to the correct option(s), "Penjelasan" section if the correct option has an `explanation`
-- For FITB: "Jawaban benar: {options[0].optionText}" with "Penjelasan" section if any. No "Jawaban kamu" line for FITB (see the FITB v1 compatibility note below).
+- For MC/MS: "Jawaban kamu" list with `✕` next to the user's selected option(s), "Jawaban benar" list with `✓` next to the correct option(s), "Penjelasan" section (Q17: **expanded by default**, no click-to-expand) if the correct option has an `explanation`
+- For FITB: "Jawaban benar: {options[0].optionText}" with "Penjelasan" section (expanded by default) if any. No "Jawaban kamu" line for FITB (see the FITB v1 compatibility note below).
 - Hidden entirely when `results.incorrectQuestions.length === 0` (perfect score). The hero copy changes to "Sempurna" in that case.
 
 **4. Footer CTAs** — both link to `/session/[studySetId]/quiz/` (the hub):
@@ -477,6 +479,8 @@ A proper FITB refactor is deferred. The likely shape: store the user's typed str
 - **Q13 — Score copy thresholds {100, 90–99, 75–89, 0–74}:** `scoreToCopy` thresholds changed. Labels: `100 = Sempurna`, `90–99 = Bagus sekali`, `75–89 = Hebat`, `0–74 = Coba lagi`. The chapter analysis section's visibility logic (`failingChapterIds.length > 0`) is unchanged — independent of the score thresholds.
 - **Q14 — 4-state progress pills:** pill visual states expanded from 2 (filled/empty + current highlight) to 4 (Unvisited outline / Visited-unanswered diagonal-stripe / Answered solid filled with chapter accent / Current with `ring-2 ring-offset-2 ring-foreground` border). Implementation lives in a pure function `answerStateForPill` in `$lib/utils/quiz-session.ts` so the state logic is testable.
 - **Q15 — Chapter analysis section is informational only:** no per-chapter "Ulangi" CTAs in the failing-chapter section. The section just lists chapter titles + "N salah" counts, with chips that navigate to the study set filtered by chapter. YAGNI for v1 — user can navigate back to the hub to retry.
+- **Q16 — Motion choreography is static:** no question-change or page transitions. The question card swaps instantly, no SvelteKit page transitions between hub/taking/results. Only the count-up on the results hero and the pulse on the current pill are choreographed. The progress pills' active-index change is the visual feedback for question-change events.
+- **Q17 — Penjelasan section is expanded by default:** no click-to-expand. The user came to the results page to learn what they got wrong and why — hiding the explanation behind a tap is a tax on the primary review flow. "Show, don't hide" per the high-end-visual-design playbook.
 - **Component count:** 12 → 13 (added `quiz-session-list-filter.svelte`).
 - **Test surface:** added a small `quiz-session.utils.test.ts` block (10–15 cases) to lock down the `answerStateForPill` pure function. The rest of the frontend remains dev-stub-verified.
 - **Out of scope additions:** tab sync, `beforeunload` warning, multiple-Actives-as-multiple-Card-A's. Each logged in the "Out of Scope / Deferred" section.
