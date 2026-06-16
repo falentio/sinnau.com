@@ -1,6 +1,14 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
+  import {
+    CrownIcon,
+    HappyIcon,
+    IdeaIcon,
+    SadIcon,
+  } from "$lib/components/features/icons";
   import { scoreToCopy, tweenedScore } from "$lib/utils/quiz-session";
-  import { Arc } from "layerchart";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { Arc, Chart, Layer } from "layerchart";
 
   interface Props {
     score: number;
@@ -15,10 +23,36 @@
   $effect(() => tweened.subscribe((v) => (tweenedValue = v)));
 
   const isLow = $derived(score < 75);
-  const arcColor = $derived(isLow ? "stroke-destructive" : "stroke-primary");
-  const trackColor = "stroke-muted";
+  const fillColor = $derived(isLow ? "fill-destructive" : "fill-primary");
+  const percent = $derived(total > 0 ? (score / total) * 100 : 0);
+  const roundedValue = $derived(Math.round(tweenedValue));
+  const copy = $derived(scoreToCopy(score));
 
-  const tweenedPercent = $derived(total > 0 ? (tweenedValue / total) * 100 : 0);
+  const scoreIcon = $derived.by(() => {
+    if (score === 100) {
+      return CrownIcon;
+    }
+    if (score >= 90) {
+      return HappyIcon;
+    }
+    if (score >= 75) {
+      return IdeaIcon;
+    }
+    return SadIcon;
+  });
+
+  const scoreIconColor = $derived.by(() => {
+    if (score === 100) {
+      return "bg-amber-100 text-amber-700";
+    }
+    if (score >= 90) {
+      return "bg-emerald-100 text-emerald-700";
+    }
+    if (score >= 75) {
+      return "bg-blue-100 text-blue-700";
+    }
+    return "bg-red-100 text-red-700";
+  });
 </script>
 
 <div
@@ -28,25 +62,39 @@
     class="flex w-full flex-col items-center gap-1 rounded-[calc(2rem-0.375rem)] bg-background/50 p-8"
   >
     <div class="relative size-48">
-      <Arc
-        value={tweenedPercent}
-        domain={[0, 100]}
-        range={[-90, 270]}
-        innerRadius={0.85}
-        outerRadius={1}
-        cornerRadius={8}
-        track={{ class: trackColor }}
-        class={arcColor}
-      />
+      {#if browser}
+        <Chart width={192} height={192} padding={0}>
+          <Layer center>
+            <Arc
+              value={percent}
+              domain={[0, 100]}
+              range={[-90, 270]}
+              innerRadius={0.85}
+              outerRadius={1}
+              cornerRadius={8}
+              track={{ class: "fill-muted" }}
+              class={fillColor}
+            />
+          </Layer>
+        </Chart>
+      {/if}
       <div class="absolute inset-0 flex flex-col items-center justify-center">
         <p
           class="text-7xl font-semibold leading-none tracking-tighter tabular-nums md:text-8xl"
         >
-          {tweenedValue}
+          {roundedValue}
         </p>
       </div>
     </div>
     <p class="text-sm text-muted-foreground">{score} dari {total} benar</p>
-    <p class="mt-2 text-base font-medium">{scoreToCopy(score)}</p>
+
+    <div class="mt-2 flex items-center gap-2">
+      <span
+        class="flex size-6 items-center justify-center rounded-full {scoreIconColor}"
+      >
+        <HugeiconsIcon icon={scoreIcon} class="size-3.5" />
+      </span>
+      <p class="text-base font-medium">{copy}</p>
+    </div>
   </div>
 </div>
