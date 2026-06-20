@@ -1,0 +1,25 @@
+import { env } from "$env/dynamic/private";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+
+const getClient = () => {
+  if (env.AI_COMPATIBILITY === "openai") {
+    return createOpenAICompatible({
+      apiKey: env.AI_APIKEY,
+      baseURL: env.AI_BASEURL,
+      async fetch(...args) {
+        const init: RequestInit = args[1] ?? {};
+        const body = JSON.parse(init.body as string);
+        console.log({
+          keys: Object.keys(body),
+          thinking: body.thinking,
+        });
+        return await fetch(...args);
+      },
+      name: env.AI_PROVIDER_NAME,
+    });
+  }
+  throw new Error(`Unsupported AI_COMPATIBILITY: ${env.AI_COMPATIBILITY}`);
+};
+
+export const client = getClient();
+export const defaultModel = client(env.AI_MODEL);
