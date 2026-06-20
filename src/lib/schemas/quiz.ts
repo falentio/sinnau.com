@@ -3,7 +3,6 @@ import * as v from "valibot";
 import { CHAPTER_ID_PREFIX } from "./chapter.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
 import {
-  FITB_OPTION_EXACT,
   MCQ_OPTION_MAX,
   MCQ_OPTION_MIN,
   MS_OPTION_MAX,
@@ -78,11 +77,6 @@ export const validateQuizOptions = (
         options.length >= MS_OPTION_MIN &&
         options.length <= MS_OPTION_MAX &&
         options.some((o) => o.isCorrect)
-      );
-    }
-    case "FILL_IN_THE_BLANK": {
-      return (
-        options.length === FITB_OPTION_EXACT && options[0]?.isCorrect === true
       );
     }
     default: {

@@ -107,8 +107,8 @@ export class QuizSessionGuard {
     }
     const options = await this.repo.findSessionQuizOptionsByIds(optionIds);
     const foundIds = new Set(options.map((o) => o.id));
-
     const notFound = optionIds.filter((id) => !foundIds.has(id));
+
     if (notFound.length > 0) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Some option IDs do not exist",

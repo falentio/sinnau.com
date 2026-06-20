@@ -33,7 +33,7 @@ Quiz is not responsible for:
 ## Entities
 
 ```typescript
-type QuizType = "MULTIPLE_CHOICE" | "MULTIPLE_SELECT" | "FILL_IN_THE_BLANK";
+type QuizType = "MULTIPLE_CHOICE" | "MULTIPLE_SELECT";
 
 interface Quiz {
   id: UUID;
@@ -87,12 +87,9 @@ interface QuizOption {
 
 - `MULTIPLE_CHOICE` quizzes require 2-6 options and exactly one correct option.
 - `MULTIPLE_SELECT` quizzes require 2-10 options and at least one correct option.
-- `FILL_IN_THE_BLANK` quizzes require exactly one option with `isCorrect: true`.
 - Option constraints are validated via the input schema for quiz creation and via valibot schema for all option mutation commands.
 - Option create/update/delete commands must preserve the quiz type invariants defined above.
 - Quiz type cannot be changed after creation.
-- Multiple acceptable answers for fill-in-the-blank are not supported.
-- Fill-in-the-blank uses the unified QuizOption model, not a separate `correctAnswer` field.
 
 ## Visibility And Authorization
 
@@ -259,7 +256,6 @@ interface GetQuizQuery {
 
 - Quiz attempts and progress tracking are deferred to a separate domain.
 - Scoring sessions and spaced repetition are not handled here.
-- Multiple acceptable fill-in-the-blank answers are not supported.
 - Markdown/rich text is not supported.
 - Images are not supported.
 - Cloze deletion is not supported.

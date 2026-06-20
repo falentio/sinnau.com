@@ -7,7 +7,7 @@ import { error as httpError, fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
 const isTakingStubFilter = (value: string): value is DevStubFilter =>
-  value === "mc" || value === "ms" || value === "fitb";
+  value === "mc" || value === "ms";
 
 const isRedirect = (cause: unknown): cause is Response => {
   if (!(cause instanceof Response)) {

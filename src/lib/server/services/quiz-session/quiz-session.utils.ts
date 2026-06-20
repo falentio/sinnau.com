@@ -10,7 +10,6 @@ const DEV_STUB_FILTER_VALUES = [
   "500",
   "mc",
   "ms",
-  "fitb",
   "perfect",
   "partial",
   "zero",
@@ -41,51 +40,39 @@ const makeSession = (
   };
 };
 
-type QuestionType = "MULTIPLE_CHOICE" | "MULTIPLE_SELECT" | "FILL_IN_THE_BLANK";
+type QuestionType = "MULTIPLE_CHOICE" | "MULTIPLE_SELECT";
 
 const makeQuestion = (
   type: QuestionType,
   isIncorrect = false
 ): QuizSessionQuestionItem => {
-  const isFillInTheBlank = type === "FILL_IN_THE_BLANK";
   const sessionQuizId = `qsa_q${type.toLowerCase()}0000000001`;
-  const options: QuizSessionQuestionItem["options"] = isFillInTheBlank
-    ? [
-        {
-          explanation: null,
-          id: `qso_${type.toLowerCase()}0000000001`,
-          isCorrect: true,
-          optionText: "correct answer",
-          position: 0,
-          sessionQuizId,
-        },
-      ]
-    : [
-        {
-          explanation: null,
-          id: `qso_${type.toLowerCase()}0000000001`,
-          isCorrect: true,
-          optionText: "Correct",
-          position: 0,
-          sessionQuizId,
-        },
-        {
-          explanation: null,
-          id: `qso_${type.toLowerCase()}0000000002`,
-          isCorrect: false,
-          optionText: "Wrong 1",
-          position: 1,
-          sessionQuizId,
-        },
-        {
-          explanation: null,
-          id: `qso_${type.toLowerCase()}0000000003`,
-          isCorrect: false,
-          optionText: "Wrong 2",
-          position: 2,
-          sessionQuizId,
-        },
-      ];
+  const options: QuizSessionQuestionItem["options"] = [
+    {
+      explanation: null,
+      id: `qso_${type.toLowerCase()}0000000001`,
+      isCorrect: true,
+      optionText: "Correct",
+      position: 0,
+      sessionQuizId,
+    },
+    {
+      explanation: null,
+      id: `qso_${type.toLowerCase()}0000000002`,
+      isCorrect: false,
+      optionText: "Wrong 1",
+      position: 1,
+      sessionQuizId,
+    },
+    {
+      explanation: null,
+      id: `qso_${type.toLowerCase()}0000000003`,
+      isCorrect: false,
+      optionText: "Wrong 2",
+      position: 2,
+      sessionQuizId,
+    },
+  ];
 
   let currentAnswer: string[] | null = null;
   if (isIncorrect) {
@@ -133,7 +120,6 @@ const hubStubs = {
 } as const;
 
 const takingStubs = {
-  fitb: () => [makeQuestion("FILL_IN_THE_BLANK")],
   mc: () => [makeQuestion("MULTIPLE_CHOICE")],
   ms: () => [makeQuestion("MULTIPLE_SELECT")],
 } as const;
@@ -199,9 +185,6 @@ export const getTakingStub = (
   }
   if (filter === "ms") {
     return takingStubs.ms();
-  }
-  if (filter === "fitb") {
-    return takingStubs.fitb();
   }
   return null;
 };

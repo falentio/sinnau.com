@@ -28,9 +28,6 @@ export const getDefaultOptions = (
         { explanation: "", isCorrect: false, optionText: "" },
       ];
     }
-    case "FILL_IN_THE_BLANK": {
-      return [{ explanation: "", isCorrect: true, optionText: "" }];
-    }
     default: {
       return [
         { explanation: "", isCorrect: true, optionText: "" },
@@ -88,7 +85,7 @@ export const createQuizForm = () => {
         if (!submittedForm.valid) {
           return;
         }
-        await submitQuiz(submittedForm.data as CreateQuizInput);
+        await submitQuiz(submittedForm.data);
       },
       resetForm: false,
       validators: valibotClient(createQuizInputSchema),

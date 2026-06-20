@@ -4,7 +4,6 @@
     createQuizForm,
     getDefaultOptions,
   } from "$lib/components/features/quiz/create-quiz-form";
-  import FillInTheBlankFields from "$lib/components/features/quiz/fill-in-the-blank-fields.svelte";
   import MultipleChoiceFields from "$lib/components/features/quiz/multiple-choice-fields.svelte";
   import MultipleSelectFields from "$lib/components/features/quiz/multiple-select-fields.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
@@ -31,7 +30,6 @@
   const quizTypeItems = [
     { label: "Pilihan Ganda", value: "MULTIPLE_CHOICE" },
     { label: "Pilihan Banyak", value: "MULTIPLE_SELECT" },
-    { label: "Isian Singkat", value: "FILL_IN_THE_BLANK" },
   ];
 
   const handleTypeChange = (value: string) => {
@@ -170,13 +168,6 @@
     />
   {:else if $formData.type === "MULTIPLE_SELECT"}
     <MultipleSelectFields
-      {form}
-      {formData}
-      disabled={$submitting}
-      showExplanation={showExplanations}
-    />
-  {:else if $formData.type === "FILL_IN_THE_BLANK"}
-    <FillInTheBlankFields
       {form}
       {formData}
       disabled={$submitting}

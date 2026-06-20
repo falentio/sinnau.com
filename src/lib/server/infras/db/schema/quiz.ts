@@ -5,11 +5,7 @@ import { user } from "./auth-schema.ts";
 import { chapter } from "./chapter.ts";
 import { studySet } from "./study-set.ts";
 
-export const QUIZ_TYPES = [
-  "MULTIPLE_CHOICE",
-  "MULTIPLE_SELECT",
-  "FILL_IN_THE_BLANK",
-] as const;
+export const QUIZ_TYPES = ["MULTIPLE_CHOICE", "MULTIPLE_SELECT"] as const;
 export type QuizType = (typeof QUIZ_TYPES)[number];
 
 export const quiz = sqliteTable(

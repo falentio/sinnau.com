@@ -27,19 +27,9 @@
   const QUIZ_TYPE_OPTIONS = [
     { label: "Pilihan Ganda", value: "MULTIPLE_CHOICE" as const },
     { label: "Pilihan Banyak", value: "MULTIPLE_SELECT" as const },
-    { label: "Isian Singkat", value: "FILL_IN_THE_BLANK" as const },
   ];
 
   const stubOptionsForType = (type: QuizType) => {
-    if (type === "FILL_IN_THE_BLANK") {
-      return [
-        {
-          explanation: "Penjelasan stub untuk opsi isian singkat",
-          isCorrect: true,
-          optionText: "jawaban-stub",
-        },
-      ];
-    }
     if (type === "MULTIPLE_CHOICE") {
       return [
         {

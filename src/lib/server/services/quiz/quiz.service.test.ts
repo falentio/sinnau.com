@@ -671,41 +671,6 @@ describe.concurrent(QuizService, () => {
       expect(result.optionsToCreate).toHaveLength(2);
     });
 
-    it("rejects FITB with multiple options", async ({ expect }) => {
-      const { repo, service, ownedQuiz } = setupService();
-      ownedQuiz.type = "FILL_IN_THE_BLANK";
-      repo.findOptionsByQuizIds.mockResolvedValue([]);
-      const err = await captureError(
-        service.processOptions(QUIZ_ID, [
-          { isCorrect: true, optionText: "A" },
-          { isCorrect: true, optionText: "B" },
-        ])
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-
-    it("rejects FITB with incorrect answer", async ({ expect }) => {
-      const { repo, service, ownedQuiz } = setupService();
-      ownedQuiz.type = "FILL_IN_THE_BLANK";
-      repo.findOptionsByQuizIds.mockResolvedValue([]);
-      const err = await captureError(
-        service.processOptions(QUIZ_ID, [{ isCorrect: false, optionText: "A" }])
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-
-    it("accepts FITB with one correct option", async ({ expect }) => {
-      const { repo, service, ownedQuiz } = setupService();
-      ownedQuiz.type = "FILL_IN_THE_BLANK";
-      repo.findOptionsByQuizIds.mockResolvedValue([]);
-      const result = await service.processOptions(QUIZ_ID, [
-        { isCorrect: true, optionText: "Answer" },
-      ]);
-      expect(result.optionsToCreate).toHaveLength(1);
-    });
-
     it("accepts valid MCQ configuration", async ({ expect }) => {
       const { repo, service, ownedQuiz } = setupService();
       ownedQuiz.type = "MULTIPLE_CHOICE";
@@ -840,20 +805,6 @@ describe.concurrent(QuizService, () => {
       expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
 
-    it("rejects deleting the only FITB option", async ({ expect }) => {
-      const { repo, service, ownedOption, ownedQuiz } = setupService();
-      ownedOption.isCorrect = true;
-      ownedQuiz.type = "FILL_IN_THE_BLANK";
-      repo.findOptionsByIdsForOwner.mockResolvedValue([ownedOption]);
-      repo.findQuizzesByIds.mockResolvedValue([ownedQuiz]);
-      repo.findOptionsByQuizIds.mockResolvedValue([ownedOption]);
-      const err = await captureError(
-        service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-
     it("rejects MS removing the last correct option (batch delete)", async ({
       expect,
     }) => {
@@ -874,22 +825,6 @@ describe.concurrent(QuizService, () => {
       const { repo, service, ownedOption, ownedQuiz } = setupService();
       ownedOption.isCorrect = true;
       ownedQuiz.type = "MULTIPLE_CHOICE";
-      repo.findOptionsByIdsForOwner.mockResolvedValue([ownedOption]);
-      repo.findQuizzesByIds.mockResolvedValue([ownedQuiz]);
-      repo.findOptionsByQuizIds.mockResolvedValue([ownedOption]);
-      const err = await captureError(
-        service.deleteQuizOptions({ ids: [OPTION_ID] }, "owner-1")
-      );
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-
-    it("rejects deleting the only FITB option (the answer)", async ({
-      expect,
-    }) => {
-      const { repo, service, ownedOption, ownedQuiz } = setupService();
-      ownedOption.isCorrect = true;
-      ownedQuiz.type = "FILL_IN_THE_BLANK";
       repo.findOptionsByIdsForOwner.mockResolvedValue([ownedOption]);
       repo.findQuizzesByIds.mockResolvedValue([ownedQuiz]);
       repo.findOptionsByQuizIds.mockResolvedValue([ownedOption]);

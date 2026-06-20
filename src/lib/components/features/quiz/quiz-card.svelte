@@ -9,6 +9,7 @@
   import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+  import type { QuizType } from "$lib/schemas/quiz.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   interface Props {
@@ -16,7 +17,7 @@
       chapterId: string | null;
       id: string;
       questionText: string;
-      type: "MULTIPLE_CHOICE" | "MULTIPLE_SELECT" | "FILL_IN_THE_BLANK";
+      type: QuizType;
       options: {
         explanation: string | null;
         id: string;
@@ -33,17 +34,11 @@
 
   let openExplanation = $state(false);
 
-  const getTypeLabel = (type: string) => {
-    if (type === "MULTIPLE_CHOICE") {
-      return "Pilihan Ganda";
-    }
-    if (type === "MULTIPLE_SELECT") {
-      return "Pilihan Ganda Kompleks";
-    }
-    return "Isian";
+  const TYPE_LABELS: Record<QuizType, string> = {
+    MULTIPLE_CHOICE: "Pilihan Ganda",
+    MULTIPLE_SELECT: "Pilihan Ganda Kompleks",
   };
-
-  const typeLabel = $derived(getTypeLabel(quiz.type));
+  const typeLabel = $derived(TYPE_LABELS[quiz.type]);
 </script>
 
 <div class="rounded-4xl bg-card text-card-foreground shadow-xs">
@@ -96,46 +91,32 @@
 
     <h3 class="mt-3 text-lg font-semibold">{quiz.questionText}</h3>
 
-    {#if quiz.type === "FILL_IN_THE_BLANK"}
-      {#if quiz.options[0]}
-        <div class="mt-4 rounded-2xl border bg-background/50 p-4">
-          <p class="text-sm font-medium text-muted-foreground">Kunci Jawaban</p>
-          <p class="mt-1 font-medium">{quiz.options[0].optionText}</p>
-          {#if quiz.options[0].explanation && openExplanation}
-            <p class="mt-1 text-sm text-muted-foreground">
-              {quiz.options[0].explanation}
-            </p>
-          {/if}
-        </div>
-      {/if}
-    {:else}
-      <div class="mt-4 grid gap-2" role="list" aria-label="Pilihan jawaban">
-        {#each quiz.options as option, optionIndex (option.id)}
+    <div class="mt-4 grid gap-2" role="list" aria-label="Pilihan jawaban">
+      {#each quiz.options as option, optionIndex (option.id)}
+        <div
+          class="flex items-center gap-3 rounded-2xl border bg-background/50 p-4"
+          role="listitem"
+        >
           <div
-            class="flex items-center gap-3 rounded-2xl border bg-background/50 p-4"
-            role="listitem"
+            class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold"
           >
-            <div
-              class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold"
-            >
-              {String.fromCharCode(65 + optionIndex)}
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="gap-2">
-                {#if option.isCorrect}
-                  <Badge class="inline-flex">Jawaban benar</Badge>
-                {/if}
-                <p class="font-medium">{option.optionText}</p>
-              </div>
-              {#if option.explanation && openExplanation}
-                <p class="mt-1 text-sm text-muted-foreground">
-                  {option.explanation}
-                </p>
-              {/if}
-            </div>
+            {String.fromCharCode(65 + optionIndex)}
           </div>
-        {/each}
-      </div>
-    {/if}
+          <div class="min-w-0 flex-1">
+            <div class="gap-2">
+              {#if option.isCorrect}
+                <Badge class="inline-flex">Jawaban benar</Badge>
+              {/if}
+              <p class="font-medium">{option.optionText}</p>
+            </div>
+            {#if option.explanation && openExplanation}
+              <p class="mt-1 text-sm text-muted-foreground">
+                {option.explanation}
+              </p>
+            {/if}
+          </div>
+        </div>
+      {/each}
+    </div>
   </div>
 </div>

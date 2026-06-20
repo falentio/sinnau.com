@@ -161,7 +161,7 @@ The set of quizzes for a session is the frozen snapshot — not dynamically reso
 
 ## Scoring
 
-- **Correct**: For MULTIPLE_CHOICE and FILL_IN_THE_BLANK, the single correct option ID matches exactly. For MULTIPLE_SELECT, the set of selected option IDs matches the set of correct option IDs exactly (no missing, no extra).
+- **Correct**: For MULTIPLE_CHOICE, the single correct option ID matches exactly. For MULTIPLE_SELECT, the set of selected option IDs matches the set of correct option IDs exactly (no missing, no extra).
 - **Incorrect**: Any answer that does not match the correct set, including empty `[]` submissions.
 - **Unanswered**: Quizzes in the session snapshot with no `quiz_session_answer` row. Counted as incorrect in scoring, shown with `selectedOptionIds: null`.
 - **Empty session completion**: If zero answers exist, score = 0, totalQuestions = quizCount, correctCount = 0.

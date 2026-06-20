@@ -72,7 +72,7 @@ export const quizSessionQuiz = sqliteTable(
       .notNull()
       .references(() => quizSession.id, { onDelete: "cascade" }),
     type: text("type", {
-      enum: ["MULTIPLE_CHOICE", "MULTIPLE_SELECT", "FILL_IN_THE_BLANK"],
+      enum: ["MULTIPLE_CHOICE", "MULTIPLE_SELECT"],
     }).notNull(),
   },
   (table) => [
