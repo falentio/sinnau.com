@@ -4,22 +4,26 @@ export class Rng {
 
   private state!: number;
 
-  constructor(seed: string) {
+  constructor(seed: string | string[]) {
     this.initialize(seed);
   }
 
-  initialize(seed: string): void {
+  initialize(seed: string | string[]): void {
     this.state = Rng.hashSeed(seed);
     if (this.state === 0) {
       this.state = 1;
     }
+    for (let i = 0; i < 11; i += 1) {
+      this.step();
+    }
   }
 
-  private static hashSeed(seed: string): number {
+  private static hashSeed(seed: string | string[]): number {
+    const seedString = Array.isArray(seed) ? seed.join("--1108--") : seed;
     let h = 5381;
-    for (let i = 0; i < seed.length; i += 1) {
+    for (let i = 0; i < seedString.length; i += 1) {
       // oxlint-disable-next-line no-bitwise
-      h = Math.trunc((h << 5) + h) ^ (seed.codePointAt(i) ?? 0);
+      h = Math.trunc((h << 5) + h) ^ (seedString.codePointAt(i) ?? 0);
     }
     return h;
   }
@@ -103,4 +107,8 @@ export class Rng {
   }
 }
 
-export const createRng = (seed: string) => new Rng(seed);
+export const createRng = (seed: string | string[]) => new Rng(seed);
+export const shuffle = <T>(arr: readonly T[], seed: string | string[]): T[] => {
+  const rng = createRng(seed);
+  return rng.shuffle(arr);
+};
