@@ -4,6 +4,7 @@ import { FlashcardDrizzleRepository } from "./flashcard.repository.drizzle.ts";
 import { FlashcardService } from "./flashcard.service.ts";
 
 const flashcardRepo = new FlashcardDrizzleRepository();
+export { flashcardRepo };
 export const flashcardGuard = new FlashcardGuard(flashcardRepo, studySetGuard);
 export const flashcardService = new FlashcardService(
   flashcardRepo,
