@@ -1,5 +1,7 @@
 import { totalmem } from "node:os";
+import { hrtime } from "node:process";
 
+import { dev } from "$app/env";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -9,9 +11,103 @@ import * as schema from "./schema/index.ts";
 
 const MMAP_CAP = 512 * 1024 * 1024;
 
+const proxyDatabase = (sqlite: Database.Database): Database.Database => {
+  const exec = sqlite.exec.bind(sqlite);
+  const REPORT_SLOW_QUERIES_MS = 5;
+  sqlite.exec = (sql) => {
+    const start = hrtime.bigint();
+    try {
+      console.log("Executing SQL:", sql);
+      return exec(sql);
+    } finally {
+      const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
+      if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+        console.log(`Execution completed in ${durationMs.toFixed(2)} ms`, {
+          sql,
+        });
+      }
+    }
+  };
+
+  const transaction = sqlite.transaction.bind(sqlite);
+  type TransactionFn = typeof transaction;
+  sqlite.transaction = ((fn) => {
+    const wrappedFn = (...args: Parameters<typeof fn>) => {
+      const start = hrtime.bigint();
+      try {
+        return fn(...args);
+      } finally {
+        const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
+        if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+          console.log(`Transaction completed in ${durationMs.toFixed(2)} ms`);
+        }
+      }
+    };
+    return transaction(wrappedFn);
+  }) as TransactionFn;
+
+  const prepare = sqlite.prepare.bind(sqlite);
+  type PrepareFn = typeof prepare;
+  sqlite.prepare = ((sql) => {
+    const start = hrtime.bigint();
+    try {
+      const prepared = prepare(sql);
+      const originalRun = prepared.run.bind(prepared);
+      prepared.run = (...argsRun: Parameters<typeof originalRun>) => {
+        const preparedStart = hrtime.bigint();
+        try {
+          return originalRun(...argsRun);
+        } finally {
+          const durationMs =
+            Number(hrtime.bigint() - preparedStart) / 1_000_000;
+          if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+            console.log(
+              `Prepared statement run in ${durationMs.toFixed(2)} ms`,
+              {
+                sql,
+              }
+            );
+          }
+        }
+      };
+
+      const originalRaw = prepared.raw.bind(prepared);
+      prepared.raw = (...argsRaw: Parameters<typeof originalRaw>) => {
+        const preparedStart = hrtime.bigint();
+        try {
+          return originalRaw(...argsRaw);
+        } finally {
+          const durationMs =
+            Number(hrtime.bigint() - preparedStart) / 1_000_000;
+          if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+            console.log(
+              `Prepared statement raw in ${durationMs.toFixed(2)} ms`,
+              {
+                sql,
+              }
+            );
+          }
+        }
+      };
+
+      return prepared;
+    } finally {
+      const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
+      if (durationMs > REPORT_SLOW_QUERIES_MS) {
+        console.log(`Prepared statement in ${durationMs.toFixed(2)} ms`, {
+          sql,
+        });
+      }
+    }
+  }) as PrepareFn;
+
+  return sqlite;
+};
+
 export const createDb = (options: { fileName: string }) => {
   const { fileName } = options;
-  const sqlite = new Database(fileName);
+  let sqlite = new Database(fileName);
+  sqlite = proxyDatabase(sqlite);
 
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("synchronous = NORMAL");
