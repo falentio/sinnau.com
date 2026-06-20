@@ -1,13 +1,22 @@
 <script lang="ts">
-  import { page as pageStore } from "$app/state";
+  import { page, page as pageStore } from "$app/state";
   import ListPagination from "$lib/components/features/app/list-pagination.svelte";
-  import { Add01Icon } from "$lib/components/features/icons";
   import DeleteQuizDialog from "$lib/components/features/quiz/delete-quiz-dialog.svelte";
   import QuizCard from "$lib/components/features/quiz/quiz-card.svelte";
-  import QuizEmpty from "$lib/components/features/quiz/quiz-empty.svelte";
   import QuizFilterBar from "$lib/components/features/quiz/quiz-filter-bar.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
+  import EmptyContent from "$lib/components/ui/empty/empty-content.svelte";
+  import EmptyDescription from "$lib/components/ui/empty/empty-description.svelte";
+  import EmptyHeader from "$lib/components/ui/empty/empty-header.svelte";
+  import EmptyMedia from "$lib/components/ui/empty/empty-media.svelte";
+  import EmptyTitle from "$lib/components/ui/empty/empty-title.svelte";
+  import Empty from "$lib/components/ui/empty/empty.svelte";
   import { navigateWithParams } from "$lib/utils/url";
+  import {
+    Add01Icon,
+    Cancel01Icon,
+    Quiz01Icon,
+  } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
@@ -52,6 +61,8 @@
       page: p > 1 ? String(p) : null,
     });
   };
+
+  const isChapterFiltered = $derived(chapterParam !== null);
 </script>
 
 <div class="flex items-center justify-between">
@@ -65,7 +76,43 @@
 <QuizFilterBar {currentFilter} />
 
 {#if filteredQuizzes.length === 0}
-  <QuizEmpty {currentFilter} {chapterParam} />
+  <Empty>
+    <EmptyHeader>
+      <EmptyMedia variant="icon">
+        <HugeiconsIcon icon={Quiz01Icon} />
+      </EmptyMedia>
+      <EmptyTitle>
+        {isChapterFiltered ? "Belum ada quiz di chapter ini" : "Belum ada quiz"}
+      </EmptyTitle>
+      <EmptyDescription>
+        {isChapterFiltered
+          ? "Chapter ini belum memiliki quiz. Buat satu untuk mulai berlatih."
+          : "Kamu belum memiliki quiz untuk modul belajar ini. Buat quiz pertamamu untuk mulai berlatih."}
+      </EmptyDescription>
+    </EmptyHeader>
+    <EmptyContent>
+      <div class="flex gap-2">
+        {#if currentFilter && currentFilter !== "latest"}
+          <Button
+            size="sm"
+            variant="outline"
+            onclick={() =>
+              navigateWithParams(pageStore.url.searchParams, {
+                filter: null,
+                page: null,
+              })}
+          >
+            <HugeiconsIcon icon={Cancel01Icon} />
+            Hapus filter
+          </Button>
+        {/if}
+        <Button size="sm" href="./create">
+          <HugeiconsIcon icon={Add01Icon} />
+          Buat quiz
+        </Button>
+      </div>
+    </EmptyContent>
+  </Empty>
 {:else}
   <div class="space-y-3">
     {#each displayedQuizzes as quiz (quiz.id)}
@@ -95,3 +142,13 @@
   onPageChange={handlePageChange}
   perPage={10}
 />
+
+{#if filteredQuizzes.length > 0}
+  <div
+    class="sticky bottom-2 left-0 right-0 p-2 bg-card md:rounded-full shadow-xs"
+  >
+    <Button href="/session/{page.params.studySetId}/quiz" class="w-full"
+      >Mulai belajar</Button
+    >
+  </div>
+{/if}
