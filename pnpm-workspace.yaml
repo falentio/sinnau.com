@@ -5,6 +5,15 @@ allowBuilds:
   lefthook: true
 minimumReleaseAgeExclude:
   - "@types/node@22.19.20"
+  - "@falentio/liteparse-client@0.1.0"
+  - "@better-auth/core@1.6.20"
+  - "@better-auth/drizzle-adapter@1.6.20"
+  - "@better-auth/kysely-adapter@1.6.20"
+  - "@better-auth/memory-adapter@1.6.20"
+  - "@better-auth/mongo-adapter@1.6.20"
+  - "@better-auth/prisma-adapter@1.6.20"
+  - "@better-auth/telemetry@1.6.20"
+  - better-auth@1.6.20
 onlyBuiltDependencies:
   - "@tailwindcss/oxide"
   - better-sqlite3
