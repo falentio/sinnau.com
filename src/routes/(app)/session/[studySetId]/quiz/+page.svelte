@@ -6,7 +6,6 @@
   import QuizSessionEmpty from "$lib/components/features/quiz-session/quiz-session-empty.svelte";
   import QuizSessionListFilter from "$lib/components/features/quiz-session/quiz-session-list-filter.svelte";
   import QuizSessionRow from "$lib/components/features/quiz-session/quiz-session-row.svelte";
-  import Button from "$lib/components/ui/button/button.svelte";
 
   import type { PageData } from "./$types";
 
@@ -29,13 +28,15 @@
 
 <div class="flex flex-col gap-6">
   {#if firstActive}
-    <QuizSessionCard mode="active" session={firstActive} />
+    <QuizSessionCard
+      mode="active"
+      session={firstActive}
+      onNewSession={() => (newSessionOpen = true)}
+    />
   {/if}
 
-  {#if showNewSessionButton}
-    <Button onclick={() => (newSessionOpen = true)}>Mulai Sesi Baru</Button>
-  {:else}
-    <QuizSessionEmpty />
+  {#if !data.activeSessions.length && !data.recentSessions.length}
+    <QuizSessionEmpty onNewSession={() => (newSessionOpen = true)} />
   {/if}
 
   {#if data.recentSessions.length > 0}

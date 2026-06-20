@@ -89,13 +89,16 @@
                 <Select.Separator />
                 <Select.Group>
                   <Select.Label>Chapter</Select.Label>
-                  {#each chapters as chapter (chapter.id)}
-                    <Select.Item
-                      value={chapter.id}
-                      label={`${chapter.title} (${chapterQuizCounts[chapter.id] ?? 0})`}
-                    >
-                      {chapter.title} ({chapterQuizCounts[chapter.id] ?? 0})
-                    </Select.Item>
+                  {#each chapters.sort( (a, b) => a.title.localeCompare( b.title, "id-ID", { numeric: true } ) ) as chapter (chapter.id)}
+                    {@const count = chapterQuizCounts[chapter.id] ?? 0}
+                    {#if count > 0}
+                      <Select.Item
+                        value={chapter.id}
+                        label={`${chapter.title} (${count})`}
+                      >
+                        {chapter.title} ({count})
+                      </Select.Item>
+                    {/if}
                   {/each}
                 </Select.Group>
               </Select.Content>

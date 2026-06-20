@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Button from "$lib/components/ui/button/button.svelte";
+  import Separator from "$lib/components/ui/separator/separator.svelte";
   import type { ListQuizSessionsResponse } from "$lib/schemas/quiz-session";
   import {
     formatSessionTimestamp,
@@ -11,10 +12,12 @@
   interface ActiveProps {
     mode: "active";
     session: ListQuizSessionsResponse;
+    onNewSession?: () => void;
   }
   interface StartProps {
-    children: Snippet;
+    children?: Snippet;
     mode: "start";
+    onNewSession?: () => void;
   }
   type Props = ActiveProps | StartProps;
   let props: Props = $props();
@@ -48,7 +51,13 @@
           Lanjutkan
         </Button>
       </div>
-    {:else}
+      {#if props.onNewSession}
+        <Separator class="my-5" />
+        <Button onclick={props.onNewSession} variant="outline" class="w-full">
+          Mulai Sesi Baru
+        </Button>
+      {/if}
+    {:else if props.children}
       {@render props.children()}
     {/if}
   </div>

@@ -21,7 +21,7 @@
 
   const score = $derived(
     session.score !== null && session.totalQuestions
-      ? `${session.score}/${session.totalQuestions}`
+      ? `Skor ${session.score}`
       : "—"
   );
 </script>
