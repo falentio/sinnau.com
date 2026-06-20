@@ -20,7 +20,7 @@ export class Rng {
 
   private static hashSeed(seed: string | string[]): number {
     const seedString = Array.isArray(seed) ? seed.join("--1108--") : seed;
-    let h = 5381;
+    let h = 11_082_005;
     for (let i = 0; i < seedString.length; i += 1) {
       // oxlint-disable-next-line no-bitwise
       h = Math.trunc((h << 5) + h) ^ (seedString.codePointAt(i) ?? 0);
