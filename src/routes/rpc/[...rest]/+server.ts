@@ -3,9 +3,8 @@ import { RPCHandler } from "@orpc/server/fetch";
 
 import type { RequestHandler } from "./$types";
 
-const handler = new RPCHandler(router);
-
 const handle: RequestHandler = async ({ request, locals }) => {
+  const handler = new RPCHandler(router);
   const { response } = await handler.handle(request, {
     context: {
       headers: request.headers,
