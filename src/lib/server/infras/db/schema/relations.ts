@@ -2,6 +2,11 @@ import { relations } from "drizzle-orm";
 
 import { user } from "./auth-schema.ts";
 import { chapter } from "./chapter.ts";
+import {
+  flashcardSession,
+  flashcardSessionReview,
+  flashcardState,
+} from "./flashcard-session.ts";
 import { flashcard } from "./flashcard.ts";
 import {
   quizSession,
@@ -171,3 +176,35 @@ export const quizSessionAnswerRelations = relations(
     }),
   })
 );
+
+export const flashcardSessionRelations = relations(
+  flashcardSession,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [flashcardSession.userId],
+      references: [user.id],
+    }),
+    studySet: one(studySet, {
+      fields: [flashcardSession.studySetId],
+      references: [studySet.id],
+    }),
+    reviews: many(flashcardSessionReview),
+  })
+);
+
+export const flashcardSessionReviewRelations = relations(
+  flashcardSessionReview,
+  ({ one }) => ({
+    session: one(flashcardSession, {
+      fields: [flashcardSessionReview.sessionId],
+      references: [flashcardSession.id],
+    }),
+  })
+);
+
+export const flashcardStateRelations = relations(flashcardState, ({ one }) => ({
+  user: one(user, {
+    fields: [flashcardState.userId],
+    references: [user.id],
+  }),
+}));

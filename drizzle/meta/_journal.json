@@ -50,6 +50,13 @@
       "when": 1781366366113,
       "tag": "0006_woozy_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1781443200000,
+      "tag": "0007_flashcard_session",
+      "breakpoints": true
     }
   ]
 }
