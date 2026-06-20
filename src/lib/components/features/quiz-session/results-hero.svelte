@@ -24,7 +24,6 @@
 
   const isLow = $derived(score < 75);
   const fillColor = $derived(isLow ? "fill-destructive" : "fill-primary");
-  const percent = $derived(total > 0 ? (score / total) * 100 : 0);
   const roundedValue = $derived(Math.round(tweenedValue));
   const copy = $derived(scoreToCopy(score));
 
@@ -59,16 +58,16 @@
   class="flex flex-col items-center gap-2 rounded-4xl border bg-card p-1.5 shadow-xs"
 >
   <div
-    class="flex w-full flex-col items-center gap-1 rounded-[calc(2rem-0.375rem)] bg-background/50 p-8"
+    class="flex w-full flex-col items-center gap-1 rounded-[1.625rem] bg-background/50 p-8"
   >
     <div class="relative size-48">
       {#if browser}
         <Chart width={192} height={192} padding={0}>
           <Layer center>
             <Arc
-              value={percent}
+              value={score}
               domain={[0, 100]}
-              range={[-90, 270]}
+              range={[-120, 120]}
               innerRadius={0.85}
               outerRadius={1}
               cornerRadius={8}
@@ -80,13 +79,15 @@
       {/if}
       <div class="absolute inset-0 flex flex-col items-center justify-center">
         <p
-          class="text-7xl font-semibold leading-none tracking-tighter tabular-nums md:text-8xl"
+          class="text-6xl font-semibold leading-none tracking-tighter tabular-nums md:text-7xl"
         >
           {roundedValue}
         </p>
       </div>
     </div>
-    <p class="text-sm text-muted-foreground">{score} dari {total} benar</p>
+    <p class="text-sm text-muted-foreground">
+      {(score / 100) * total} benar dari {total} soal
+    </p>
 
     <div class="mt-2 flex items-center gap-2">
       <span
