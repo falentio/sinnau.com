@@ -10,7 +10,12 @@ import { env } from "../env.ts";
 const getBaseUrl = (): BetterAuthOptions["baseURL"] => {
   if (dev) {
     return {
-      allowedHosts: ["*.localhost:*", "localhost:*", "*.ts.net:*"],
+      allowedHosts: [
+        "*.localhost:*",
+        "localhost:*",
+        "*.ts.net:*",
+        "*.falentio:*",
+      ],
     };
   }
   return env.BETTER_AUTH_URL;

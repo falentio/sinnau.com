@@ -18,7 +18,11 @@ const getReporters = (): Reporters => {
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
   server: {
-    allowedHosts: ["*.localhost", "localhost"],
+    allowedHosts: ["*.localhost", "localhost", "*.falentio"],
+    port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5173,
+    watch: {
+      ignored: ["**/node_modules/**", "**/dist/**", "**/.worktrees/**"],
+    },
   },
   test: {
     coverage: {
