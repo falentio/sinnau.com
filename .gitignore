@@ -26,6 +26,9 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Generated AI data
+data/
+
 # Per-skill isolated worktrees
 .worktrees/
 worktrees/
