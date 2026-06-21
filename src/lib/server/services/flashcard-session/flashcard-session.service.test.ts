@@ -37,6 +37,7 @@ const setupService = () => {
     ],
     dueToday: [],
     new: [],
+    newLimitReached: false,
     overdue: [],
   });
   repo.findSessionById.mockResolvedValue(null);
@@ -433,6 +434,7 @@ describe.concurrent(FlashcardSessionService, () => {
         dueIn7Days: [],
         dueToday: [],
         new: [],
+        newLimitReached: false,
         overdue: [],
       });
 
@@ -460,6 +462,7 @@ describe.concurrent(FlashcardSessionService, () => {
             state: null,
           }),
         ],
+        newLimitReached: false,
         overdue: [
           createQueueFlashcardWithStateFixture({
             back: "due",
@@ -489,10 +492,12 @@ describe.concurrent(FlashcardSessionService, () => {
       expect(result.newLimitReached).toBe(false);
     });
 
-    it("caps new cards at the daily limit", async ({ expect }) => {
+    it("caps new cards at the daily limit (SQL-side cap, service just maps)", async ({
+      expect,
+    }) => {
       const { repo, service } = setupService();
 
-      const newCards = Array.from({ length: 10 }, (_, i) =>
+      const newCards = Array.from({ length: 3 }, (_, i) =>
         createQueueFlashcardWithStateFixture({
           back: `back${i}`,
           flashcardId: `flc_new_${i}`,
@@ -501,13 +506,14 @@ describe.concurrent(FlashcardSessionService, () => {
         })
       );
 
+      repo.countIntroducedToday.mockResolvedValue(5);
       repo.findFlashcardsForQueue.mockResolvedValue({
         dueIn7Days: [],
         dueToday: [],
         new: newCards,
+        newLimitReached: true,
         overdue: [],
       });
-      repo.countIntroducedToday.mockResolvedValue(5);
 
       const result = await service.getReviewQueue(
         {
@@ -517,7 +523,10 @@ describe.concurrent(FlashcardSessionService, () => {
         SAMPLE_USER_ID
       );
 
-      // 8 per day minus 5 already introduced = 3 remaining
+      // 8 per day minus 5 already introduced = 3 remaining; repo applies the cap
+      expect(repo.findFlashcardsForQueue).toHaveBeenCalledWith(
+        expect.objectContaining({ newLimit: 3 })
+      );
       expect(result.new).toHaveLength(3);
       expect(result.newLimitReached).toBe(true);
     });
@@ -534,6 +543,7 @@ describe.concurrent(FlashcardSessionService, () => {
           createQueueFlashcardWithStateFixture({ state: null }),
           createQueueFlashcardWithStateFixture({ state: null }),
         ],
+        newLimitReached: false,
         overdue: [],
       });
       repo.countIntroducedToday.mockResolvedValue(0);

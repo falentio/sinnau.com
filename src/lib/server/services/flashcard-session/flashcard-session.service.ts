@@ -12,7 +12,6 @@ import type {
   FlashcardSessionListResult,
 } from "$lib/schemas/flashcard-session";
 import {
-  FLASHCARD_SESSION_ID_PREFIX,
   FLASHCARD_SESSION_REVIEW_HORIZON_MS,
   FLASHCARD_SESSION_DUE_IN_7_DAYS_MS,
   FLASHCARD_SESSION_PAGE_DEFAULT,
@@ -29,7 +28,6 @@ import type {
   FlashcardSession,
   FlashcardSessionReview,
 } from "../../infras/db/schema/flashcard-session.ts";
-import { generateId } from "../../utils/nanoid.ts";
 import type { FlashcardSessionGuard } from "./flashcard-session.guard.ts";
 import type {
   FlashcardSessionRepository,
@@ -150,7 +148,6 @@ export class FlashcardSessionService {
     const ownerId = this.guard.requireUser(userId);
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, ownerId);
     return await this.repo.getOrCreateSession({
-      id: generateId(FLASHCARD_SESSION_ID_PREFIX),
       studySetId: input.studySetId,
       userId: ownerId,
     });
@@ -253,30 +250,26 @@ export class FlashcardSessionService {
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, ownerId);
 
     const now = Date.now();
-    const [queue, introducedToday] = await Promise.all([
-      this.repo.findFlashcardsForQueue({
-        dueIn7DaysMs: FLASHCARD_SESSION_DUE_IN_7_DAYS_MS,
-        horizonMs: FLASHCARD_SESSION_REVIEW_HORIZON_MS,
-        now,
-        studySetId: input.studySetId,
-        userId: ownerId,
-      }),
-      this.repo.countIntroducedToday(
-        ownerId,
-        input.studySetId,
-        utcMidnight(now)
-      ),
-    ]);
-
-    const remaining = Math.max(0, input.newCardsPerDay - introducedToday);
-    const capped = queue.new.slice(0, remaining);
-    const newLimitReached = queue.new.length > remaining;
+    const introducedToday = await this.repo.countIntroducedToday(
+      ownerId,
+      input.studySetId,
+      utcMidnight(now)
+    );
+    const newLimit = Math.max(0, input.newCardsPerDay - introducedToday);
+    const queue = await this.repo.findFlashcardsForQueue({
+      dueIn7DaysMs: FLASHCARD_SESSION_DUE_IN_7_DAYS_MS,
+      horizonMs: FLASHCARD_SESSION_REVIEW_HORIZON_MS,
+      newLimit,
+      now,
+      studySetId: input.studySetId,
+      userId: ownerId,
+    });
 
     return {
       dueIn7Days: queue.dueIn7Days,
       dueToday: queue.dueToday.map((item) => toQueueItem(item, "due-today")),
-      new: capped.map((item) => toQueueItem(item, "new")),
-      newLimitReached,
+      new: queue.new.map((item) => toQueueItem(item, "new")),
+      newLimitReached: queue.newLimitReached,
       overdue: queue.overdue.map((item) => toQueueItem(item, "overdue")),
     };
   }

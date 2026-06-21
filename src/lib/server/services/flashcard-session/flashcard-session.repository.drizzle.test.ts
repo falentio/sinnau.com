@@ -135,17 +135,15 @@ describe("FlashcardSessionDrizzleRepository", () => {
     it("persists a new session when none exists", async ({ expect }) => {
       await using env = new FlashcardSessionTestEnv();
       const ss = env.seedStudySet({ ownerId: env.ownerId });
-      const id = generateId(FLASHCARD_SESSION_ID_PREFIX);
       const before = Date.now();
 
       const result = await env.repo.getOrCreateSession({
-        id,
         studySetId: ss.id,
         userId: env.ownerId,
       });
 
       const after = Date.now();
-      expect(result.id).toBe(id);
+      expect(result.id).toMatch(/^fse_/);
       expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(before);
       expect(result.createdAt.getTime()).toBeLessThanOrEqual(after);
     });
@@ -156,13 +154,11 @@ describe("FlashcardSessionDrizzleRepository", () => {
       await using env = new FlashcardSessionTestEnv();
       const ss = env.seedStudySet({ ownerId: env.ownerId });
       const first = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });
 
       const second = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });
@@ -180,17 +176,14 @@ describe("FlashcardSessionDrizzleRepository", () => {
 
       const [a, b, c] = await Promise.all([
         env.repo.getOrCreateSession({
-          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
           studySetId: ss.id,
           userId: env.ownerId,
         }),
         env.repo.getOrCreateSession({
-          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
           studySetId: ss.id,
           userId: env.ownerId,
         }),
         env.repo.getOrCreateSession({
-          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
           studySetId: ss.id,
           userId: env.ownerId,
         }),
@@ -533,6 +526,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const result = await env.repo.findFlashcardsForQueue({
         dueIn7DaysMs: 7 * 86_400_000,
         horizonMs: 86_400_000,
+        newLimit: 20,
         now,
         studySetId: ss.id,
         userId: env.ownerId,
@@ -555,6 +549,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const result = await env.repo.findFlashcardsForQueue({
         dueIn7DaysMs: 7 * 86_400_000,
         horizonMs: 86_400_000,
+        newLimit: 20,
         now: Date.now(),
         studySetId: ss.id,
         userId: env.ownerId,
@@ -606,6 +601,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const result = await env.repo.findFlashcardsForQueue({
         dueIn7DaysMs: 7 * 86_400_000,
         horizonMs: 86_400_000,
+        newLimit: 20,
         now,
         studySetId: ss.id,
         userId: env.ownerId,
@@ -743,12 +739,10 @@ describe("FlashcardSessionDrizzleRepository", () => {
       await using env = new FlashcardSessionTestEnv();
       const ss = env.seedStudySet({ ownerId: env.ownerId });
       const first = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });
       const second = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });

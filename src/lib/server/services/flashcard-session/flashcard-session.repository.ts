@@ -49,7 +49,6 @@ export interface FlashcardSessionRepository {
   }): Promise<FlashcardSessionListResult>;
 
   getOrCreateSession(row: {
-    id: string;
     studySetId: string;
     userId: string;
   }): Promise<FlashcardSession>;
@@ -65,10 +64,12 @@ export interface FlashcardSessionRepository {
     now: number;
     horizonMs: number;
     dueIn7DaysMs: number;
+    newLimit: number;
   }): Promise<{
     overdue: QueueFlashcardWithState[];
     dueToday: QueueFlashcardWithState[];
     new: QueueFlashcardWithState[];
+    newLimitReached: boolean;
     dueIn7Days: DueIn7DaysItem[];
   }>;
 
