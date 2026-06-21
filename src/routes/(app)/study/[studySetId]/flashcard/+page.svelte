@@ -143,3 +143,13 @@
   onPageChange={handlePageChange}
   perPage={10}
 />
+
+{#if filteredFlashcards.length > 0}
+  <div
+    class="sticky bottom-2 left-0 right-0 rounded-2xl border border-border bg-card p-2 shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+  >
+    <Button href="/session/{studySetId}/flashcard/" class="w-full">
+      Mulai review
+    </Button>
+  </div>
+{/if}

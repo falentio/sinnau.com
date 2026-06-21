@@ -1,3 +1,4 @@
+import type { FlashcardSessionReviewWithFront } from "$lib/schemas/flashcard-session";
 import {
   FLASHCARD_SESSION_ID_PREFIX,
   FLASHCARD_SESSION_PAGE_LIMIT_MAX,
@@ -523,7 +524,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     studySetId: string;
     userId: string;
     limit: number;
-  }): Promise<FlashcardSessionReview[]> {
+  }): Promise<FlashcardSessionReviewWithFront[]> {
     try {
       const sessionIds = this.dbInstance
         .select({ id: flashcardSession.id })
@@ -538,6 +539,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
       const rows = await this.dbInstance
         .select({
           flashcardId: flashcardSessionReview.flashcardId,
+          front: flashcard.front,
           id: flashcardSessionReview.id,
           preDifficulty: flashcardSessionReview.preDifficulty,
           preDue: flashcardSessionReview.preDue,
@@ -553,6 +555,10 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
           sessionId: flashcardSessionReview.sessionId,
         })
         .from(flashcardSessionReview)
+        .innerJoin(
+          flashcard,
+          eq(flashcardSessionReview.flashcardId, flashcard.id)
+        )
         .where(inArray(flashcardSessionReview.sessionId, sessionIds))
         .orderBy(desc(flashcardSessionReview.reviewedAt))
         .limit(params.limit);

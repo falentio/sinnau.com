@@ -3,6 +3,7 @@ import type {
   BucketedQueue,
   DeleteExpiredOutput,
   FlashcardQueueItem,
+  FlashcardSessionReviewWithFront,
   GetFlashcardSessionInput,
   GetOrCreateFlashcardSessionInput,
   GetReviewQueueInput,
@@ -298,7 +299,7 @@ export class FlashcardSessionService {
   async listReviews(
     input: ListReviewsInput,
     userId: string | null | undefined
-  ): Promise<FlashcardSessionReview[]> {
+  ): Promise<FlashcardSessionReviewWithFront[]> {
     const ownerId = this.guard.requireUser(userId);
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, ownerId);
     return await this.repo.listReviewsByStudySet({

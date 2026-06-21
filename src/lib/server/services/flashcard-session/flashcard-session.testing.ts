@@ -1,4 +1,5 @@
 import { FLASHCARD_ID_PREFIX } from "$lib/schemas/flashcard";
+import type { FlashcardSessionReviewWithFront } from "$lib/schemas/flashcard-session";
 import {
   FLASHCARD_SESSION_ID_PREFIX,
   FLASHCARD_SESSION_REVIEW_ID_PREFIX,
@@ -102,6 +103,13 @@ export const createFlashcardSessionReviewFixture = (
   reviewedAt: new Date(),
   sessionId: generateId(FLASHCARD_SESSION_ID_PREFIX),
   ...overrides,
+});
+
+export const createFlashcardSessionReviewWithFrontFixture = (
+  overrides: Partial<FlashcardSessionReviewWithFront> = {}
+): FlashcardSessionReviewWithFront => ({
+  ...createFlashcardSessionReviewFixture(overrides),
+  front: overrides.front ?? "front",
 });
 
 export const createFlashcardCardStateFixture = (

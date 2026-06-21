@@ -12,6 +12,7 @@ import {
   createMockRepository,
   createFlashcardSessionFixture,
   createFlashcardSessionReviewFixture,
+  createFlashcardSessionReviewWithFrontFixture,
   createFlashcardCardStateFixture,
   createQueueFlashcardWithStateFixture,
 } from "./flashcard-session.testing.ts";
@@ -586,8 +587,8 @@ describe.concurrent(FlashcardSessionService, () => {
     it("returns reviews from the repository", async ({ expect }) => {
       const { repo, service } = setupService();
       const reviews = [
-        createFlashcardSessionReviewFixture({ id: "fsr_1" }),
-        createFlashcardSessionReviewFixture({ id: "fsr_2" }),
+        createFlashcardSessionReviewWithFrontFixture({ id: "fsr_1" }),
+        createFlashcardSessionReviewWithFrontFixture({ id: "fsr_2" }),
       ];
       repo.listReviewsByStudySet.mockResolvedValue(reviews);
 
