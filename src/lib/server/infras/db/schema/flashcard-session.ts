@@ -48,9 +48,9 @@ export const flashcardSession = sqliteTable(
 export const flashcardSessionReview = sqliteTable(
   "flashcard_session_review",
   {
-    flashcardId: text("flashcard_id").references(() => flashcard.id, {
-      onDelete: "cascade",
-    }),
+    flashcardId: text("flashcard_id")
+      .notNull()
+      .references(() => flashcard.id, { onDelete: "cascade" }),
     id: text("id").primaryKey(),
     preDifficulty: real("pre_difficulty").notNull(),
     preDue: integer("pre_due", { mode: "timestamp_ms" }).notNull(),
@@ -106,13 +106,9 @@ export const flashcardState = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.flashcardId] }),
+    index("flashcard_state_userId_due_idx").on(table.userId, table.due),
     index("flashcard_state_userId_introducedAt_idx").on(
       table.userId,
-      table.introducedAt
-    ),
-    index("flashcard_state_userId_flashcardId_introducedAt_idx").on(
-      table.userId,
-      table.flashcardId,
       table.introducedAt
     ),
   ]

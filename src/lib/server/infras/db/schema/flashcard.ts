@@ -34,6 +34,10 @@ export const flashcard = sqliteTable(
     index("flashcard_ownerId_idx").on(table.ownerId),
     index("flashcard_studySetId_idx").on(table.studySetId),
     index("flashcard_chapterId_idx").on(table.chapterId),
+    index("flashcard_studySetId_createdAt_idx").on(
+      table.studySetId,
+      table.createdAt
+    ),
   ]
 );
 
