@@ -33,6 +33,5 @@ export const FLASHCARD_SESSION_BUCKETS = [
   "overdue",
   "due-today",
   "new",
-  "due-in-7-days",
 ] as const;
 export type FlashcardSessionBucket = (typeof FLASHCARD_SESSION_BUCKETS)[number];

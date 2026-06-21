@@ -15,7 +15,7 @@ CREATE TABLE `flashcard_session_review` (
 	`flashcard_id` text NOT NULL,
 	`id` text PRIMARY KEY NOT NULL,
 	`pre_difficulty` real NOT NULL,
-	`pre_due` integer NOT NULL,
+	`pre_due` integer,
 	`pre_lapses` integer NOT NULL,
 	`pre_last_review` integer,
 	`pre_learning_steps` integer NOT NULL,

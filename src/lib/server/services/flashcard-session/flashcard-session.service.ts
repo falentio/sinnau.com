@@ -19,7 +19,6 @@ import {
   FLASHCARD_SESSION_TTL_MS,
 } from "$lib/schemas/flashcard-session.constant";
 import type { FlashcardSessionRating } from "$lib/schemas/flashcard-session.constant";
-import { ORPCError } from "@orpc/server";
 import { Rating, State, createEmptyCard, fsrs } from "ts-fsrs";
 import type { Card, CardInput, DateInput, Grade } from "ts-fsrs";
 
@@ -44,29 +43,45 @@ const ratingToGrade: Record<FlashcardSessionRating, Grade> = {
 };
 
 const dbStateToFsrsState = (state: FlashcardCardState["state"]): State => {
-  if (state === "New") {
-    return State.New;
+  switch (state) {
+    case "New": {
+      return State.New;
+    }
+    case "Learning": {
+      return State.Learning;
+    }
+    case "Review": {
+      return State.Review;
+    }
+    case "Relearning": {
+      return State.Relearning;
+    }
+    default: {
+      const exhaustive: never = state;
+      throw new Error(`Unhandled FSRS state: ${String(exhaustive)}`);
+    }
   }
-  if (state === "Learning") {
-    return State.Learning;
-  }
-  if (state === "Review") {
-    return State.Review;
-  }
-  return State.Relearning;
 };
 
 const fsrsStateToDb = (state: State): FlashcardCardState["state"] => {
-  if (state === State.New) {
-    return "New";
+  switch (state) {
+    case State.New: {
+      return "New";
+    }
+    case State.Learning: {
+      return "Learning";
+    }
+    case State.Review: {
+      return "Review";
+    }
+    case State.Relearning: {
+      return "Relearning";
+    }
+    default: {
+      const exhaustive: never = state;
+      throw new Error(`Unhandled FSRS state: ${String(exhaustive)}`);
+    }
   }
-  if (state === State.Learning) {
-    return "Learning";
-  }
-  if (state === State.Review) {
-    return "Review";
-  }
-  return "Relearning";
 };
 
 const cardInputFromState = (state: FlashcardCardState): CardInput => ({
@@ -192,8 +207,14 @@ export class FlashcardSessionService {
     const recordLogItem = computeFsrs.next(preCard, now, grade);
     const nextCard = recordLogItem.card;
 
-    const preDue =
-      preCard.due instanceof Date ? preCard.due : new Date(preCard.due);
+    let preDue: Date | null;
+    if (existingState === null) {
+      preDue = null;
+    } else if (preCard.due instanceof Date) {
+      preDue = preCard.due;
+    } else {
+      preDue = new Date(preCard.due);
+    }
     const preLastReview = normalizeDate(preCard.last_review);
 
     const preStateStr: FlashcardCardState["state"] =
@@ -301,12 +322,6 @@ export class FlashcardSessionService {
   async adminListSessions(
     input: AdminListSessionsInput
   ): Promise<FlashcardSessionListResult> {
-    if (input.userId === undefined && input.studySetId === undefined) {
-      throw new ORPCError("VALIDATION_FAILED", {
-        message:
-          "At least one of userId or studySetId must be provided to list admin sessions",
-      });
-    }
     const page = input.pagination?.page ?? FLASHCARD_SESSION_PAGE_DEFAULT;
     const limit =
       input.pagination?.limit ?? FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT;

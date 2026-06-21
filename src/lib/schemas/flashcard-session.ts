@@ -85,11 +85,17 @@ export const listReviewsInputSchema = v.object({
   studySetId: studySetIdSchema,
 });
 
-export const adminListSessionsInputSchema = v.object({
-  pagination: v.optional(flashcardSessionPaginationSchema),
-  studySetId: v.optional(studySetIdSchema),
-  userId: v.optional(v.string()),
-});
+export const adminListSessionsInputSchema = v.pipe(
+  v.object({
+    pagination: v.optional(flashcardSessionPaginationSchema),
+    studySetId: v.optional(studySetIdSchema),
+    userId: v.optional(v.string()),
+  }),
+  v.check(
+    (input) => input.userId !== undefined || input.studySetId !== undefined,
+    "At least one of userId or studySetId must be provided"
+  )
+);
 
 export const listSessionsInputSchema = v.object({
   pagination: v.optional(flashcardSessionPaginationSchema),
@@ -104,10 +110,10 @@ export const flashcardSessionSchema = v.object({
 });
 
 export const flashcardSessionReviewSchema = v.object({
-  flashcardId: v.nullable(v.string()),
+  flashcardId: v.string(),
   id: v.string(),
   preDifficulty: v.number(),
-  preDue: v.date(),
+  preDue: v.nullable(v.date()),
   preLapses: v.number(),
   preLastReview: v.nullable(v.date()),
   preLearningSteps: v.number(),

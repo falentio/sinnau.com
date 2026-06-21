@@ -53,7 +53,7 @@ export const flashcardSessionReview = sqliteTable(
       .references(() => flashcard.id, { onDelete: "cascade" }),
     id: text("id").primaryKey(),
     preDifficulty: real("pre_difficulty").notNull(),
-    preDue: integer("pre_due", { mode: "timestamp_ms" }).notNull(),
+    preDue: integer("pre_due", { mode: "timestamp_ms" }),
     preLapses: integer("pre_lapses").notNull(),
     preLastReview: integer("pre_last_review", { mode: "timestamp_ms" }),
     preLearningSteps: integer("pre_learning_steps").notNull(),

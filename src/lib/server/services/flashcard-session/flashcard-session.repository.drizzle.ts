@@ -50,6 +50,14 @@ const fillDueIn7Days = (
   return result;
 };
 
+const isForeignKeyError = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code } = error as { code?: unknown };
+  return code === "SQLITE_CONSTRAINT_FOREIGNKEY";
+};
+
 export class FlashcardSessionDrizzleRepository implements FlashcardSessionRepository {
   private readonly dbInstance: DB;
 
@@ -319,6 +327,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
+  // oxlint-disable-next-line require-await
   async findFlashcardsForQueue(params: {
     userId: string;
     studySetId: string;
@@ -609,6 +618,11 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
+      }
+      if (isForeignKeyError(error)) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Referenced flashcard or session no longer exists",
+        });
       }
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Internal server error",

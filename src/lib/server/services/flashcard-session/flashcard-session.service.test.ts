@@ -315,7 +315,7 @@ describe.concurrent(FlashcardSessionService, () => {
       const { repo, service } = setupService();
       repo.findStateByKey.mockResolvedValue(null);
 
-      await service.submitReview(
+      const result = await service.submitReview(
         { flashcardId, rating: "Good", sessionId },
         SAMPLE_USER_ID
       );
@@ -323,6 +323,8 @@ describe.concurrent(FlashcardSessionService, () => {
       expect(repo.insertReviewWithState).toHaveBeenCalledTimes(1);
       const inserted = repo.insertReviewWithState.mock.calls[0]?.[0];
       expect(inserted?.state?.introducedAt).toBeInstanceOf(Date);
+      expect(result.preDue).toBeNull();
+      expect(inserted?.review?.preDue).toBeNull();
     });
 
     it("preserves introducedAt on subsequent reviews", async ({ expect }) => {
@@ -637,16 +639,9 @@ describe.concurrent(FlashcardSessionService, () => {
   });
 
   describe("adminListSessions", () => {
-    it("throws VALIDATION_FAILED when neither userId nor studySetId is provided", async ({
+    it("passes filters through to the repository (must-filter enforced at schema layer)", async ({
       expect,
     }) => {
-      const { service } = setupService();
-      const error = await captureError(service.adminListSessions({}));
-      expect(error).toBeInstanceOf(ORPCError);
-      expect(error).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-
-    it("passes filters through to the repository", async ({ expect }) => {
       const { repo, service } = setupService();
       const sessions = [createFlashcardSessionFixture({ id: "fse_1" })];
       const result = {
