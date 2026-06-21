@@ -37,6 +37,8 @@ export type MockedFlashcardGuard = {
 export const createMockGuard = (): MockedFlashcardGuard => ({
   assertChapterOwnerInStudySetOrForbidden:
     vi.fn<FlashcardGuard["assertChapterOwnerInStudySetOrForbidden"]>(),
+  assertFlashcardExistsOrNotFound:
+    vi.fn<FlashcardGuard["assertFlashcardExistsOrNotFound"]>(),
   assertFlashcardOwnerOrForbidden:
     vi.fn<FlashcardGuard["assertFlashcardOwnerOrForbidden"]>(),
   assertFlashcardVisibleOrNotFound:

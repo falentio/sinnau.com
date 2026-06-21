@@ -9,6 +9,7 @@ import {
 import { eq } from "drizzle-orm";
 import { describe, it } from "vitest";
 
+import { sleep } from "../../infras/db/testing.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import {
   captureError,
@@ -135,17 +136,15 @@ describe("FlashcardSessionDrizzleRepository", () => {
     it("persists a new session when none exists", async ({ expect }) => {
       await using env = new FlashcardSessionTestEnv();
       const ss = env.seedStudySet({ ownerId: env.ownerId });
-      const id = generateId(FLASHCARD_SESSION_ID_PREFIX);
       const before = Date.now();
 
       const result = await env.repo.getOrCreateSession({
-        id,
         studySetId: ss.id,
         userId: env.ownerId,
       });
 
       const after = Date.now();
-      expect(result.id).toBe(id);
+      expect(result.id).toMatch(/^fse_/);
       expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(before);
       expect(result.createdAt.getTime()).toBeLessThanOrEqual(after);
     });
@@ -156,13 +155,11 @@ describe("FlashcardSessionDrizzleRepository", () => {
       await using env = new FlashcardSessionTestEnv();
       const ss = env.seedStudySet({ ownerId: env.ownerId });
       const first = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });
 
       const second = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });
@@ -180,17 +177,14 @@ describe("FlashcardSessionDrizzleRepository", () => {
 
       const [a, b, c] = await Promise.all([
         env.repo.getOrCreateSession({
-          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
           studySetId: ss.id,
           userId: env.ownerId,
         }),
         env.repo.getOrCreateSession({
-          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
           studySetId: ss.id,
           userId: env.ownerId,
         }),
         env.repo.getOrCreateSession({
-          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
           studySetId: ss.id,
           userId: env.ownerId,
         }),
@@ -533,6 +527,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const result = await env.repo.findFlashcardsForQueue({
         dueIn7DaysMs: 7 * 86_400_000,
         horizonMs: 86_400_000,
+        newLimit: 20,
         now,
         studySetId: ss.id,
         userId: env.ownerId,
@@ -555,6 +550,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const result = await env.repo.findFlashcardsForQueue({
         dueIn7DaysMs: 7 * 86_400_000,
         horizonMs: 86_400_000,
+        newLimit: 20,
         now: Date.now(),
         studySetId: ss.id,
         userId: env.ownerId,
@@ -606,6 +602,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const result = await env.repo.findFlashcardsForQueue({
         dueIn7DaysMs: 7 * 86_400_000,
         horizonMs: 86_400_000,
+        newLimit: 20,
         now,
         studySetId: ss.id,
         userId: env.ownerId,
@@ -626,6 +623,84 @@ describe("FlashcardSessionDrizzleRepository", () => {
       expect(result.dueIn7Days.map((d) => d.date)).toEqual(expectedDates);
       const day2 = result.dueIn7Days.find((d) => d.date === twoDaysStr);
       expect(day2?.count).toBe(1);
+    });
+
+    it("orders overdue by due ASC and new by createdAt ASC", async ({
+      expect,
+    }) => {
+      await using env = new FlashcardSessionTestEnv();
+      const ss = env.seedStudySet({ ownerId: env.ownerId });
+      const now = Date.now();
+
+      const fc1 = env.seedFlashcard({
+        front: "oldest-new",
+        ownerId: env.ownerId,
+        studySetId: ss.id,
+      });
+      await sleep(2);
+      const fc2 = env.seedFlashcard({
+        front: "newest-new",
+        ownerId: env.ownerId,
+        studySetId: ss.id,
+      });
+      const fcOld = env.seedFlashcard({
+        front: "oldest-overdue",
+        ownerId: env.ownerId,
+        studySetId: ss.id,
+      });
+      const fcRecent = env.seedFlashcard({
+        front: "newest-overdue",
+        ownerId: env.ownerId,
+        studySetId: ss.id,
+      });
+
+      env.seedFlashcardState({
+        difficulty: 5,
+        due: new Date(now - 3 * 86_400_000),
+        elapsedDays: 0,
+        flashcardId: fcOld.id,
+        introducedAt: new Date(now - 5 * 86_400_000),
+        lapses: 0,
+        lastReview: null,
+        learningSteps: 0,
+        reps: 1,
+        scheduledDays: 0,
+        stability: 2.5,
+        state: "Review",
+        updatedAt: new Date(),
+        userId: env.ownerId,
+      });
+      env.seedFlashcardState({
+        difficulty: 5,
+        due: new Date(now - 1 * 86_400_000),
+        elapsedDays: 0,
+        flashcardId: fcRecent.id,
+        introducedAt: new Date(now - 2 * 86_400_000),
+        lapses: 0,
+        lastReview: null,
+        learningSteps: 0,
+        reps: 1,
+        scheduledDays: 0,
+        stability: 2.5,
+        state: "Review",
+        updatedAt: new Date(),
+        userId: env.ownerId,
+      });
+
+      const result = await env.repo.findFlashcardsForQueue({
+        dueIn7DaysMs: 7 * 86_400_000,
+        horizonMs: 86_400_000,
+        newLimit: 20,
+        now,
+        studySetId: ss.id,
+        userId: env.ownerId,
+      });
+
+      expect(result.overdue.map((r) => r.flashcardId)).toEqual([
+        fcOld.id,
+        fcRecent.id,
+      ]);
+      expect(result.new.map((r) => r.flashcardId)).toEqual([fc1.id, fc2.id]);
     });
   });
 
@@ -743,12 +818,10 @@ describe("FlashcardSessionDrizzleRepository", () => {
       await using env = new FlashcardSessionTestEnv();
       const ss = env.seedStudySet({ ownerId: env.ownerId });
       const first = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });
       const second = await env.repo.getOrCreateSession({
-        id: generateId(FLASHCARD_SESSION_ID_PREFIX),
         studySetId: ss.id,
         userId: env.ownerId,
       });

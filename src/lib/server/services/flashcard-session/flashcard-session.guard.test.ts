@@ -18,10 +18,18 @@ const setupGuard = () => {
   const repo = createMockRepository();
   repo.findSessionById.mockResolvedValue(null);
 
-  const flashcardRepo = {
-    findFlashcardById: vi
-      .fn<() => Promise<Pick<Flashcard, "id" | "studySetId"> | null>>()
-      .mockResolvedValue(null),
+  const flashcardGuard = {
+    assertFlashcardExistsOrNotFound: vi
+      .fn<(id: string) => Promise<Flashcard>>()
+      .mockResolvedValue({
+        createdAt: new Date(),
+        front: "front",
+        hint: null,
+        id: "flc_placeholder",
+        importance: 0,
+        ownerId: "user-1",
+        studySetId: "set-1",
+      } as Flashcard),
   };
 
   const studySetRepo = createMockStudySetRepo();
@@ -32,11 +40,11 @@ const setupGuard = () => {
     repo,
     studySetGuard,
     // oxlint-disable-next-line no-unsafe-type-assertion
-    flashcardRepo as unknown as ConstructorParameters<
+    flashcardGuard as unknown as ConstructorParameters<
       typeof FlashcardSessionGuard
     >[2]
   );
-  return { flashcardRepo, guard, repo, studySetRepo };
+  return { flashcardGuard, guard, repo, studySetRepo };
 };
 
 describe.concurrent(FlashcardSessionGuard, () => {
@@ -134,25 +142,40 @@ describe.concurrent(FlashcardSessionGuard, () => {
   });
 
   describe("assertFlashcardBelongsToStudySetOrNotFound", () => {
-    it("resolves when the flashcard belongs to the study set", async ({
+    it("resolves and returns the flashcard when it belongs to the study set", async ({
       expect,
     }) => {
-      const { flashcardRepo, guard } = setupGuard();
-      flashcardRepo.findFlashcardById.mockResolvedValue({
+      const { flashcardGuard, guard } = setupGuard();
+      const card = {
+        createdAt: new Date(),
+        front: "front",
+        hint: null,
         id: "flc_1",
+        importance: 0,
+        ownerId: "user-1",
         studySetId: "set-1",
-      });
+      } as Flashcard;
+      flashcardGuard.assertFlashcardExistsOrNotFound.mockResolvedValue(card);
 
-      await expect(
-        guard.assertFlashcardBelongsToStudySetOrNotFound("flc_1", "set-1")
-      ).resolves.toBeUndefined();
-      expect(flashcardRepo.findFlashcardById).toHaveBeenCalledWith("flc_1");
+      const result = await guard.assertFlashcardBelongsToStudySetOrNotFound(
+        "flc_1",
+        "set-1"
+      );
+      expect(result).toBe(card);
+      expect(
+        flashcardGuard.assertFlashcardExistsOrNotFound
+      ).toHaveBeenCalledWith("flc_1");
     });
 
-    it("throws NOT_FOUND when the flashcard does not exist", async ({
+    it("propagates NOT_FOUND from assertFlashcardExistsOrNotFound when the flashcard does not exist", async ({
       expect,
     }) => {
-      const { guard } = setupGuard();
+      const { flashcardGuard, guard } = setupGuard();
+      flashcardGuard.assertFlashcardExistsOrNotFound.mockImplementation(
+        async () => {
+          throw new ORPCError("NOT_FOUND", { message: "Flashcard not found" });
+        }
+      );
       const err = await captureError(
         guard.assertFlashcardBelongsToStudySetOrNotFound("missing", "set-1")
       );
@@ -160,19 +183,24 @@ describe.concurrent(FlashcardSessionGuard, () => {
       expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("throws NOT_FOUND when the flashcard belongs to a different study set", async ({
+    it("throws VALIDATION_FAILED when the flashcard belongs to a different study set", async ({
       expect,
     }) => {
-      const { flashcardRepo, guard } = setupGuard();
-      flashcardRepo.findFlashcardById.mockResolvedValue({
+      const { flashcardGuard, guard } = setupGuard();
+      flashcardGuard.assertFlashcardExistsOrNotFound.mockResolvedValue({
+        createdAt: new Date(),
+        front: "front",
+        hint: null,
         id: "flc_1",
+        importance: 0,
+        ownerId: "user-1",
         studySetId: "other-set",
-      });
+      } as Flashcard);
       const err = await captureError(
         guard.assertFlashcardBelongsToStudySetOrNotFound("flc_1", "set-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "NOT_FOUND" });
+      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
     });
   });
 });

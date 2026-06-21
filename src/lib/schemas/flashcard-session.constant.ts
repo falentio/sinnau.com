@@ -11,6 +11,7 @@ export const FLASHCARD_SESSION_REVIEW_LIST_MAX = 200;
 export const FLASHCARD_SESSION_PAGE_DEFAULT = 1;
 export const FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT = 20;
 export const FLASHCARD_SESSION_PAGE_LIMIT_MAX = 100;
+export const FLASHCARD_SESSION_QUEUE_BUCKET_LIMIT = 500;
 
 export const FLASHCARD_SESSION_RATINGS = [
   "Again",
@@ -32,6 +33,5 @@ export const FLASHCARD_SESSION_BUCKETS = [
   "overdue",
   "due-today",
   "new",
-  "due-in-7-days",
 ] as const;
 export type FlashcardSessionBucket = (typeof FLASHCARD_SESSION_BUCKETS)[number];

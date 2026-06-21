@@ -1,9 +1,11 @@
 import {
+  FLASHCARD_SESSION_ID_PREFIX,
   FLASHCARD_SESSION_PAGE_LIMIT_MAX,
+  FLASHCARD_SESSION_QUEUE_BUCKET_LIMIT,
   FLASHCARD_SESSION_REVIEW_ID_PREFIX,
 } from "$lib/schemas/flashcard-session.constant";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type { DB } from "../../infras/db/client.ts";
@@ -26,6 +28,35 @@ import type {
   FlashcardSessionRepository,
   QueueFlashcardWithState,
 } from "./flashcard-session.repository.ts";
+
+const fillDueIn7Days = (
+  now: number,
+  grouped: { count: number; day: string }[]
+): DueIn7DaysItem[] => {
+  const map = new Map(grouped.map((row) => [row.day, row.count]));
+  const nowUtc = new Date(now);
+  const result: DueIn7DaysItem[] = [];
+  for (let i = 1; i <= 7; i += 1) {
+    const d = new Date(
+      Date.UTC(
+        nowUtc.getUTCFullYear(),
+        nowUtc.getUTCMonth(),
+        nowUtc.getUTCDate() + i
+      )
+    );
+    const dateStr = d.toISOString().slice(0, 10);
+    result.push({ count: map.get(dateStr) ?? 0, date: dateStr });
+  }
+  return result;
+};
+
+const isForeignKeyError = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code } = error as { code?: unknown };
+  return code === "SQLITE_CONSTRAINT_FOREIGNKEY";
+};
 
 export class FlashcardSessionDrizzleRepository implements FlashcardSessionRepository {
   private readonly dbInstance: DB;
@@ -150,7 +181,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     limit: number;
   }): Promise<FlashcardSessionListResult> {
     try {
-      const filters = [];
+      const filters = [sql`${studySet.deletedAt} IS NULL`];
       if (params.userId !== undefined) {
         filters.push(eq(flashcardSession.userId, params.userId));
       }
@@ -162,20 +193,23 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
         FLASHCARD_SESSION_PAGE_LIMIT_MAX
       );
       const offset = (params.page - 1) * effectiveLimit;
-      const whereClause = filters.length > 0 ? and(...filters) : undefined;
+      const whereClause = and(...filters);
 
       const [rows, totalRow] = [
         this.dbInstance
-          .select()
+          .select({ session: flashcardSession })
           .from(flashcardSession)
+          .innerJoin(studySet, eq(studySet.id, flashcardSession.studySetId))
           .where(whereClause)
           .orderBy(desc(flashcardSession.updatedAt))
           .limit(effectiveLimit)
           .offset(offset)
-          .all(),
+          .all()
+          .map((r) => r.session),
         this.dbInstance
           .select({ count: sql<number>`count(*)` })
           .from(flashcardSession)
+          .innerJoin(studySet, eq(studySet.id, flashcardSession.studySetId))
           .where(whereClause)
           .all(),
       ];
@@ -200,14 +234,16 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
   }
 
   async getOrCreateSession(row: {
-    id: string;
     studySetId: string;
     userId: string;
   }): Promise<FlashcardSession> {
     try {
       const [inserted] = await this.dbInstance
         .insert(flashcardSession)
-        .values(row)
+        .values({
+          id: generateId(FLASHCARD_SESSION_ID_PREFIX),
+          ...row,
+        })
         .onConflictDoNothing({
           target: [flashcardSession.userId, flashcardSession.studySetId],
         })
@@ -262,27 +298,18 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
   async deleteExpiredSessions(beforeTimestamp: number): Promise<number> {
     try {
       const cutoff = new Date(beforeTimestamp);
+      const cutoffMs = cutoff.getTime();
       return this.dbInstance.transaction((tx) => {
-        const expired = tx
-          .select({
-            studySetId: flashcardSession.studySetId,
-            userId: flashcardSession.userId,
-          })
-          .from(flashcardSession)
-          .where(lt(flashcardSession.updatedAt, cutoff))
-          .all();
-        if (expired.length > 0) {
-          tx.delete(flashcardState)
-            .where(
-              sql`(${flashcardState.userId}, ${flashcardState.flashcardId}) IN (
-                SELECT fs.user_id, f.id
-                FROM ${flashcardSession} fs
-                JOIN ${flashcard} f ON f.study_set_id = fs.study_set_id
-                WHERE fs.updated_at < ${beforeTimestamp}
-              )`
-            )
-            .run();
-        }
+        tx.delete(flashcardState)
+          .where(
+            sql`(${flashcardState.userId}, ${flashcardState.flashcardId}) IN (
+              SELECT fs.user_id, f.id
+              FROM ${flashcardSession} fs
+              JOIN ${flashcard} f ON f.study_set_id = fs.study_set_id
+              WHERE fs.updated_at < ${cutoffMs}
+            )`
+          )
+          .run();
         const deleted = tx
           .delete(flashcardSession)
           .where(lt(flashcardSession.updatedAt, cutoff))
@@ -300,92 +327,133 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
+  // oxlint-disable-next-line require-await
   async findFlashcardsForQueue(params: {
     userId: string;
     studySetId: string;
     now: number;
     horizonMs: number;
     dueIn7DaysMs: number;
+    newLimit: number;
   }): Promise<{
     overdue: QueueFlashcardWithState[];
     dueToday: QueueFlashcardWithState[];
     new: QueueFlashcardWithState[];
+    newLimitReached: boolean;
     dueIn7Days: DueIn7DaysItem[];
   }> {
     try {
-      const joined = await this.dbInstance
+      const nowDate = new Date(params.now);
+      const horizonCutoff = new Date(params.now + params.horizonMs);
+      const dueIn7DaysCutoff = new Date(params.now + params.dueIn7DaysMs);
+      const stateJoin = and(
+        eq(flashcardState.flashcardId, flashcard.id),
+        eq(flashcardState.userId, params.userId)
+      );
+      const flashcardCols = {
+        back: flashcard.back,
+        createdAt: flashcard.createdAt,
+        flashcardId: flashcard.id,
+        front: flashcard.front,
+        hint: flashcard.hint,
+      };
+
+      const overdue = this.dbInstance
         .select({
-          back: flashcard.back,
-          createdAt: flashcard.createdAt,
-          flashcardId: flashcard.id,
-          front: flashcard.front,
-          hint: flashcard.hint,
+          ...flashcardCols,
           state: flashcardState,
         })
         .from(flashcard)
-        .leftJoin(
-          flashcardState,
+        .innerJoin(flashcardState, stateJoin)
+        .where(
           and(
-            eq(flashcardState.flashcardId, flashcard.id),
-            eq(flashcardState.userId, params.userId)
+            eq(flashcard.studySetId, params.studySetId),
+            sql`${flashcardState.state} != 'New'`,
+            lt(flashcardState.due, nowDate)
           )
         )
-        .where(eq(flashcard.studySetId, params.studySetId));
+        .orderBy(asc(flashcardState.due))
+        .limit(FLASHCARD_SESSION_QUEUE_BUCKET_LIMIT)
+        .all();
 
-      const overdue: QueueFlashcardWithState[] = [];
-      const dueToday: QueueFlashcardWithState[] = [];
-      const newCards: QueueFlashcardWithState[] = [];
-      const dueIn7DaysMap = new Map<string, number>();
-      const horizonCutoff = params.now + params.horizonMs;
-      const dueIn7DaysCutoff = params.now + params.dueIn7DaysMs;
-
-      for (const row of joined) {
-        const st = row.state ?? null;
-        const item: QueueFlashcardWithState = {
-          back: row.back,
-          createdAt: row.createdAt,
-          flashcardId: row.flashcardId,
-          front: row.front,
-          hint: row.hint,
-          state: st,
-        };
-        if (!st || st.state === "New") {
-          newCards.push(item);
-          continue;
-        }
-        const dueMs = st.due.getTime();
-        if (dueMs < params.now) {
-          overdue.push(item);
-        } else if (dueMs <= horizonCutoff) {
-          dueToday.push(item);
-        } else if (dueMs <= dueIn7DaysCutoff) {
-          const dateStr = st.due.toISOString().slice(0, 10);
-          dueIn7DaysMap.set(dateStr, (dueIn7DaysMap.get(dateStr) ?? 0) + 1);
-        }
-      }
-
-      const dueIn7DaysResult: DueIn7DaysItem[] = [];
-      const nowUtc = new Date(params.now);
-      for (let i = 1; i <= 7; i += 1) {
-        const d = new Date(
-          Date.UTC(
-            nowUtc.getUTCFullYear(),
-            nowUtc.getUTCMonth(),
-            nowUtc.getUTCDate() + i
+      const dueToday = this.dbInstance
+        .select({
+          ...flashcardCols,
+          state: flashcardState,
+        })
+        .from(flashcard)
+        .innerJoin(flashcardState, stateJoin)
+        .where(
+          and(
+            eq(flashcard.studySetId, params.studySetId),
+            sql`${flashcardState.state} != 'New'`,
+            gte(flashcardState.due, nowDate),
+            lt(flashcardState.due, horizonCutoff)
           )
-        );
-        const dateStr = d.toISOString().slice(0, 10);
-        dueIn7DaysResult.push({
-          count: dueIn7DaysMap.get(dateStr) ?? 0,
-          date: dateStr,
-        });
-      }
+        )
+        .orderBy(asc(flashcardState.due))
+        .limit(FLASHCARD_SESSION_QUEUE_BUCKET_LIMIT)
+        .all();
+
+      const newRows = this.dbInstance
+        .select({
+          ...flashcardCols,
+          state: flashcardState,
+        })
+        .from(flashcard)
+        .leftJoin(flashcardState, stateJoin)
+        .where(
+          and(
+            eq(flashcard.studySetId, params.studySetId),
+            sql`(${flashcardState.userId} IS NULL OR ${flashcardState.state} = 'New')`
+          )
+        )
+        .orderBy(asc(flashcard.createdAt))
+        .limit(params.newLimit)
+        .all();
+
+      const newCountRow = this.dbInstance
+        .select({ count: sql<number>`count(*)` })
+        .from(flashcard)
+        .leftJoin(flashcardState, stateJoin)
+        .where(
+          and(
+            eq(flashcard.studySetId, params.studySetId),
+            sql`(${flashcardState.userId} IS NULL OR ${flashcardState.state} = 'New')`
+          )
+        )
+        .all();
+      const newLimitReached = (newCountRow[0]?.count ?? 0) > params.newLimit;
+
+      const dueIn7DaysDayExpr = sql<string>`strftime('%Y-%m-%d', ${flashcardState.due} / 1000, 'unixepoch')`;
+      const dueIn7DaysGrouped = this.dbInstance
+        .select({
+          count: sql<number>`count(*)`,
+          day: dueIn7DaysDayExpr,
+        })
+        .from(flashcard)
+        .innerJoin(flashcardState, stateJoin)
+        .where(
+          and(
+            eq(flashcard.studySetId, params.studySetId),
+            sql`${flashcardState.state} != 'New'`,
+            gte(flashcardState.due, horizonCutoff),
+            lt(flashcardState.due, dueIn7DaysCutoff)
+          )
+        )
+        .groupBy(dueIn7DaysDayExpr)
+        .orderBy(dueIn7DaysDayExpr)
+        .limit(7)
+        .all();
+
+      const dueIn7Days = fillDueIn7Days(params.now, dueIn7DaysGrouped);
 
       return {
-        dueIn7Days: dueIn7DaysResult,
-        dueToday,
-        new: newCards,
-        overdue,
+        dueIn7Days,
+        dueToday: dueToday as QueueFlashcardWithState[],
+        new: newRows as QueueFlashcardWithState[],
+        newLimitReached,
+        overdue: overdue as QueueFlashcardWithState[],
       };
     } catch (error) {
       if (error instanceof ORPCError) {
@@ -536,6 +604,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
               scheduledDays: params.state.scheduledDays,
               stability: params.state.stability,
               state: params.state.state,
+              updatedAt: sql`(cast(unixepoch('subsecond') * 1000 as integer))`,
             },
             target: [flashcardState.userId, flashcardState.flashcardId],
           })
@@ -549,6 +618,11 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
+      }
+      if (isForeignKeyError(error)) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Referenced flashcard or session no longer exists",
+        });
       }
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Internal server error",

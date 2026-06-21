@@ -37,6 +37,7 @@ const setupService = () => {
     ],
     dueToday: [],
     new: [],
+    newLimitReached: false,
     overdue: [],
   });
   repo.findSessionById.mockResolvedValue(null);
@@ -96,7 +97,15 @@ const setupService = () => {
       userId: SAMPLE_USER_ID,
     })
   );
-  guard.assertFlashcardBelongsToStudySetOrNotFound.mockResolvedValue();
+  guard.assertFlashcardBelongsToStudySetOrNotFound.mockResolvedValue({
+    createdAt: new Date(),
+    front: "front",
+    hint: null,
+    id: "flc_1",
+    importance: 0,
+    ownerId: SAMPLE_USER_ID,
+    studySetId: SAMPLE_STUDY_SET_ID,
+  } as never);
 
   // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new FlashcardSessionService(
@@ -306,7 +315,7 @@ describe.concurrent(FlashcardSessionService, () => {
       const { repo, service } = setupService();
       repo.findStateByKey.mockResolvedValue(null);
 
-      await service.submitReview(
+      const result = await service.submitReview(
         { flashcardId, rating: "Good", sessionId },
         SAMPLE_USER_ID
       );
@@ -314,6 +323,8 @@ describe.concurrent(FlashcardSessionService, () => {
       expect(repo.insertReviewWithState).toHaveBeenCalledTimes(1);
       const inserted = repo.insertReviewWithState.mock.calls[0]?.[0];
       expect(inserted?.state?.introducedAt).toBeInstanceOf(Date);
+      expect(result.preDue).toBeNull();
+      expect(inserted?.review?.preDue).toBeNull();
     });
 
     it("preserves introducedAt on subsequent reviews", async ({ expect }) => {
@@ -433,6 +444,7 @@ describe.concurrent(FlashcardSessionService, () => {
         dueIn7Days: [],
         dueToday: [],
         new: [],
+        newLimitReached: false,
         overdue: [],
       });
 
@@ -460,6 +472,7 @@ describe.concurrent(FlashcardSessionService, () => {
             state: null,
           }),
         ],
+        newLimitReached: false,
         overdue: [
           createQueueFlashcardWithStateFixture({
             back: "due",
@@ -489,10 +502,12 @@ describe.concurrent(FlashcardSessionService, () => {
       expect(result.newLimitReached).toBe(false);
     });
 
-    it("caps new cards at the daily limit", async ({ expect }) => {
+    it("caps new cards at the daily limit (SQL-side cap, service just maps)", async ({
+      expect,
+    }) => {
       const { repo, service } = setupService();
 
-      const newCards = Array.from({ length: 10 }, (_, i) =>
+      const newCards = Array.from({ length: 3 }, (_, i) =>
         createQueueFlashcardWithStateFixture({
           back: `back${i}`,
           flashcardId: `flc_new_${i}`,
@@ -501,13 +516,14 @@ describe.concurrent(FlashcardSessionService, () => {
         })
       );
 
+      repo.countIntroducedToday.mockResolvedValue(5);
       repo.findFlashcardsForQueue.mockResolvedValue({
         dueIn7Days: [],
         dueToday: [],
         new: newCards,
+        newLimitReached: true,
         overdue: [],
       });
-      repo.countIntroducedToday.mockResolvedValue(5);
 
       const result = await service.getReviewQueue(
         {
@@ -517,7 +533,10 @@ describe.concurrent(FlashcardSessionService, () => {
         SAMPLE_USER_ID
       );
 
-      // 8 per day minus 5 already introduced = 3 remaining
+      // 8 per day minus 5 already introduced = 3 remaining; repo applies the cap
+      expect(repo.findFlashcardsForQueue).toHaveBeenCalledWith(
+        expect.objectContaining({ newLimit: 3 })
+      );
       expect(result.new).toHaveLength(3);
       expect(result.newLimitReached).toBe(true);
     });
@@ -534,6 +553,7 @@ describe.concurrent(FlashcardSessionService, () => {
           createQueueFlashcardWithStateFixture({ state: null }),
           createQueueFlashcardWithStateFixture({ state: null }),
         ],
+        newLimitReached: false,
         overdue: [],
       });
       repo.countIntroducedToday.mockResolvedValue(0);
@@ -619,16 +639,9 @@ describe.concurrent(FlashcardSessionService, () => {
   });
 
   describe("adminListSessions", () => {
-    it("throws VALIDATION_FAILED when neither userId nor studySetId is provided", async ({
+    it("passes filters through to the repository (must-filter enforced at schema layer)", async ({
       expect,
     }) => {
-      const { service } = setupService();
-      const error = await captureError(service.adminListSessions({}));
-      expect(error).toBeInstanceOf(ORPCError);
-      expect(error).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-
-    it("passes filters through to the repository", async ({ expect }) => {
       const { repo, service } = setupService();
       const sessions = [createFlashcardSessionFixture({ id: "fse_1" })];
       const result = {
