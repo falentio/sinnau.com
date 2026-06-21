@@ -97,7 +97,15 @@ const setupService = () => {
       userId: SAMPLE_USER_ID,
     })
   );
-  guard.assertFlashcardBelongsToStudySetOrNotFound.mockResolvedValue();
+  guard.assertFlashcardBelongsToStudySetOrNotFound.mockResolvedValue({
+    createdAt: new Date(),
+    front: "front",
+    hint: null,
+    id: "flc_1",
+    importance: 0,
+    ownerId: SAMPLE_USER_ID,
+    studySetId: SAMPLE_STUDY_SET_ID,
+  } as never);
 
   // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new FlashcardSessionService(

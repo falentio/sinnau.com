@@ -77,6 +77,14 @@ export class FlashcardGuard {
     return card;
   }
 
+  async assertFlashcardExistsOrNotFound(id: string): Promise<Flashcard> {
+    const card = await this.repo.findFlashcardById(id);
+    if (!card) {
+      throw new ORPCError("NOT_FOUND", { message: "Flashcard not found" });
+    }
+    return card;
+  }
+
   async assertFlashcardVisibleOrNotFound(
     id: string,
     userId: string
