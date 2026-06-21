@@ -5,6 +5,9 @@ import {
   FLASHCARD_SESSION_ID_PREFIX,
   FLASHCARD_SESSION_NEW_CARDS_PER_DAY_MAX,
   FLASHCARD_SESSION_NEW_CARDS_PER_DAY_DEFAULT,
+  FLASHCARD_SESSION_PAGE_DEFAULT,
+  FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT,
+  FLASHCARD_SESSION_PAGE_LIMIT_MAX,
   FLASHCARD_SESSION_RATINGS,
   FLASHCARD_SESSION_REVIEW_LIST_MAX,
   FLASHCARD_SESSION_REVIEW_LIST_DEFAULT,
@@ -21,6 +24,26 @@ const flashcardIdSchema = createPrefixedIdSchema(FLASHCARD_ID_PREFIX);
 const ratingSchema = v.picklist(FLASHCARD_SESSION_RATINGS);
 const bucketSchema = v.picklist(FLASHCARD_SESSION_BUCKETS);
 const stateSchema = v.picklist(FLASHCARD_SESSION_STATES);
+
+const pageSchema = v.optional(
+  v.pipe(v.number(), v.integer(), v.minValue(1)),
+  FLASHCARD_SESSION_PAGE_DEFAULT
+);
+
+const pageLimitSchema = v.optional(
+  v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(1),
+    v.maxValue(FLASHCARD_SESSION_PAGE_LIMIT_MAX)
+  ),
+  FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT
+);
+
+export const flashcardSessionPaginationSchema = v.object({
+  limit: pageLimitSchema,
+  page: pageSchema,
+});
 
 export const getOrCreateFlashcardSessionInputSchema = v.object({
   studySetId: studySetIdSchema,
@@ -63,8 +86,13 @@ export const listReviewsInputSchema = v.object({
 });
 
 export const adminListSessionsInputSchema = v.object({
+  pagination: v.optional(flashcardSessionPaginationSchema),
   studySetId: v.optional(studySetIdSchema),
   userId: v.optional(v.string()),
+});
+
+export const listSessionsInputSchema = v.object({
+  pagination: v.optional(flashcardSessionPaginationSchema),
 });
 
 export const flashcardSessionSchema = v.object({
@@ -135,6 +163,18 @@ export const deleteExpiredOutputSchema = v.object({
   deletedCount: v.number(),
 });
 
+const flashcardSessionPaginationOutputSchema = v.object({
+  limit: v.number(),
+  page: v.number(),
+  total: v.number(),
+  totalPages: v.number(),
+});
+
+export const flashcardSessionListResultSchema = v.object({
+  data: v.array(flashcardSessionSchema),
+  pagination: flashcardSessionPaginationOutputSchema,
+});
+
 export type GetOrCreateFlashcardSessionInput = v.InferOutput<
   typeof getOrCreateFlashcardSessionInputSchema
 >;
@@ -148,6 +188,13 @@ export type GetReviewQueueInput = v.InferOutput<
 export type ListReviewsInput = v.InferOutput<typeof listReviewsInputSchema>;
 export type AdminListSessionsInput = v.InferOutput<
   typeof adminListSessionsInputSchema
+>;
+export type ListSessionsInput = v.InferOutput<typeof listSessionsInputSchema>;
+export type FlashcardSessionPagination = v.InferOutput<
+  typeof flashcardSessionPaginationSchema
+>;
+export type FlashcardSessionListResult = v.InferOutput<
+  typeof flashcardSessionListResultSchema
 >;
 export type FlashcardSession = v.InferOutput<typeof flashcardSessionSchema>;
 export type FlashcardSessionReview = v.InferOutput<

@@ -18,17 +18,35 @@ export interface DueIn7DaysItem {
   count: number;
 }
 
+export interface FlashcardSessionListPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface FlashcardSessionListResult {
+  data: FlashcardSession[];
+  pagination: FlashcardSessionListPagination;
+}
+
 export interface FlashcardSessionRepository {
   findSessionById(id: string): Promise<FlashcardSession | null>;
   findSessionByUserAndStudySet(
     userId: string,
     studySetId: string
   ): Promise<FlashcardSession | null>;
-  listSessionsForUser(userId: string): Promise<FlashcardSession[]>;
+  listSessionsForUser(
+    userId: string,
+    page: number,
+    limit: number
+  ): Promise<FlashcardSessionListResult>;
   listSessionsForAdmin(params: {
     userId?: string;
     studySetId?: string;
-  }): Promise<FlashcardSession[]>;
+    page: number;
+    limit: number;
+  }): Promise<FlashcardSessionListResult>;
 
   getOrCreateSession(row: {
     id: string;
@@ -64,8 +82,6 @@ export interface FlashcardSessionRepository {
     userId: string,
     flashcardId: string
   ): Promise<FlashcardCardState | null>;
-
-  upsertState(row: FlashcardCardState): Promise<FlashcardCardState>;
 
   listReviewsByStudySet(params: {
     studySetId: string;

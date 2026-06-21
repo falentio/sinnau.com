@@ -7,9 +7,6 @@ import { authorizedProcedure } from "$lib/server/api/base";
 import { flashcardSessionService } from "../index";
 
 const ERRORS = {
-  FORBIDDEN: {
-    message: "Cannot view the study set",
-  },
   NOT_FOUND: {
     message: "Study set not found",
   },

@@ -4,6 +4,7 @@ import { describe, it } from "vitest";
 
 import type { StudySet } from "../../infras/db/schema/study-set.ts";
 import type { FlashcardSessionGuard } from "./flashcard-session.guard.ts";
+import type { FlashcardSessionRepository } from "./flashcard-session.repository.ts";
 import { FlashcardSessionService } from "./flashcard-session.service.ts";
 import {
   captureError,
@@ -26,13 +27,13 @@ const setupService = () => {
   repo.deleteExpiredSessions.mockResolvedValue(0);
   repo.findFlashcardsForQueue.mockResolvedValue({
     dueIn7Days: [
-      { date: "2026-01-01", count: 0 },
-      { date: "2026-01-02", count: 0 },
-      { date: "2026-01-03", count: 0 },
-      { date: "2026-01-04", count: 0 },
-      { date: "2026-01-05", count: 0 },
-      { date: "2026-01-06", count: 0 },
-      { date: "2026-01-07", count: 0 },
+      { count: 0, date: "2026-01-01" },
+      { count: 0, date: "2026-01-02" },
+      { count: 0, date: "2026-01-03" },
+      { count: 0, date: "2026-01-04" },
+      { count: 0, date: "2026-01-05" },
+      { count: 0, date: "2026-01-06" },
+      { count: 0, date: "2026-01-07" },
     ],
     dueToday: [],
     new: [],
@@ -42,20 +43,23 @@ const setupService = () => {
   repo.findSessionByUserAndStudySet.mockResolvedValue(null);
   repo.findStateByKey.mockResolvedValue(null);
   repo.listReviewsByStudySet.mockResolvedValue([]);
-  repo.listSessionsForAdmin.mockResolvedValue([]);
-  repo.listSessionsForUser.mockResolvedValue([]);
+  repo.listSessionsForAdmin.mockResolvedValue({
+    data: [],
+    pagination: { limit: 20, page: 1, total: 0, totalPages: 1 },
+  });
+  repo.listSessionsForUser.mockResolvedValue({
+    data: [],
+    pagination: { limit: 20, page: 1, total: 0, totalPages: 1 },
+  });
   // oxlint-disable-next-line require-await
-  repo.insertSession.mockImplementation(async (row) =>
+  repo.getOrCreateSession.mockImplementation(async (row) =>
     createFlashcardSessionFixture({ ...row })
   );
   // oxlint-disable-next-line require-await
-  repo.insertReview.mockImplementation(async (row) =>
-    createFlashcardSessionReviewFixture({ ...row })
-  );
-  // oxlint-disable-next-line require-await
-  repo.upsertState.mockImplementation(async (row) =>
-    createFlashcardCardStateFixture({ ...row })
-  );
+  repo.insertReviewWithState.mockImplementation(async (params) => ({
+    review: createFlashcardSessionReviewFixture({ ...params.review }),
+    state: createFlashcardCardStateFixture({ ...params.state }),
+  }));
   repo.updateSessionTouch.mockResolvedValue(
     createFlashcardSessionFixture({
       id: "fse_000000000000000001",
@@ -92,10 +96,13 @@ const setupService = () => {
       userId: SAMPLE_USER_ID,
     })
   );
-  guard.assertFlashcardBelongsToStudySetOrValidationFailed.mockResolvedValue();
+  guard.assertFlashcardBelongsToStudySetOrNotFound.mockResolvedValue();
 
+  // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new FlashcardSessionService(
-    repo as any,
+    // oxlint-disable-next-line no-unsafe-type-assertion
+    repo as unknown as FlashcardSessionRepository,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     guard as unknown as FlashcardSessionGuard
   );
   return { guard, repo, service };
@@ -109,10 +116,6 @@ const throwUnauthorized = (): never => {
 
 const throwNotFound = (): never => {
   throw new ORPCError("NOT_FOUND", { message: "Not found" });
-};
-
-const throwValidationFailed = (): never => {
-  throw new ORPCError("VALIDATION_FAILED", { message: "Validation failed" });
 };
 
 describe.concurrent(FlashcardSessionService, () => {
@@ -145,41 +148,23 @@ describe.concurrent(FlashcardSessionService, () => {
       expect(error).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("returns the existing session when one already exists", async ({
+    it("delegates to the repository and returns the session it produced", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      const existing = createFlashcardSessionFixture({
-        id: "fse_existing",
+      const session = createFlashcardSessionFixture({
+        id: "fse_repo",
         studySetId: SAMPLE_STUDY_SET_ID,
         userId: SAMPLE_USER_ID,
       });
-      repo.findSessionByUserAndStudySet.mockResolvedValue(existing);
+      repo.getOrCreateSession.mockResolvedValue(session);
 
       const result = await service.getOrCreateSession(
         { studySetId: SAMPLE_STUDY_SET_ID },
         SAMPLE_USER_ID
       );
-      expect(result).toBe(existing);
-      expect(repo.insertSession).not.toHaveBeenCalled();
-    });
-
-    it("creates a new session when none exists", async ({ expect }) => {
-      const { repo, service } = setupService();
-      repo.findSessionByUserAndStudySet.mockResolvedValue(null);
-      const created = createFlashcardSessionFixture({
-        id: "fse_new",
-        studySetId: SAMPLE_STUDY_SET_ID,
-        userId: SAMPLE_USER_ID,
-      });
-      repo.insertSession.mockResolvedValue(created);
-
-      const result = await service.getOrCreateSession(
-        { studySetId: SAMPLE_STUDY_SET_ID },
-        SAMPLE_USER_ID
-      );
-      expect(result).toBe(created);
-      expect(repo.insertSession).toHaveBeenCalledWith(
+      expect(result).toBe(session);
+      expect(repo.getOrCreateSession).toHaveBeenCalledWith(
         expect.objectContaining({
           studySetId: SAMPLE_STUDY_SET_ID,
           userId: SAMPLE_USER_ID,
@@ -252,12 +237,12 @@ describe.concurrent(FlashcardSessionService, () => {
       expect(error).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("propagates VALIDATION_FAILED from assertFlashcardBelongsToStudySet", async ({
+    it("propagates NOT_FOUND from assertFlashcardBelongsToStudySet", async ({
       expect,
     }) => {
       const { guard, service } = setupService();
-      guard.assertFlashcardBelongsToStudySetOrValidationFailed.mockImplementation(
-        throwValidationFailed
+      guard.assertFlashcardBelongsToStudySetOrNotFound.mockImplementation(
+        throwNotFound
       );
 
       const error = await captureError(
@@ -267,10 +252,10 @@ describe.concurrent(FlashcardSessionService, () => {
         )
       );
       expect(error).toBeInstanceOf(ORPCError);
-      expect(error).toMatchObject({ code: "VALIDATION_FAILED" });
+      expect(error).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("inserts a review, upserts state, and touches session on the happy path", async ({
+    it("inserts a review atomically with state and touches the session", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
@@ -282,8 +267,7 @@ describe.concurrent(FlashcardSessionService, () => {
 
       expect(result).toBeDefined();
       expect(result.rating).toBe("Good");
-      expect(repo.insertReview).toHaveBeenCalled();
-      expect(repo.upsertState).toHaveBeenCalled();
+      expect(repo.insertReviewWithState).toHaveBeenCalledTimes(1);
       expect(repo.updateSessionTouch).toHaveBeenCalledWith(
         sessionId,
         SAMPLE_USER_ID
@@ -313,7 +297,7 @@ describe.concurrent(FlashcardSessionService, () => {
         SAMPLE_USER_ID,
         flashcardId
       );
-      expect(repo.insertReview).toHaveBeenCalled();
+      expect(repo.insertReviewWithState).toHaveBeenCalledTimes(1);
     });
 
     it("sets introducedAt on first review of a new card", async ({
@@ -327,9 +311,9 @@ describe.concurrent(FlashcardSessionService, () => {
         SAMPLE_USER_ID
       );
 
-      expect(repo.upsertState).toHaveBeenCalled();
-      const upsertedState = repo.upsertState.mock.calls[0]?.[0];
-      expect(upsertedState?.introducedAt).toBeInstanceOf(Date);
+      expect(repo.insertReviewWithState).toHaveBeenCalledTimes(1);
+      const inserted = repo.insertReviewWithState.mock.calls[0]?.[0];
+      expect(inserted?.state?.introducedAt).toBeInstanceOf(Date);
     });
 
     it("preserves introducedAt on subsequent reviews", async ({ expect }) => {
@@ -350,8 +334,63 @@ describe.concurrent(FlashcardSessionService, () => {
         SAMPLE_USER_ID
       );
 
-      const upsertedState = repo.upsertState.mock.calls[0]?.[0];
-      expect(upsertedState?.introducedAt).toBe(existingIntroducedAt);
+      const inserted = repo.insertReviewWithState.mock.calls[0]?.[0];
+      expect(inserted?.state?.introducedAt).toBe(existingIntroducedAt);
+    });
+
+    it("persists all nine pre-snapshot fields on the review row", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const reviewedAt = new Date("2026-02-01");
+      repo.findStateByKey.mockResolvedValue(
+        createFlashcardCardStateFixture({
+          flashcardId,
+          introducedAt: new Date("2026-01-01"),
+          lastReview: reviewedAt,
+          reps: 5,
+          state: "Review",
+          userId: SAMPLE_USER_ID,
+        })
+      );
+
+      const result = await service.submitReview(
+        { flashcardId, rating: "Good", sessionId },
+        SAMPLE_USER_ID
+      );
+
+      expect(result.preState).toBe("Review");
+      expect(result.preStability).toBeGreaterThan(0);
+      expect(result.preDifficulty).toBeGreaterThan(0);
+      expect(result.preDue).toBeInstanceOf(Date);
+      expect(result.preLastReview).toBeInstanceOf(Date);
+      expect(typeof result.preReps).toBe("number");
+      expect(typeof result.preLapses).toBe("number");
+      expect(typeof result.preScheduledDays).toBe("number");
+      expect(typeof result.preLearningSteps).toBe("number");
+    });
+
+    it("persists preLastReview as null when the card has no prior review", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findStateByKey.mockResolvedValue(
+        createFlashcardCardStateFixture({
+          flashcardId,
+          introducedAt: new Date("2026-01-01"),
+          lastReview: null,
+          reps: 5,
+          state: "Review",
+          userId: SAMPLE_USER_ID,
+        })
+      );
+
+      const result = await service.submitReview(
+        { flashcardId, rating: "Good", sessionId },
+        SAMPLE_USER_ID
+      );
+
+      expect(result.preLastReview).toBeNull();
     });
   });
 
@@ -415,17 +454,17 @@ describe.concurrent(FlashcardSessionService, () => {
         dueToday: [],
         new: [
           createQueueFlashcardWithStateFixture({
+            back: "card",
             flashcardId: "flc_new",
             front: "new",
-            back: "card",
             state: null,
           }),
         ],
         overdue: [
           createQueueFlashcardWithStateFixture({
+            back: "due",
             flashcardId: "flc_overdue",
             front: "over",
-            back: "due",
             state: createFlashcardCardStateFixture({
               flashcardId: "flc_overdue",
               state: "Review",
@@ -550,7 +589,7 @@ describe.concurrent(FlashcardSessionService, () => {
       const { guard, service } = setupService();
       guard.requireUser.mockImplementation(throwUnauthorized);
 
-      const error = await captureError(service.listSessions({}, null));
+      const error = await captureError(service.listSessions(undefined, null));
       expect(error).toBeInstanceOf(ORPCError);
       expect(error).toMatchObject({ code: "UNAUTHORIZED" });
     });
@@ -563,26 +602,49 @@ describe.concurrent(FlashcardSessionService, () => {
         createFlashcardSessionFixture({ id: "fse_1" }),
         createFlashcardSessionFixture({ id: "fse_2" }),
       ];
-      repo.listSessionsForUser.mockResolvedValue(sessions);
+      const result = {
+        data: sessions,
+        pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
+      };
+      repo.listSessionsForUser.mockResolvedValue(result);
 
-      const result = await service.listSessions({}, SAMPLE_USER_ID);
-      expect(result).toBe(sessions);
-      expect(repo.listSessionsForUser).toHaveBeenCalledWith(SAMPLE_USER_ID);
+      const returned = await service.listSessions(undefined, SAMPLE_USER_ID);
+      expect(returned).toBe(result);
+      expect(repo.listSessionsForUser).toHaveBeenCalledWith(
+        SAMPLE_USER_ID,
+        1,
+        20
+      );
     });
   });
 
   describe("adminListSessions", () => {
+    it("throws VALIDATION_FAILED when neither userId nor studySetId is provided", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+      const error = await captureError(service.adminListSessions({}));
+      expect(error).toBeInstanceOf(ORPCError);
+      expect(error).toMatchObject({ code: "VALIDATION_FAILED" });
+    });
+
     it("passes filters through to the repository", async ({ expect }) => {
       const { repo, service } = setupService();
       const sessions = [createFlashcardSessionFixture({ id: "fse_1" })];
-      repo.listSessionsForAdmin.mockResolvedValue(sessions);
+      const result = {
+        data: sessions,
+        pagination: { limit: 20, page: 1, total: 1, totalPages: 1 },
+      };
+      repo.listSessionsForAdmin.mockResolvedValue(result);
 
-      const result = await service.adminListSessions({
+      const returned = await service.adminListSessions({
         studySetId: SAMPLE_STUDY_SET_ID,
         userId: SAMPLE_USER_ID,
       });
-      expect(result).toBe(sessions);
+      expect(returned).toBe(result);
       expect(repo.listSessionsForAdmin).toHaveBeenCalledWith({
+        limit: 20,
+        page: 1,
         studySetId: SAMPLE_STUDY_SET_ID,
         userId: SAMPLE_USER_ID,
       });
@@ -596,7 +658,7 @@ describe.concurrent(FlashcardSessionService, () => {
       const { repo, service } = setupService();
       repo.deleteExpiredSessions.mockResolvedValue(2);
 
-      const result = await service.adminDeleteExpired({});
+      const result = await service.adminDeleteExpired();
       expect(result).toEqual({ deletedCount: 2 });
       expect(repo.deleteExpiredSessions).toHaveBeenCalledExactlyOnceWith(
         expect.any(Number)

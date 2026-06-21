@@ -30,10 +30,10 @@ Flashcard Session is not responsible for:
 3. **FlashcardSessionDrizzleRepository** takes only a DB instance. Repository touches `flashcard_session`, `flashcard_session_review`, `flashcard_state`, and `flashcard` tables. Bucket classification (overdue/due-today/new) happens in the repo via a single joined query.
 4. **Daily new-card limit**: new cards are capped at `newCardsPerDay` (default 20, max 100). The count is derived from `flashcard_state.introduced_at` set on first review, with a UTC-midnight day boundary.
 5. **Due-in-7-days forecast**: cards due within `now+24h < due <= now+7d` are aggregated as per-day counts (7 entries, zero-filled) instead of fetching all future card content.
-6. **No atomic transaction for submitReview** — `insertReview` then `upsertState` then `updateSessionTouch` as three separate repo calls.
+6. **Atomic submitReview** — `insertReview` and `upsertState` run inside a single `dbInstance.transaction(...)`. `updateSessionTouch` runs after the transaction commits (touching the session timestamp is non-critical and stays outside the unit-of-work).
 7. **No snapshot** — flashcards are always live-queried. Edits are reflected immediately on the next `getReviewQueue` call.
 8. **FSRS state on `flashcard_state` table** — per-(userId, flashcardId) composite PK. Survives session boundaries.
-9. **Review row stores pre-review Card snapshot** — enables future FSRS weight tuning.
+9. **Review row stores pre-review Card snapshot** — exposed via `flashcardSessionReviewSchema` (nine pre-snapshot fields) so clients can render state transitions and future FSRS weight tuning can replay reviews.
 10. **Last-write-wins for flashcard_state** — concurrent submits both store their review; later `upsertState` overwrites.
 
 ## Entities
@@ -43,14 +43,14 @@ interface FlashcardSession {
   id: string;
   userId: string;
   studySetId: string;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface FlashcardCardState {
   userId: string; // composite PK
   flashcardId: string; // composite PK
-  due: number; // epoch ms
+  due: Date;
   stability: number;
   difficulty: number;
   elapsedDays: number;
@@ -58,10 +58,10 @@ interface FlashcardCardState {
   reps: number;
   lapses: number;
   state: "New" | "Learning" | "Review" | "Relearning";
-  lastReview: number | null;
+  lastReview: Date | null;
   learningSteps: number;
-  introducedAt: number | null; // set on first review, NULL meaning "introduced before tracking"
-  updatedAt: number;
+  introducedAt: Date | null; // set on first review, NULL meaning "introduced before tracking"
+  updatedAt: Date;
 }
 ```
 
@@ -115,7 +115,7 @@ flashcardSessionRouter
   - `flashcard_session.userId` → `user.id`: `ON DELETE CASCADE`
   - `flashcard_session.studySetId` → `study_set.id`: `ON DELETE CASCADE`
   - `flashcard_session_review.sessionId` → `flashcard_session.id`: `ON DELETE CASCADE`
-  - `flashcard_session_review.flashcardId` → `flashcard.id`: `ON DELETE SET NULL`
+  - `flashcard_session_review.flashcardId` → `flashcard.id`: `ON DELETE CASCADE`
   - `flashcard_state.userId` → `user.id`: `ON DELETE CASCADE`
   - `flashcard_state.flashcardId` → `flashcard.id`: `ON DELETE CASCADE`
 - Unique constraints:
@@ -137,9 +137,7 @@ interface FlashcardSessionRepository {
     studySetId?: string;
   }): Promise<FlashcardSession[]>;
 
-  insertSession(
-    row: Omit<FlashcardSession, "createdAt" | "updatedAt">
-  ): Promise<FlashcardSession>;
+  getOrCreateSession(row): Promise<FlashcardSession>;
   updateSessionTouch(
     id: string,
     userId: string
@@ -175,24 +173,28 @@ interface FlashcardSessionRepository {
     userId: string;
     limit: number;
   }): Promise<FlashcardSessionReview[]>;
-  insertReview(
-    row: Omit<FlashcardSessionReview, "id">
-  ): Promise<FlashcardSessionReview>;
+  insertReviewWithState(params: {
+    review: Omit<FlashcardSessionReview, "id">;
+    state: FlashcardCardState;
+  }): Promise<{
+    review: FlashcardSessionReview;
+    state: FlashcardCardState;
+  }>;
 }
 ```
 
 ## Service-to-Repo Mapping
 
-| Service method       | Repo calls                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------------- |
-| `getOrCreateSession` | `findSessionByUserAndStudySet` → `insertSession` if null                                  |
-| `submitReview`       | `findStateByKey` → (FSRS compute) → `insertReview` → `upsertState` → `updateSessionTouch` |
-| `getSession`         | `findSessionById` (after guard owner check)                                               |
-| `getReviewQueue`     | `findFlashcardsForQueue` + `countIntroducedToday` (daily cap)                             |
-| `listReviews`        | `listReviewsByStudySet`                                                                   |
-| `listSessions`       | `listSessionsForUser`                                                                     |
-| `adminListSessions`  | `listSessionsForAdmin`                                                                    |
-| `adminDeleteExpired` | `deleteExpiredSessions`                                                                   |
+| Service method       | Repo calls                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `getOrCreateSession` | `getOrCreateSession` (atomic `INSERT … ON CONFLICT DO NOTHING` + re-SELECT)                      |
+| `submitReview`       | `findStateByKey` → (FSRS compute) → `insertReviewWithState` (transaction) → `updateSessionTouch` |
+| `getSession`         | `findSessionById` (after guard owner check)                                                      |
+| `getReviewQueue`     | `findFlashcardsForQueue` + `countIntroducedToday` (daily cap)                                    |
+| `listReviews`        | `listReviewsByStudySet`                                                                          |
+| `listSessions`       | `listSessionsForUser`                                                                            |
+| `adminListSessions`  | `listSessionsForAdmin`                                                                           |
+| `adminDeleteExpired` | `deleteExpiredSessions`                                                                          |
 
 ## Constants
 
@@ -208,6 +210,7 @@ interface FlashcardSessionRepository {
 ## Errors
 
 - `UNAUTHORIZED`: missing authenticated user.
-- `FORBIDDEN`: authenticated user cannot view the study set.
 - `NOT_FOUND`: session, study set, flashcard not found or not visible.
 - `VALIDATION_FAILED`: invalid input, flashcard does not belong to session's study set.
+
+> **Note on visibility:** `FORBIDDEN` is intentionally not raised. Visibility failures on study sets collapse to `NOT_FOUND` so the API does not leak the existence of a study set the caller cannot see. Once a session exists, the session owner may continue submitting reviews against the session even if the underlying study set is later soft-deleted.

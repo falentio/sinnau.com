@@ -6,6 +6,10 @@ import {
 import { STUDY_SET_ID_PREFIX } from "$lib/schemas/study-set";
 import { user } from "$lib/server/infras/db/schema/auth-schema";
 import { flashcard } from "$lib/server/infras/db/schema/flashcard";
+import {
+  flashcardSession,
+  flashcardState,
+} from "$lib/server/infras/db/schema/flashcard-session";
 import { studySet } from "$lib/server/infras/db/schema/study-set";
 import { getTestingDb } from "$lib/server/infras/db/testing";
 import { eq } from "drizzle-orm";
@@ -41,8 +45,9 @@ export const createMockRepository = (): MockedFlashcardSessionRepository => ({
   findSessionByUserAndStudySet:
     vi.fn<FlashcardSessionRepository["findSessionByUserAndStudySet"]>(),
   findStateByKey: vi.fn<FlashcardSessionRepository["findStateByKey"]>(),
-  insertReview: vi.fn<FlashcardSessionRepository["insertReview"]>(),
-  insertSession: vi.fn<FlashcardSessionRepository["insertSession"]>(),
+  getOrCreateSession: vi.fn<FlashcardSessionRepository["getOrCreateSession"]>(),
+  insertReviewWithState:
+    vi.fn<FlashcardSessionRepository["insertReviewWithState"]>(),
   listReviewsByStudySet:
     vi.fn<FlashcardSessionRepository["listReviewsByStudySet"]>(),
   listSessionsForAdmin:
@@ -50,7 +55,6 @@ export const createMockRepository = (): MockedFlashcardSessionRepository => ({
   listSessionsForUser:
     vi.fn<FlashcardSessionRepository["listSessionsForUser"]>(),
   updateSessionTouch: vi.fn<FlashcardSessionRepository["updateSessionTouch"]>(),
-  upsertState: vi.fn<FlashcardSessionRepository["upsertState"]>(),
 });
 
 export type MockedFlashcardSessionGuard = {
@@ -58,15 +62,14 @@ export type MockedFlashcardSessionGuard = {
 };
 
 export const createMockGuard = (): MockedFlashcardSessionGuard => ({
-  assertFlashcardBelongsToStudySetOrValidationFailed:
+  assertFlashcardBelongsToStudySetOrNotFound:
     vi.fn<
-      FlashcardSessionGuard["assertFlashcardBelongsToStudySetOrValidationFailed"]
+      FlashcardSessionGuard["assertFlashcardBelongsToStudySetOrNotFound"]
     >(),
   assertSessionOwnerOrNotFound:
     vi.fn<FlashcardSessionGuard["assertSessionOwnerOrNotFound"]>(),
   assertStudySetVisibleOrNotFound:
     vi.fn<FlashcardSessionGuard["assertStudySetVisibleOrNotFound"]>(),
-  canViewStudySet: vi.fn<FlashcardSessionGuard["canViewStudySet"]>(),
   requireUser: vi.fn<FlashcardSessionGuard["requireUser"]>(),
 });
 
@@ -88,7 +91,6 @@ export const createFlashcardSessionReviewFixture = (
   id: generateId(FLASHCARD_SESSION_REVIEW_ID_PREFIX),
   preDifficulty: 5,
   preDue: new Date(),
-  preElapsedDays: 0,
   preLapses: 0,
   preLastReview: null,
   preLearningSteps: 0,
@@ -140,14 +142,17 @@ export const createQueueFlashcardWithStateFixture = (
   state: overrides.state === undefined ? null : overrides.state,
 });
 
-export const captureError = async (
-  promise: Promise<unknown>
-): Promise<unknown> => {
+export const captureError = async <T>(
+  promise: Promise<T>
+): Promise<Error | null> => {
   try {
     await promise;
     return null;
   } catch (error) {
-    return error;
+    if (error instanceof Error) {
+      return error;
+    }
+    return new Error(String(error));
   }
 };
 
@@ -223,9 +228,7 @@ export class FlashcardSessionTestEnv implements AsyncDisposable {
     return row;
   }
 
-  async seedFlashcard(
-    overrides: SeedFlashcardOptions = {}
-  ): Promise<Flashcard> {
+  seedFlashcard(overrides: SeedFlashcardOptions = {}): Flashcard {
     const id = overrides.id ?? generateId(FLASHCARD_ID_PREFIX);
     this.db
       .insert(flashcard)
@@ -251,9 +254,7 @@ export class FlashcardSessionTestEnv implements AsyncDisposable {
     return row;
   }
 
-  async seedSession(
-    overrides: Partial<FlashcardSession> = {}
-  ): Promise<FlashcardSession> {
+  seedSession(overrides: Partial<FlashcardSession> = {}): FlashcardSession {
     const id = overrides.id ?? generateId(FLASHCARD_SESSION_ID_PREFIX);
     const studySetId = overrides.studySetId ?? generateId(STUDY_SET_ID_PREFIX);
     const userId = overrides.userId ?? this.ownerId;
@@ -271,16 +272,33 @@ export class FlashcardSessionTestEnv implements AsyncDisposable {
         })
         .run();
     }
-    await this.repo.insertSession({
-      id,
-      studySetId,
-      userId,
-    });
-    const row = await this.repo.findSessionById(id);
+    const [row] = this.db
+      .insert(flashcardSession)
+      .values({
+        createdAt: new Date(),
+        id,
+        studySetId,
+        updatedAt: new Date(),
+        userId,
+      })
+      .returning()
+      .all();
     if (!row) {
       throw new Error("Failed to seed flashcard session");
     }
     return row;
+  }
+
+  seedFlashcardState(row: FlashcardCardState): FlashcardCardState {
+    const [inserted] = this.db
+      .insert(flashcardState)
+      .values(row)
+      .returning()
+      .all();
+    if (!inserted) {
+      throw new Error("Failed to seed flashcard state");
+    }
+    return inserted;
   }
 
   // oxlint-disable-next-line require-await

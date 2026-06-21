@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
 
+import type { Flashcard } from "../../infras/db/schema/flashcard.ts";
 import { StudySetGuard } from "../study-set/study-set.guard.ts";
 import {
   createStudySetFixture,
@@ -9,7 +10,6 @@ import {
 import { FlashcardSessionGuard } from "./flashcard-session.guard.ts";
 import {
   captureError,
-  createMockGuard as _createMockGuard,
   createMockRepository,
   createFlashcardSessionFixture,
 } from "./flashcard-session.testing.ts";
@@ -19,8 +19,10 @@ const setupGuard = () => {
   repo.findSessionById.mockResolvedValue(null);
 
   const flashcardRepo = {
-    findFlashcardById: vi.fn().mockResolvedValue(null),
-  } as unknown as import("./flashcard-session.repository.ts").FlashcardSessionRepository;
+    findFlashcardById: vi
+      .fn<() => Promise<Pick<Flashcard, "id" | "studySetId"> | null>>()
+      .mockResolvedValue(null),
+  };
 
   const studySetRepo = createMockStudySetRepo();
   studySetRepo.findStudySetById.mockResolvedValue(null);
@@ -29,9 +31,12 @@ const setupGuard = () => {
   const guard = new FlashcardSessionGuard(
     repo,
     studySetGuard,
-    flashcardRepo as any
+    // oxlint-disable-next-line no-unsafe-type-assertion
+    flashcardRepo as unknown as ConstructorParameters<
+      typeof FlashcardSessionGuard
+    >[2]
   );
-  return { flashcardRepo: flashcardRepo as any, guard, repo, studySetRepo };
+  return { flashcardRepo, guard, repo, studySetRepo };
 };
 
 describe.concurrent(FlashcardSessionGuard, () => {
@@ -48,7 +53,8 @@ describe.concurrent(FlashcardSessionGuard, () => {
 
     it("throws UNAUTHORIZED when userId is undefined", ({ expect }) => {
       const { guard } = setupGuard();
-      expect(() => guard.requireUser()).toThrow(ORPCError);
+      const userId: string | undefined = undefined;
+      expect(() => guard.requireUser(userId)).toThrow(ORPCError);
     });
   });
 
@@ -127,7 +133,7 @@ describe.concurrent(FlashcardSessionGuard, () => {
     });
   });
 
-  describe("assertFlashcardBelongsToStudySetOrValidationFailed", () => {
+  describe("assertFlashcardBelongsToStudySetOrNotFound", () => {
     it("resolves when the flashcard belongs to the study set", async ({
       expect,
     }) => {
@@ -138,29 +144,23 @@ describe.concurrent(FlashcardSessionGuard, () => {
       });
 
       await expect(
-        guard.assertFlashcardBelongsToStudySetOrValidationFailed(
-          "flc_1",
-          "set-1"
-        )
+        guard.assertFlashcardBelongsToStudySetOrNotFound("flc_1", "set-1")
       ).resolves.toBeUndefined();
       expect(flashcardRepo.findFlashcardById).toHaveBeenCalledWith("flc_1");
     });
 
-    it("throws VALIDATION_FAILED when the flashcard does not exist", async ({
+    it("throws NOT_FOUND when the flashcard does not exist", async ({
       expect,
     }) => {
       const { guard } = setupGuard();
       const err = await captureError(
-        guard.assertFlashcardBelongsToStudySetOrValidationFailed(
-          "missing",
-          "set-1"
-        )
+        guard.assertFlashcardBelongsToStudySetOrNotFound("missing", "set-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("throws VALIDATION_FAILED when the flashcard belongs to a different study set", async ({
+    it("throws NOT_FOUND when the flashcard belongs to a different study set", async ({
       expect,
     }) => {
       const { flashcardRepo, guard } = setupGuard();
@@ -169,32 +169,10 @@ describe.concurrent(FlashcardSessionGuard, () => {
         studySetId: "other-set",
       });
       const err = await captureError(
-        guard.assertFlashcardBelongsToStudySetOrValidationFailed(
-          "flc_1",
-          "set-1"
-        )
+        guard.assertFlashcardBelongsToStudySetOrNotFound("flc_1", "set-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "VALIDATION_FAILED" });
-    });
-  });
-
-  describe("canViewStudySet", () => {
-    it("returns true when the study set is visible", async ({ expect }) => {
-      const { guard, studySetRepo } = setupGuard();
-      studySetRepo.findStudySetById.mockResolvedValue(
-        createStudySetFixture({ id: "set-1", visibility: "PUBLIC" })
-      );
-      const result = await guard.canViewStudySet("set-1", "user-1");
-      expect(result).toBe(true);
-    });
-
-    it("returns false when the study set is not visible", async ({
-      expect,
-    }) => {
-      const { guard } = setupGuard();
-      const result = await guard.canViewStudySet("missing", "user-1");
-      expect(result).toBe(false);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
   });
 });

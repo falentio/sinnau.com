@@ -7,17 +7,22 @@ import type {
   GetOrCreateFlashcardSessionInput,
   GetReviewQueueInput,
   ListReviewsInput,
+  ListSessionsInput,
   SubmitReviewInput,
+  FlashcardSessionListResult,
 } from "$lib/schemas/flashcard-session";
 import {
   FLASHCARD_SESSION_ID_PREFIX,
   FLASHCARD_SESSION_REVIEW_HORIZON_MS,
   FLASHCARD_SESSION_DUE_IN_7_DAYS_MS,
+  FLASHCARD_SESSION_PAGE_DEFAULT,
+  FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT,
   FLASHCARD_SESSION_TTL_MS,
 } from "$lib/schemas/flashcard-session.constant";
 import type { FlashcardSessionRating } from "$lib/schemas/flashcard-session.constant";
-import { Rating, State, fsrs } from "ts-fsrs";
-import type { CardInput, Grade } from "ts-fsrs";
+import { ORPCError } from "@orpc/server";
+import { Rating, State, createEmptyCard, fsrs } from "ts-fsrs";
+import type { Card, CardInput, DateInput, Grade } from "ts-fsrs";
 
 import type {
   FlashcardCardState,
@@ -34,70 +39,60 @@ import type {
 export type { FlashcardSession, FlashcardSessionReview, FlashcardCardState };
 
 const ratingToGrade: Record<FlashcardSessionRating, Grade> = {
-  Again: Rating.Again as Grade,
-  Easy: Rating.Easy as Grade,
-  Good: Rating.Good as Grade,
-  Hard: Rating.Hard as Grade,
+  Again: Rating.Again,
+  Easy: Rating.Easy,
+  Good: Rating.Good,
+  Hard: Rating.Hard,
 };
 
-const computeFsrs = fsrs();
+const dbStateToFsrsState = (state: FlashcardCardState["state"]): State => {
+  if (state === "New") {
+    return State.New;
+  }
+  if (state === "Learning") {
+    return State.Learning;
+  }
+  if (state === "Review") {
+    return State.Review;
+  }
+  return State.Relearning;
+};
 
-const emptyCardAsInput = (now: Date): CardInput => ({
-  difficulty: 0,
-  due: now,
-  elapsed_days: 0,
-  lapses: 0,
-  last_review: null,
-  learning_steps: 0,
-  reps: 0,
-  scheduled_days: 0,
-  stability: 0,
-  state: State.New,
-});
+const fsrsStateToDb = (state: State): FlashcardCardState["state"] => {
+  if (state === State.New) {
+    return "New";
+  }
+  if (state === State.Learning) {
+    return "Learning";
+  }
+  if (state === State.Review) {
+    return "Review";
+  }
+  return "Relearning";
+};
 
-const dbStateToCardInput = (state: FlashcardCardState): CardInput => ({
+const cardInputFromState = (state: FlashcardCardState): CardInput => ({
   difficulty: state.difficulty,
   due: state.due,
-  elapsed_days: state.elapsedDays,
+  elapsed_days: state.elapsedDays, // oxlint-disable-line no-deprecated
   lapses: state.lapses,
   last_review: state.lastReview,
   learning_steps: state.learningSteps,
   reps: state.reps,
   scheduled_days: state.scheduledDays,
   stability: state.stability,
-  state: state.state,
+  state: dbStateToFsrsState(state.state),
 });
-
-const fsrsStateToDb = (state: State): FlashcardCardState["state"] => {
-  const map: Record<number, FlashcardCardState["state"]> = {
-    [State.New]: "New",
-    [State.Learning]: "Learning",
-    [State.Review]: "Review",
-    [State.Relearning]: "Relearning",
-  };
-  return map[state] ?? "New";
-};
 
 const newCardToDbState = (
   userId: string,
   flashcardId: string,
-  card: {
-    due: Date;
-    stability: number;
-    difficulty: number;
-    elapsed_days: number;
-    scheduled_days: number;
-    reps: number;
-    lapses: number;
-    state: State;
-    last_review?: Date;
-    learning_steps: number;
-  },
+  card: Card,
   introducedAt: Date | null
 ): FlashcardCardState => ({
   difficulty: card.difficulty,
   due: card.due,
-  elapsedDays: card.elapsed_days,
+  elapsedDays: card.elapsed_days, // oxlint-disable-line no-deprecated
   flashcardId,
   introducedAt,
   lapses: card.lapses,
@@ -118,6 +113,13 @@ const utcMidnight = (now: number): Date => {
   );
 };
 
+const normalizeDate = (value: DateInput | null | undefined): Date | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return value instanceof Date ? value : new Date(value);
+};
+
 const toQueueItem = (
   row: QueueFlashcardWithState,
   bucket: FlashcardQueueItem["bucket"]
@@ -129,6 +131,8 @@ const toQueueItem = (
   hint: row.hint,
   state: row.state,
 });
+
+const computeFsrs = fsrs();
 
 export class FlashcardSessionService {
   private readonly repo: FlashcardSessionRepository;
@@ -145,7 +149,7 @@ export class FlashcardSessionService {
   ): Promise<FlashcardSession> {
     const ownerId = this.guard.requireUser(userId);
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, ownerId);
-    return this.repo.getOrCreateSession({
+    return await this.repo.getOrCreateSession({
       id: generateId(FLASHCARD_SESSION_ID_PREFIX),
       studySetId: input.studySetId,
       userId: ownerId,
@@ -157,7 +161,10 @@ export class FlashcardSessionService {
     userId: string | null | undefined
   ): Promise<FlashcardSession> {
     const ownerId = this.guard.requireUser(userId);
-    return this.guard.assertSessionOwnerOrNotFound(input.sessionId, ownerId);
+    return await this.guard.assertSessionOwnerOrNotFound(
+      input.sessionId,
+      ownerId
+    );
   }
 
   async submitReview(
@@ -169,7 +176,7 @@ export class FlashcardSessionService {
       input.sessionId,
       ownerId
     );
-    await this.guard.assertFlashcardBelongsToStudySetOrValidationFailed(
+    await this.guard.assertFlashcardBelongsToStudySetOrNotFound(
       input.flashcardId,
       session.studySetId
     );
@@ -181,19 +188,24 @@ export class FlashcardSessionService {
     );
 
     const preCard: CardInput = existingState
-      ? dbStateToCardInput(existingState)
-      : emptyCardAsInput(now);
+      ? cardInputFromState(existingState)
+      : createEmptyCard(now);
 
     const grade = ratingToGrade[input.rating];
     const recordLogItem = computeFsrs.next(preCard, now, grade);
     const nextCard = recordLogItem.card;
+
+    const preDue =
+      preCard.due instanceof Date ? preCard.due : new Date(preCard.due);
+    const preLastReview = normalizeDate(preCard.last_review);
 
     const preStateStr: FlashcardCardState["state"] =
       typeof preCard.state === "string"
         ? preCard.state
         : fsrsStateToDb(preCard.state);
 
-    const introducedAt = existingState?.introducedAt ?? now;
+    const introducedAt =
+      existingState === null ? now : existingState.introducedAt;
     const newState = newCardToDbState(
       ownerId,
       input.flashcardId,
@@ -203,24 +215,32 @@ export class FlashcardSessionService {
 
     const { review } = await this.repo.insertReviewWithState({
       review: {
-        sessionId: session.id,
         flashcardId: input.flashcardId,
+        preDifficulty: preCard.difficulty,
+        preDue,
+        preLapses: preCard.lapses,
+        preLastReview,
+        preLearningSteps: preCard.learning_steps,
+        preReps: preCard.reps,
+        preScheduledDays: preCard.scheduled_days,
+        preStability: preCard.stability,
+        preState: preStateStr,
         rating: input.rating,
         reviewedAt: now,
-        preState: preStateStr,
-        preStability: preCard.stability,
-        preDifficulty: preCard.difficulty,
-        preDue: preCard.due,
-        preLastReview: preCard.last_review ?? null,
-        preReps: preCard.reps,
-        preLapses: preCard.lapses,
-        preScheduledDays: preCard.scheduled_days,
-        preLearningSteps: preCard.learning_steps,
+        sessionId: session.id,
       },
       state: newState,
     });
 
-    await this.repo.updateSessionTouch(session.id, ownerId);
+    try {
+      await this.repo.updateSessionTouch(session.id, ownerId);
+    } catch (error) {
+      console.error("updateSessionTouch failed", {
+        error,
+        sessionId: session.id,
+        userId: ownerId,
+      });
+    }
 
     return review;
   }
@@ -267,7 +287,7 @@ export class FlashcardSessionService {
   ): Promise<FlashcardSessionReview[]> {
     const ownerId = this.guard.requireUser(userId);
     await this.guard.assertStudySetVisibleOrNotFound(input.studySetId, ownerId);
-    return this.repo.listReviewsByStudySet({
+    return await this.repo.listReviewsByStudySet({
       limit: input.limit,
       studySetId: input.studySetId,
       userId: ownerId,
@@ -275,16 +295,31 @@ export class FlashcardSessionService {
   }
 
   async listSessions(
+    input: ListSessionsInput | undefined,
     userId: string | null | undefined
-  ): Promise<FlashcardSession[]> {
+  ): Promise<FlashcardSessionListResult> {
     const ownerId = this.guard.requireUser(userId);
-    return this.repo.listSessionsForUser(ownerId);
+    const page = input?.pagination?.page ?? FLASHCARD_SESSION_PAGE_DEFAULT;
+    const limit =
+      input?.pagination?.limit ?? FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT;
+    return await this.repo.listSessionsForUser(ownerId, page, limit);
   }
 
   async adminListSessions(
     input: AdminListSessionsInput
-  ): Promise<FlashcardSession[]> {
-    return this.repo.listSessionsForAdmin({
+  ): Promise<FlashcardSessionListResult> {
+    if (input.userId === undefined && input.studySetId === undefined) {
+      throw new ORPCError("VALIDATION_FAILED", {
+        message:
+          "At least one of userId or studySetId must be provided to list admin sessions",
+      });
+    }
+    const page = input.pagination?.page ?? FLASHCARD_SESSION_PAGE_DEFAULT;
+    const limit =
+      input.pagination?.limit ?? FLASHCARD_SESSION_PAGE_LIMIT_DEFAULT;
+    return await this.repo.listSessionsForAdmin({
+      limit,
+      page,
       studySetId: input.studySetId,
       userId: input.userId,
     });

@@ -8,7 +8,7 @@ import type { FlashcardSessionRepository } from "./flashcard-session.repository.
 
 export class FlashcardSessionGuard {
   private readonly repo: FlashcardSessionRepository;
-  private readonly studySetGuard: StudySetGuard;
+  private readonly resolvedStudySetGuard: StudySetGuard;
   private readonly flashcardRepo: FlashcardRepository;
 
   constructor(
@@ -17,11 +17,11 @@ export class FlashcardSessionGuard {
     flashcardRepo: FlashcardRepository
   ) {
     this.repo = repo;
-    this.studySetGuard = studySetGuardInstance;
+    this.resolvedStudySetGuard = studySetGuardInstance;
     this.flashcardRepo = flashcardRepo;
   }
 
-  // oxlint-disable-next-line class-methods-use-this, typescript/strict-boolean-expressions
+  // oxlint-disable-next-line class-methods-use-this
   requireUser(userId: string | null | undefined): string {
     if (userId === null || userId === undefined) {
       throw new ORPCError("UNAUTHORIZED", {
@@ -31,11 +31,12 @@ export class FlashcardSessionGuard {
     return userId;
   }
 
+  // oxlint-disable-next-line require-await
   async assertStudySetVisibleOrNotFound(
     studySetId: string,
     userId: string
   ): Promise<StudySet> {
-    return await this.studySetGuard.assertStudySetVisibleByIdOrNotFound(
+    return await this.resolvedStudySetGuard.assertStudySetVisibleByIdOrNotFound(
       studySetId,
       userId
     );
@@ -54,27 +55,15 @@ export class FlashcardSessionGuard {
     return session;
   }
 
-  async assertFlashcardBelongsToStudySetOrValidationFailed(
+  async assertFlashcardBelongsToStudySetOrNotFound(
     flashcardId: string,
     studySetId: string
   ): Promise<void> {
     const card = await this.flashcardRepo.findFlashcardById(flashcardId);
     if (!card || card.studySetId !== studySetId) {
-      throw new ORPCError("VALIDATION_FAILED", {
+      throw new ORPCError("NOT_FOUND", {
         message: "Flashcard does not belong to the study set",
       });
-    }
-  }
-
-  async canViewStudySet(studySetId: string, userId: string): Promise<boolean> {
-    try {
-      await this.studySetGuard.assertStudySetVisibleByIdOrNotFound(
-        studySetId,
-        userId
-      );
-      return true;
-    } catch {
-      return false;
     }
   }
 }

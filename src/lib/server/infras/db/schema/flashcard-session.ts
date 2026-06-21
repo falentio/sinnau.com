@@ -1,3 +1,7 @@
+import {
+  FLASHCARD_SESSION_RATINGS,
+  FLASHCARD_SESSION_STATES,
+} from "$lib/schemas/flashcard-session.constant";
 import { sql } from "drizzle-orm";
 import {
   index,
@@ -12,14 +16,6 @@ import {
 import { user } from "./auth-schema.ts";
 import { flashcard } from "./flashcard.ts";
 import { studySet } from "./study-set.ts";
-
-const FLASHCARD_SESSION_RATINGS = ["Again", "Hard", "Good", "Easy"] as const;
-const FLASHCARD_SESSION_STATES = [
-  "New",
-  "Learning",
-  "Review",
-  "Relearning",
-] as const;
 
 export const flashcardSession = sqliteTable(
   "flashcard_session",
@@ -44,7 +40,6 @@ export const flashcardSession = sqliteTable(
       table.userId,
       table.studySetId
     ),
-    index("flashcard_session_userId_idx").on(table.userId),
     index("flashcard_session_studySetId_idx").on(table.studySetId),
     index("flashcard_session_updatedAt_idx").on(table.updatedAt),
   ]
@@ -73,7 +68,6 @@ export const flashcardSessionReview = sqliteTable(
       .references(() => flashcardSession.id, { onDelete: "cascade" }),
   },
   (table) => [
-    index("flashcard_session_review_sessionId_idx").on(table.sessionId),
     index("flashcard_session_review_flashcardId_sessionId_idx").on(
       table.flashcardId,
       table.sessionId
@@ -114,6 +108,11 @@ export const flashcardState = sqliteTable(
     primaryKey({ columns: [table.userId, table.flashcardId] }),
     index("flashcard_state_userId_introducedAt_idx").on(
       table.userId,
+      table.introducedAt
+    ),
+    index("flashcard_state_userId_flashcardId_introducedAt_idx").on(
+      table.userId,
+      table.flashcardId,
       table.introducedAt
     ),
   ]

@@ -1,6 +1,9 @@
-import { FLASHCARD_SESSION_REVIEW_ID_PREFIX } from "$lib/schemas/flashcard-session.constant";
+import {
+  FLASHCARD_SESSION_PAGE_LIMIT_MAX,
+  FLASHCARD_SESSION_REVIEW_ID_PREFIX,
+} from "$lib/schemas/flashcard-session.constant";
 import { ORPCError } from "@orpc/server";
-import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type { DB } from "../../infras/db/client.ts";
@@ -15,9 +18,11 @@ import type {
   FlashcardSessionReview,
 } from "../../infras/db/schema/flashcard-session.ts";
 import { flashcard } from "../../infras/db/schema/flashcard.ts";
+import { studySet } from "../../infras/db/schema/study-set.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type {
   DueIn7DaysItem,
+  FlashcardSessionListResult,
   FlashcardSessionRepository,
   QueueFlashcardWithState,
 } from "./flashcard-session.repository.ts";
@@ -77,14 +82,56 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
-  async listSessionsForUser(userId: string): Promise<FlashcardSession[]> {
+  // oxlint-disable-next-line require-await
+  async listSessionsForUser(
+    userId: string,
+    page: number,
+    limit: number
+  ): Promise<FlashcardSessionListResult> {
     try {
-      return this.dbInstance
-        .select()
-        .from(flashcardSession)
-        .where(eq(flashcardSession.userId, userId))
-        .orderBy(desc(flashcardSession.updatedAt))
-        .all();
+      const effectiveLimit = Math.min(limit, FLASHCARD_SESSION_PAGE_LIMIT_MAX);
+      const offset = (page - 1) * effectiveLimit;
+
+      const [rows, totalRow] = [
+        this.dbInstance
+          .select()
+          .from(flashcardSession)
+          .innerJoin(
+            studySet,
+            and(
+              eq(studySet.id, flashcardSession.studySetId),
+              sql`${studySet.deletedAt} IS NULL`
+            )
+          )
+          .where(eq(flashcardSession.userId, userId))
+          .orderBy(desc(flashcardSession.updatedAt))
+          .limit(effectiveLimit)
+          .offset(offset)
+          .all()
+          .map((r) => r.flashcard_session),
+        this.dbInstance
+          .select({ count: sql<number>`count(*)` })
+          .from(flashcardSession)
+          .innerJoin(
+            studySet,
+            and(
+              eq(studySet.id, flashcardSession.studySetId),
+              sql`${studySet.deletedAt} IS NULL`
+            )
+          )
+          .where(eq(flashcardSession.userId, userId))
+          .all(),
+      ];
+      const total = totalRow[0]?.count ?? 0;
+      return {
+        data: rows,
+        pagination: {
+          limit: effectiveLimit,
+          page,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / effectiveLimit)),
+        },
+      };
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -95,10 +142,13 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
+  // oxlint-disable-next-line require-await
   async listSessionsForAdmin(params: {
     userId?: string;
     studySetId?: string;
-  }): Promise<FlashcardSession[]> {
+    page: number;
+    limit: number;
+  }): Promise<FlashcardSessionListResult> {
     try {
       const filters = [];
       if (params.userId !== undefined) {
@@ -107,12 +157,38 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
       if (params.studySetId !== undefined) {
         filters.push(eq(flashcardSession.studySetId, params.studySetId));
       }
-      return this.dbInstance
-        .select()
-        .from(flashcardSession)
-        .where(and(...filters))
-        .orderBy(desc(flashcardSession.updatedAt))
-        .all();
+      const effectiveLimit = Math.min(
+        params.limit,
+        FLASHCARD_SESSION_PAGE_LIMIT_MAX
+      );
+      const offset = (params.page - 1) * effectiveLimit;
+      const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+      const [rows, totalRow] = [
+        this.dbInstance
+          .select()
+          .from(flashcardSession)
+          .where(whereClause)
+          .orderBy(desc(flashcardSession.updatedAt))
+          .limit(effectiveLimit)
+          .offset(offset)
+          .all(),
+        this.dbInstance
+          .select({ count: sql<number>`count(*)` })
+          .from(flashcardSession)
+          .where(whereClause)
+          .all(),
+      ];
+      const total = totalRow[0]?.count ?? 0;
+      return {
+        data: rows,
+        pagination: {
+          limit: effectiveLimit,
+          page: params.page,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / effectiveLimit)),
+        },
+      };
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -182,42 +258,38 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
+  // oxlint-disable-next-line require-await
   async deleteExpiredSessions(beforeTimestamp: number): Promise<number> {
     try {
-      const expired = this.dbInstance
-        .select({
-          studySetId: flashcardSession.studySetId,
-          userId: flashcardSession.userId,
-        })
-        .from(flashcardSession)
-        .where(lt(flashcardSession.updatedAt, new Date(beforeTimestamp)))
-        .all();
-      if (expired.length === 0) {
-        return 0;
-      }
-      const studySetIds = Array.from(new Set(expired.map((r) => r.studySetId)));
-      const userIds = Array.from(new Set(expired.map((r) => r.userId)));
-      this.dbInstance
-        .delete(flashcardState)
-        .where(
-          and(
-            inArray(flashcardState.userId, userIds),
-            inArray(
-              flashcardState.flashcardId,
-              this.dbInstance
-                .select({ id: flashcard.id })
-                .from(flashcard)
-                .where(inArray(flashcard.studySetId, studySetIds))
+      const cutoff = new Date(beforeTimestamp);
+      return this.dbInstance.transaction((tx) => {
+        const expired = tx
+          .select({
+            studySetId: flashcardSession.studySetId,
+            userId: flashcardSession.userId,
+          })
+          .from(flashcardSession)
+          .where(lt(flashcardSession.updatedAt, cutoff))
+          .all();
+        if (expired.length > 0) {
+          tx.delete(flashcardState)
+            .where(
+              sql`(${flashcardState.userId}, ${flashcardState.flashcardId}) IN (
+                SELECT fs.user_id, f.id
+                FROM ${flashcardSession} fs
+                JOIN ${flashcard} f ON f.study_set_id = fs.study_set_id
+                WHERE fs.updated_at < ${beforeTimestamp}
+              )`
             )
-          )
-        )
-        .run();
-      const deleted = this.dbInstance
-        .delete(flashcardSession)
-        .where(lt(flashcardSession.updatedAt, new Date(beforeTimestamp)))
-        .returning({ id: flashcardSession.id })
-        .all();
-      return deleted.length;
+            .run();
+        }
+        const deleted = tx
+          .delete(flashcardSession)
+          .where(lt(flashcardSession.updatedAt, cutoff))
+          .returning({ id: flashcardSession.id })
+          .all();
+        return deleted.length;
+      });
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -258,8 +330,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
             eq(flashcardState.userId, params.userId)
           )
         )
-        .where(eq(flashcard.studySetId, params.studySetId))
-        .orderBy(asc(flashcardState.due), asc(flashcard.createdAt));
+        .where(eq(flashcard.studySetId, params.studySetId));
 
       const overdue: QueueFlashcardWithState[] = [];
       const dueToday: QueueFlashcardWithState[] = [];
@@ -269,12 +340,12 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
       const dueIn7DaysCutoff = params.now + params.dueIn7DaysMs;
 
       for (const row of joined) {
-        const st = row.state;
+        const st = row.state ?? null;
         const item: QueueFlashcardWithState = {
-          back: row.back ?? "",
+          back: row.back,
           createdAt: row.createdAt,
           flashcardId: row.flashcardId,
-          front: row.front ?? "",
+          front: row.front,
           hint: row.hint,
           state: st,
         };
@@ -332,9 +403,8 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     since: Date
   ): Promise<number> {
     try {
-      const countExpr = sql<number>`cast(count(*) as integer)`;
       const [result] = await this.dbInstance
-        .select({ count: countExpr })
+        .select({ count: sql<number>`count(*)` })
         .from(flashcardState)
         .innerJoin(flashcard, eq(flashcardState.flashcardId, flashcard.id))
         .where(
@@ -381,48 +451,22 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
-  async upsertState(row: FlashcardCardState): Promise<FlashcardCardState> {
-    try {
-      const [created] = await this.dbInstance
-        .insert(flashcardState)
-        .values(row)
-        .onConflictDoUpdate({
-          set: {
-            difficulty: row.difficulty,
-            due: row.due,
-            elapsedDays: row.elapsedDays,
-            introducedAt: sql`COALESCE(introduced_at, excluded.introduced_at)`,
-            lapses: row.lapses,
-            lastReview: row.lastReview,
-            learningSteps: row.learningSteps,
-            reps: row.reps,
-            scheduledDays: row.scheduledDays,
-            stability: row.stability,
-            state: row.state,
-          },
-          target: [flashcardState.userId, flashcardState.flashcardId],
-        })
-        .returning();
-      if (!created) {
-        throw new Error("Failed to upsert flashcard state");
-      }
-      return created;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
-  }
-
   async listReviewsByStudySet(params: {
     studySetId: string;
     userId: string;
     limit: number;
   }): Promise<FlashcardSessionReview[]> {
     try {
+      const sessionIds = this.dbInstance
+        .select({ id: flashcardSession.id })
+        .from(flashcardSession)
+        .where(
+          and(
+            eq(flashcardSession.studySetId, params.studySetId),
+            eq(flashcardSession.userId, params.userId)
+          )
+        );
+
       const rows = await this.dbInstance
         .select({
           flashcardId: flashcardSessionReview.flashcardId,
@@ -441,16 +485,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
           sessionId: flashcardSessionReview.sessionId,
         })
         .from(flashcardSessionReview)
-        .innerJoin(
-          flashcardSession,
-          eq(flashcardSessionReview.sessionId, flashcardSession.id)
-        )
-        .where(
-          and(
-            eq(flashcardSession.studySetId, params.studySetId),
-            eq(flashcardSession.userId, params.userId)
-          )
-        )
+        .where(inArray(flashcardSessionReview.sessionId, sessionIds))
         .orderBy(desc(flashcardSessionReview.reviewedAt))
         .limit(params.limit);
       return rows;
@@ -464,6 +499,7 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
     }
   }
 
+  // oxlint-disable-next-line require-await
   async insertReviewWithState(params: {
     review: Omit<FlashcardSessionReview, "id">;
     state: FlashcardCardState;
