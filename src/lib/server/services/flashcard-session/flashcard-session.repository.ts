@@ -1,3 +1,5 @@
+import type { FlashcardSessionReviewWithFront } from "$lib/schemas/flashcard-session";
+
 import type {
   FlashcardCardState,
   FlashcardSession,
@@ -88,7 +90,7 @@ export interface FlashcardSessionRepository {
     studySetId: string;
     userId: string;
     limit: number;
-  }): Promise<FlashcardSessionReview[]>;
+  }): Promise<FlashcardSessionReviewWithFront[]>;
 
   insertReviewWithState(params: {
     review: Omit<FlashcardSessionReview, "id">;

@@ -1,6 +1,6 @@
 import {
   listReviewsInputSchema,
-  flashcardSessionReviewSchema,
+  flashcardSessionReviewWithFrontSchema,
 } from "$lib/schemas/flashcard-session";
 import { authorizedProcedure } from "$lib/server/api/base";
 import * as v from "valibot";
@@ -16,7 +16,7 @@ const ERRORS = {
 export const flashcardSessionListReviews = authorizedProcedure
   .errors(ERRORS)
   .input(listReviewsInputSchema)
-  .output(v.array(flashcardSessionReviewSchema))
+  .output(v.array(flashcardSessionReviewWithFrontSchema))
   .handler(
     async ({ input, context }) =>
       await flashcardSessionService.listReviews(input, context.user.id)

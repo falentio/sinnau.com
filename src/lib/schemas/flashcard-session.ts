@@ -126,6 +126,11 @@ export const flashcardSessionReviewSchema = v.object({
   sessionId: v.string(),
 });
 
+export const flashcardSessionReviewWithFrontSchema = v.object({
+  ...flashcardSessionReviewSchema.entries,
+  front: v.string(),
+});
+
 export const flashcardCardStateSchema = v.object({
   difficulty: v.number(),
   due: v.date(),
@@ -206,8 +211,12 @@ export type FlashcardSession = v.InferOutput<typeof flashcardSessionSchema>;
 export type FlashcardSessionReview = v.InferOutput<
   typeof flashcardSessionReviewSchema
 >;
+export type FlashcardSessionReviewWithFront = v.InferOutput<
+  typeof flashcardSessionReviewWithFrontSchema
+>;
 export type FlashcardCardState = v.InferOutput<typeof flashcardCardStateSchema>;
 export type FlashcardQueueItem = v.InferOutput<typeof flashcardQueueItemSchema>;
+export type DueIn7DaysItem = v.InferOutput<typeof dueIn7DaysItemSchema>;
 export type BucketedQueue = v.InferOutput<typeof bucketedQueueSchema>;
 export type DeleteExpiredOutput = v.InferOutput<
   typeof deleteExpiredOutputSchema

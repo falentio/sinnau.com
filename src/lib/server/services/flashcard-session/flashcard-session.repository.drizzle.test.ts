@@ -762,6 +762,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
         userId: env.ownerId,
       });
       const fc = env.seedFlashcard({
+        front: "Apa ibukota Indonesia?",
         ownerId: env.ownerId,
         studySetId: ss.id,
       });
@@ -808,6 +809,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       });
       expect(reviews).toHaveLength(1);
       expect(reviews[0]?.rating).toBe("Good");
+      expect(reviews[0]?.front).toBe("Apa ibukota Indonesia?");
     });
   });
 
