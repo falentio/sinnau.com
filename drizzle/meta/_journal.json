@@ -57,6 +57,13 @@
       "when": 1781443200000,
       "tag": "0007_flashcard_session",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1782103230278,
+      "tag": "0008_study_set_fts",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ import { flashcardSessionRouter } from "$lib/server/services/flashcard-session/f
 import { flashcardRouter } from "$lib/server/services/flashcard/flashcard.router";
 import { quizSessionRouter } from "$lib/server/services/quiz-session/quiz-session.router";
 import { quizRouter } from "$lib/server/services/quiz/quiz.router";
+import { studySetSearchRouter } from "$lib/server/services/study-set-search/study-set-search.router";
 import { studySetRouter } from "$lib/server/services/study-set/study-set.router";
 import { ORPCError } from "@orpc/client";
 
@@ -26,6 +27,7 @@ export const router = {
   quiz: quizRouter,
   quizSession: quizSessionRouter,
   studySet: studySetRouter,
+  studySetSearch: studySetSearchRouter,
   unimplemented: publicProcedure.handler(() => {
     throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "unimplemented" });
   }),
