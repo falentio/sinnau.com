@@ -21,7 +21,7 @@ export default defineConfig({
     allowedHosts: ["*.localhost", "localhost", "*.falentio"],
     port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5173,
     watch: {
-      ignored: ["**/node_modules/**", "**/dist/**", "**/.worktrees/**"],
+      ignored: ["**/node_modules/**", "**/dist/**", "./.worktrees/**"],
     },
   },
   test: {

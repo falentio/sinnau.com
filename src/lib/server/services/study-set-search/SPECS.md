@@ -10,8 +10,8 @@ StudySetSearch is the public-discovery slice of the study-set domain. It exposes
 
 StudySetSearch is responsible for:
 
-- full-text search over public study-set `title` and `description`
-- a flat, paginated-light result projection suitable for a discovery surface
+- full-text search over public study-set `slug`, `title`, and `description`
+- a flat, fixed-size result projection suitable for a discovery surface
 - keeping the FTS5 index in sync with the underlying `study_set` table
 
 StudySetSearch is not responsible for:
@@ -35,24 +35,19 @@ interface StudySetSearchResult {
   slug: string;
   title: string;
   description: string | null;
-  visibility: "PUBLIC";
   ownerId: string;
-  createdAt: number;
-  updatedAt: number;
 }
 ```
 
-`visibility` is always `PUBLIC` in the projection because private and soft-deleted sets are filtered out before the result is built. The narrower `visibility: "PUBLIC"` literal signals to consumers that no further visibility check is required.
+Every row in the result is a public, non-deleted study set. The FTS index only ever contains rows where `visibility = 'PUBLIC' AND deleted_at IS NULL`, so consumers can rely on that invariant without checking a per-row field. No `visibility`, `createdAt`, or `updatedAt` is included in the projection; callers needing those should fetch the full study set by `id` or `slug`.
 
 ## Field Rules
 
 - `id` is the `studySet.id` of the matching row. It is a text-prefixed identifier (`sts_...`); clients receive it as an opaque string.
-- `slug` is the existing study-set slug. The search projection does not regenerate, validate, or re-sanitize slugs.
+- `slug` is the existing study-set slug. The search projection does not regenerate, validate, or re-sanitize slugs. `slug` is also a searchable FTS column, so a query that matches the slug can return a row even when `title` and `description` do not contain it.
 - `title` is the current `studySet.title` of the matching row. The FTS index is matched case-insensitively, but the returned `title` preserves the stored casing.
 - `description` is the current `studySet.description`, or `null` when the underlying row has no description. The FTS index treats `NULL` as the empty string for matching purposes.
-- `visibility` is the literal `"PUBLIC"`; any other visibility is filtered out by the FTS query.
-- `ownerId` is the `studySet.ownerId` of the matching row.
-- `createdAt` and `updatedAt` are Unix timestamps in milliseconds, copied from the `study_set` row at query time (not from the FTS index).
+- `ownerId` is the `studySet.ownerId` of the matching row. It is not used to filter the result; the index-level visibility filter is the only filter that applies.
 
 ## Visibility And Authorization
 
@@ -77,10 +72,9 @@ interface SearchStudySetsQuery {
 - `query` is trimmed before validation; leading and trailing whitespace is discarded.
 - `query` must be between 3 and 100 characters after trimming, where the minimum is the FTS5 trigram tokenizer floor.
 - `query` must not contain ASCII control characters (U+0000–U+001F or U+007F).
-- The matched text is the concatenation of `title` (weighted higher) and `description`, using FTS5 column weights.
+- `query` is matched against every FTS column simultaneously (`slug`, `title`, `description`); there is no per-field filter or per-field result split. All columns are equally weighted in the default FTS5 ranking — no column has a higher or lower weight than any other.
 - The match is case-insensitive and uses trigram substring matching (FTS5 `trigram` tokenizer).
 - Special FTS5 syntax characters in `query` are escaped by wrapping the trimmed query in double quotes and doubling any embedded double quotes; the search runs in FTS5 phrase mode.
-- `query` is matched against both indexed columns simultaneously; there is no per-field filter or per-field result split.
 - There is no pagination; the fixed limit is `STUDY_SET_SEARCH_LIMIT` (20). Callers needing more results must narrow the query.
 - The result is the flat array `StudySetSearchResult[]` (no wrapper, no metadata, no pagination cursor).
 - An empty result set returns `[]`, not `null` and not `NOT_FOUND`.
@@ -88,22 +82,22 @@ interface SearchStudySetsQuery {
 
 ## Persistence
 
-- Use a standalone FTS5 virtual table named `study_set_fts`, not a Drizzle schema definition.
-- `study_set_fts` schema:
-  - `study_set_id TEXT UNINDEXED` — the foreign key back to `study_set.id`. Declared `UNINDEXED` so the trigram tokenizer does not index id substrings, which would otherwise produce spurious matches for any 3-character substring of any study-set id.
+- DDL — the `study_set_fts` virtual table and the three synchronization triggers — lives in migration `drizzle/0008_study_set_fts.sql`. The repository owns the data lifecycle, not the schema: its `setup()` method is responsible for the self-healing backfill only.
+- `study_set_fts` schema (created by the migration):
+  - `study_set_id TEXT UNINDEXED` — the back-reference to `study_set.id`. Declared `UNINDEXED` so the trigram tokenizer does not index id substrings, which would otherwise produce spurious matches for any 3-character substring of any study-set id.
   - `slug TEXT` — the searchable slug.
-  - `title TEXT` — the searchable title, weighted higher than `description`.
+  - `title TEXT` — the searchable title.
   - `description TEXT` — the searchable description.
-  - `rowid` is implicit; the `study_set_id` text column is the primary key, not the rowid.
+  - SQLite FTS5 always provides an implicit integer `rowid`; `study_set_id` is a regular column, not a primary key.
 - Synchronization is via SQLite triggers on `study_set`:
   - `AFTER INSERT` on `study_set` → insert a corresponding row into `study_set_fts`, gated by `visibility = 'PUBLIC' AND NEW.deleted_at IS NULL`.
   - `AFTER DELETE` on `study_set` → delete the corresponding row from `study_set_fts` by `study_set_id`.
   - `AFTER UPDATE OF title, description, visibility, deleted_at` on `study_set` → delete-then-insert the row, gated by `WHEN OLD.title IS NOT NEW.title OR OLD.description IS NOT NEW.description OR OLD.visibility IS NOT NEW.visibility OR OLD.deleted_at IS NOT NEW.deleted_at`. The `WHEN` clause keeps updates to unrelated columns from churning the FTS index.
-- Triggers run `IF NOT EXISTS` so the setup is idempotent across restarts and test runs.
-- A self-healing backfill runs at startup and at every `setup()` call. It deletes every FTS row whose `study_set_id` is no longer visible (`visibility = 'PUBLIC' AND deleted_at IS NULL`) and re-inserts the full set of currently visible rows. This also recovers from drift where triggers may have failed (e.g. legacy data inserted before the triggers existed).
-- DDL is owned by the repository's `setup()` method. `setup()` is a public method that must be called explicitly at boot from the singleton wiring in `index.ts`; the constructor does not invoke it. Tests call `setup()` after constructing the repository against a fresh in-memory DB.
+- Triggers are declared `IF NOT EXISTS` so applying the migration is idempotent across restarts and test runs.
+- The repository's `setup()` method performs a self-healing backfill: it deletes every FTS row whose `study_set_id` is no longer visible (`visibility = 'PUBLIC' AND deleted_at IS NULL`) and re-inserts the full set of currently visible rows. This recovers from drift where triggers may have failed (e.g. legacy data inserted before the triggers existed): the DELETE removes drifted rows and the INSERT re-populates from the source of truth.
+- `setup()` is a public method that must be called explicitly at boot from the singleton wiring in `index.ts`; the constructor does not invoke it. Tests call `setup()` after constructing the repository against a fresh in-memory DB.
 - The repository interface is the only public surface for persistence. The service does not run raw SQL.
-- The repository accepts the `userId` parameter on `search()` for API symmetry with other domains, but the visibility filter is index-level and does not depend on the caller's identity. Any userId value (including `null`) produces the same result set.
+- The repository's `search()` accepts a `StudySetSearchParams` payload (`{ query, limit }`). It does not take a `userId` parameter because visibility is enforced at the index level. The service builds the payload from the schema-validated input and applies the fixed `STUDY_SET_SEARCH_LIMIT`.
 
 ## Errors
 

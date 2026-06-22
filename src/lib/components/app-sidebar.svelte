@@ -43,8 +43,12 @@
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              <HugeiconsIcon icon={Search02Icon} />
-              <span>Cari</span>
+              {#snippet child({ props })}
+                <a href="/discover" {...props}>
+                  <HugeiconsIcon icon={Search02Icon} />
+                  <span>Cari</span>
+                </a>
+              {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>

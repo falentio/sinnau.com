@@ -6,6 +6,11 @@ import { describe, it } from "vitest";
 import { StudySetSearchTestEnv } from "./study-set-search.testing.ts";
 import { sanitizeFts5Query } from "./study-set-search.utils.ts";
 
+const searchParams = (query: string) => ({
+  limit: STUDY_SET_SEARCH_LIMIT,
+  query: sanitizeFts5Query(query),
+});
+
 describe.concurrent("StudySetSearchDrizzleRepository", () => {
   describe.concurrent("setup (backfill)", () => {
     it("re-indexes study sets whose FTS row was lost to drift", async ({
@@ -22,11 +27,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       env.db.run(sql`DELETE FROM study_set_fts WHERE study_set_id = ${id}`);
       env.repo.setup();
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("Biology 101");
     });
@@ -44,11 +45,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         title: "Chemistry Basics",
       });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("Biology 101");
       expect(results[0]?.description).toBe("Intro to biology");
@@ -62,11 +59,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       env.seedStudySet({ title: "Public Biology", visibility: "PUBLIC" });
       env.seedStudySet({ title: "Private Biology", visibility: "PRIVATE" });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("Public Biology");
     });
@@ -76,11 +69,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       env.seedStudySet({ title: "Active Biology" });
       env.seedStudySet({ deletedAt: new Date(), title: "Deleted Biology" });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("Active Biology");
     });
@@ -92,11 +81,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         title: "International Studies",
       });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("nation"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("nation"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("International Studies");
     });
@@ -105,11 +90,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       await using env = new StudySetSearchTestEnv();
       env.seedStudySet({ title: "Biology 101" });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("Biology 101");
     });
@@ -118,11 +99,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       await using env = new StudySetSearchTestEnv();
       env.seedStudySet({ title: 'Test "Quotes" Here' });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query('Test "Quotes" Here'),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams('Test "Quotes" Here'));
       expect(results).toHaveLength(1);
     });
 
@@ -132,11 +109,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         env.seedStudySet({ title: `Biology Set ${i}` });
       }
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(STUDY_SET_SEARCH_LIMIT);
     });
 
@@ -144,11 +117,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       await using env = new StudySetSearchTestEnv();
       env.seedStudySet({ title: "Biology 101" });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("xyznomatch"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("xyznomatch"));
       expect(results).toHaveLength(0);
     });
 
@@ -159,11 +128,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         title: "My Study Set",
       });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.title).toBe("My Study Set");
     });
@@ -181,11 +146,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       // The id is "sts_xxxxxxxx..." — searching for any 3-char substring
       // of the id tail must not match, because study_set_id is UNINDEXED.
       const trigram = id.slice(-3);
-      const results = await env.repo.search(
-        sanitizeFts5Query(trigram),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams(trigram));
       expect(results).toHaveLength(0);
     });
   });
@@ -224,20 +185,12 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
     it("makes newly inserted public sets searchable", async ({ expect }) => {
       await using env = new StudySetSearchTestEnv();
 
-      let results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      let results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(0);
 
       env.seedStudySet({ title: "Biology 101" });
 
-      results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
     });
 
@@ -247,11 +200,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       await using env = new StudySetSearchTestEnv();
       const id = env.seedStudySet({ title: "Biology 101" });
 
-      let results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      let results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
 
       env.db
@@ -260,11 +209,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         .where(eq(studySet.id, id))
         .run();
 
-      results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(0);
     });
 
@@ -272,11 +217,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       await using env = new StudySetSearchTestEnv();
       const id = env.seedStudySet({ title: "Biology 101" });
 
-      let results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      let results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
 
       env.db
@@ -285,11 +226,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         .where(eq(studySet.id, id))
         .run();
 
-      results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(0);
     });
 
@@ -331,11 +268,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         .where(eq(studySet.id, id))
         .run();
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.id).toBe(id);
     });
@@ -357,11 +290,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         .where(eq(studySet.id, id))
         .run();
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.id).toBe(id);
     });
@@ -377,11 +306,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
         .where(eq(studySet.id, id))
         .run();
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.id).toBe(id);
       expect(results[0]?.ownerId).toBe(newOwnerId);
@@ -393,11 +318,7 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       await using env = new StudySetSearchTestEnv();
       env.seedStudySet({ title: "Biology 101" });
 
-      const results = await env.repo.search(
-        sanitizeFts5Query("Biology"),
-        STUDY_SET_SEARCH_LIMIT,
-        null
-      );
+      const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.description).toBeNull();
     });
