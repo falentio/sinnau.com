@@ -25,7 +25,13 @@
       >
         <HugeiconsIcon icon={Home01Icon} />
       </Button>
-      <Button variant="ghost" size="icon-lg">
+      <Button
+        href="/discover/"
+        variant={page.route.id?.startsWith("/(app)/discover")
+          ? "outline"
+          : "ghost"}
+        size="icon-lg"
+      >
         <HugeiconsIcon icon={Search02Icon} />
       </Button>
       <Button variant="default" size="icon-lg">

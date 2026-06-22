@@ -1,7 +1,9 @@
+import type { SearchStudySetsInput } from "$lib/schemas/study-set-search";
 import { STUDY_SET_SEARCH_LIMIT } from "$lib/schemas/study-set-search.constant";
 
 import type { StudySetSearchGuard } from "./study-set-search.guard.ts";
 import type {
+  StudySetSearchParams,
   StudySetSearchRepository,
   StudySetSearchResult,
 } from "./study-set-search.repository.ts";
@@ -18,15 +20,14 @@ export class StudySetSearchService {
 
   // oxlint-disable-next-line require-await
   async search(
-    query: string,
+    input: SearchStudySetsInput,
     userId: string | null | undefined
   ): Promise<StudySetSearchResult[]> {
-    const authedUserId = this.guard.requireUser(userId);
-    const fts5Query = sanitizeFts5Query(query);
-    return await this.repo.search(
-      fts5Query,
-      STUDY_SET_SEARCH_LIMIT,
-      authedUserId
-    );
+    this.guard.requireUser(userId);
+    const params: StudySetSearchParams = {
+      limit: STUDY_SET_SEARCH_LIMIT,
+      query: sanitizeFts5Query(input.query),
+    };
+    return await this.repo.search(params);
   }
 }

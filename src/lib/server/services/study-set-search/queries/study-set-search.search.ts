@@ -11,5 +11,5 @@ export const studySetSearch = authorizedProcedure
   .output(searchStudySetsListOutputSchema)
   .handler(
     async ({ input, context }) =>
-      await studySetSearchService.search(input.query, context.user.id)
+      await studySetSearchService.search(input, context.user.id)
   );

@@ -28,7 +28,7 @@ const setupService = () => {
 describe.concurrent(StudySetSearchService, () => {
   it("calls requireUser before searching", async ({ expect }) => {
     const { guard, service } = setupService();
-    await service.search("biology", "user-1");
+    await service.search({ query: "biology" }, "user-1");
     expect(guard.requireUser).toHaveBeenCalledExactlyOnceWith("user-1");
   });
 
@@ -40,22 +40,21 @@ describe.concurrent(StudySetSearchService, () => {
       });
     });
 
-    const error = await captureError(service.search("biology", null));
+    const error = await captureError(
+      service.search({ query: "biology" }, null)
+    );
     expect(error).toBeInstanceOf(ORPCError);
     expect(error).toMatchObject({ code: "UNAUTHORIZED" });
     expect(repo.search).not.toHaveBeenCalled();
   });
 
-  it("passes sanitized query, limit, and userId to repository", async ({
-    expect,
-  }) => {
+  it("passes sanitized params to repository", async ({ expect }) => {
     const { repo, service } = setupService();
-    await service.search("biology 101", "user-1");
-    expect(repo.search).toHaveBeenCalledExactlyOnceWith(
-      '"biology 101"',
-      STUDY_SET_SEARCH_LIMIT,
-      "user-1"
-    );
+    await service.search({ query: "biology 101" }, "user-1");
+    expect(repo.search).toHaveBeenCalledExactlyOnceWith({
+      limit: STUDY_SET_SEARCH_LIMIT,
+      query: '"biology 101"',
+    });
   });
 
   it("returns repository results directly", async ({ expect }) => {
@@ -80,7 +79,7 @@ describe.concurrent(StudySetSearchService, () => {
       guard as unknown as StudySetSearchGuard
     );
 
-    const result = await service.search("biology", "user-1");
+    const result = await service.search({ query: "biology" }, "user-1");
 
     expect(result).toBe(results);
   });
@@ -89,11 +88,10 @@ describe.concurrent(StudySetSearchService, () => {
     expect,
   }) => {
     const { repo, service } = setupService();
-    await service.search('test "query"', "user-1");
-    expect(repo.search).toHaveBeenCalledExactlyOnceWith(
-      '"test ""query"""',
-      STUDY_SET_SEARCH_LIMIT,
-      "user-1"
-    );
+    await service.search({ query: 'test "query"' }, "user-1");
+    expect(repo.search).toHaveBeenCalledExactlyOnceWith({
+      limit: STUDY_SET_SEARCH_LIMIT,
+      query: '"test ""query"""',
+    });
   });
 });

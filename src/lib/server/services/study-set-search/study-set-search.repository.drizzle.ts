@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import type { DB } from "../../infras/db/client.ts";
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type {
+  StudySetSearchParams,
   StudySetSearchRepository,
   StudySetSearchResult,
 } from "./study-set-search.repository.ts";
@@ -64,25 +65,19 @@ export class StudySetSearchDrizzleRepository implements StudySetSearchRepository
     return new StudySetSearchDrizzleRepository(db);
   }
 
-  // Visibility filtering is index-level; userId is accepted for API
-  // symmetry with other domains but does not change the result set.
-  // oxlint-disable-next-line require-await, max-params, no-unused-vars
-  async search(
-    fts5Query: string,
-    limit: number,
-    _userId: string | null | undefined
-  ): Promise<StudySetSearchResult[]> {
+  // oxlint-disable-next-line require-await
+  async search(params: StudySetSearchParams): Promise<StudySetSearchResult[]> {
     try {
       // oxlint-disable-next-line no-unsafe-type-assertion
       const rows = this.dbInstance.all(
         sql`SELECT s.id, s.title, s.description, s.slug, s.owner_id AS ownerId
 				FROM study_set_fts fts
 				JOIN study_set s ON s.id = fts.study_set_id
-				WHERE study_set_fts MATCH ${fts5Query}
+				WHERE study_set_fts MATCH ${params.query}
 					AND s.visibility = 'PUBLIC'
 					AND s.deleted_at IS NULL
 				ORDER BY rank
-				LIMIT ${limit}`
+				LIMIT ${params.limit}`
       ) as StudySetSearchResult[];
 
       return rows;
