@@ -148,7 +148,10 @@
 <div class="bg-card text-card-foreground">
   <div class="mx-auto flex w-full max-w-2xl flex-col px-6 pt-6">
     <div class="mb-2">
-      <Button variant="ghost" class="-ml-4 hover:ml-0 transition-[margin]"
+      <Button
+        href="/home/"
+        variant="ghost"
+        class="-ml-4 hover:ml-0 transition-[margin]"
         ><HugeiconsIcon icon={ArrowLeft01Icon} /> Kembali
       </Button>
     </div>

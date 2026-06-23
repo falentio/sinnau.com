@@ -13,9 +13,9 @@
   let { card, currentIndex, totalCount, revealed, onReveal }: Props = $props();
 
   const bucketLabel: Record<FlashcardSessionBucket, string> = {
-    overdue: "Terlambat",
     "due-today": "Hari ini",
     new: "Baru",
+    overdue: "Terlambat",
   };
 
   const stateText = $derived(
