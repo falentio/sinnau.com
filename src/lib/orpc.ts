@@ -1,11 +1,8 @@
+import { browser } from "$app/env";
 import type { Router } from "$lib/server/api";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "@orpc/server";
-
-declare global {
-  var $client: RouterClient<Router> | undefined;
-}
 
 const link = new RPCLink({
   url: () => {
@@ -16,5 +13,17 @@ const link = new RPCLink({
   },
 });
 
-export const client: RouterClient<Router> =
-  globalThis.$client ?? createORPCClient(link);
+// oxlint-disable-next-line import/no-mutable-exports
+export let client: RouterClient<Router> = browser
+  ? createORPCClient(link)
+  : new Proxy({} as unknown as RouterClient<Router>, {
+      get(target, p) {
+        throw new TypeError(
+          `Attempted to access the client on the server side. This is not allowed. Property: ${String(p)}`
+        );
+      },
+    });
+
+export const setClient = (newClient: RouterClient<Router>) => {
+  client = newClient;
+};

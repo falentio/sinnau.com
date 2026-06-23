@@ -21,7 +21,7 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
       return exec(sql);
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-      if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+      if (durationMs > REPORT_SLOW_QUERIES_MS) {
         console.log(`Execution completed in ${durationMs.toFixed(2)} ms`, {
           sql,
         });
@@ -38,7 +38,7 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         return fn(...args);
       } finally {
         const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-        if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+        if (durationMs > REPORT_SLOW_QUERIES_MS) {
           console.log(`Transaction completed in ${durationMs.toFixed(2)} ms`);
         }
       }
@@ -60,7 +60,7 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         } finally {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
-          if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+          if (durationMs > REPORT_SLOW_QUERIES_MS) {
             console.log(
               `Prepared statement run in ${durationMs.toFixed(2)} ms`,
               {
@@ -79,7 +79,7 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         } finally {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
-          if (durationMs > REPORT_SLOW_QUERIES_MS || dev) {
+          if (durationMs > REPORT_SLOW_QUERIES_MS) {
             console.log(
               `Prepared statement raw in ${durationMs.toFixed(2)} ms`,
               {
