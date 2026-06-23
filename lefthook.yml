@@ -3,6 +3,13 @@ pre-commit:
     - run: pnpm run format
       stage_fixed: true
 
+pre-merge-commit:
+  parallel: true
+  jobs:
+    - run: pnpm run check
+    - run: pnpm run lint:agent
+    - run: pnpm run format:check
+
 pre-push:
   parallel: true
   jobs:
