@@ -5,7 +5,7 @@ import type { WideEventStorage } from "$lib/server/infras/als";
 import { wideEventStorage } from "$lib/server/infras/als";
 import { auth } from "$lib/server/infras/auth";
 import { nanoid } from "$lib/server/utils/nanoid";
-import { redirect } from "@sveltejs/kit";
+import { redirect, isHttpError, isRedirect } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
@@ -26,7 +26,7 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
   };
 
   wideEventStorage.assign({
-    userId: event.locals.user?.id,
+    user: { id: event.locals.user?.id },
   });
 
   return await svelteKitHandler({ auth, building, event, resolve });
@@ -42,8 +42,9 @@ const authGuardHandle: Handle = async ({ event, resolve }) => {
   const loggedIn = !!event.locals.session;
 
   wideEventStorage.assign({
-    loggedIn,
-    requiresAuth,
+    route: {
+      requiresAuth,
+    },
   });
   if (requiresAuth && !loggedIn) {
     redirect(302, "/login");
@@ -52,22 +53,77 @@ const authGuardHandle: Handle = async ({ event, resolve }) => {
   return await resolve(event);
 };
 
+const wellKnownHeaders = [
+  "user-agent",
+  "accept-language",
+  "accept-encoding",
+  "accept",
+  "content-type",
+  "content-length",
+  "x-client-id",
+  "origin",
+  "referer",
+];
+const getWellKnownHeaders = (request: Request) => {
+  const headers: Record<string, string> = {};
+  for (const header of wellKnownHeaders) {
+    const value = request.headers.get(header);
+    if (value) {
+      headers[header] = value;
+    }
+  }
+  return headers;
+};
+
 const wideEventStorageHandle: Handle = ({ event, resolve }) => {
   const requestId = nanoid(32);
   const initialWideEventData = {
+    request: {
+      headers: getWellKnownHeaders(event.request),
+      method: event.request.method,
+      pathname: event.url.pathname,
+      searchParams: Object.fromEntries(event.url.searchParams.entries()),
+    },
     requestId,
-    routeId: event.route.id,
+    route: event.route,
   } satisfies WideEventStorage.WideEventData;
   return wideEventStorage.run(initialWideEventData, async () => {
     try {
-      return await resolve(event);
+      const result = await resolve(event);
+      result.headers.set("x-request-id", requestId);
+      wideEventStorage.assign({
+        response: {
+          headers: Object.fromEntries(result.headers.entries()),
+          status: result.status,
+        },
+      });
+      return result;
+    } catch (error) {
+      if (isRedirect(error)) {
+        throw error;
+      }
+      if (isHttpError(error)) {
+        wideEventStorage.assign({
+          http: {
+            status: error.status || 500,
+          },
+        });
+      }
+      if (error instanceof Error) {
+        wideEventStorage.assign({
+          error: {
+            message: error.message,
+            name: error.name,
+          },
+          http: {
+            status: 500,
+          },
+        });
+      }
+      throw error;
     } finally {
       const wideEventData = wideEventStorage.get();
-      console.log(
-        { requestId },
-        `Request ${requestId} completed.`,
-        wideEventData
-      );
+      console.log(`Request ${requestId} completed.`, wideEventData);
     }
   });
 };

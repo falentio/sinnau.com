@@ -1,6 +1,5 @@
 import { getRequestEvent } from "$app/server";
 import { router } from "$lib/server/api";
-import { wideEventStorage } from "$lib/server/infras/als";
 import { createRouterClient, ORPCError } from "@orpc/server";
 import { error } from "@sveltejs/kit";
 
@@ -15,6 +14,7 @@ export const createServerClient = () =>
   createRouterClient(router, {
     context: () => {
       const event = getRequestEvent();
+
       return {
         headers: event.request.headers,
         session: event.locals.session,
@@ -27,9 +27,6 @@ export const createServerClient = () =>
           return await context.next();
           // oxlint-disable-next-line unicorn/catch-error-name
         } catch (e) {
-          wideEventStorage.assign({
-            hasError: true,
-          });
           if (instanceOfORPCError(e)) {
             error(e.status, {
               code: e.code,

@@ -1,8 +1,10 @@
 import { hrtime } from "node:process";
 
+import { wideEventStorage } from "$lib/server/infras/als";
 import { ORPCError } from "@orpc/server";
 
 import { base } from "./context.ts";
+import type { Context } from "./context.ts";
 import { requireAuth } from "./middlewares/auth.ts";
 
 export { requireAuth };
@@ -15,17 +17,21 @@ export const publicProcedure = base.use(async ({ next, path }) => {
     result = await next();
   } catch (error) {
     isError = true;
-    console.error("Error in publicProcedure:", error);
     throw error;
   } finally {
     const end = hrtime.bigint();
-    console.error("procedure called", {
+    wideEventStorage.push(["orpc", "procedures"], {
       duration: Number(end - start) / 1_000_000,
-      isError,
+      error: isError,
+      procedure: path.join("."),
+    });
+    console.log(`Procedure ${path.join(".")} completed.`, {
+      duration: Number(end - start) / 1_000_000,
+      error: isError,
       procedure: path.join("."),
     });
   }
-  return result;
+  return result as Awaited<ReturnType<typeof next<Context>>>;
 });
 
 export const authorizedProcedure = publicProcedure.use(requireAuth);
