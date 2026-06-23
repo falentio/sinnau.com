@@ -82,7 +82,7 @@
               <Select.Content>
                 <Select.Group>
                   <Select.Label>Semua</Select.Label>
-                  <Select.Item value="" label={allOption.label}>
+                  <Select.Item value="undefined" label={allOption.label}>
                     {allOption.label}
                   </Select.Item>
                 </Select.Group>

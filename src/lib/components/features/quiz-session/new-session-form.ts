@@ -69,6 +69,15 @@ export const newSessionForm = () => {
     }
   );
 
+  const realSubmit = superFormResult.submit;
+  superFormResult.submit = async () => {
+    superFormResult.form.update((form) => ({
+      ...form,
+      chapterId: form.chapterId === "" ? undefined : form.chapterId,
+    }));
+    await realSubmit();
+  };
+
   return { form: superFormResult };
 };
 
