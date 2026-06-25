@@ -1,0 +1,422 @@
+import { CHAPTER_ID_PREFIX } from "$lib/schemas/chapter";
+import { FLASHCARD_ID_PREFIX } from "$lib/schemas/flashcard";
+import { QUIZ_ID_PREFIX, QUIZ_OPTION_ID_PREFIX } from "$lib/schemas/quiz";
+import type {
+  ChunkRecord,
+  SuccessRecord,
+} from "$lib/server/infras/generate/generate";
+import { ORPCError } from "@orpc/server";
+import { and, eq, gt, inArray, lt } from "drizzle-orm";
+
+import type { DB } from "../../infras/db/client.ts";
+import { db as defaultDb } from "../../infras/db/client.ts";
+import { chapter } from "../../infras/db/schema/chapter.ts";
+import { flashcard } from "../../infras/db/schema/flashcard.ts";
+import {
+  generate,
+  generateChunkResult,
+  generateInput,
+} from "../../infras/db/schema/generate.ts";
+import type {
+  Generate,
+  GenerateChunkResult,
+  GenerateInput,
+} from "../../infras/db/schema/generate.ts";
+import { quiz, quizOption } from "../../infras/db/schema/quiz.ts";
+import { generateId as createId } from "../../utils/nanoid.ts";
+import type {
+  ChunkSummary,
+  GenerateRepository,
+} from "./generate.repository.ts";
+
+export class GenerateDrizzleRepository implements GenerateRepository {
+  private readonly dbInstance: DB;
+
+  constructor(db: DB = defaultDb) {
+    this.dbInstance = db;
+  }
+
+  static withDatabase(db: DB): GenerateDrizzleRepository {
+    return new GenerateDrizzleRepository(db);
+  }
+
+  async insertGenerate(
+    row: Omit<Generate, "createdAt" | "updatedAt">
+  ): Promise<Generate> {
+    try {
+      const [created] = await this.dbInstance
+        .insert(generate)
+        .values(row)
+        .returning();
+      if (!created) {
+        throw new Error("Failed to insert generate");
+      }
+      return created;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async updateGenerateStatus(
+    id: string,
+    status: Generate["status"],
+    completedAt?: number
+  ): Promise<Generate | null> {
+    try {
+      const updateValues: {
+        status: typeof status;
+        completedAt?: Date;
+      } = {
+        status,
+      };
+      if (completedAt !== undefined) {
+        updateValues.completedAt = new Date(completedAt);
+      }
+      const [updated] = await this.dbInstance
+        .update(generate)
+        .set(updateValues)
+        .where(eq(generate.id, id))
+        .returning();
+      return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findGenerateById(id: string): Promise<Generate | null> {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(generate)
+        .where(eq(generate.id, id));
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async finalizeStuckAsFailed(_reason: string): Promise<number> {
+    try {
+      const result = await this.dbInstance
+        .update(generate)
+        .set({ completedAt: new Date(), status: "FAILED" })
+        .where(inArray(generate.status, ["CREATED", "ONGOING"]));
+      return result.changes;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async insertGenerateInput(
+    row: Omit<GenerateInput, "id">
+  ): Promise<GenerateInput> {
+    try {
+      const [created] = await this.dbInstance
+        .insert(generateInput)
+        .values({ ...row, id: crypto.randomUUID() })
+        .returning();
+      if (!created) {
+        throw new Error("Failed to insert generate_input");
+      }
+      return created;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findGenerateInputByGenerateId(
+    genId: string
+  ): Promise<GenerateInput | null> {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(generateInput)
+        .where(eq(generateInput.generateId, genId));
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async appendChunkResult(params: {
+    generateId: string;
+    record: ChunkRecord;
+  }): Promise<void> {
+    try {
+      const { generateId, record } = params;
+      await this.dbInstance.transaction(async (tx) => {
+        await tx
+          .delete(generateChunkResult)
+          .where(
+            and(
+              eq(generateChunkResult.generateId, generateId),
+              eq(generateChunkResult.index, record.index)
+            )
+          );
+
+        await tx.insert(generateChunkResult).values({
+          generateId,
+          id: crypto.randomUUID(),
+          index: record.index,
+          kind: record.kind,
+          payload: JSON.stringify(record),
+        });
+      });
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async loadChunkResults(generateId: string): Promise<GenerateChunkResult[]> {
+    try {
+      return await this.dbInstance
+        .select()
+        .from(generateChunkResult)
+        .where(eq(generateChunkResult.generateId, generateId))
+        .orderBy(generateChunkResult.index);
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findChunkSummaries(
+    generateId: string,
+    since: number | null,
+    limit: number,
+    cutoffMs: number
+  ): Promise<ChunkSummary[]> {
+    try {
+      const [firstChunk] = await this.dbInstance
+        .select({ createdAt: generateChunkResult.createdAt })
+        .from(generateChunkResult)
+        .where(eq(generateChunkResult.generateId, generateId))
+        .orderBy(generateChunkResult.index)
+        .limit(1);
+
+      if (!firstChunk) {
+        return [];
+      }
+
+      if (firstChunk.createdAt.getTime() < Date.now() - cutoffMs) {
+        return [];
+      }
+
+      const conditions = [eq(generateChunkResult.generateId, generateId)];
+      if (since !== null) {
+        conditions.push(gt(generateChunkResult.createdAt, new Date(since)));
+      }
+
+      const rows = await this.dbInstance
+        .select()
+        .from(generateChunkResult)
+        .where(and(...conditions))
+        .orderBy(generateChunkResult.index)
+        .limit(limit);
+
+      return rows.map((r) => ({
+        createdAt: r.createdAt.getTime(),
+        index: r.index,
+        kind: r.kind,
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        payload: JSON.parse(r.payload) as ChunkSummary["payload"],
+      }));
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async deleteOldChunks(olderThanDays: number): Promise<number> {
+    try {
+      const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
+      const result = await this.dbInstance
+        .delete(generateChunkResult)
+        .where(lt(generateChunkResult.createdAt, new Date(cutoff)));
+      return result.changes;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async finalizeGenerateTransaction(params: {
+    generateId: string;
+    ownerId: string;
+    studySetId: string;
+    successfulChunks: SuccessRecord[];
+  }): Promise<void> {
+    const { ownerId, studySetId, successfulChunks } = params;
+
+    const rollbackErrors: unknown[] = [];
+
+    try {
+      const existingRows = await this.dbInstance
+        .select({ id: chapter.id, slug: chapter.slug })
+        .from(chapter)
+        .where(eq(chapter.studySetId, studySetId));
+
+      const slugToId = new Map<string, string>();
+      for (const row of existingRows) {
+        slugToId.set(row.slug, row.id);
+      }
+
+      const seenSlugs = new Set(slugToId.keys());
+      const chapterRows: (typeof chapter.$inferInsert)[] = [];
+      const quizRows: (typeof quiz.$inferInsert)[] = [];
+      const optionRows: (typeof quizOption.$inferInsert)[] = [];
+      const flashcardRows: (typeof flashcard.$inferInsert)[] = [];
+
+      for (const chunk of successfulChunks) {
+        const { content } = chunk;
+
+        for (const genChapter of content.chapter) {
+          if (seenSlugs.has(genChapter.slug)) {
+            continue;
+          }
+          seenSlugs.add(genChapter.slug);
+          const id = createId(CHAPTER_ID_PREFIX);
+          slugToId.set(genChapter.slug, id);
+          chapterRows.push({
+            id,
+            ownerId,
+            slug: genChapter.slug,
+            studySetId,
+            title: genChapter.title,
+          });
+        }
+
+        for (const genQuiz of content.quiz) {
+          const quizId = createId(QUIZ_ID_PREFIX);
+          quizRows.push({
+            chapterId: slugToId.get(genQuiz.chapterSlug) ?? null,
+            id: quizId,
+            ownerId,
+            questionText: genQuiz.questionText,
+            studySetId,
+            type: genQuiz.type,
+          });
+          for (const genOption of genQuiz.options) {
+            optionRows.push({
+              explanation: genOption.explanation,
+              id: createId(QUIZ_OPTION_ID_PREFIX),
+              isCorrect: genOption.isCorrect,
+              optionText: genOption.optionText,
+              quizId,
+            });
+          }
+        }
+
+        for (const genFlashcard of content.flashcard) {
+          flashcardRows.push({
+            back: genFlashcard.back,
+            chapterId: slugToId.get(genFlashcard.chapterSlug) ?? null,
+            front: genFlashcard.front,
+            hint: genFlashcard.hint,
+            id: createId(FLASHCARD_ID_PREFIX),
+            importance: genFlashcard.importance,
+            ownerId,
+            studySetId,
+          });
+        }
+      }
+
+      if (chapterRows.length > 0) {
+        await this.dbInstance.insert(chapter).values(chapterRows);
+      }
+      if (quizRows.length > 0) {
+        await this.dbInstance.insert(quiz).values(quizRows);
+      }
+      if (optionRows.length > 0) {
+        await this.dbInstance.insert(quizOption).values(optionRows);
+      }
+      if (flashcardRows.length > 0) {
+        await this.dbInstance.insert(flashcard).values(flashcardRows);
+      }
+    } catch (error) {
+      try {
+        await this.dbInstance
+          .delete(flashcard)
+          .where(eq(flashcard.studySetId, studySetId));
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+      try {
+        await this.dbInstance
+          .delete(quiz)
+          .where(eq(quiz.studySetId, studySetId));
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+      try {
+        await this.dbInstance
+          .delete(chapter)
+          .where(eq(chapter.studySetId, studySetId));
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+
+      if (rollbackErrors.length > 0) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          cause: new AggregateError(rollbackErrors, "Saga rollback failed"),
+          message: "Internal server error",
+        });
+      }
+
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+}

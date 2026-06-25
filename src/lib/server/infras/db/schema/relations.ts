@@ -8,6 +8,7 @@ import {
   flashcardState,
 } from "./flashcard-session.ts";
 import { flashcard } from "./flashcard.ts";
+import { generate, generateChunkResult, generateInput } from "./generate.ts";
 import {
   quizSession,
   quizSessionAnswer,
@@ -208,3 +209,36 @@ export const flashcardStateRelations = relations(flashcardState, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const generateRelations = relations(generate, ({ many, one }) => ({
+  chunkResults: many(generateChunkResult),
+  input: one(generateInput, {
+    fields: [generate.id],
+    references: [generateInput.generateId],
+  }),
+  owner: one(user, {
+    fields: [generate.ownerId],
+    references: [user.id],
+  }),
+  studySet: one(studySet, {
+    fields: [generate.studySetId],
+    references: [studySet.id],
+  }),
+}));
+
+export const generateInputRelations = relations(generateInput, ({ one }) => ({
+  generate: one(generate, {
+    fields: [generateInput.generateId],
+    references: [generate.id],
+  }),
+}));
+
+export const generateChunkResultRelations = relations(
+  generateChunkResult,
+  ({ one }) => ({
+    generate: one(generate, {
+      fields: [generateChunkResult.generateId],
+      references: [generate.id],
+    }),
+  })
+);

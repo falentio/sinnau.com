@@ -4,6 +4,7 @@ import { createServerClient } from "$lib/orpc.server";
 import type { WideEventStorage } from "$lib/server/infras/als";
 import { wideEventStorage } from "$lib/server/infras/als";
 import { auth } from "$lib/server/infras/auth";
+import { generateService } from "$lib/server/services/generate";
 import { nanoid } from "$lib/server/utils/nanoid";
 import { redirect, isHttpError, isRedirect } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit";
@@ -11,6 +12,10 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 
 setClient(createServerClient());
+
+if (!building) {
+  await generateService.startupRecovery();
+}
 
 const betterAuthHandle: Handle = async ({ event, resolve }) => {
   const session = await auth.api.getSession({ headers: event.request.headers });
