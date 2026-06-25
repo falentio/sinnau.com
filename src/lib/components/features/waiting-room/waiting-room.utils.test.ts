@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { appendChunks, capItems, flattenChunk } from "./waiting-room.utils.ts";
 
 const makeChapter = (title: string) => ({
-  slug: title.toLowerCase().replace(/\s+/g, "_"),
+  slug: title.toLowerCase().replaceAll(/\s+/gu, "_"),
   title,
 });
 
@@ -60,7 +60,7 @@ const makeFailureChunk = (): ChunkSummaryItem => ({
   },
 });
 
-describe("flattenChunk", () => {
+describe("flattenChunk helper", () => {
   it("returns items in chapter -> flashcard -> quiz order", () => {
     const chunk = makeSuccessChunk(
       ["Introduction", "Variables"],
@@ -71,29 +71,29 @@ describe("flattenChunk", () => {
 
     expect(items).toHaveLength(4);
     expect(items[0]).toMatchObject({
-      type: "chapter",
       data: { title: "Introduction" },
+      type: "chapter",
     });
     expect(items[1]).toMatchObject({
-      type: "chapter",
       data: { title: "Variables" },
+      type: "chapter",
     });
     expect(items[2]).toMatchObject({
-      type: "flashcard",
       data: { front: "What is x?" },
+      type: "flashcard",
     });
     expect(items[3]).toMatchObject({
-      type: "quiz",
       data: { questionText: "Solve for x" },
+      type: "quiz",
     });
   });
 
   it("returns empty array for failure chunks", () => {
-    expect(flattenChunk(makeFailureChunk())).toEqual([]);
+    expect(flattenChunk(makeFailureChunk())).toStrictEqual([]);
   });
 });
 
-describe("capItems", () => {
+describe("capItems helper", () => {
   it("keeps all items when under limit", () => {
     const items = Array.from({ length: 5 }, (_, index) => ({
       data: makeChapter(`Chapter ${index}`),
@@ -114,7 +114,7 @@ describe("capItems", () => {
   });
 });
 
-describe("appendChunks", () => {
+describe("appendChunks helper", () => {
   it("prepends new items and caps at limit", () => {
     const existing = Array.from({ length: 8 }, (_, index) => ({
       data: makeChapter(`Existing ${index}`),
@@ -138,8 +138,8 @@ describe("appendChunks", () => {
 
     expect(result).toHaveLength(10);
     expect(result[0]).toMatchObject({
-      type: "flashcard",
       data: { front: "D" },
+      type: "flashcard",
     });
     expect(result[9]).toMatchObject({ data: { title: "Existing 7" } });
   });
