@@ -33,4 +33,7 @@ data/
 .worktrees/
 worktrees/
 
+# Brainstorming mockups
+.superpowers/
+
 **/*.pdf
