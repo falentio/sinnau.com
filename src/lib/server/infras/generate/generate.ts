@@ -198,7 +198,6 @@ const currentChunkMessage = (currentChunk: string) =>
     role: "user",
   }) as const;
 
-export type ModelVersion = "smart" | "fast";
 export type ExtractionType = "normal" | "exhaustive";
 
 const getStep = (extractionType: ExtractionType) => {
@@ -208,26 +207,11 @@ const getStep = (extractionType: ExtractionType) => {
   return 2;
 };
 
-const nonThinkinkOptions = {
+const providerOptions = {
   deepseek: {
     thinking: { type: "disabled" },
   },
 } as const;
-
-const thinkingOptions = {
-  deepseek: {
-    thinking: { type: "enabled" },
-  },
-} as const;
-
-type ProviderOptions = ReturnType<typeof getProviderOptions>;
-
-const getProviderOptions = (modelVersion: ModelVersion) => {
-  if (modelVersion === "smart") {
-    return thinkingOptions;
-  }
-  return nonThinkinkOptions;
-};
 
 const createTool = (newContent: Contents) => ({
   submitContentTool: tool({
@@ -265,7 +249,7 @@ const emptyContent = () =>
 interface TokenUsage {
   input: number;
   output: number;
-  resoning: number;
+  reasoning: number;
   cacheRead: number;
   cacheWrite: number;
 }
@@ -348,7 +332,6 @@ export interface GenerateOptions {
   chunkSize?: number;
   groupSize?: number;
   extractionType?: ExtractionType;
-  modelVersion?: ModelVersion;
   languageModel: LanguageModel;
   storage: GenerationStorage;
   languageStyle?: LanguageStyleId;
@@ -434,7 +417,7 @@ export const buildSuccessRecord = (opts: {
       cacheWrite: opts.usage.inputTokenDetails.cacheWriteTokens ?? 0,
       input: opts.usage.inputTokenDetails.noCacheTokens ?? 0,
       output: opts.usage.outputTokenDetails.textTokens ?? 0,
-      resoning: opts.usage.outputTokenDetails.reasoningTokens ?? 0,
+      reasoning: opts.usage.outputTokenDetails.reasoningTokens ?? 0,
     },
   };
 };
@@ -456,7 +439,7 @@ export const summarizeResults = (
     cacheWrite: 0,
     input: 0,
     output: 0,
-    resoning: 0,
+    reasoning: 0,
   };
   let stepCount = 0;
 
@@ -469,7 +452,7 @@ export const summarizeResults = (
     tokenUsage.cacheWrite += chunk.tokenUsage.cacheWrite;
     tokenUsage.input += chunk.tokenUsage.input;
     tokenUsage.output += chunk.tokenUsage.output;
-    tokenUsage.resoning += chunk.tokenUsage.resoning;
+    tokenUsage.reasoning += chunk.tokenUsage.reasoning;
 
     stepCount += chunk.stepCount;
   }
@@ -489,7 +472,6 @@ const toFailureRecord = (index: number, error: unknown): FailureRecord => ({
 export const processChunk = async (opts: {
   chunk: GroupedChunk;
   deps: GenerateDeps;
-  providerOptions: ProviderOptions;
 }): Promise<ChunkRecord> => {
   try {
     const records = await opts.deps.storage.loadChunkResults();
@@ -503,7 +485,7 @@ export const processChunk = async (opts: {
         currentChunkMessage(opts.chunk.chunk),
       ],
       model: opts.deps.languageModel,
-      providerOptions: opts.providerOptions,
+      providerOptions,
       stopWhen: [stepCountIs(opts.deps.maxSteps)],
       system: opts.deps.systemPrompt,
       temperature: 0.2,
@@ -523,7 +505,6 @@ export const processChunk = async (opts: {
 export const processChunkGroup = async (opts: {
   group: readonly GroupedChunk[];
   deps: GenerateDeps;
-  providerOptions: ProviderOptions;
   maxTokens: number;
 }): Promise<void> => {
   for (const chunk of opts.group) {
@@ -538,11 +519,7 @@ export const processChunkGroup = async (opts: {
     if (sumInputTokens(successes) >= opts.maxTokens) {
       break;
     }
-    const record = await processChunk({
-      chunk,
-      deps: opts.deps,
-      providerOptions: opts.providerOptions,
-    });
+    const record = await processChunk({ chunk, deps: opts.deps });
     await opts.deps.storage.appendChunkResult(record);
   }
 };
@@ -554,7 +531,6 @@ export const generate = async (
   const groupSize = opts.groupSize ?? 3;
   const maxSteps = getStep(opts.extractionType ?? "normal");
   const maxTokens = getMaxTokens(maxSteps);
-  const providerOptions = getProviderOptions(opts.modelVersion ?? "fast");
 
   const deps: GenerateDeps = {
     languageModel: opts.languageModel,
@@ -578,12 +554,11 @@ export const generate = async (
       deps,
       group: firstGroup,
       maxTokens,
-      providerOptions,
     });
   }
   await Promise.all(
     restGroups.map(async (group) => {
-      await processChunkGroup({ deps, group, maxTokens, providerOptions });
+      await processChunkGroup({ deps, group, maxTokens });
     })
   );
 

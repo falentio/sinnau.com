@@ -4,16 +4,16 @@ import { createPrefixedIdSchema } from "./id-schema.ts";
 
 export const STUDY_SET_ID_PREFIX = "sts";
 
-const STUDY_SET_VISIBILITIES = ["PUBLIC", "PRIVATE"] as const;
+export const STUDY_SET_VISIBILITIES = ["PUBLIC", "PRIVATE"] as const;
 
-const trimmedTitleSchema = v.pipe(
+export const trimmedTitleSchema = v.pipe(
   v.string(),
   v.trim(),
   v.minLength(5, "Judul minimal 5 karakter setelah dipangkas"),
   v.maxLength(50, "Judul maksimal 50 karakter")
 );
 
-const descriptionSchema = v.optional(
+export const descriptionSchema = v.optional(
   v.pipe(v.string(), v.maxLength(2000, "Deskripsi maksimal 2000 karakter"))
 );
 
