@@ -147,14 +147,6 @@
 
 <div class="bg-card text-card-foreground">
   <div class="mx-auto flex w-full max-w-2xl flex-col px-6 pt-6">
-    <div class="mb-2">
-      <Button
-        href="/home/"
-        variant="ghost"
-        class="-ml-4 hover:ml-0 transition-[margin]"
-        ><HugeiconsIcon icon={ArrowLeft01Icon} /> Kembali
-      </Button>
-    </div>
     <div class="mb-2 flex flex-col gap-1">
       <h1 class="text-2xl font-semibold tracking-tight">Discover</h1>
       <p class="text-sm text-muted-foreground">

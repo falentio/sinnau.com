@@ -22,7 +22,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:check": "drizzle-kit check",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "opencode:serve": "portless oc2sin --app-port 11008 opencode serve --port 11008"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1"

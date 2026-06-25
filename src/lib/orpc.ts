@@ -5,6 +5,9 @@ import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "@orpc/server";
 
 const link = new RPCLink({
+  headers: {
+    "x-client-id": "sinnau.com/client",
+  },
   url: () => {
     if (typeof window === "undefined") {
       throw new TypeError("RPCLink is not allowed on the server side.");

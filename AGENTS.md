@@ -128,27 +128,30 @@ cp .env.example .env
 # 3. Generate a random BETTER_AUTH_SECRET and write it to .env
 SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$SECRET|" .env
-
-# 4. Apply database migrations. Do NOT use `pnpm db:push` here —
-#    the app also runs migrations on boot (see
-#    src/lib/server/infras/db/client.ts:13), so push would create
-#    tables the runtime migrations would then refuse to reapply.
-pnpm db:migrate
 ```
 
 `svelte-kit sync` runs automatically via the `prepare` postinstall script, so it does not need to be invoked manually.
 
 ### Develop
 
+we use portless to run development server
+it has 3 reponsibilities:
+
+- starting dev server "pnpm run dev"
+- reverse proxy with local only tld, ".falentio" for our case
+- assign ssl certificate, so we able to do https
+
 ```sh
-pnpm dev
+portless
 ```
 
-Vite defaults to port 5173. Pass `--port` to use a specific one when running multiple worktrees at once.
+### Herdr Workspaces Initial
 
-```sh
-pnpm dev --port 5174
-```
+We must have three open tabs for initial herdr workspaces
+
+- `opencode attach http://localhost:4096` if opencode server available or `opencode` otherwise
+- `portless`
+- empty
 
 ### Tear down
 
