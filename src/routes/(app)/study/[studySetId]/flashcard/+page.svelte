@@ -59,37 +59,50 @@
   };
 </script>
 
-<div class="flex items-center justify-between">
-  <h2 class="font-medium">Flashcard ({filteredFlashcards.length})</h2>
-  <div>
-    <Button variant="outline" size="icon-sm" href="create">
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-4">
+    <div class="flex min-w-0 items-center gap-2.5">
+      <h2 class="text-lg font-semibold">Flashcard</h2>
+      <Badge variant="secondary" class="shrink-0">
+        {filteredFlashcards.length}
+      </Badge>
+    </div>
+    <Button size="sm" href="create" class="shrink-0">
       <HugeiconsIcon icon={Add01Icon} />
+      Buat flashcard
     </Button>
   </div>
+
+  <FlashcardFilterBar {currentFilter} />
 </div>
-<FlashcardFilterBar {currentFilter} />
 
 {#if filteredFlashcards.length === 0}
   <FlashcardEmpty {currentFilter} {chapterParam} />
 {:else}
-  <div class="rounded-4xl bg-card shadow-xs text-card-foreground">
-    {#each displayedFlashcards as flashcard, i (flashcard.id)}
-      <div class="border-b p-6 last:border-b-0">
-        <div class="flex items-center gap-2">
-          <h3 class="font-semibold">{flashcard.front}</h3>
-          <span class="flex-auto"></span>
-          {#if i % 5 === 0}
-            <Badge variant="outline">Penting</Badge>
-          {/if}
+  <div class="flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs">
+    {#each displayedFlashcards as flashcard (flashcard.id)}
+      <div
+        class="group flex flex-col gap-2 border-b p-4 transition-colors last:border-b-0 hover:bg-muted/40"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="min-w-0 flex-1 text-sm font-medium leading-relaxed">
+            {flashcard.front}
+          </h3>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               {#snippet child({ props })}
-                <Button {...props} variant="ghost" size="icon-sm">
+                <Button
+                  {...props}
+                  variant="ghost"
+                  size="icon-sm"
+                  class="shrink-0 opacity-60 transition-opacity group-hover:opacity-100"
+                  aria-label="Opsi flashcard"
+                >
                   <HugeiconsIcon icon={Settings02Icon} />
                 </Button>
               {/snippet}
             </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
+            <DropdownMenu.Content align="end">
               <DropdownMenu.Item
                 onSelect={() => {
                   selectedFlashcard = flashcard;
@@ -112,10 +125,15 @@
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </div>
-        <p class="text-sm text-muted-foreground">{flashcard.back}</p>
+
+        <p class="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+          {flashcard.back}
+        </p>
+
         {#if flashcard.hint}
-          <p class="mt-1 text-sm text-muted-foreground italic">
-            Hint: {flashcard.hint}
+          <p class="text-xs text-muted-foreground">
+            <span class="font-medium">Hint:</span>
+            {flashcard.hint}
           </p>
         {/if}
       </div>
@@ -143,13 +161,3 @@
   onPageChange={handlePageChange}
   perPage={10}
 />
-
-{#if filteredFlashcards.length > 0}
-  <div
-    class="sticky bottom-2 left-0 right-0 rounded-2xl border border-border bg-card p-2 shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
-  >
-    <Button href="/session/{studySetId}/flashcard/" class="w-full">
-      Mulai review
-    </Button>
-  </div>
-{/if}

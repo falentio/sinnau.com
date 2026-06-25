@@ -1,9 +1,15 @@
 <script lang="ts">
   import { page, page as pageStore } from "$app/state";
   import ListPagination from "$lib/components/features/app/list-pagination.svelte";
+  import {
+    Add01Icon,
+    Cancel01Icon,
+    Quiz01Icon,
+  } from "$lib/components/features/icons";
   import DeleteQuizDialog from "$lib/components/features/quiz/delete-quiz-dialog.svelte";
   import QuizCard from "$lib/components/features/quiz/quiz-card.svelte";
   import QuizFilterBar from "$lib/components/features/quiz/quiz-filter-bar.svelte";
+  import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import EmptyContent from "$lib/components/ui/empty/empty-content.svelte";
   import EmptyDescription from "$lib/components/ui/empty/empty-description.svelte";
@@ -12,11 +18,6 @@
   import EmptyTitle from "$lib/components/ui/empty/empty-title.svelte";
   import Empty from "$lib/components/ui/empty/empty.svelte";
   import { navigateWithParams } from "$lib/utils/url";
-  import {
-    Add01Icon,
-    Cancel01Icon,
-    Quiz01Icon,
-  } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
@@ -65,15 +66,22 @@
   const isChapterFiltered = $derived(chapterParam !== null);
 </script>
 
-<div class="flex items-center justify-between">
-  <h2 class="font-medium">Quiz ({filteredQuizzes.length})</h2>
-  <div>
-    <Button variant="outline" size="icon-sm" href="create">
+<div class="flex flex-col gap-4">
+  <div class="flex items-center justify-between gap-4">
+    <div class="flex min-w-0 items-center gap-2.5">
+      <h2 class="text-lg font-semibold">Quiz</h2>
+      <Badge variant="secondary" class="shrink-0">
+        {filteredQuizzes.length}
+      </Badge>
+    </div>
+    <Button size="sm" href="create" class="shrink-0">
       <HugeiconsIcon icon={Add01Icon} />
+      Buat quiz
     </Button>
   </div>
+
+  <QuizFilterBar {currentFilter} />
 </div>
-<QuizFilterBar {currentFilter} />
 
 {#if filteredQuizzes.length === 0}
   <Empty>
@@ -114,7 +122,7 @@
     </EmptyContent>
   </Empty>
 {:else}
-  <div class="space-y-3">
+  <div class="flex flex-col gap-3">
     {#each displayedQuizzes as quiz (quiz.id)}
       {@const editHref = `./edit?quizId=${quiz.id}`}
       <QuizCard
@@ -142,13 +150,3 @@
   onPageChange={handlePageChange}
   perPage={10}
 />
-
-{#if filteredQuizzes.length > 0}
-  <div
-    class="sticky bottom-2 left-0 right-0 p-2 bg-card md:rounded-full shadow-xs"
-  >
-    <Button href="/session/{page.params.studySetId}/quiz" class="w-full"
-      >Mulai belajar</Button
-    >
-  </div>
-{/if}

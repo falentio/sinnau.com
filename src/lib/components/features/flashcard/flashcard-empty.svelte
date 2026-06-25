@@ -30,7 +30,7 @@
 
 <Empty>
   <EmptyHeader>
-    <EmptyMedia>
+    <EmptyMedia variant="icon">
       <HugeiconsIcon icon={Cards01Icon} />
     </EmptyMedia>
     <EmptyTitle>

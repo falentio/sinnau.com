@@ -3,6 +3,7 @@
   import AppSidebar from "$lib/components/app-sidebar.svelte";
   import UsernameSetupDialog from "$lib/components/features/auth/username-setup-dialog.svelte";
   import BottomNavbar from "$lib/components/features/navigation/bottom-navbar.svelte";
+  import StudySetActionBar from "$lib/components/features/study-set/study-set-action-bar.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
@@ -32,7 +33,11 @@
           {@render children()}
 
           <div class="flex-auto"></div>
-          <BottomNavbar />
+          {#if page.route.id?.includes("/study/[studySetId]/")}
+            <StudySetActionBar />
+          {:else}
+            <BottomNavbar />
+          {/if}
 
           <UsernameSetupDialog />
         </main>
