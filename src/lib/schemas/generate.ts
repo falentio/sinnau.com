@@ -119,6 +119,7 @@ export const checkGenerateContentOutputSchema = v.object({
   ),
   isInputTruncated: v.boolean(),
   maxCreatedAt: v.nullable(v.number()),
+  startedAt: v.number(),
   status: generateStatusSchema,
   studySetId: v.string(),
 });
@@ -155,6 +156,16 @@ export const deleteOldChunksOutputSchema = v.object({
   deletedCount: v.number(),
 });
 
+// ─── GetLanguageStyles ────────────────────────────────────────────────
+
+export const languageStyleItemSchema = v.object({
+  value: v.string(),
+  label: v.string(),
+  isDefault: v.boolean(),
+});
+
+export const getLanguageStylesOutputSchema = v.array(languageStyleItemSchema);
+
 // ─── Inferred types ────────────────────────────────────────────────────
 
 export type TokenUsage = v.InferOutput<typeof tokenUsageSchema>;
@@ -186,4 +197,9 @@ export type DeleteOldChunksInput = v.InferOutput<
 >;
 export type DeleteOldChunksOutput = v.InferOutput<
   typeof deleteOldChunksOutputSchema
+>;
+
+export type LanguageStyleItem = v.InferOutput<typeof languageStyleItemSchema>;
+export type GetLanguageStylesOutput = v.InferOutput<
+  typeof getLanguageStylesOutputSchema
 >;

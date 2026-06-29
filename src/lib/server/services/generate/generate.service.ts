@@ -19,6 +19,7 @@ import type {
   GenerationStorage,
   SuccessRecord,
 } from "../../infras/generate/generate";
+import type { LanguageStyleId } from "../../infras/generate/language-style";
 import { waitUntil } from "../../utils/background-jobs.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type { GenerateGuard } from "./generate.guard.ts";
@@ -49,6 +50,12 @@ interface StudySetGuardClient {
   ): Promise<unknown>;
 }
 
+export interface LanguageStyleItem {
+  value: LanguageStyleId;
+  label: string;
+  isDefault: boolean;
+}
+
 export class GenerateService {
   private readonly activeOwners = new Set<string>();
 
@@ -74,6 +81,17 @@ export class GenerateService {
     this.pipeline = pipeline;
     this.studySetService = studySetService;
     this.studySetGuard = studySetGuard;
+  }
+
+  async findActiveByStudySet(
+    studySetId: string,
+    userId: string
+  ): Promise<Generate | null> {
+    await this.studySetGuard.assertStudySetVisibleByIdOrNotFound(
+      studySetId,
+      userId
+    );
+    return await this.repo.findActiveByStudySetId(studySetId);
   }
 
   async createGenerate(
@@ -202,6 +220,7 @@ export class GenerateService {
       chunks,
       isInputTruncated: generateInputRow?.isInputTruncated ?? false,
       maxCreatedAt,
+      startedAt: row.startedAt.getTime(),
       status: row.status,
       studySetId: row.studySetId,
     };
@@ -272,7 +291,8 @@ export class GenerateService {
         .filter((r) => r.kind === "success")
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         .map((r) => JSON.parse(r.payload) as SuccessRecord);
-    } catch {
+    } catch (error) {
+      console.error("Error occurred while running LLM:", error);
       const rows = await this.repo.loadChunkResults(gId);
       successfulChunks = rows
         .filter((r) => r.kind === "success")
@@ -300,6 +320,19 @@ export class GenerateService {
     const status =
       successCount === totalChunkCount ? "COMPLETED" : "PARTIAL_COMPLETED";
     await this.retryStatusUpdate(gId, status, Date.now());
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getLanguageStyles(): LanguageStyleItem[] {
+    return [
+      {
+        isDefault: true,
+        label: "Ramah Pelajar",
+        value: "student-friendly",
+      },
+      { isDefault: false, label: "Akademik", value: "academic" },
+      { isDefault: false, label: "Dasar", value: "elementary" },
+    ];
   }
 
   private async retryStatusUpdate(

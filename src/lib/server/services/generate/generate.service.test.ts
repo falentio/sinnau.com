@@ -333,4 +333,52 @@ describe.concurrent(GenerateService, () => {
       expect(repo.finalizeStuckAsFailed).toHaveBeenCalledOnce();
     });
   });
+
+  describe("getLanguageStyles", () => {
+    it("returns all three language styles with labels and isDefault", ({
+      expect,
+    }) => {
+      const { service } = setupService();
+
+      const result = service.getLanguageStyles();
+
+      expect(result).toHaveLength(3);
+      expect(result).toEqual([
+        {
+          isDefault: true,
+          label: "Ramah Pelajar",
+          value: "student-friendly",
+        },
+        { isDefault: false, label: "Akademik", value: "academic" },
+        { isDefault: false, label: "Dasar", value: "elementary" },
+      ]);
+    });
+
+    it("has exactly one default style", ({ expect }) => {
+      const { service } = setupService();
+
+      const result = service.getLanguageStyles();
+      const defaults = result.filter((s) => s.isDefault);
+
+      expect(defaults).toHaveLength(1);
+      expect(defaults[0]?.value).toBe("student-friendly");
+    });
+
+    it("every item has value, label, and isDefault properties", ({
+      expect,
+    }) => {
+      const { service } = setupService();
+
+      const result = service.getLanguageStyles();
+
+      for (const item of result) {
+        expect(item).toHaveProperty("value");
+        expect(item).toHaveProperty("label");
+        expect(item).toHaveProperty("isDefault");
+        expect(typeof item.value).toBe("string");
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.isDefault).toBe("boolean");
+      }
+    });
+  });
 });

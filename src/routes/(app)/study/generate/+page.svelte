@@ -22,6 +22,10 @@
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
+  import type { PageProps } from "./$types";
+
+  let { data }: PageProps = $props();
+
   type Visibility = "PUBLIC" | "PRIVATE";
 
   const visibilityItems: { value: Visibility; label: string }[] = [
@@ -44,8 +48,8 @@
         position: "top-right",
       });
       await goto(
-        resolve("/(app)/study/[studySetId]/waiting-room", {
-          studySetId: result.studySetId,
+        resolve("/(app)/generate/[genId]/waiting-room", {
+          genId: result.generateId,
         })
       );
     } catch (error) {
@@ -69,6 +73,8 @@
     defaults<CreateGenerateInput>(
       {
         description: "",
+        extractionType: "normal",
+        languageStyle: "student-friendly",
         pdf: undefined as unknown as File,
         title: "",
         visibility: "PRIVATE",
@@ -99,6 +105,17 @@
     extractionTypeItems.find((item) => item.value === $formData.extractionType)
       ?.label ?? "Normal"
   );
+  const selectedLanguageStyleLabel = $derived(
+    data.languageStyles.find((item) => item.value === $formData.languageStyle)
+      ?.label ??
+      data.languageStyles.find((s) => s.isDefault)?.label ??
+      "Ramah Pelajar"
+  );
+
+  const { errors } = form;
+  $effect(() => {
+    console.log($errors);
+  });
 
   const handlePdfChange = (e: Event) => {
     const input = e.currentTarget as HTMLInputElement;
@@ -130,6 +147,7 @@
   method="POST"
   class="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-5 px-6 py-6"
   novalidate
+  enctype="multipart/form-data"
   use:enhance
 >
   <Form.Field {form} name="title">
@@ -301,19 +319,33 @@
 
     <Form.Field {form} name="languageStyle">
       <Form.Control>
-        {#snippet children({ props })}
-          <Form.Label>Gaya Bahasa</Form.Label>
-          <Input
-            {...props}
-            bind:value={$formData.languageStyle}
-            placeholder="Contoh: id, en, jv"
-            disabled={$submitting}
-          />
-        {/snippet}
+        <Form.Label>Gaya Bahasa</Form.Label>
+        <Select.Root
+          type="single"
+          name="languageStyle"
+          items={data.languageStyles}
+          bind:value={$formData.languageStyle}
+          disabled={$submitting}
+        >
+          <Select.Trigger class="w-full" aria-label="Pilih gaya bahasa">
+            <span class="min-w-0 flex-1 truncate text-left"
+              >{selectedLanguageStyleLabel}</span
+            >
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              <Select.Label>Gaya Bahasa</Select.Label>
+              {#each data.languageStyles as item (item.value)}
+                <Select.Item value={item.value} label={item.label}>
+                  {item.label}
+                </Select.Item>
+              {/each}
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>
       </Form.Control>
       <Form.Description
-        >Opsional. Kode bahasa untuk gaya penulisan (contoh: `id` untuk
-        Indonesia).</Form.Description
+        >Pilih gaya bahasa untuk penulisan modul.</Form.Description
       >
       <Form.FieldErrors />
     </Form.Field>
