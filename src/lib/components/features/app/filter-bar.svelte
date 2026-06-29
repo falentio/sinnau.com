@@ -11,7 +11,6 @@
 
   const filters = $derived([
     { def: true, label: "Terbaru", value: "latest" },
-    { def: false, label: "Baru dipelajari", value: "newly-studied" },
     { def: false, label: "Baru dibuka", value: "newly-opened" },
     ...(dev
       ? ([

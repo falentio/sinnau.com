@@ -9,6 +9,7 @@ import { describe, it } from "vitest";
 import type { StudySetVisit } from "../../infras/db/schema/study-set.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type { StudySetGuard } from "./study-set.guard.ts";
+import type { StudySetListResult } from "./study-set.repository.ts";
 import { StudySetService } from "./study-set.service.ts";
 import {
   captureError,
@@ -377,6 +378,39 @@ describe.concurrent(StudySetService, () => {
         "asc",
         2
       );
+    });
+
+    it("delegates to findOwnedStudySetsByVisit when orderBy is newlyOpened", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOwnedStudySetsByVisit.mockResolvedValue(EMPTY_STUDY_SET_LIST);
+
+      await service.getStudySets(
+        { pagination: { orderBy: "newlyOpened", page: 2 } },
+        "owner-1"
+      );
+      expect(repo.findOwnedStudySetsByVisit).toHaveBeenCalledWith(
+        "owner-1",
+        "desc",
+        2
+      );
+      expect(repo.findOwnedStudySets).not.toHaveBeenCalled();
+    });
+
+    it("returns result from findOwnedStudySetsByVisit", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const mockResult: StudySetListResult = {
+        data: [createStudySetFixture()],
+        pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },
+      };
+      repo.findOwnedStudySetsByVisit.mockResolvedValue(mockResult);
+
+      const result = await service.getStudySets(
+        { pagination: { orderBy: "newlyOpened" } },
+        "owner-1"
+      );
+      expect(result).toBe(mockResult);
     });
   });
 

@@ -51,7 +51,7 @@ const queryParamIntegerSchema = v.pipe(
 
 const paginationSchema = v.optional(
   v.object({
-    orderBy: v.optional(v.picklist(["createdAt", "updatedAt"])),
+    orderBy: v.optional(v.picklist(["createdAt", "updatedAt", "newlyOpened"])),
     orderDirection: v.optional(v.picklist(["asc", "desc"])),
     page: v.optional(queryParamIntegerSchema),
   })

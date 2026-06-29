@@ -364,6 +364,86 @@ describe.concurrent("StudySetDrizzleRepository", () => {
     });
   });
 
+  describe("findOwnedStudySetsByVisit", () => {
+    it("returns only visited study sets ordered by visitedAt desc", async ({
+      expect,
+    }) => {
+      await using env = new StudySetTestEnv();
+      const a = await env.seedStudySet({ id: "a", ownerId: env.ownerId });
+      const b = await env.seedStudySet({ id: "b", ownerId: env.ownerId });
+      await env.seedStudySet({ id: "c", ownerId: env.ownerId });
+
+      await env.repo.upsertVisit(env.ownerId, b.id, Date.now() - 1000);
+      await env.repo.upsertVisit(env.ownerId, a.id, Date.now());
+      // c is never visited
+
+      const result = await env.repo.findOwnedStudySetsByVisit(
+        env.ownerId,
+        "desc",
+        1
+      );
+
+      expect(result.data.map((s) => s.id)).toEqual(["a", "b"]);
+      expect(result.pagination.total).toBe(2);
+    });
+
+    it("excludes study sets owned by other users", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      const mine = await env.seedStudySet({ id: "mine", ownerId: env.ownerId });
+      const theirs = await env.seedStudySet({
+        id: "theirs",
+        ownerId: env.otherId,
+      });
+
+      await env.repo.upsertVisit(env.ownerId, mine.id, Date.now());
+      await env.repo.upsertVisit(env.ownerId, theirs.id, Date.now());
+
+      const result = await env.repo.findOwnedStudySetsByVisit(
+        env.ownerId,
+        "desc",
+        1
+      );
+
+      expect(result.data.map((s) => s.id)).toEqual(["mine"]);
+      expect(result.pagination.total).toBe(1);
+    });
+
+    it("returns empty when user has no visited study sets", async ({
+      expect,
+    }) => {
+      await using env = new StudySetTestEnv();
+      await env.seedStudySet({ id: "a", ownerId: env.ownerId });
+
+      const result = await env.repo.findOwnedStudySetsByVisit(
+        env.ownerId,
+        "desc",
+        1
+      );
+
+      expect(result.data).toHaveLength(0);
+      expect(result.pagination.total).toBe(0);
+    });
+
+    it("excludes soft-deleted sets", async ({ expect }) => {
+      await using env = new StudySetTestEnv();
+      const a = await env.seedStudySet({ id: "a", ownerId: env.ownerId });
+      const b = await env.seedStudySet({ id: "b", ownerId: env.ownerId });
+
+      await env.repo.upsertVisit(env.ownerId, a.id, Date.now());
+      await env.repo.upsertVisit(env.ownerId, b.id, Date.now() - 1000);
+      await env.repo.deleteStudySet("a", env.ownerId);
+
+      const result = await env.repo.findOwnedStudySetsByVisit(
+        env.ownerId,
+        "desc",
+        1
+      );
+
+      expect(result.data.map((s) => s.id)).toEqual(["b"]);
+      expect(result.pagination.total).toBe(1);
+    });
+  });
+
   describe("isSlugTaken", () => {
     it("returns true when an exact-match slug exists", async ({ expect }) => {
       await using env = new StudySetTestEnv();

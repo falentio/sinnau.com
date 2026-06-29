@@ -21,6 +21,8 @@ export const createMockRepository = (): MockedStudySetRepository => ({
   deleteOldVisits: vi.fn<StudySetRepository["deleteOldVisits"]>(),
   deleteStudySet: vi.fn<StudySetRepository["deleteStudySet"]>(),
   findOwnedStudySets: vi.fn<StudySetRepository["findOwnedStudySets"]>(),
+  findOwnedStudySetsByVisit:
+    vi.fn<StudySetRepository["findOwnedStudySetsByVisit"]>(),
   findRecentVisits: vi.fn<StudySetRepository["findRecentVisits"]>(),
   findStudySetById: vi.fn<StudySetRepository["findStudySetById"]>(),
   findStudySetBySlug: vi.fn<StudySetRepository["findStudySetBySlug"]>(),

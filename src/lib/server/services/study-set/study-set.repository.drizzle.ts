@@ -243,6 +243,70 @@ export class StudySetDrizzleRepository implements StudySetRepository {
     }
   }
 
+  async findOwnedStudySetsByVisit(
+    userId: string,
+    orderDirection: "asc" | "desc",
+    page: number
+  ): Promise<StudySetListResult> {
+    try {
+      const direction = orderDirection === "asc" ? asc : desc;
+      const offset = (page - 1) * STUDY_SET_PAGE_LIMIT;
+
+      const baseConditions = and(
+        eq(studySet.ownerId, userId),
+        sql`${studySet.deletedAt} IS NULL`,
+        eq(studySetVisit.userId, userId)
+      );
+
+      const columns = {
+        createdAt: studySet.createdAt,
+        deletedAt: studySet.deletedAt,
+        description: studySet.description,
+        files: studySet.files,
+        id: studySet.id,
+        ownerId: studySet.ownerId,
+        slug: studySet.slug,
+        title: studySet.title,
+        updatedAt: studySet.updatedAt,
+        visibility: studySet.visibility,
+      };
+
+      const [rows, totalRow] = await Promise.all([
+        this.dbInstance
+          .select(columns)
+          .from(studySet)
+          .innerJoin(studySetVisit, eq(studySetVisit.studySetId, studySet.id))
+          .where(baseConditions)
+          .orderBy(direction(studySetVisit.visitedAt))
+          .limit(STUDY_SET_PAGE_LIMIT)
+          .offset(offset),
+        this.dbInstance
+          .select({ count: sql<number>`count(*)` })
+          .from(studySet)
+          .innerJoin(studySetVisit, eq(studySetVisit.studySetId, studySet.id))
+          .where(baseConditions),
+      ]);
+
+      const total = totalRow[0]?.count ?? 0;
+      return {
+        data: rows,
+        pagination: {
+          limit: STUDY_SET_PAGE_LIMIT,
+          page,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / STUDY_SET_PAGE_LIMIT)),
+        },
+      };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
   async isSlugTaken(slug: string): Promise<boolean> {
     try {
       const [row] = await this.dbInstance

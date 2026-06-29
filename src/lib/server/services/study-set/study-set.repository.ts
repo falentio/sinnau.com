@@ -39,6 +39,11 @@ export interface StudySetRepository {
     orderDirection: "asc" | "desc",
     page: number
   ): Promise<StudySetListResult>;
+  findOwnedStudySetsByVisit(
+    userId: string,
+    orderDirection: "asc" | "desc",
+    page: number
+  ): Promise<StudySetListResult>;
   isSlugTaken(slug: string): Promise<boolean>;
   upsertVisit(
     userId: string,

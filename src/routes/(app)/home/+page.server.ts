@@ -1,8 +1,7 @@
 import { dev } from "$app/environment";
-import { client } from "$lib/orpc";
+import { createServerClient } from "$lib/orpc.server";
 import { getStudySetsInputSchema } from "$lib/schemas/study-set";
 import { STUDY_SET_PAGE_LIMIT } from "$lib/schemas/study-set.constant";
-import { studySetService } from "$lib/server/services/study-set/index";
 import { getStudySetStubs } from "$lib/server/services/study-set/study-set.utils";
 import { searchParamsToRecord } from "$lib/server/utils/searchparams";
 import { error } from "@sveltejs/kit";
@@ -10,7 +9,7 @@ import * as v from "valibot";
 
 import type { PageServerLoad } from "./$types";
 
-const VALID_FILTERS = new Set(["latest", "newly-studied", "newly-opened"]);
+const VALID_FILTERS = new Set(["latest", "newly-opened"]);
 const DEV_STUB_FILTERS = new Set(["empty", "paginated", "unpaginated", "500"]);
 
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -48,6 +47,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
       };
     }
     if (filter === "500") {
+      const client = createServerClient();
       await client.unimplemented();
     }
     if (filter === "paginated") {
@@ -65,7 +65,19 @@ export const load: PageServerLoad = async ({ url, locals }) => {
     }
   }
 
-  const result = await studySetService.getStudySets(parsed.output, user.id);
+  const client = createServerClient();
+
+  const orderBy =
+    filter === "newly-opened"
+      ? "newlyOpened"
+      : parsed.output.pagination?.orderBy;
+
+  const result = await client.studySet.list({
+    pagination: {
+      ...parsed.output.pagination,
+      ...(orderBy ? { orderBy } : {}),
+    },
+  });
 
   return {
     filter,

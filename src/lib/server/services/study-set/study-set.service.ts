@@ -130,6 +130,15 @@ export class StudySetService {
     const orderBy = input.pagination?.orderBy ?? "createdAt";
     const orderDirection = input.pagination?.orderDirection ?? "desc";
     const page = input.pagination?.page ?? 1;
+
+    if (orderBy === "newlyOpened") {
+      return await this.repo.findOwnedStudySetsByVisit(
+        ownerId,
+        orderDirection,
+        page
+      );
+    }
+
     return await this.repo.findOwnedStudySets(
       ownerId,
       orderBy,
