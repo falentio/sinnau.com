@@ -16,10 +16,10 @@
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   let {
-    currentFilter,
+    currentSort,
     chapterParam,
   }: {
-    currentFilter: string | null;
+    currentSort: string | null;
     chapterParam?: string | null;
   } = $props();
 
@@ -46,13 +46,13 @@
   </EmptyHeader>
   <EmptyContent>
     <div class="flex gap-2">
-      {#if currentFilter && currentFilter !== "latest"}
+      {#if currentSort && currentSort !== "newest"}
         <Button
           size="sm"
           variant="outline"
           onclick={() =>
             navigateWithParams(pageStore.url.searchParams, {
-              filter: null,
+              sort: null,
               page: null,
             })}
         >

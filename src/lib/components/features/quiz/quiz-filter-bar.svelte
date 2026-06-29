@@ -5,10 +5,13 @@
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import { buildHref } from "$lib/utils/url";
 
-  let { currentFilter }: { currentFilter: string | null } = $props();
+  let { currentSort }: { currentSort: string | null } = $props();
 
-  const filters = $derived([
-    { def: true, label: "Terbaru", value: "latest" },
+  const sorts = $derived([
+    { def: true, label: "Terbaru", value: "newest" },
+    { def: false, label: "Terlama", value: "oldest" },
+    { def: false, label: "Abjad A-Z", value: "alphabetical" },
+    { def: false, label: "Abjad Z-A", value: "reverse-alphabetical" },
     ...(dev
       ? ([
           { def: false, label: "Dev: Empty", value: "empty" },
@@ -22,17 +25,17 @@
 
 <ScrollArea orientation="horizontal">
   <div class="flex w-full flex-row gap-0">
-    {#each filters as filter (filter.value)}
+    {#each sorts as sort (sort.value)}
       {@const isActive =
-        currentFilter === filter.value || (!currentFilter && filter.def)}
+        currentSort === sort.value || (!currentSort && sort.def)}
       <Button
         variant={isActive ? "outline" : "ghost"}
         href={buildHref(pageStore.url.searchParams, {
-          filter: filter.value,
+          sort: sort.value,
           page: null,
         })}
       >
-        {filter.label}
+        {sort.label}
       </Button>
     {/each}
   </div>

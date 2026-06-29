@@ -25,7 +25,7 @@
   let { data }: { data: PageData } = $props();
 
   const quizzes = $derived(data.quizzes);
-  const currentFilter = $derived(data.filter ?? null);
+  const currentSort = $derived(data.sort ?? null);
   const chapters = $derived(data.chapters ?? []);
 
   let deleteDialogOpen = $state(false);
@@ -42,10 +42,31 @@
 
   const chapterMap = $derived(new Map(chapters.map((c) => [c.id, c.title])));
 
+  const sortFn = (sort: string | null) => {
+    return (a: (typeof quizzes)[0], b: (typeof quizzes)[0]): number => {
+      switch (sort) {
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "alphabetical":
+          return a.questionText.localeCompare(b.questionText, "id");
+        case "reverse-alphabetical":
+          return b.questionText.localeCompare(a.questionText, "id");
+        default:
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    };
+  };
+
+  const sortedQuizzes = $derived([...quizzes].sort(sortFn(currentSort)));
+
   const filteredQuizzes = $derived(
     chapterParam
-      ? quizzes.filter((quiz) => quiz.chapterId === chapterParam)
-      : quizzes
+      ? sortedQuizzes.filter((quiz) => quiz.chapterId === chapterParam)
+      : sortedQuizzes
   );
 
   const displayedQuizzes = $derived(
@@ -80,7 +101,7 @@
     </Button>
   </div>
 
-  <QuizFilterBar {currentFilter} />
+  <QuizFilterBar {currentSort} />
 </div>
 
 {#if filteredQuizzes.length === 0}
@@ -100,13 +121,13 @@
     </EmptyHeader>
     <EmptyContent>
       <div class="flex gap-2">
-        {#if currentFilter && currentFilter !== "latest"}
+        {#if currentSort && currentSort !== "newest"}
           <Button
             size="sm"
             variant="outline"
             onclick={() =>
               navigateWithParams(pageStore.url.searchParams, {
-                filter: null,
+                sort: null,
                 page: null,
               })}
           >

@@ -5,36 +5,41 @@ import { error } from "@sveltejs/kit";
 
 import type { PageServerLoad } from "./$types";
 
-const VALID_FILTERS = new Set(["latest"]);
-const DEV_STUB_FILTERS = new Set(["empty", "paginated", "unpaginated", "500"]);
+const VALID_SORTS = new Set([
+  "newest",
+  "oldest",
+  "alphabetical",
+  "reverse-alphabetical",
+]);
+const DEV_STUB_SORTS = new Set(["empty", "paginated", "unpaginated", "500"]);
 
 export const load: PageServerLoad = async ({ url, params, locals }) => {
   const user = locals.mustGetUser();
-  const filter = url.searchParams.get("filter");
+  const sort = url.searchParams.get("sort");
 
   if (
-    filter !== null &&
-    !VALID_FILTERS.has(filter) &&
-    !(dev && DEV_STUB_FILTERS.has(filter))
+    sort !== null &&
+    !VALID_SORTS.has(sort) &&
+    !(dev && DEV_STUB_SORTS.has(sort))
   ) {
-    error(400, { message: "filter unknown" });
+    error(400, { message: "sort unknown" });
   }
 
   if (dev) {
-    if (filter === "empty") {
-      return { filter, quizzes: [] };
+    if (sort === "empty") {
+      return { sort, quizzes: [] };
     }
-    if (filter === "500") {
+    if (sort === "500") {
       await client.unimplemented();
     }
-    if (filter === "paginated") {
-      return { filter, quizzes: getQuizStubs(50, params.studySetId, user.id) };
+    if (sort === "paginated") {
+      return { sort, quizzes: getQuizStubs(50, params.studySetId, user.id) };
     }
-    if (filter === "unpaginated") {
-      return { filter, quizzes: getQuizStubs(9, params.studySetId, user.id) };
+    if (sort === "unpaginated") {
+      return { sort, quizzes: getQuizStubs(9, params.studySetId, user.id) };
     }
   }
 
   const quizzes = await client.quiz.list({ studySetId: params.studySetId });
-  return { filter, quizzes };
+  return { sort, quizzes };
 };

@@ -22,7 +22,7 @@
   let { data }: { data: PageData } = $props();
 
   const flashcards = $derived(data.flashcards);
-  const currentFilter = $derived(data.filter ?? null);
+  const currentSort = $derived(data.sort ?? null);
 
   const chapterParam = $derived(pageStore.url.searchParams.get("chapter"));
 
@@ -38,10 +38,35 @@
     importance: number;
   } | null>(null);
 
+  const sortFn = (sort: string | null) => {
+    return (a: (typeof flashcards)[0], b: (typeof flashcards)[0]): number => {
+      switch (sort) {
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "alphabetical":
+          return a.front.localeCompare(b.front, "id");
+        case "reverse-alphabetical":
+          return b.front.localeCompare(a.front, "id");
+        case "most-important":
+          return b.importance - a.importance;
+        default:
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    };
+  };
+
+  const sortedFlashcards = $derived([...flashcards].sort(sortFn(currentSort)));
+
   const filteredFlashcards = $derived(
     chapterParam
-      ? flashcards.filter((flashcard) => flashcard.chapterId === chapterParam)
-      : flashcards
+      ? sortedFlashcards.filter(
+          (flashcard) => flashcard.chapterId === chapterParam
+        )
+      : sortedFlashcards
   );
 
   const pageIndex = $derived(
@@ -73,11 +98,11 @@
     </Button>
   </div>
 
-  <FlashcardFilterBar {currentFilter} />
+  <FlashcardFilterBar {currentSort} />
 </div>
 
 {#if filteredFlashcards.length === 0}
-  <FlashcardEmpty {currentFilter} {chapterParam} />
+  <FlashcardEmpty {currentSort} {chapterParam} />
 {:else}
   <div class="flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs">
     {#each displayedFlashcards as flashcard (flashcard.id)}

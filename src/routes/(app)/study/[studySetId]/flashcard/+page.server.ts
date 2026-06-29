@@ -5,8 +5,14 @@ import { error } from "@sveltejs/kit";
 
 import type { PageServerLoad } from "./$types";
 
-const VALID_FILTERS = new Set(["latest"]);
-const DEV_STUB_FILTERS = new Set(["empty", "paginated", "unpaginated", "500"]);
+const VALID_SORTS = new Set([
+  "newest",
+  "oldest",
+  "alphabetical",
+  "reverse-alphabetical",
+  "most-important",
+]);
+const DEV_STUB_SORTS = new Set(["empty", "paginated", "unpaginated", "500"]);
 
 export const load: PageServerLoad = async ({
   depends,
@@ -15,34 +21,34 @@ export const load: PageServerLoad = async ({
   locals,
 }) => {
   const user = locals.mustGetUser();
-  const filter = url.searchParams.get("filter");
+  const sort = url.searchParams.get("sort");
 
   depends(`flashcard:list:${params.studySetId}`);
 
   if (
-    filter !== null &&
-    !VALID_FILTERS.has(filter) &&
-    !(dev && DEV_STUB_FILTERS.has(filter))
+    sort !== null &&
+    !VALID_SORTS.has(sort) &&
+    !(dev && DEV_STUB_SORTS.has(sort))
   ) {
-    error(400, { message: "filter unknown" });
+    error(400, { message: "sort unknown" });
   }
 
   if (dev) {
-    if (filter === "empty") {
-      return { filter, flashcards: [] };
+    if (sort === "empty") {
+      return { sort, flashcards: [] };
     }
-    if (filter === "500") {
+    if (sort === "500") {
       await client.unimplemented();
     }
-    if (filter === "paginated") {
+    if (sort === "paginated") {
       return {
-        filter,
+        sort,
         flashcards: getFlashcardStubs(50, params.studySetId, user.id),
       };
     }
-    if (filter === "unpaginated") {
+    if (sort === "unpaginated") {
       return {
-        filter,
+        sort,
         flashcards: getFlashcardStubs(9, params.studySetId, user.id),
       };
     }
@@ -51,5 +57,5 @@ export const load: PageServerLoad = async ({
   const flashcards = await client.flashcard.list({
     studySetId: params.studySetId,
   });
-  return { filter, flashcards };
+  return { sort, flashcards };
 };
