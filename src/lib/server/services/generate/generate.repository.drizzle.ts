@@ -110,6 +110,30 @@ export class GenerateDrizzleRepository implements GenerateRepository {
     }
   }
 
+  async findActiveByStudySetId(studySetId: string): Promise<Generate | null> {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(generate)
+        .where(
+          and(
+            eq(generate.studySetId, studySetId),
+            inArray(generate.status, ["CREATED", "ONGOING"])
+          )
+        )
+        .orderBy(generate.startedAt)
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
   async finalizeStuckAsFailed(_reason: string): Promise<number> {
     try {
       const result = await this.dbInstance
@@ -174,28 +198,34 @@ export class GenerateDrizzleRepository implements GenerateRepository {
   }): Promise<void> {
     try {
       const { generateId, record } = params;
-      await this.dbInstance.transaction(async (tx) => {
-        await tx
-          .delete(generateChunkResult)
+      await this.dbInstance.transaction((tx) => {
+        tx.delete(generateChunkResult)
           .where(
             and(
               eq(generateChunkResult.generateId, generateId),
               eq(generateChunkResult.index, record.index)
             )
-          );
+          )
+          .run();
 
-        await tx.insert(generateChunkResult).values({
-          generateId,
-          id: crypto.randomUUID(),
-          index: record.index,
-          kind: record.kind,
-          payload: JSON.stringify(record),
-        });
+        tx.insert(generateChunkResult)
+          .values({
+            generateId,
+            id: crypto.randomUUID(),
+            index: record.index,
+            kind: record.kind,
+            payload: JSON.stringify(record),
+          })
+          .run();
       });
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
       }
+      console.error("Error occurred while appending chunk result:", {
+        error,
+        params,
+      });
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Internal server error",
       });
@@ -230,7 +260,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
         .select({ createdAt: generateChunkResult.createdAt })
         .from(generateChunkResult)
         .where(eq(generateChunkResult.generateId, generateId))
-        .orderBy(generateChunkResult.index)
+        .orderBy(generateChunkResult.createdAt)
         .limit(1);
 
       if (!firstChunk) {
@@ -250,7 +280,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
         .select()
         .from(generateChunkResult)
         .where(and(...conditions))
-        .orderBy(generateChunkResult.index)
+        .orderBy(generateChunkResult.createdAt)
         .limit(limit);
 
       return rows.map((r) => ({

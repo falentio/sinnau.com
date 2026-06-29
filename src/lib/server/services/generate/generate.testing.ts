@@ -29,6 +29,7 @@ export const createMockRepository = (): MockedGenerateRepository => ({
   finalizeGenerateTransaction:
     vi.fn<GenerateRepository["finalizeGenerateTransaction"]>(),
   finalizeStuckAsFailed: vi.fn<GenerateRepository["finalizeStuckAsFailed"]>(),
+  findActiveByStudySetId: vi.fn<GenerateRepository["findActiveByStudySetId"]>(),
   findChunkSummaries: vi.fn<GenerateRepository["findChunkSummaries"]>(),
   findGenerateById: vi.fn<GenerateRepository["findGenerateById"]>(),
   findGenerateInputByGenerateId:
@@ -140,12 +141,12 @@ export class GenerateTestEnv implements AsyncDisposable {
   async seedGenerate(overrides: Partial<Generate> = {}): Promise<Generate> {
     const id = overrides.id ?? generateId(GENERATE_ID_PREFIX);
     return await this.repo.insertGenerate({
-      completedAt: null,
+      completedAt: overrides.completedAt ?? null,
       id,
       ownerId: overrides.ownerId ?? this.ownerId,
       startedAt: overrides.startedAt ?? new Date(),
       status: overrides.status ?? "CREATED",
-      studySetId: overrides.studySetId ?? "study-set-1",
+      studySetId: overrides.studySetId ?? this.studySetId,
     });
   }
 

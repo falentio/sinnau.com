@@ -26,6 +26,7 @@ export interface GenerateRepository {
     completedAt?: number
   ): Promise<Generate | null>;
   findGenerateById(id: string): Promise<Generate | null>;
+  findActiveByStudySetId(studySetId: string): Promise<Generate | null>;
   finalizeStuckAsFailed(reason: string): Promise<number>;
   insertGenerateInput(row: Omit<GenerateInput, "id">): Promise<GenerateInput>;
   findGenerateInputByGenerateId(
