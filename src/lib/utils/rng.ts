@@ -112,3 +112,13 @@ export const shuffle = <T>(arr: readonly T[], seed: string | string[]): T[] => {
   const rng = createRng(seed);
   return rng.shuffle(arr);
 };
+
+export const hash = (seed: string | string[]): string => {
+  const rng = createRng(seed);
+  let hashValue = "";
+  for (let i = 0; i < 8; i += 1) {
+    const part = rng.uint32().toString(16).padStart(8, "0");
+    hashValue += part;
+  }
+  return hashValue;
+};

@@ -11,20 +11,11 @@
 
   const { items }: Props = $props();
 
-  const keyFor = (item: GenerationItem, index: number): string => {
-    const base = item.type;
-    if (item.type === "chapter") {
-      return `${base}:${item.data.slug}:${index}`;
-    }
-    if (item.type === "flashcard") {
-      return `${base}:${item.data.front}:${index}`;
-    }
-    return `${base}:${item.data.questionText}:${index}`;
-  };
+  const keyFor = (item: GenerationItem): string => item.id;
 </script>
 
 <div class="flex flex-col gap-3">
-  {#each items as item, index (keyFor(item, index))}
+  {#each items as item (keyFor(item))}
     <div
       in:fly={{ duration: 400, opacity: 0, y: 10 }}
       out:fade={{ duration: 250 }}

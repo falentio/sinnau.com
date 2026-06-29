@@ -6,7 +6,9 @@ import type {
 
 export type GenerationItemType = "chapter" | "flashcard" | "quiz";
 
-export type GenerationItem =
+export type UnstampedGenerationItem =
   | { data: GeneratedChapter; type: "chapter" }
   | { data: GeneratedFlashcard; type: "flashcard" }
   | { data: GeneratedQuiz; type: "quiz" };
+
+export type GenerationItem = UnstampedGenerationItem & { id: string };

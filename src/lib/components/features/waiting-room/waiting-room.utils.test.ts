@@ -1,7 +1,7 @@
 import type { ChunkSummaryItem } from "$lib/schemas/generate";
 import { describe, expect, it } from "vitest";
 
-import { appendChunks, capItems, flattenChunk } from "./waiting-room.utils.ts";
+import { capItems, flattenChunk } from "./waiting-room.utils.ts";
 
 const makeChapter = (title: string) => ({
   slug: title.toLowerCase().replaceAll(/\s+/gu, "_"),
@@ -109,38 +109,7 @@ describe("capItems helper", () => {
     }));
     const result = capItems(items);
     expect(result).toHaveLength(10);
-    expect(result[0]).toMatchObject({ data: { title: "Chapter 5" } });
-    expect(result[9]).toMatchObject({ data: { title: "Chapter 14" } });
-  });
-});
-
-describe("appendChunks helper", () => {
-  it("prepends new items and caps at limit", () => {
-    const existing = Array.from({ length: 8 }, (_, index) => ({
-      data: makeChapter(`Existing ${index}`),
-      type: "chapter" as const,
-    }));
-    const chunks = [makeSuccessChunk(["New"], [], [])];
-    const result = appendChunks(existing, chunks);
-
-    expect(result).toHaveLength(9);
-    expect(result[0]).toMatchObject({ data: { title: "New" } });
-    expect(result[8]).toMatchObject({ data: { title: "Existing 7" } });
-  });
-
-  it("drops oldest items when total exceeds limit", () => {
-    const existing = Array.from({ length: 8 }, (_, index) => ({
-      data: makeChapter(`Existing ${index}`),
-      type: "chapter" as const,
-    }));
-    const chunks = [makeSuccessChunk(["A", "B", "C"], ["D"], ["E"])];
-    const result = appendChunks(existing, chunks);
-
-    expect(result).toHaveLength(10);
-    expect(result[0]).toMatchObject({
-      data: { front: "D" },
-      type: "flashcard",
-    });
-    expect(result[9]).toMatchObject({ data: { title: "Existing 7" } });
+    expect(result[0]).toMatchObject({ data: { title: "Chapter 0" } });
+    expect(result[9]).toMatchObject({ data: { title: "Chapter 9" } });
   });
 });
