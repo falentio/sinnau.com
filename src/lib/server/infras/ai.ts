@@ -2,6 +2,9 @@ import { env } from "$lib/server/infras/env";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 const getClient = () => {
+  if (process.env.VITEST) {
+    return undefined as any;
+  }
   if (env.AI_COMPATIBILITY === "openai") {
     return createOpenAICompatible({
       apiKey: env.AI_APIKEY,
