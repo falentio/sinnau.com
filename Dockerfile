@@ -52,6 +52,7 @@ LABEL org.opencontainers.image.title="sinnau" \
 ENV NODE_ENV=production \
     PORT=11085 \
     HOST=0.0.0.0 \
+    BODY_SIZE_LIMIT=50M \
     DB_FILE_NAME=/app/data/data.db
 
 # Pre-create the data volume target as root, chown to node, THEN switch user
