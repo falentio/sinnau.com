@@ -1,6 +1,6 @@
 import { open, writeFile } from "node:fs/promises";
 
-import { defaultModel } from "$lib/server/infras/ai";
+import { getDefaultModel } from "$lib/server/infras/ai";
 import { generate } from "$lib/server/infras/generate/generate";
 import type { ChunkRecord } from "$lib/server/infras/generate/generate";
 
@@ -19,7 +19,7 @@ const events: ChunkRecord[] = [];
 
 const result = await generate({
   content: matematika,
-  languageModel: defaultModel,
+  languageModel: getDefaultModel(),
   storage: {
     appendChunkResult: async (record) => {
       events.push(record);

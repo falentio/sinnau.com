@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { defaultModel } from "$lib/server/infras/ai";
+import { getDefaultModel } from "$lib/server/infras/ai";
 import { chunkContent } from "$lib/server/infras/generate/chunk";
 import type {
   GenerationStorage,
@@ -38,7 +38,7 @@ export const createRunLLMDefault =
       content: input.pdfText,
       extractionType:
         input.extractionType === "exhaustive" ? "exhaustive" : "normal",
-      languageModel: defaultModel,
+      languageModel: getDefaultModel(),
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       languageStyle: input.languageStyle as LanguageStyleId | undefined,
       storage: input.storage,

@@ -22,4 +22,4 @@ const getClient = () => {
 };
 
 export const client = getClient();
-export const defaultModel = client(env.AI_MODEL);
+export const getDefaultModel = () => client(env.AI_MODEL);
