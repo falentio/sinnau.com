@@ -105,6 +105,7 @@ export const flashcardSchema = v.object({
   hint: v.nullable(v.string()),
   id: v.string(),
   importance: v.number(),
+  isAiGenerated: v.optional(v.boolean(), false),
   ownerId: v.string(),
   studySetId: v.string(),
   updatedAt: v.date(),

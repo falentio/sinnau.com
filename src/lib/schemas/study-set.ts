@@ -105,6 +105,7 @@ export const studySetSchema = v.object({
   description: v.nullable(v.string()),
   files: v.array(v.string()),
   id: v.string(),
+  isAiGenerated: v.optional(v.boolean(), false),
   ownerId: v.string(),
   slug: v.string(),
   title: v.string(),

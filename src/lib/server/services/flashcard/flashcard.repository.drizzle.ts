@@ -24,7 +24,7 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
   }
 
   async insertFlashcards(
-    rows: Omit<Flashcard, "createdAt" | "updatedAt">[]
+    rows: Omit<Flashcard, "createdAt" | "updatedAt" | "isAiGenerated">[]
   ): Promise<Flashcard[]> {
     try {
       if (rows.length === 0) {

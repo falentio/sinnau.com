@@ -24,7 +24,7 @@ export class ChapterDrizzleRepository implements ChapterRepository {
   }
 
   async insertChapter(
-    row: Omit<Chapter, "createdAt" | "updatedAt">
+    row: Omit<Chapter, "createdAt" | "updatedAt" | "isAiGenerated">
   ): Promise<Chapter> {
     try {
       const [created] = await this.dbInstance
@@ -114,6 +114,7 @@ export class ChapterDrizzleRepository implements ChapterRepository {
           createdAt: chapter.createdAt,
           description: chapter.description,
           id: chapter.id,
+          isAiGenerated: chapter.isAiGenerated,
           ownerId: chapter.ownerId,
           slug: chapter.slug,
           studySetId: chapter.studySetId,

@@ -76,6 +76,7 @@ export const chapterSchema = v.object({
   createdAt: v.date(),
   description: v.nullable(v.string()),
   id: v.string(),
+  isAiGenerated: v.optional(v.boolean(), false),
   ownerId: v.string(),
   slug: v.string(),
   studySetId: v.string(),

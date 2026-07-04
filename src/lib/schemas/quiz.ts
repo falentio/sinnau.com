@@ -166,6 +166,7 @@ export const quizSchema = v.object({
   chapterId: v.nullable(v.string()),
   createdAt: v.date(),
   id: v.string(),
+  isAiGenerated: v.optional(v.boolean(), false),
   options: v.array(quizOptionOutputSchema),
   ownerId: v.string(),
   questionText: v.string(),

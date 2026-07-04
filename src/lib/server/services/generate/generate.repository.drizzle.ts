@@ -23,6 +23,7 @@ import type {
   GenerateInput,
 } from "../../infras/db/schema/generate.ts";
 import { quiz, quizOption } from "../../infras/db/schema/quiz.ts";
+import { studySet } from "../../infras/db/schema/study-set.ts";
 import { generateId as createId } from "../../utils/nanoid.ts";
 import type {
   ChunkSummary,
@@ -356,6 +357,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
           slugToId.set(genChapter.slug, id);
           chapterRows.push({
             id,
+            isAiGenerated: true,
             ownerId,
             slug: genChapter.slug,
             studySetId,
@@ -368,6 +370,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
           quizRows.push({
             chapterId: slugToId.get(genQuiz.chapterSlug) ?? null,
             id: quizId,
+            isAiGenerated: true,
             ownerId,
             questionText: genQuiz.questionText,
             studySetId,
@@ -392,6 +395,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
             hint: genFlashcard.hint,
             id: createId(FLASHCARD_ID_PREFIX),
             importance: genFlashcard.importance,
+            isAiGenerated: true,
             ownerId,
             studySetId,
           });
@@ -410,6 +414,11 @@ export class GenerateDrizzleRepository implements GenerateRepository {
       if (flashcardRows.length > 0) {
         await this.dbInstance.insert(flashcard).values(flashcardRows);
       }
+
+      await this.dbInstance
+        .update(studySet)
+        .set({ isAiGenerated: true })
+        .where(eq(studySet.id, studySetId));
     } catch (error) {
       try {
         await this.dbInstance

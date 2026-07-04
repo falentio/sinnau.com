@@ -30,7 +30,7 @@
   data-hidden={page.route.id?.includes("waiting-room")}
 >
   <nav
-    class="flex max-w-[calc(100%-2rem)] items-center gap-1 overflow-x-auto rounded-full border border-border/50 bg-popover/90 p-1.5 text-popover-foreground shadow-[0_8px_32px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+    class="flex max-w-[calc(100%-2rem)] *:flex-1 items-center gap-1 overflow-x-auto rounded-full border border-border/50 bg-popover/90 p-1.5 text-popover-foreground shadow-[0_8px_32px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl"
     aria-label="Aksi modul"
   >
     <Button

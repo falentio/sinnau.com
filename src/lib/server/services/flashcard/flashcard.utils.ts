@@ -20,6 +20,7 @@ export const getFlashcardStubs = (
       hint: null,
       id: generateId(FLASHCARD_ID_PREFIX),
       importance: 0,
+      isAiGenerated: false,
       ownerId,
       studySetId,
       updatedAt: new Date(now.getTime() - (count - i) * 1_800_000),

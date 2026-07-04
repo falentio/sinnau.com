@@ -269,7 +269,6 @@ export const createRunLLMMock = (): RunLLMImpl => async (input) => {
   const chunks = chunkContent(input.pdfText, MOCK_CHUNK_SIZE);
   for (let i = 0; i < chunks.length; i += 1) {
     await sleep(MOCK_CHUNK_DELAY_MS);
-    console.log(`Mock LLM: Processing chunk ${i + 1} of ${chunks.length}`);
     const content = createMockContents(i);
     const record = {
       chaptersSlugs: content.chapter.map((c) => c.slug),

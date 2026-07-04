@@ -25,6 +25,9 @@ export const studySet = sqliteTable(
       .notNull()
       .default([]),
     id: text("id").primaryKey(),
+    isAiGenerated: integer("is_ai_generated", { mode: "boolean" })
+      .notNull()
+      .default(false),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

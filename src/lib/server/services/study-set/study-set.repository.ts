@@ -21,7 +21,10 @@ export type StudySetUpdatePatch = Partial<
 
 export interface StudySetRepository {
   insertStudySet(
-    row: Omit<StudySet, "createdAt" | "updatedAt" | "deletedAt">
+    row: Omit<
+      StudySet,
+      "createdAt" | "updatedAt" | "deletedAt" | "isAiGenerated"
+    >
   ): Promise<StudySet>;
   updateStudySet(
     id: string,

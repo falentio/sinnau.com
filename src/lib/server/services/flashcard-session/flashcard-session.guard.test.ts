@@ -22,13 +22,17 @@ const setupGuard = () => {
     assertFlashcardExistsOrNotFound: vi
       .fn<(id: string) => Promise<Flashcard>>()
       .mockResolvedValue({
+        back: "back",
+        chapterId: null,
         createdAt: new Date(),
         front: "front",
         hint: null,
         id: "flc_placeholder",
         importance: 0,
+        isAiGenerated: false,
         ownerId: "user-1",
         studySetId: "set-1",
+        updatedAt: new Date(),
       } as Flashcard),
   };
 
@@ -147,13 +151,17 @@ describe.concurrent(FlashcardSessionGuard, () => {
     }) => {
       const { flashcardGuard, guard } = setupGuard();
       const card = {
+        back: "back",
+        chapterId: null,
         createdAt: new Date(),
         front: "front",
         hint: null,
         id: "flc_1",
         importance: 0,
+        isAiGenerated: false,
         ownerId: "user-1",
         studySetId: "set-1",
+        updatedAt: new Date(),
       } as Flashcard;
       flashcardGuard.assertFlashcardExistsOrNotFound.mockResolvedValue(card);
 
@@ -188,13 +196,17 @@ describe.concurrent(FlashcardSessionGuard, () => {
     }) => {
       const { flashcardGuard, guard } = setupGuard();
       flashcardGuard.assertFlashcardExistsOrNotFound.mockResolvedValue({
+        back: "back",
+        chapterId: null,
         createdAt: new Date(),
         front: "front",
         hint: null,
         id: "flc_1",
         importance: 0,
+        isAiGenerated: false,
         ownerId: "user-1",
         studySetId: "other-set",
+        updatedAt: new Date(),
       } as Flashcard);
       const err = await captureError(
         guard.assertFlashcardBelongsToStudySetOrNotFound("flc_1", "set-1")

@@ -59,6 +59,7 @@ export const createStudySetFixture = (
   description: null,
   files: [],
   id: generateId(STUDY_SET_ID_PREFIX),
+  isAiGenerated: false,
   ownerId: "owner-1",
   slug: "test-slug-abc123",
   title: "Test Set",

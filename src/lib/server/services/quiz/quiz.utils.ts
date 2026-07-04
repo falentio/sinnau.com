@@ -57,6 +57,7 @@ export const getQuizStubs = (
         chapterId: null,
         createdAt: new Date(now.getTime() - (count - i) * 3_600_000),
         id: quizId,
+        isAiGenerated: false,
         ownerId,
         questionText: `Pertanyaan stub #${i + 1}?`,
         studySetId,

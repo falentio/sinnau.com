@@ -3,7 +3,10 @@ import type { Quiz, QuizOption } from "../../infras/db/schema/quiz.ts";
 
 export type QuizWithOptions = Quiz & { options: QuizOption[] };
 
-export type NewQuizRow = Omit<Quiz, "createdAt" | "updatedAt">;
+export type NewQuizRow = Omit<
+  Quiz,
+  "createdAt" | "updatedAt" | "isAiGenerated"
+>;
 export type NewQuizOptionRow = Omit<QuizOption, "createdAt" | "updatedAt">;
 
 export type QuizUpdatePatch = Partial<

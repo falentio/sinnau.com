@@ -12,7 +12,7 @@ export interface FlashcardChapterRef {
 
 export interface FlashcardRepository {
   insertFlashcards(
-    rows: Omit<Flashcard, "createdAt" | "updatedAt">[]
+    rows: Omit<Flashcard, "createdAt" | "updatedAt" | "isAiGenerated">[]
   ): Promise<Flashcard[]>;
   updateFlashcard(
     id: string,

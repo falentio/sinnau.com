@@ -1,8 +1,8 @@
 {
+  "id": "b7285c49-30c4-4647-8e86-cf8c485675d6",
+  "prevId": "ca203735-2c96-4e38-a4be-15a3346f5eaf",
   "version": "6",
   "dialect": "sqlite",
-  "id": "6b2d4e6f-8324-4e01-b389-cb501af0ab5c",
-  "prevId": "a7f68fd8-babb-4308-9119-80a664adc5e6",
   "tables": {
     "account": {
       "name": "account",
@@ -113,15 +113,15 @@
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -216,15 +216,15 @@
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -496,15 +496,15 @@
         "study_set_owner_id_user_id_fk": {
           "name": "study_set_owner_id_user_id_fk",
           "tableFrom": "study_set",
-          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -579,28 +579,28 @@
         "study_set_visit_study_set_id_study_set_id_fk": {
           "name": "study_set_visit_study_set_id_study_set_id_fk",
           "tableFrom": "study_set_visit",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "study_set_visit_user_id_user_id_fk": {
           "name": "study_set_visit_user_id_user_id_fk",
           "tableFrom": "study_set_visit",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -697,28 +697,28 @@
         "chapter_owner_id_user_id_fk": {
           "name": "chapter_owner_id_user_id_fk",
           "tableFrom": "chapter",
-          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "chapter_study_set_id_study_set_id_fk": {
           "name": "chapter_study_set_id_study_set_id_fk",
           "tableFrom": "chapter",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -837,41 +837,41 @@
         "flashcard_chapter_id_chapter_id_fk": {
           "name": "flashcard_chapter_id_chapter_id_fk",
           "tableFrom": "flashcard",
-          "tableTo": "chapter",
           "columnsFrom": [
             "chapter_id"
           ],
+          "tableTo": "chapter",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "flashcard_owner_id_user_id_fk": {
           "name": "flashcard_owner_id_user_id_fk",
           "tableFrom": "flashcard",
-          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "flashcard_study_set_id_study_set_id_fk": {
           "name": "flashcard_study_set_id_study_set_id_fk",
           "tableFrom": "flashcard",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -947,28 +947,28 @@
         "flashcard_session_study_set_id_study_set_id_fk": {
           "name": "flashcard_session_study_set_id_study_set_id_fk",
           "tableFrom": "flashcard_session",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "flashcard_session_user_id_user_id_fk": {
           "name": "flashcard_session_user_id_user_id_fk",
           "tableFrom": "flashcard_session",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1099,28 +1099,28 @@
         "flashcard_session_review_flashcard_id_flashcard_id_fk": {
           "name": "flashcard_session_review_flashcard_id_flashcard_id_fk",
           "tableFrom": "flashcard_session_review",
-          "tableTo": "flashcard",
           "columnsFrom": [
             "flashcard_id"
           ],
+          "tableTo": "flashcard",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "flashcard_session_review_session_id_flashcard_session_id_fk": {
           "name": "flashcard_session_review_session_id_flashcard_session_id_fk",
           "tableFrom": "flashcard_session_review",
-          "tableTo": "flashcard_session",
           "columnsFrom": [
             "session_id"
           ],
+          "tableTo": "flashcard_session",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1252,28 +1252,28 @@
         "flashcard_state_flashcard_id_flashcard_id_fk": {
           "name": "flashcard_state_flashcard_id_flashcard_id_fk",
           "tableFrom": "flashcard_state",
-          "tableTo": "flashcard",
           "columnsFrom": [
             "flashcard_id"
           ],
+          "tableTo": "flashcard",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "flashcard_state_user_id_user_id_fk": {
           "name": "flashcard_state_user_id_user_id_fk",
           "tableFrom": "flashcard_state",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -1377,41 +1377,41 @@
         "quiz_chapter_id_chapter_id_fk": {
           "name": "quiz_chapter_id_chapter_id_fk",
           "tableFrom": "quiz",
-          "tableTo": "chapter",
           "columnsFrom": [
             "chapter_id"
           ],
+          "tableTo": "chapter",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "quiz_owner_id_user_id_fk": {
           "name": "quiz_owner_id_user_id_fk",
           "tableFrom": "quiz",
-          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "quiz_study_set_id_study_set_id_fk": {
           "name": "quiz_study_set_id_study_set_id_fk",
           "tableFrom": "quiz",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1486,15 +1486,15 @@
         "quiz_option_quiz_id_quiz_id_fk": {
           "name": "quiz_option_quiz_id_quiz_id_fk",
           "tableFrom": "quiz_option",
-          "tableTo": "quiz",
           "columnsFrom": [
             "quiz_id"
           ],
+          "tableTo": "quiz",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1653,41 +1653,41 @@
         "quiz_session_chapter_id_chapter_id_fk": {
           "name": "quiz_session_chapter_id_chapter_id_fk",
           "tableFrom": "quiz_session",
-          "tableTo": "chapter",
           "columnsFrom": [
             "chapter_id"
           ],
+          "tableTo": "chapter",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "quiz_session_study_set_id_study_set_id_fk": {
           "name": "quiz_session_study_set_id_study_set_id_fk",
           "tableFrom": "quiz_session",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "quiz_session_user_id_user_id_fk": {
           "name": "quiz_session_user_id_user_id_fk",
           "tableFrom": "quiz_session",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1763,28 +1763,28 @@
         "quiz_session_answer_session_id_quiz_session_id_fk": {
           "name": "quiz_session_answer_session_id_quiz_session_id_fk",
           "tableFrom": "quiz_session_answer",
-          "tableTo": "quiz_session",
           "columnsFrom": [
             "session_id"
           ],
+          "tableTo": "quiz_session",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "quiz_session_answer_session_quiz_id_quiz_session_quiz_id_fk": {
           "name": "quiz_session_answer_session_quiz_id_quiz_session_quiz_id_fk",
           "tableFrom": "quiz_session_answer",
-          "tableTo": "quiz_session_quiz",
           "columnsFrom": [
             "session_quiz_id"
           ],
+          "tableTo": "quiz_session_quiz",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1864,28 +1864,28 @@
         "quiz_session_quiz_original_quiz_id_quiz_id_fk": {
           "name": "quiz_session_quiz_original_quiz_id_quiz_id_fk",
           "tableFrom": "quiz_session_quiz",
-          "tableTo": "quiz",
           "columnsFrom": [
             "original_quiz_id"
           ],
+          "tableTo": "quiz",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "quiz_session_quiz_session_id_quiz_session_id_fk": {
           "name": "quiz_session_quiz_session_id_quiz_session_id_fk",
           "tableFrom": "quiz_session_quiz",
-          "tableTo": "quiz_session",
           "columnsFrom": [
             "session_id"
           ],
+          "tableTo": "quiz_session",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1951,15 +1951,15 @@
         "quiz_session_quiz_option_session_quiz_id_quiz_session_quiz_id_fk": {
           "name": "quiz_session_quiz_option_session_quiz_id_quiz_session_quiz_id_fk",
           "tableFrom": "quiz_session_quiz_option",
-          "tableTo": "quiz_session_quiz",
           "columnsFrom": [
             "session_quiz_id"
           ],
+          "tableTo": "quiz_session_quiz",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -2020,15 +2020,15 @@
         "study_set_content_study_set_id_study_set_id_fk": {
           "name": "study_set_content_study_set_id_study_set_id_fk",
           "tableFrom": "study_set_content",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -2066,28 +2066,28 @@
         "study_set_content_to_chapter_chapter_id_chapter_id_fk": {
           "name": "study_set_content_to_chapter_chapter_id_chapter_id_fk",
           "tableFrom": "study_set_content_to_chapter",
-          "tableTo": "chapter",
           "columnsFrom": [
             "chapter_id"
           ],
+          "tableTo": "chapter",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "study_set_content_to_chapter_content_id_study_set_content_id_fk": {
           "name": "study_set_content_to_chapter_content_id_study_set_content_id_fk",
           "tableFrom": "study_set_content_to_chapter",
-          "tableTo": "study_set_content",
           "columnsFrom": [
             "content_id"
           ],
+          "tableTo": "study_set_content",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -2192,28 +2192,28 @@
         "generate_owner_id_user_id_fk": {
           "name": "generate_owner_id_user_id_fk",
           "tableFrom": "generate",
-          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "generate_study_set_id_study_set_id_fk": {
           "name": "generate_study_set_id_study_set_id_fk",
           "tableFrom": "generate",
-          "tableTo": "study_set",
           "columnsFrom": [
             "study_set_id"
           ],
+          "tableTo": "study_set",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -2288,15 +2288,15 @@
         "generate_chunk_result_generate_id_generate_id_fk": {
           "name": "generate_chunk_result_generate_id_generate_id_fk",
           "tableFrom": "generate_chunk_result",
-          "tableTo": "generate",
           "columnsFrom": [
             "generate_id"
           ],
+          "tableTo": "generate",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -2348,15 +2348,15 @@
         "generate_input_generate_id_generate_id_fk": {
           "name": "generate_input_generate_id_generate_id_fk",
           "tableFrom": "generate_input",
-          "tableTo": "generate",
           "columnsFrom": [
             "generate_id"
           ],
+          "tableTo": "generate",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -2367,9 +2367,9 @@
   "views": {},
   "enums": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   },
   "internal": {
     "indexes": {

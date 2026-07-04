@@ -1,3 +1,4 @@
+-- Custom SQL migration file, put your code below! --
 -- FTS5 full-text search index for public study sets.
 -- Standalone virtual table (no content rowid linkage) so we can drive
 -- INSERT/DELETE/UPDATE via explicit triggers on the `study_set` table.

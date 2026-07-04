@@ -67,6 +67,7 @@ export const createQuizFixture = (overrides: Partial<Quiz> = {}): Quiz => ({
   chapterId: null,
   createdAt: new Date(),
   id: generateId(QUIZ_ID_PREFIX),
+  isAiGenerated: false,
   ownerId: "owner-1",
   questionText: "What is 2 + 2?",
   studySetId: generateId(STUDY_SET_ID_PREFIX),

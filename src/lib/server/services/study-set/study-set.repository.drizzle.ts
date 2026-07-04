@@ -31,7 +31,10 @@ export class StudySetDrizzleRepository implements StudySetRepository {
   }
 
   async insertStudySet(
-    row: Omit<StudySet, "createdAt" | "updatedAt" | "deletedAt">
+    row: Omit<
+      StudySet,
+      "createdAt" | "updatedAt" | "deletedAt" | "isAiGenerated"
+    >
   ): Promise<StudySet> {
     try {
       const [created] = await this.dbInstance
@@ -264,6 +267,7 @@ export class StudySetDrizzleRepository implements StudySetRepository {
         description: studySet.description,
         files: studySet.files,
         id: studySet.id,
+        isAiGenerated: studySet.isAiGenerated,
         ownerId: studySet.ownerId,
         slug: studySet.slug,
         title: studySet.title,
@@ -386,6 +390,7 @@ export class StudySetDrizzleRepository implements StudySetRepository {
           description: studySet.description,
           files: studySet.files,
           id: studySet.id,
+          isAiGenerated: studySet.isAiGenerated,
           ownerId: studySet.ownerId,
           slug: studySet.slug,
           title: studySet.title,

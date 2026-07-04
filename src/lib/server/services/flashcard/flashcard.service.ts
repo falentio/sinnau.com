@@ -47,7 +47,7 @@ export class FlashcardService {
       );
     }
 
-    const rows: Omit<Flashcard, "createdAt" | "updatedAt">[] =
+    const rows: Omit<Flashcard, "createdAt" | "updatedAt" | "isAiGenerated">[] =
       input.flashcards.map((item) => ({
         back: item.back,
         chapterId: item.chapterId ?? null,

@@ -49,6 +49,7 @@ export const createChapterFixture = (
   createdAt: new Date(),
   description: null,
   id: generateId(CHAPTER_ID_PREFIX),
+  isAiGenerated: false,
   ownerId: "owner-1",
   slug: "chapter-slug-abc123",
   studySetId: "set-1",

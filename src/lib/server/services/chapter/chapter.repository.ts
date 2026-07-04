@@ -6,7 +6,7 @@ export type ChapterUpdatePatch = Partial<
 
 export interface ChapterRepository {
   insertChapter(
-    row: Omit<Chapter, "createdAt" | "updatedAt">
+    row: Omit<Chapter, "createdAt" | "updatedAt" | "isAiGenerated">
   ): Promise<Chapter>;
   updateChapter(
     id: string,

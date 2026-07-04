@@ -58,6 +58,7 @@ const setupService = () => {
     description: null,
     files: [],
     id: SAMPLE_STUDY_SET_ID,
+    isAiGenerated: false,
     ownerId: SAMPLE_USER_ID,
     slug: "sample-set",
     title: "Sample",

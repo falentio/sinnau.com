@@ -1,1 +1,0 @@
-ALTER TABLE `study_set` ADD `deleted_at` integer;

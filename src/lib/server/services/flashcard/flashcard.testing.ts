@@ -78,6 +78,7 @@ export const createFlashcardFixture = (
   hint: null,
   id: generateId(FLASHCARD_ID_PREFIX),
   importance: 0,
+  isAiGenerated: false,
   ownerId: "owner-1",
   studySetId: "set-1",
   updatedAt: new Date(),

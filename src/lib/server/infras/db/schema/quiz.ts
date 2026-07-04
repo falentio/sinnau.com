@@ -18,6 +18,9 @@ export const quiz = sqliteTable(
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
     id: text("id").primaryKey(),
+    isAiGenerated: integer("is_ai_generated", { mode: "boolean" })
+      .notNull()
+      .default(false),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

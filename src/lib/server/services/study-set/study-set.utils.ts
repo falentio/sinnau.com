@@ -10,6 +10,7 @@ const buildStubs = (count: number, ownerId: string): StudySet[] => {
     description: i % 3 === 0 ? `Deskripsi modul belajar nomor ${i + 1}` : null,
     files: [],
     id: `sts_stub${String(i + 1).padStart(2, "0")}`,
+    isAiGenerated: false,
     ownerId,
     slug: `stub-study-set-${i + 1}`,
     title: `Modul Pembelajaran ${i + 1}`,

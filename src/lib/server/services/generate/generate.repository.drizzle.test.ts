@@ -10,6 +10,7 @@ import {
   generateInput,
 } from "$lib/server/infras/db/schema/generate";
 import { quiz, quizOption } from "$lib/server/infras/db/schema/quiz";
+import { studySet } from "$lib/server/infras/db/schema/study-set";
 import type {
   ChunkRecord,
   FailureRecord,
@@ -1065,6 +1066,80 @@ describe.concurrent("GenerateDrizzleRepository", () => {
         .where(eq(chapter.studySetId, env.studySetId))
         .all();
       expect(chapters).toHaveLength(0);
+    });
+
+    it("marks generated content with isAiGenerated flag and updates study_set", async ({
+      expect,
+    }) => {
+      await using env = new GenerateTestEnv();
+
+      const successfulChunks: SuccessRecord[] = [
+        makeSuccessRecord(0, {
+          chapter: [{ slug: "ch1", title: "Chapter 1" }],
+          flashcard: [
+            {
+              back: "Back",
+              chapterSlug: "ch1",
+              front: "Front",
+              hint: "Hint",
+              importance: 3,
+            },
+          ],
+          quiz: [
+            {
+              chapterSlug: "ch1",
+              options: [
+                {
+                  explanation: "Right",
+                  isCorrect: true,
+                  optionText: "A",
+                },
+              ],
+              questionText: "Q?",
+              type: "MULTIPLE_CHOICE",
+            },
+          ],
+        }),
+      ];
+
+      await env.repo.finalizeGenerateTransaction({
+        generateId: "gen-1",
+        ownerId: env.ownerId,
+        studySetId: env.studySetId,
+        successfulChunks,
+      });
+
+      const chapters = env.db
+        .select()
+        .from(chapter)
+        .where(eq(chapter.studySetId, env.studySetId))
+        .all();
+      expect(chapters).toHaveLength(1);
+      expect(chapters[0]?.isAiGenerated).toBe(true);
+
+      const quizzes = env.db
+        .select()
+        .from(quiz)
+        .where(eq(quiz.studySetId, env.studySetId))
+        .all();
+      expect(quizzes).toHaveLength(1);
+      expect(quizzes[0]?.isAiGenerated).toBe(true);
+
+      const flashcards = env.db
+        .select()
+        .from(flashcard)
+        .where(eq(flashcard.studySetId, env.studySetId))
+        .all();
+      expect(flashcards).toHaveLength(1);
+      expect(flashcards[0]?.isAiGenerated).toBe(true);
+
+      const sets = env.db
+        .select()
+        .from(studySet)
+        .where(eq(studySet.id, env.studySetId))
+        .all();
+      expect(sets).toHaveLength(1);
+      expect(sets[0]?.isAiGenerated).toBe(true);
     });
   });
 });

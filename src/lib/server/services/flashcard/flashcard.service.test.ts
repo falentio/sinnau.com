@@ -23,6 +23,7 @@ const setupService = () => {
     description: null,
     files: [],
     id: "set-1",
+    isAiGenerated: false,
     ownerId: "owner-1",
     slug: "set-slug",
     title: "Owned",
