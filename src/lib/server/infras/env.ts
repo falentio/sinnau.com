@@ -1,3 +1,4 @@
+import { building } from "$app/env";
 import { env as privateEnv } from "$env/dynamic/private";
 
 const read = (key: string): string | undefined => {
@@ -9,6 +10,9 @@ const read = (key: string): string | undefined => {
 };
 
 const required = (key: string): string => {
+  if (building) {
+    return "";
+  }
   const value = read(key);
   if (value === undefined) {
     throw new Error(`Missing required env var: ${key}`);
@@ -33,6 +37,9 @@ export const env = {
     return required("AI_PROVIDER_NAME");
   },
   get BETTER_AUTH_SECRET() {
+    if (building) {
+      return "dev-secret";
+    }
     return required("BETTER_AUTH_SECRET");
   },
   get BETTER_AUTH_URL() {

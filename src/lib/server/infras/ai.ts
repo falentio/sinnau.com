@@ -1,8 +1,9 @@
+import { building } from "$app/env";
 import { env } from "$lib/server/infras/env";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 const getClient = () => {
-  if (process.env.VITEST) {
+  if (process.env.VITEST || building) {
     // oxlint-disable-next-line typescript/no-explicit-any
     return undefined as any;
   }

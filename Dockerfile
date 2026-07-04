@@ -35,8 +35,12 @@ FROM base AS prod-deps
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 
+# --ignore-scripts avoids the project-level `prepare` script which requires
+# devDependencies (svelte-kit sync, lefthook). better-sqlite3's native addon
+# is rebuilt explicitly since it can't be bundled.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --prod
+    pnpm install --frozen-lockfile --prod --ignore-scripts && \
+    pnpm rebuild better-sqlite3
 
 FROM base AS runner
 
@@ -64,5 +68,8 @@ COPY --from=builder   --chown=node:node /app/package.json ./package.json
 USER node
 EXPOSE 11085
 VOLUME ["/app/data"]
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD node -e "fetch('http://localhost:11085/').then(()=>process.exit(0)).catch(()=>process.exit(1))"
 
 CMD ["node", "build"]
