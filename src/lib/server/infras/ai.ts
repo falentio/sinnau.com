@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import { env } from "$lib/server/infras/env";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 const getClient = () => {
