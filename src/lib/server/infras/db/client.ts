@@ -105,6 +105,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
 };
 
 export const createDb = (options: { fileName: string }) => {
+  if (process.env.VITEST) {
+    options.fileName = ":memory:";
+  }
   const { fileName } = options;
   let sqlite = new Database(fileName);
   sqlite = proxyDatabase(sqlite);
