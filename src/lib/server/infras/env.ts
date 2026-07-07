@@ -36,6 +36,24 @@ export const env = {
   get AI_PROVIDER_NAME() {
     return required("AI_PROVIDER_NAME");
   },
+  get APP_BUILD_DATE() {
+    const value = read("APP_BUILD_DATE");
+    if (value === undefined) {
+      return new Date().toISOString();
+    }
+    return value;
+  },
+  get APP_SHA() {
+    const value = read("APP_SHA");
+    if (value === undefined) {
+      return "unknown";
+    }
+    return value;
+  },
+  get APP_VERSION() {
+    const version = read("APP_VERSION");
+    return version ?? "0.0.0";
+  },
   get AUTH_ADMIN_EMAILS() {
     return (
       read("AUTH_ADMIN_EMAILS")
@@ -69,6 +87,18 @@ export const env = {
   },
   get GENERATE_USE_MOCK() {
     return read("GENERATE_USE_MOCK") ?? "false";
+  },
+  get GITHUB_CLIENT_ID() {
+    return read("GITHUB_CLIENT_ID");
+  },
+  get GITHUB_CLIENT_SECRET() {
+    return read("GITHUB_CLIENT_SECRET");
+  },
+  get GOOGLE_CLIENT_ID() {
+    return read("GOOGLE_CLIENT_ID");
+  },
+  get GOOGLE_CLIENT_SECRET() {
+    return read("GOOGLE_CLIENT_SECRET");
   },
   get LITEPARSE_APIKEY() {
     return required("LITEPARSE_APIKEY");

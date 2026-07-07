@@ -41,11 +41,14 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import OAuthButtons from "$lib/components/oauth-buttons.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient } from "$lib/hooks/auth.svelte";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
+
+  let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
 
   let serverError = $state("");
   let pending = $state(false);
@@ -182,6 +185,8 @@
   <Form.Button class="w-full" disabled={$submitting || pending}>
     {$submitting || pending ? "Membuat..." : "Daftar"}
   </Form.Button>
+
+  <OAuthButtons {providers} />
 
   <div class="text-center text-sm">
     Sudah punya akun?

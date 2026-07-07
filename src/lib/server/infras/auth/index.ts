@@ -21,6 +21,26 @@ const getBaseUrl = (): BetterAuthOptions["baseURL"] => {
   return env.BETTER_AUTH_URL;
 };
 
+const socialProviders: BetterAuthOptions["socialProviders"] = {};
+if (
+  env.GOOGLE_CLIENT_ID !== undefined &&
+  env.GOOGLE_CLIENT_SECRET !== undefined
+) {
+  socialProviders.google = {
+    clientId: env.GOOGLE_CLIENT_ID,
+    clientSecret: env.GOOGLE_CLIENT_SECRET,
+  };
+}
+if (
+  env.GITHUB_CLIENT_ID !== undefined &&
+  env.GITHUB_CLIENT_SECRET !== undefined
+) {
+  socialProviders.github = {
+    clientId: env.GITHUB_CLIENT_ID,
+    clientSecret: env.GITHUB_CLIENT_SECRET,
+  };
+}
+
 export const auth = betterAuth({
   ...config,
   baseURL: getBaseUrl(),
@@ -48,6 +68,7 @@ export const auth = betterAuth({
     },
   },
   secret: env.BETTER_AUTH_SECRET,
+  socialProviders,
   trustedOrigins: () => (dev ? ["*://*"] : []),
 });
 
