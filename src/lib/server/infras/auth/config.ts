@@ -23,7 +23,7 @@ export const config = {
       storeInDatabase: true,
     }),
     dash({
-      apiKey: process.env.BETTER_AUTH_API_KEY || "",
+      apiKey: process.env.BETTER_AUTH_API_KEY ?? "",
     }),
   ],
   rateLimit: {
