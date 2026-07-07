@@ -181,15 +181,15 @@ export const quizSessionAnswerRelations = relations(
 export const flashcardSessionRelations = relations(
   flashcardSession,
   ({ one, many }) => ({
-    user: one(user, {
-      fields: [flashcardSession.userId],
-      references: [user.id],
-    }),
+    reviews: many(flashcardSessionReview),
     studySet: one(studySet, {
       fields: [flashcardSession.studySetId],
       references: [studySet.id],
     }),
-    reviews: many(flashcardSessionReview),
+    user: one(user, {
+      fields: [flashcardSession.userId],
+      references: [user.id],
+    }),
   })
 );
 
