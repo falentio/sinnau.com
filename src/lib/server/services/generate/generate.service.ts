@@ -5,6 +5,7 @@ import {
   GENERATE_ID_PREFIX,
   GENERATE_INPUT_MAX_CHARS,
 } from "$lib/schemas/generate.constant";
+import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 
 import type {
@@ -28,6 +29,8 @@ import type { GenerateRepository } from "./generate.repository.ts";
 
 export type { CreateGenerateInput, CreateGenerateOutput };
 export type { Generate };
+
+const logger = getLogger(["sinnau.com", "generate", "service"]);
 
 const MAX_RETRIES = 3;
 
@@ -292,7 +295,7 @@ export class GenerateService {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         .map((r) => JSON.parse(r.payload) as SuccessRecord);
     } catch (error) {
-      console.error("Error occurred while running LLM:", error);
+      logger.error("Error occurred while running LLM: {error}", { error });
       const rows = await this.repo.loadChunkResults(gId);
       successfulChunks = rows
         .filter((r) => r.kind === "success")

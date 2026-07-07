@@ -1,11 +1,14 @@
 import { hrtime } from "node:process";
 
 import { wideEventStorage } from "$lib/server/infras/als";
+import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 
 import { base } from "./context.ts";
 import type { Context } from "./context.ts";
 import { requireAuth } from "./middlewares/auth.ts";
+
+const logger = getLogger(["sinnau.com", "orpc", "middleware"]);
 
 export { requireAuth };
 
@@ -25,11 +28,11 @@ export const publicProcedure = base.use(async ({ next, path }) => {
       error: isError,
       procedure: path.join("."),
     });
-    console.log(`Procedure ${path.join(".")} completed.`, {
+    logger.info("Procedure completed.", () => ({
       duration: Number(end - start) / 1_000_000,
       error: isError,
       procedure: path.join("."),
-    });
+    }));
   }
   return result as Awaited<ReturnType<typeof next<Context>>>;
 });

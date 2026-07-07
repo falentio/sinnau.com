@@ -5,6 +5,7 @@ import type {
   ChunkRecord,
   SuccessRecord,
 } from "$lib/server/infras/generate/generate";
+import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 import { and, eq, gt, inArray, lt } from "drizzle-orm";
 
@@ -29,6 +30,8 @@ import type {
   ChunkSummary,
   GenerateRepository,
 } from "./generate.repository.ts";
+
+const logger = getLogger(["sinnau.com", "generate", "repo"]);
 
 export class GenerateDrizzleRepository implements GenerateRepository {
   private readonly dbInstance: DB;
@@ -223,7 +226,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
       if (error instanceof ORPCError) {
         throw error;
       }
-      console.error("Error occurred while appending chunk result:", {
+      logger.error("Error occurred while appending chunk result:", {
         error,
         params,
       });

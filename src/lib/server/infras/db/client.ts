@@ -2,12 +2,15 @@ import { totalmem } from "node:os";
 import { hrtime } from "node:process";
 
 import { dev } from "$app/env";
+import { getLogger } from "@logtape/logtape";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 import { env } from "../env.ts";
 import * as schema from "./schema/index.ts";
+
+const logger = getLogger(["sinnau.com", "db", "client"]);
 
 const MMAP_CAP = 512 * 1024 * 1024;
 
@@ -17,14 +20,15 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
   sqlite.exec = (sql) => {
     const start = hrtime.bigint();
     try {
-      console.log("Executing SQL:", sql);
+      logger.debug("Executing SQL: {sql}", () => ({ sql }));
       return exec(sql);
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
       if (durationMs > REPORT_SLOW_QUERIES_MS) {
-        console.log(`Execution completed in ${durationMs.toFixed(2)} ms`, {
+        logger.debug("Execution completed in {duration} ms", () => ({
+          duration: durationMs.toFixed(2),
           sql,
-        });
+        }));
       }
     }
   };
@@ -39,7 +43,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
       } finally {
         const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
         if (durationMs > REPORT_SLOW_QUERIES_MS) {
-          console.log(`Transaction completed in ${durationMs.toFixed(2)} ms`);
+          logger.debug("Transaction completed in {duration} ms", () => ({
+            duration: durationMs.toFixed(2),
+          }));
         }
       }
     };
@@ -61,12 +67,10 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
           if (durationMs > REPORT_SLOW_QUERIES_MS) {
-            console.log(
-              `Prepared statement run in ${durationMs.toFixed(2)} ms`,
-              {
-                sql,
-              }
-            );
+            logger.debug("Prepared statement run in {duration} ms", () => ({
+              duration: durationMs.toFixed(2),
+              sql,
+            }));
           }
         }
       };
@@ -80,12 +84,10 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
           if (durationMs > REPORT_SLOW_QUERIES_MS) {
-            console.log(
-              `Prepared statement raw in ${durationMs.toFixed(2)} ms`,
-              {
-                sql,
-              }
-            );
+            logger.debug("Prepared statement raw in {duration} ms", () => ({
+              duration: durationMs.toFixed(2),
+              sql,
+            }));
           }
         }
       };
@@ -94,9 +96,10 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
       if (durationMs > REPORT_SLOW_QUERIES_MS) {
-        console.log(`Prepared statement in ${durationMs.toFixed(2)} ms`, {
+        logger.debug("Prepared statement in {duration} ms", () => ({
+          duration: durationMs.toFixed(2),
           sql,
-        });
+        }));
       }
     }
   }) as PrepareFn;

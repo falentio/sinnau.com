@@ -1,7 +1,10 @@
 import { createServerClient } from "$lib/orpc.server";
+import { getLogger } from "@logtape/logtape";
 import { redirect } from "@sveltejs/kit";
 
 import type { PageServerLoad } from "./$types";
+
+const logger = getLogger(["sinnau.com", "generate", "page"]);
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const client = createServerClient();
@@ -24,7 +27,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
   if (initialCheck.status === "COMPLETED") {
     redirect(307, `/study/${initialCheck.studySetId}`);
   }
-  console.log("initialCheck", initialCheck);
+  logger.debug("initialCheck", { initialCheck });
   return {
     generateId: params.genId,
     initialCheck,
