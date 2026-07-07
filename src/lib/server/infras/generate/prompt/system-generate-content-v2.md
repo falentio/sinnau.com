@@ -86,41 +86,45 @@ Rules:
 - Do not include explanations, sentences, JSON, markdown, or extra text inside `flashcard.rubric`.
 
 **Positive rules**
-| Rule Name | Points | Apply When |
+
+| Rule Name             | Points | Apply When                                                                                                         |
 | --------------------- | -----: | ------------------------------------------------------------------------------------------------------------------ |
-| `ParetoTop20` | 8 | The card is likely in the top 20% by learning gain after comparing it with other generated flashcards. Use rarely. |
-| `FrequentUseTheory` | 6 | The theory, concept, formula, or rule will be reused often across later explanations, problems, or chapters. |
-| `CoreConcept` | 5 | The card teaches a central idea needed to understand the topic. |
-| `LearningObjective` | 5 | The source clearly presents this as a main learning goal, section objective, or required takeaway. |
-| `TransferableConcept` | 5 | The card applies across multiple examples, contexts, subjects, or problem types. |
-| `Prerequisite` | 4 | The learner needs this card before understanding later concepts, steps, formulas, or examples. |
-| `AssessmentHighYield` | 4 | The card covers knowledge likely to appear in practice questions, assignments, exams, or checks for understanding. |
-| `CommonMisconception` | 3 | The card prevents a likely confusion or common incorrect understanding. |
-| `HighYieldFact` | 3 | The card covers a frequently used fact, definition, formula, date, term, or relationship. |
-| `SourceEmphasis` | 3 | The source repeats, defines, summarizes, labels, or otherwise emphasizes this idea. |
-| `ProcessStep` | 2 | The card covers an important step in a process, sequence, method, or workflow. |
-| `CauseEffect` | 2 | The card explains why something happens or how one idea affects another. |
-| `Terminology` | 2 | The card teaches an important term, symbol, abbreviation, or label. |
-| `ExampleBridge` | 1 | The card uses or explains an example that helps connect an abstract idea to a concrete case. |
+| `ParetoTop20`         |      8 | The card is likely in the top 20% by learning gain after comparing it with other generated flashcards. Use rarely. |
+| `FrequentUseTheory`   |      6 | The theory, concept, formula, or rule will be reused often across later explanations, problems, or chapters.       |
+| `CoreConcept`         |      5 | The card teaches a central idea needed to understand the topic.                                                    |
+| `LearningObjective`   |      5 | The source clearly presents this as a main learning goal, section objective, or required takeaway.                 |
+| `TransferableConcept` |      5 | The card applies across multiple examples, contexts, subjects, or problem types.                                   |
+| `Prerequisite`        |      4 | The learner needs this card before understanding later concepts, steps, formulas, or examples.                     |
+| `AssessmentHighYield` |      4 | The card covers knowledge likely to appear in practice questions, assignments, exams, or checks for understanding. |
+| `CommonMisconception` |      3 | The card prevents a likely confusion or common incorrect understanding.                                            |
+| `HighYieldFact`       |      3 | The card covers a frequently used fact, definition, formula, date, term, or relationship.                          |
+| `SourceEmphasis`      |      3 | The source repeats, defines, summarizes, labels, or otherwise emphasizes this idea.                                |
+| `ProcessStep`         |      2 | The card covers an important step in a process, sequence, method, or workflow.                                     |
+| `CauseEffect`         |      2 | The card explains why something happens or how one idea affects another.                                           |
+| `Terminology`         |      2 | The card teaches an important term, symbol, abbreviation, or label.                                                |
+| `ExampleBridge`       |      1 | The card uses or explains an example that helps connect an abstract idea to a concrete case.                       |
 
 **Neutral rules**
-| Rule Name | Points | Apply When |
+
+| Rule Name     | Points | Apply When                                                                               |
 | ------------- | -----: | ---------------------------------------------------------------------------------------- |
-| `ContextOnly` | 0 | The card gives useful background, but it is not central to the topic. |
-| `NiceToKnow` | 0 | The card is interesting or supportive, but learners can understand the topic without it. |
+| `ContextOnly` |      0 | The card gives useful background, but it is not central to the topic.                    |
+| `NiceToKnow`  |      0 | The card is interesting or supportive, but learners can understand the topic without it. |
 
 **Negative rules**
-| Rule Name | Points | Apply When |
+
+| Rule Name             | Points | Apply When                                                                                                                     |
 | --------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------ |
-| `DuplicateOverlap` | -4 | The card repeats another flashcard without adding a distinct learning target. |
-| `RarelyUsedDetail` | -3 | The card covers information that is unlikely to be reused in later study, problems, or explanations. |
-| `TooBroad` | -3 | The card asks for too many ideas at once or cannot be answered clearly in 1-4 sentences. |
-| `TooNarrow` | -2 | The card focuses on a minor detail that is unlikely to help the learner understand the topic. |
-| `OneOffExample` | -2 | The card memorizes a single example without teaching the reusable concept behind it. |
-| `UnclearTarget` | -4 | The front, back, or hint does not make the expected answer clear enough. |
-| `UnsupportedBySource` | -5 | The card includes information not supported by the source content. |
-| `LowStudyValue` | -3 | The card tests trivia, formatting, navigation text, metadata, or a detail with little learning value. |
-| `FormattingArtifact` | -5 | The card was created from page numbers, headers, footers, captions without context, OCR noise, or repeated document artifacts. |
+| `DuplicateOverlap`    |     -4 | The card repeats another flashcard without adding a distinct learning target.                                                  |
+| `RarelyUsedDetail`    |     -3 | The card covers information that is unlikely to be reused in later study, problems, or explanations.                           |
+| `TooBroad`            |     -3 | The card asks for too many ideas at once or cannot be answered clearly in 1-4 sentences.                                       |
+| `TooNarrow`           |     -2 | The card focuses on a minor detail that is unlikely to help the learner understand the topic.                                  |
+| `OneOffExample`       |     -2 | The card memorizes a single example without teaching the reusable concept behind it.                                           |
+| `UnclearTarget`       |     -4 | The front, back, or hint does not make the expected answer clear enough.                                                       |
+| `UnsupportedBySource` |     -5 | The card includes information not supported by the source content.                                                             |
+| `LowStudyValue`       |     -3 | The card tests trivia, formatting, navigation text, metadata, or a detail with little learning value.                          |
+| `FormattingArtifact`  |     -5 | The card was created from page numbers, headers, footers, captions without context, OCR noise, or repeated document artifacts. |
+
 </score-rubrics>
 <score-rubrics-usage>
 Use the rubrics and output the score as comma-separated `RuleName:point` pairs.
@@ -551,6 +555,7 @@ The `submitContentTool` is used to submit new content based on the chunk.
 - If new content needs a new chapter, include that chapter in the same submission.
 - If the content belongs to an existing chapter, reuse that chapter slug exactly.
 </submit-tool>
+
 <referencing>
 **NEVER** reference using relative sentences like `based on picture 11`, `in image number 8`, `examine figure 6`, `based on example`, `similar to page 11`, `just like example no 8`, or `refer to table 3`.
 **ALWAYS** expect users cannot access the document, so instead of relative reference, you must directly say what the referenced information is.

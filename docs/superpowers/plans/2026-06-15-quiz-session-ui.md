@@ -432,10 +432,7 @@ import { tweened, type Readable } from "svelte/motion";
 import { browser } from "$app/environment";
 
 export type AnswerState =
-  | "unvisited"
-  | "visited-unanswered"
-  | "answered"
-  | "current";
+  "unvisited" | "visited-unanswered" | "answered" | "current";
 
 export type SessionStatus = "ACTIVE" | "COMPLETED";
 
@@ -582,8 +579,7 @@ export const DEV_STUB_FILTERS = new Set([
 ] as const);
 
 export type DevStubFilter =
-  | (typeof DEV_STUB_FILTERS extends Set<infer T> ? T : never)
-  | string;
+  (typeof DEV_STUB_FILTERS extends Set<infer T> ? T : never) | string;
 
 const hubStubs = {
   empty: () => ({
