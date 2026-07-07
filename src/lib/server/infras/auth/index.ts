@@ -27,6 +27,26 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "sqlite",
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const email = user.email.toLowerCase();
+          const isAdmin =
+            env.AUTH_ADMIN_EMAILS.includes(email) ||
+            env.AUTH_ADMIN_EMAIL_DOMAINS.some((domain) =>
+              email.endsWith(`@${domain}`)
+            );
+          return {
+            data: {
+              ...user,
+              role: isAdmin ? "admin" : "user",
+            },
+          };
+        },
+      },
+    },
+  },
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: () => (dev ? ["*://*"] : []),
 });

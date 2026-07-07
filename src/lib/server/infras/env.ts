@@ -52,6 +52,9 @@ export const env = {
         .filter(Boolean) ?? []
     );
   },
+  get BETTER_AUTH_API_KEY() {
+    return read("BETTER_AUTH_API_KEY");
+  },
   get BETTER_AUTH_SECRET() {
     if (building) {
       return "dev-secret";
