@@ -25,6 +25,7 @@ export default defineConfig({
     },
   },
   test: {
+    setupFiles: ["./vitest.setup.ts"],
     coverage: {
       enabled: false,
       exclude: [

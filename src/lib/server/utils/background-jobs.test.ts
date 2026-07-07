@@ -1,9 +1,41 @@
-import { beforeEach, describe, it, vi } from "vitest";
+import type { LogRecord } from "@logtape/logtape";
+import { configureSync, resetSync } from "@logtape/logtape";
+import { createLogRecorder } from "@logtape/testing";
+import { afterEach, beforeEach, describe, it, vi } from "vitest";
 
 import { waitUntil, waitForAll } from "./background-jobs.ts";
 
+let recorder: ReturnType<typeof createLogRecorder>;
+
+const errorMessage = (props: Record<string, unknown>): string | undefined => {
+  const error = props.error;
+  return error instanceof Error ? error.message : undefined;
+};
+
+const findRecord = (level: LogRecord["level"]): LogRecord | undefined =>
+  recorder.records.find(
+    (r) =>
+      r.level === level && r.category.join(".") === "sinnau.com.background.util"
+  );
+
 beforeEach(() => {
-  vi.restoreAllMocks();
+  resetSync();
+  recorder = createLogRecorder();
+  configureSync({
+    loggers: [
+      {
+        category: ["sinnau.com", "background", "util"],
+        lowestLevel: "debug",
+        sinks: ["recorder"],
+      },
+    ],
+    reset: true,
+    sinks: { recorder: recorder.sink },
+  });
+});
+
+afterEach(() => {
+  resetSync();
 });
 
 describe(waitForAll, () => {
@@ -26,16 +58,13 @@ describe(waitForAll, () => {
   it("logs and drains rejected promises without throwing", async ({
     expect,
   }) => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-
     waitUntil(Promise.reject(new Error("boom")));
     waitUntil(Promise.resolve("ok"));
 
     await expect(waitForAll()).resolves.toBeUndefined();
-    expect(console.error).toHaveBeenCalledWith(
-      "Background job failed:",
-      expect.objectContaining({ message: "boom" })
-    );
+    const record = findRecord("error");
+    expect(record).toBeDefined();
+    expect(errorMessage(record?.properties ?? {})).toBe("boom");
   });
 
   it("clears the pending set after drain", async ({ expect }) => {
@@ -54,16 +83,12 @@ describe(waitForAll, () => {
   it("eagerly catches rejection — no unhandled rejection if waitForAll never called", async ({
     expect,
   }) => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-
     waitUntil(Promise.reject(new Error("eager")));
 
-    // flush microtasks so .catch runs
     await vi.waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith(
-        "Background job failed:",
-        expect.objectContaining({ message: "eager" })
-      );
+      const record = findRecord("error");
+      expect(record).toBeDefined();
+      expect(errorMessage(record?.properties ?? {})).toBe("eager");
     });
   });
 
@@ -72,7 +97,6 @@ describe(waitForAll, () => {
   }) => {
     waitUntil(Promise.resolve("done"));
 
-    // flush microtasks so .finally runs
     await vi.waitFor(async () => {
       await expect(waitForAll()).resolves.toBeUndefined();
     });
@@ -81,16 +105,12 @@ describe(waitForAll, () => {
   it("removes rejected promise from pending via finally", async ({
     expect,
   }) => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-
     waitUntil(Promise.reject(new Error("gone")));
 
-    // flush microtasks so .catch + .finally run
     await vi.waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith(
-        "Background job failed:",
-        expect.objectContaining({ message: "gone" })
-      );
+      const record = findRecord("error");
+      expect(record).toBeDefined();
+      expect(errorMessage(record?.properties ?? {})).toBe("gone");
     });
     await expect(waitForAll()).resolves.toBeUndefined();
   });
@@ -98,26 +118,28 @@ describe(waitForAll, () => {
   it("warns when pending exceeds threshold, resets flag after drain", async ({
     expect,
   }) => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    for (let i = 0; i < 1_001; i++) {
+    for (let i = 0; i < 1001; i++) {
       waitUntil(Promise.resolve(i));
     }
 
-    expect(console.warn).toHaveBeenCalledTimes(1);
+    expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
+      1
+    );
 
     await waitForAll();
-    expect(console.warn).toHaveBeenCalledTimes(1);
+    expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
+      1
+    );
   });
 
   it("does not warn below threshold", async ({ expect }) => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-
     for (let i = 0; i < 999; i++) {
       waitUntil(Promise.resolve(i));
     }
 
-    expect(console.warn).not.toHaveBeenCalled();
+    expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
+      0
+    );
     await waitForAll();
   });
 });
