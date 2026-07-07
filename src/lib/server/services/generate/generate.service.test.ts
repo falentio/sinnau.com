@@ -32,7 +32,7 @@ const setupService = () => {
         ...row,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as Generate)
+      })
   );
   repo.updateGenerateStatus.mockResolvedValue(null);
   repo.findGenerateById.mockResolvedValue(null);

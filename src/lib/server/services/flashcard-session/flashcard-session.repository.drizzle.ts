@@ -451,10 +451,10 @@ export class FlashcardSessionDrizzleRepository implements FlashcardSessionReposi
 
       return {
         dueIn7Days,
-        dueToday: dueToday as QueueFlashcardWithState[],
-        new: newRows as QueueFlashcardWithState[],
+        dueToday: dueToday,
+        new: newRows,
         newLimitReached,
-        overdue: overdue as QueueFlashcardWithState[],
+        overdue: overdue,
       };
     } catch (error) {
       if (error instanceof ORPCError) {

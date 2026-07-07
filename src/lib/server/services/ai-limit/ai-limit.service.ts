@@ -94,12 +94,12 @@ export class AiLimitService {
 
     if (input.amount > plan.daily || input.amount > plan.weekly) {
       throw new ORPCError("AI_LIMIT_EXCEEDED", {
-        message: "Requested amount exceeds plan limit",
         data: {
           daily: { limit: plan.daily },
           requestedAmount: input.amount,
           weekly: { limit: plan.weekly },
         },
+        message: "Requested amount exceeds plan limit",
       });
     }
 

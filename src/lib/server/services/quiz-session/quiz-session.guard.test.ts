@@ -51,7 +51,7 @@ describe.concurrent(QuizSessionGuard, () => {
 
     it("throws UNAUTHORIZED when userId is undefined", ({ expect }) => {
       const { guard } = setupGuard();
-      expect(() => guard.requireUser(undefined)).toThrow(ORPCError);
+      expect(() => guard.requireUser()).toThrow(ORPCError);
     });
   });
 

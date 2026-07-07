@@ -526,7 +526,9 @@ describe.concurrent("AiLimitDrizzleRepository", () => {
       });
 
       expect(first).not.toBe("EXCEEDED");
-      if (first === "EXCEEDED") return;
+      if (first === "EXCEEDED") {
+        return;
+      }
 
       const refunded = await env.repo.markRefunded(first.id, env.ownerId);
       expect(refunded).toBe(true);

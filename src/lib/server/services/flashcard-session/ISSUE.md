@@ -455,15 +455,15 @@ Spec defines `createdAt`/`updatedAt`/`due` as `number`, but Drizzle infers `Date
 
 **Found by:** Agent 2, Agent 3, existing | **Confidence: ⭐⭐**
 
-| Gap                                                        | Details                                                                      |
+| Gap | Details |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
-| No test for `deleteExpiredSessions` cross-product bug (C1) | Integration test should verify correct state rows deleted across users       |
-| No concurrent `submitReview` race test (C3)                | Service tests mock everything — never exercise the actual race               |
-| No partial failure test for `deleteExpiredSessions` (C2)   | No test for crash between state-delete and session-delete                    |
-| Missing NOT_FOUND propagation tests                        | `getSession` and `listReviews` NOT_FOUND paths not tested at service level   |
-| No `dueIn7Days` service-level test                         | Bucket never asserted in service tests, only at repo level                   |
-| UTC midnight boundary not tested                           | `countIntroducedToday` test uses static 24h ago, not the actual UTC midnight |
-| Guard test mocks bypass type safety                        | `Pick<Flashcard, "id"                                                        | "studySetId">`with`as unknown as` cast |
+| No test for `deleteExpiredSessions` cross-product bug (C1) | Integration test should verify correct state rows deleted across users |
+| No concurrent `submitReview` race test (C3) | Service tests mock everything — never exercise the actual race |
+| No partial failure test for `deleteExpiredSessions` (C2) | No test for crash between state-delete and session-delete |
+| Missing NOT_FOUND propagation tests | `getSession` and `listReviews` NOT_FOUND paths not tested at service level |
+| No `dueIn7Days` service-level test | Bucket never asserted in service tests, only at repo level |
+| UTC midnight boundary not tested | `countIntroducedToday` test uses static 24h ago, not the actual UTC midnight |
+| Guard test mocks bypass type safety | `Pick<Flashcard, "id"                                                        | "studySetId">`with`as unknown as` cast |
 
 ---
 

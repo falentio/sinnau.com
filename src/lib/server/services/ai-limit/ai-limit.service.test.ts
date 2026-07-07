@@ -150,7 +150,7 @@ describe.concurrent(AiLimitService, () => {
       repo.sumUsageInWindow.mockResolvedValue(0);
       repo.markRefunded.mockResolvedValue(true);
 
-      const lookupPlan = () =>
+      const lookupPlan = async () =>
         Promise.reject(new Error("Plan service unavailable"));
       // eslint-disable-next-line no-unsafe-type-assertion
       const service = new AiLimitService(
@@ -188,7 +188,7 @@ describe.concurrent(AiLimitService, () => {
       expect(result.usage.daily.used).toBe(1);
       expect(result.usage.daily.remaining).toBe(4999);
       expect(result.usage.weekly.used).toBe(1);
-      expect(result.usage.weekly.remaining).toBe(19999);
+      expect(result.usage.weekly.remaining).toBe(19_999);
       expect(result.usage.planKey).toBe("FREE");
     });
 
@@ -256,15 +256,13 @@ describe.concurrent(AiLimitService, () => {
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
       // eslint-disable-next-line no-unsafe-type-assertion
-      const data = (
-        err as {
-          data?: {
-            requestedAmount: number;
-            daily: { limit: number };
-            weekly: { limit: number };
-          };
-        }
-      ).data;
+      const { data } = err as {
+        data?: {
+          requestedAmount: number;
+          daily: { limit: number };
+          weekly: { limit: number };
+        };
+      };
       expect(data?.requestedAmount).toBe(5001);
       expect(data?.daily).toMatchObject({ limit: 5000 });
       expect(data?.weekly).toMatchObject({ limit: 20_000 });

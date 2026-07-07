@@ -199,8 +199,8 @@ export class AiLimitDrizzleRepository implements AiLimitRepository {
           .run();
 
         return {
-          id,
           dailyTotal: dailyTotal + params.amount,
+          id,
           weeklyTotal: weeklyTotal + params.amount,
         };
       });

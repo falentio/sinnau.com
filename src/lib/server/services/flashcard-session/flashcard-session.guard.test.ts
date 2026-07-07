@@ -33,7 +33,7 @@ const setupGuard = () => {
         ownerId: "user-1",
         studySetId: "set-1",
         updatedAt: new Date(),
-      } as Flashcard),
+      }),
   };
 
   const studySetRepo = createMockStudySetRepo();
@@ -207,7 +207,7 @@ describe.concurrent(FlashcardSessionGuard, () => {
         ownerId: "user-1",
         studySetId: "other-set",
         updatedAt: new Date(),
-      } as Flashcard);
+      });
       const err = await captureError(
         guard.assertFlashcardBelongsToStudySetOrNotFound("flc_1", "set-1")
       );

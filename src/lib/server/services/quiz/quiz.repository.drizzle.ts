@@ -252,7 +252,7 @@ export class QuizDrizzleRepository implements QuizRepository {
         .innerJoin(quiz, eq(quizOption.quizId, quiz.id))
         .where(and(inArray(quizOption.id, ids), eq(quiz.ownerId, ownerId)))
         .orderBy(asc(quizOption.createdAt), asc(quizOption.id));
-      return rows as QuizOption[];
+      return rows;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -282,7 +282,7 @@ export class QuizDrizzleRepository implements QuizRepository {
         .innerJoin(quiz, eq(quizOption.quizId, quiz.id))
         .where(and(eq(quizOption.id, id), eq(quiz.ownerId, ownerId)))
         .limit(1);
-      return (row as QuizOption | undefined) ?? null;
+      return row ?? null;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;

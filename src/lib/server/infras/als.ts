@@ -59,7 +59,8 @@ export const pushToNestedObject = (
 };
 
 export class WideEventStorage {
-  private storage = new AsyncLocalStorage<WideEventStorage.WideEventData>();
+  private readonly storage =
+    new AsyncLocalStorage<WideEventStorage.WideEventData>();
 
   // oxlint-disable-next-line promise/prefer-await-to-callbacks
   run<T>(data: WideEventStorage.WideEventData, callback: () => T): T {
