@@ -36,6 +36,22 @@ export const env = {
   get AI_PROVIDER_NAME() {
     return required("AI_PROVIDER_NAME");
   },
+  get AUTH_ADMIN_EMAILS() {
+    return (
+      read("AUTH_ADMIN_EMAILS")
+        ?.split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean) ?? []
+    );
+  },
+  get AUTH_ADMIN_EMAIL_DOMAINS() {
+    return (
+      read("AUTH_ADMIN_EMAIL_DOMAINS")
+        ?.split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean) ?? []
+    );
+  },
   get BETTER_AUTH_SECRET() {
     if (building) {
       return "dev-secret";

@@ -36,6 +36,13 @@
       "when": 1783160828683,
       "tag": "20260704102708_little_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1783431767330,
+      "tag": "20260707134247_condemned_human_torch",
+      "breakpoints": true
     }
   ]
 }
