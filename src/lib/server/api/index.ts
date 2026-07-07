@@ -1,3 +1,4 @@
+import { aiLimitRouter } from "$lib/server/services/ai-limit/ai-limit.router";
 import { chapterRouter } from "$lib/server/services/chapter/chapter.router";
 import { flashcardSessionRouter } from "$lib/server/services/flashcard-session/flashcard-session.router";
 import { flashcardRouter } from "$lib/server/services/flashcard/flashcard.router";
@@ -6,7 +7,7 @@ import { quizSessionRouter } from "$lib/server/services/quiz-session/quiz-sessio
 import { quizRouter } from "$lib/server/services/quiz/quiz.router";
 import { studySetSearchRouter } from "$lib/server/services/study-set-search/study-set-search.router";
 import { studySetRouter } from "$lib/server/services/study-set/study-set.router";
-import { ORPCError } from "@orpc/client";
+import { ORPCError } from "@orpc/server";
 
 import {
   publicProcedure,
@@ -18,6 +19,7 @@ import {
 export { publicProcedure, authorizedProcedure, adminProcedure, requireAuth };
 
 export const router = {
+  aiLimit: aiLimitRouter,
   chapter: chapterRouter,
   flashcard: flashcardRouter,
   flashcardSession: flashcardSessionRouter,

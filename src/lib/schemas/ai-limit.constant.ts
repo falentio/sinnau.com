@@ -1,0 +1,5 @@
+export const AI_LIMIT_ID_PREFIX = "aiu";
+export const AI_LIMIT_DEFAULT_DAILY_LIMIT = 5000;
+export const AI_LIMIT_DEFAULT_WEEKLY_LIMIT = 20_000;
+export const AI_LIMIT_DEFAULT_PLAN_KEY = "FREE";
+export const AI_LIMIT_MAX_PER_REQUEST = 10_000_000;

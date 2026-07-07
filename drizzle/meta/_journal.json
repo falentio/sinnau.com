@@ -22,6 +22,20 @@
       "when": 1783148573060,
       "tag": "20260704070253_curious_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1783156455556,
+      "tag": "20260704091415_panoramic_supernaut",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1783160828683,
+      "tag": "20260704102708_little_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }
