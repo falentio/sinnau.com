@@ -5,6 +5,7 @@ import { createServerClient } from "$lib/orpc.server";
 import type { WideEventStorage } from "$lib/server/infras/als";
 import { wideEventStorage } from "$lib/server/infras/als";
 import { auth } from "$lib/server/infras/auth";
+import { env } from "$lib/server/infras/env";
 import { generateService } from "$lib/server/services/generate";
 import { nanoid } from "$lib/server/utils/nanoid";
 import { getLogger } from "@logtape/logtape";
@@ -89,6 +90,10 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
   const initialWideEventData = {
     request: {
       headers: getWellKnownHeaders(event.request),
+      ip:
+        event.request.headers.get("cf-connecting-ip") ??
+        event.getClientAddress() ??
+        "",
       method: event.request.method,
       pathname: event.url.pathname,
       searchParams: Object.fromEntries(event.url.searchParams.entries()),
@@ -131,13 +136,35 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
       }
       throw error;
     } finally {
-      logger.info("Request completed.");
+      logger.info("Request completed.", () => ({ ...wideEventStorage.get() }));
     }
   });
+};
+
+const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+  try {
+    response.headers.set("x-powered-by", "Sinnau");
+    response.headers.set("x-sinnau-version", env.APP_VERSION);
+    wideEventStorage.assign({
+      app: {
+        buildDate: env.APP_BUILD_DATE,
+        sha: env.APP_SHA,
+        version: env.APP_VERSION,
+      },
+    });
+  } catch (error) {
+    logger.error("Failed to set x-powered-by header", () => ({
+      error: error instanceof Error ? error.message : String(error),
+      wideEventStorage: wideEventStorage.get(),
+    }));
+  }
+  return response;
 };
 
 export const handle = sequence(
   wideEventStorageHandle,
   betterAuthHandle,
-  authGuardHandle
+  authGuardHandle,
+  watermarkHeaderHandle
 );

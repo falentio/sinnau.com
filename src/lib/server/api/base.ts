@@ -28,7 +28,7 @@ export const publicProcedure = base.use(async ({ next, path }) => {
       error: isError,
       procedure: path.join("."),
     });
-    logger.info("Procedure completed.", () => ({
+    logger.info("Procedure completed ", () => ({
       duration: Number(end - start) / 1_000_000,
       error: isError,
       procedure: path.join("."),
