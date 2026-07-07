@@ -1,3 +1,4 @@
+import "$lib/server/infras/logging";
 import { building } from "$app/environment";
 import { setClient } from "$lib/orpc";
 import { createServerClient } from "$lib/orpc.server";
@@ -6,10 +7,13 @@ import { wideEventStorage } from "$lib/server/infras/als";
 import { auth } from "$lib/server/infras/auth";
 import { generateService } from "$lib/server/services/generate";
 import { nanoid } from "$lib/server/utils/nanoid";
+import { getLogger } from "@logtape/logtape";
 import { redirect, isHttpError, isRedirect } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
+
+const logger = getLogger(["sinnau.com", "http", "middleware"]);
 
 setClient(createServerClient());
 
@@ -80,7 +84,7 @@ const getWellKnownHeaders = (request: Request) => {
   return headers;
 };
 
-const wideEventStorageHandle: Handle = ({ event, resolve }) => {
+const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
   const requestId = nanoid(32);
   const initialWideEventData = {
     request: {
@@ -127,8 +131,7 @@ const wideEventStorageHandle: Handle = ({ event, resolve }) => {
       }
       throw error;
     } finally {
-      const wideEventData = wideEventStorage.get();
-      console.log(`Request ${requestId} completed.`, wideEventData);
+      logger.info("Request completed.");
     }
   });
 };
