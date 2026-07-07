@@ -13,20 +13,20 @@
     { label: string; classes: string }
   > = {
     Again: {
-      label: "Lupa",
       classes: "bg-[--color-destructive]/8 text-[--color-destructive]",
-    },
-    Hard: {
-      label: "Sulit",
-      classes: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    },
-    Good: {
-      label: "Cukup",
-      classes: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+      label: "Lupa",
     },
     Easy: {
-      label: "Mudah",
       classes: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+      label: "Mudah",
+    },
+    Good: {
+      classes: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+      label: "Cukup",
+    },
+    Hard: {
+      classes: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+      label: "Sulit",
     },
   };
 </script>

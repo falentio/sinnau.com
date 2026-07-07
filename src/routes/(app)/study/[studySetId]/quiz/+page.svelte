@@ -42,8 +42,9 @@
 
   const chapterMap = $derived(new Map(chapters.map((c) => [c.id, c.title])));
 
-  const sortFn = (sort: string | null) => {
-    return (a: (typeof quizzes)[0], b: (typeof quizzes)[0]): number => {
+  const sortFn =
+    (sort: string | null) =>
+    (a: (typeof quizzes)[0], b: (typeof quizzes)[0]): number => {
       switch (sort) {
         case "oldest":
           return (
@@ -59,9 +60,8 @@
           );
       }
     };
-  };
 
-  const sortedQuizzes = $derived([...quizzes].sort(sortFn(currentSort)));
+  const sortedQuizzes = $derived([...quizzes].toSorted(sortFn(currentSort)));
 
   const filteredQuizzes = $derived(
     chapterParam

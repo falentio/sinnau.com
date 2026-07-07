@@ -58,7 +58,9 @@
   const computeIntervalsFor = (
     card: FlashcardQueueItem
   ): Record<FlashcardSessionRating, number> => {
-    if (!card.state) return DEFAULT_INTERVALS;
+    if (!card.state) {
+      return DEFAULT_INTERVALS;
+    }
     const now = new Date();
     const cardInput: CardInput = {
       difficulty: card.state.difficulty,
@@ -97,12 +99,16 @@
   );
 
   const handleReveal = () => {
-    if (currentCard) revealedIndex = currentIndex;
+    if (currentCard) {
+      revealedIndex = currentIndex;
+    }
   };
 
   const handleRate = async (rating: FlashcardSessionRating) => {
-    if (!currentCard || submittingFor !== null) return;
-    const flashcardId = currentCard.flashcardId;
+    if (!currentCard || submittingFor !== null) {
+      return;
+    }
+    const { flashcardId } = currentCard;
     submittingFor = flashcardId;
     try {
       await client.flashcardSession.review.submit({
@@ -113,9 +119,9 @@
       submittedRatings = [...submittedRatings, rating];
       await invalidate(`flashcard-session:queue:${studySetId}`);
       currentIndex += 1;
-    } catch (err) {
+    } catch (error) {
       const message =
-        err instanceof Error ? err.message : "Gagal menyimpan review";
+        error instanceof Error ? error.message : "Gagal menyimpan review";
       toast.error(message);
     } finally {
       submittingFor = null;

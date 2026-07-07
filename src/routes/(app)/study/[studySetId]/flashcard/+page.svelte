@@ -38,8 +38,9 @@
     importance: number;
   } | null>(null);
 
-  const sortFn = (sort: string | null) => {
-    return (a: (typeof flashcards)[0], b: (typeof flashcards)[0]): number => {
+  const sortFn =
+    (sort: string | null) =>
+    (a: (typeof flashcards)[0], b: (typeof flashcards)[0]): number => {
       switch (sort) {
         case "oldest":
           return (
@@ -57,9 +58,10 @@
           );
       }
     };
-  };
 
-  const sortedFlashcards = $derived([...flashcards].sort(sortFn(currentSort)));
+  const sortedFlashcards = $derived(
+    [...flashcards].toSorted(sortFn(currentSort))
+  );
 
   const filteredFlashcards = $derived(
     chapterParam

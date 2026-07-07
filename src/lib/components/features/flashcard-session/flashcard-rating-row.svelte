@@ -23,32 +23,32 @@
     accent: string;
   }[] = [
     {
-      rating: "Again",
-      label: "Lupa",
-      icon: SadDizzyIcon,
       accent:
         "border-[--color-destructive]/30 bg-[--color-destructive]/5 text-[--color-destructive] hover:bg-[--color-destructive]/10",
+      icon: SadDizzyIcon,
+      label: "Lupa",
+      rating: "Again",
     },
     {
-      rating: "Hard",
-      label: "Sulit",
-      icon: SadIcon,
       accent:
         "border-amber-500/30 bg-amber-500/5 text-amber-700 hover:bg-amber-500/10 dark:text-amber-400",
+      icon: SadIcon,
+      label: "Sulit",
+      rating: "Hard",
     },
     {
-      rating: "Good",
-      label: "Cukup",
-      icon: ConfusedIcon,
       accent:
         "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400",
+      icon: ConfusedIcon,
+      label: "Cukup",
+      rating: "Good",
     },
     {
-      rating: "Easy",
-      label: "Mudah",
-      icon: HappyIcon,
       accent:
         "border-sky-500/30 bg-sky-500/5 text-sky-700 hover:bg-sky-500/10 dark:text-sky-400",
+      icon: HappyIcon,
+      label: "Mudah",
+      rating: "Easy",
     },
   ];
 </script>

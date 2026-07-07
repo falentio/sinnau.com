@@ -159,9 +159,9 @@ export const deleteOldChunksOutputSchema = v.object({
 // ─── GetLanguageStyles ────────────────────────────────────────────────
 
 export const languageStyleItemSchema = v.object({
-  value: v.string(),
-  label: v.string(),
   isDefault: v.boolean(),
+  label: v.string(),
+  value: v.string(),
 });
 
 export const getLanguageStylesOutputSchema = v.array(languageStyleItemSchema);
