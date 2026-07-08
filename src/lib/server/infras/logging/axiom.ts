@@ -58,7 +58,6 @@ export const setupAxiom = (): AxiomSetup | null => {
     },
     token,
   });
-  client.ingest(dataset, [{ foo: 42, hello: "world" }]);
 
   const sink = fromAsyncSink((record) => {
     client.ingest(dataset, [toAxiomEvent(record)]);
