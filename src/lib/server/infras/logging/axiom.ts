@@ -1,6 +1,5 @@
 import { Axiom } from "@axiomhq/js";
 import type { Axiom as AxiomClient } from "@axiomhq/js";
-import { fromAsyncSink } from "@logtape/logtape";
 import type { LogRecord, Sink } from "@logtape/logtape";
 
 import { env } from "../env.ts";
@@ -59,9 +58,9 @@ export const setupAxiom = (): AxiomSetup | null => {
     token,
   });
 
-  const sink = fromAsyncSink((record) => {
+  const sink = (record: LogRecord) => {
     client.ingest(dataset, [toAxiomEvent(record)]);
-  });
+  };
 
   return { client, sink };
 };
