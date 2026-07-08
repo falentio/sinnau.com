@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { and, eq, inArray } from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
@@ -31,25 +30,14 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
   async insertContent(
     row: Omit<StudySetContent, "createdAt" | "updatedAt">
   ): Promise<StudySetContent> {
-    try {
-      const [created] = await this.dbInstance
-        .insert(studySetContent)
-        .values(row)
-        .returning();
-      if (!created) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Internal server error",
-        });
-      }
-      return created;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    const [created] = await this.dbInstance
+      .insert(studySetContent)
+      .values(row)
+      .returning();
+    if (!created) {
+      throw new Error("Failed to insert study set content");
     }
+    return created;
   }
 
   async updateContent(
@@ -57,172 +45,116 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
     studySetId: string,
     patch: StudySetContentUpdatePatch
   ): Promise<StudySetContent | null> {
-    try {
-      const [updated] = await this.dbInstance
-        .update(studySetContent)
-        .set(patch)
-        .where(
-          and(
-            eq(studySetContent.id, id),
-            eq(studySetContent.studySetId, studySetId)
-          )
+    const [updated] = await this.dbInstance
+      .update(studySetContent)
+      .set(patch)
+      .where(
+        and(
+          eq(studySetContent.id, id),
+          eq(studySetContent.studySetId, studySetId)
         )
-        .returning();
-      return updated ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+      )
+      .returning();
+    return updated ?? null;
   }
 
   async deleteContent(id: string, studySetId: string): Promise<boolean> {
-    try {
-      const deleted = await this.dbInstance
-        .delete(studySetContent)
-        .where(
-          and(
-            eq(studySetContent.id, id),
-            eq(studySetContent.studySetId, studySetId)
-          )
+    const deleted = await this.dbInstance
+      .delete(studySetContent)
+      .where(
+        and(
+          eq(studySetContent.id, id),
+          eq(studySetContent.studySetId, studySetId)
         )
-        .returning({ id: studySetContent.id });
-      return deleted.length > 0;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+      )
+      .returning({ id: studySetContent.id });
+    return deleted.length > 0;
   }
 
   async findContentById(id: string): Promise<StudySetContent | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(studySetContent)
-        .where(eq(studySetContent.id, id))
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [row] = await this.dbInstance
+      .select()
+      .from(studySetContent)
+      .where(eq(studySetContent.id, id))
+      .limit(1);
+    return row ?? null;
   }
 
   async findContentByIdWithChapters(
     id: string
   ): Promise<StudySetContentWithChapters | null> {
-    try {
-      const rows = await this.dbInstance
-        .select({
-          chapterId: studySetContentToChapter.chapterId,
-          content: studySetContent.content,
-          createdAt: studySetContent.createdAt,
-          id: studySetContent.id,
-          studySetId: studySetContent.studySetId,
-          updatedAt: studySetContent.updatedAt,
-        })
-        .from(studySetContent)
-        .leftJoin(
-          studySetContentToChapter,
-          eq(studySetContent.id, studySetContentToChapter.contentId)
-        )
-        .where(eq(studySetContent.id, id));
-      if (rows.length === 0) {
-        return null;
-      }
-      return (
-        StudySetContentDrizzleRepository.buildWithChapters(rows)[0] ?? null
-      );
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    const rows = await this.dbInstance
+      .select({
+        chapterId: studySetContentToChapter.chapterId,
+        content: studySetContent.content,
+        createdAt: studySetContent.createdAt,
+        id: studySetContent.id,
+        studySetId: studySetContent.studySetId,
+        updatedAt: studySetContent.updatedAt,
+      })
+      .from(studySetContent)
+      .leftJoin(
+        studySetContentToChapter,
+        eq(studySetContent.id, studySetContentToChapter.contentId)
+      )
+      .where(eq(studySetContent.id, id));
+    if (rows.length === 0) {
+      return null;
     }
+    return StudySetContentDrizzleRepository.buildWithChapters(rows)[0] ?? null;
   }
 
   async findContentsByStudySet(
     studySetId: string
   ): Promise<StudySetContentWithChapters[]> {
-    try {
-      const rows = await this.dbInstance
-        .select({
-          chapterId: studySetContentToChapter.chapterId,
-          content: studySetContent.content,
-          createdAt: studySetContent.createdAt,
-          id: studySetContent.id,
-          studySetId: studySetContent.studySetId,
-          updatedAt: studySetContent.updatedAt,
-        })
-        .from(studySetContent)
-        .leftJoin(
-          studySetContentToChapter,
-          eq(studySetContent.id, studySetContentToChapter.contentId)
-        )
-        .where(eq(studySetContent.studySetId, studySetId));
-      return StudySetContentDrizzleRepository.buildWithChapters(rows);
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const rows = await this.dbInstance
+      .select({
+        chapterId: studySetContentToChapter.chapterId,
+        content: studySetContent.content,
+        createdAt: studySetContent.createdAt,
+        id: studySetContent.id,
+        studySetId: studySetContent.studySetId,
+        updatedAt: studySetContent.updatedAt,
+      })
+      .from(studySetContent)
+      .leftJoin(
+        studySetContentToChapter,
+        eq(studySetContent.id, studySetContentToChapter.contentId)
+      )
+      .where(eq(studySetContent.studySetId, studySetId));
+    return StudySetContentDrizzleRepository.buildWithChapters(rows);
   }
 
   async findContentsByChapter(
     chapterId: string
   ): Promise<StudySetContentWithChapters[]> {
-    try {
-      const junctionRows = await this.dbInstance
-        .select({ contentId: studySetContentToChapter.contentId })
-        .from(studySetContentToChapter)
-        .where(eq(studySetContentToChapter.chapterId, chapterId));
+    const junctionRows = await this.dbInstance
+      .select({ contentId: studySetContentToChapter.contentId })
+      .from(studySetContentToChapter)
+      .where(eq(studySetContentToChapter.chapterId, chapterId));
 
-      const contentIds = junctionRows.map((r) => r.contentId);
-      if (contentIds.length === 0) {
-        return [];
-      }
-
-      const rows = await this.dbInstance
-        .select({
-          chapterId: studySetContentToChapter.chapterId,
-          content: studySetContent.content,
-          createdAt: studySetContent.createdAt,
-          id: studySetContent.id,
-          studySetId: studySetContent.studySetId,
-          updatedAt: studySetContent.updatedAt,
-        })
-        .from(studySetContent)
-        .leftJoin(
-          studySetContentToChapter,
-          eq(studySetContent.id, studySetContentToChapter.contentId)
-        )
-        .where(inArray(studySetContent.id, contentIds));
-
-      return StudySetContentDrizzleRepository.buildWithChapters(rows);
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    const contentIds = junctionRows.map((r) => r.contentId);
+    if (contentIds.length === 0) {
+      return [];
     }
+
+    const rows = await this.dbInstance
+      .select({
+        chapterId: studySetContentToChapter.chapterId,
+        content: studySetContent.content,
+        createdAt: studySetContent.createdAt,
+        id: studySetContent.id,
+        studySetId: studySetContent.studySetId,
+        updatedAt: studySetContent.updatedAt,
+      })
+      .from(studySetContent)
+      .leftJoin(
+        studySetContentToChapter,
+        eq(studySetContent.id, studySetContentToChapter.contentId)
+      )
+      .where(inArray(studySetContent.id, contentIds));
+
+    return StudySetContentDrizzleRepository.buildWithChapters(rows);
   }
 
   async linkChapter(
@@ -235,78 +167,48 @@ export class StudySetContentDrizzleRepository implements StudySetContentReposito
         .values({ chapterId, contentId })
         .returning();
       return linked ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
+    } catch {
       return null;
     }
   }
 
   async unlinkChapter(contentId: string, chapterId: string): Promise<boolean> {
-    try {
-      const deleted = await this.dbInstance
-        .delete(studySetContentToChapter)
-        .where(
-          and(
-            eq(studySetContentToChapter.contentId, contentId),
-            eq(studySetContentToChapter.chapterId, chapterId)
-          )
+    const deleted = await this.dbInstance
+      .delete(studySetContentToChapter)
+      .where(
+        and(
+          eq(studySetContentToChapter.contentId, contentId),
+          eq(studySetContentToChapter.chapterId, chapterId)
         )
-        .returning({ contentId: studySetContentToChapter.contentId });
-      return deleted.length > 0;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+      )
+      .returning({ contentId: studySetContentToChapter.contentId });
+    return deleted.length > 0;
   }
 
   async setChapters(contentId: string, chapterIds: string[]): Promise<void> {
-    try {
-      await Promise.resolve();
-      this.dbInstance.transaction((tx) => {
-        tx.delete(studySetContentToChapter)
-          .where(eq(studySetContentToChapter.contentId, contentId))
-          .run();
+    await Promise.resolve();
+    this.dbInstance.transaction((tx) => {
+      tx.delete(studySetContentToChapter)
+        .where(eq(studySetContentToChapter.contentId, contentId))
+        .run();
 
-        if (chapterIds.length > 0) {
-          tx.insert(studySetContentToChapter)
-            .values(chapterIds.map((chapterId) => ({ chapterId, contentId })))
-            .run();
-        }
-      });
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
+      if (chapterIds.length > 0) {
+        tx.insert(studySetContentToChapter)
+          .values(chapterIds.map((chapterId) => ({ chapterId, contentId })))
+          .run();
       }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    });
   }
 
   async findChapterById(
     chapterId: string
   ): Promise<{ id: string; studySetId: string } | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select({ id: chapter.id, studySetId: chapter.studySetId })
-        .from(chapter)
-        .where(eq(chapter.id, chapterId))
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [row] = await this.dbInstance
+      .select({ id: chapter.id, studySetId: chapter.studySetId })
+      .from(chapter)
+      .where(eq(chapter.id, chapterId))
+      .limit(1);
+    return row ?? null;
   }
 
   private static buildWithChapters(

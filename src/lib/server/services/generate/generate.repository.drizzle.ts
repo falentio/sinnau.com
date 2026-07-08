@@ -47,23 +47,14 @@ export class GenerateDrizzleRepository implements GenerateRepository {
   async insertGenerate(
     row: Omit<Generate, "createdAt" | "updatedAt">
   ): Promise<Generate> {
-    try {
-      const [created] = await this.dbInstance
-        .insert(generate)
-        .values(row)
-        .returning();
-      if (!created) {
-        throw new Error("Failed to insert generate");
-      }
-      return created;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    const [created] = await this.dbInstance
+      .insert(generate)
+      .values(row)
+      .returning();
+    if (!created) {
+      throw new Error("Failed to insert generate");
     }
+    return created;
   }
 
   async updateGenerateStatus(
@@ -71,129 +62,75 @@ export class GenerateDrizzleRepository implements GenerateRepository {
     status: Generate["status"],
     completedAt?: number
   ): Promise<Generate | null> {
-    try {
-      const updateValues: {
-        status: typeof status;
-        completedAt?: Date;
-      } = {
-        status,
-      };
-      if (completedAt !== undefined) {
-        updateValues.completedAt = new Date(completedAt);
-      }
-      const [updated] = await this.dbInstance
-        .update(generate)
-        .set(updateValues)
-        .where(eq(generate.id, id))
-        .returning();
-      return updated ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    const updateValues: {
+      status: typeof status;
+      completedAt?: Date;
+    } = {
+      status,
+    };
+    if (completedAt !== undefined) {
+      updateValues.completedAt = new Date(completedAt);
     }
+    const [updated] = await this.dbInstance
+      .update(generate)
+      .set(updateValues)
+      .where(eq(generate.id, id))
+      .returning();
+    return updated ?? null;
   }
 
   async findGenerateById(id: string): Promise<Generate | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(generate)
-        .where(eq(generate.id, id));
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [row] = await this.dbInstance
+      .select()
+      .from(generate)
+      .where(eq(generate.id, id));
+    return row ?? null;
   }
 
   async findActiveByStudySetId(studySetId: string): Promise<Generate | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(generate)
-        .where(
-          and(
-            eq(generate.studySetId, studySetId),
-            inArray(generate.status, ["CREATED", "ONGOING"])
-          )
+    const [row] = await this.dbInstance
+      .select()
+      .from(generate)
+      .where(
+        and(
+          eq(generate.studySetId, studySetId),
+          inArray(generate.status, ["CREATED", "ONGOING"])
         )
-        .orderBy(generate.startedAt)
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+      )
+      .orderBy(generate.startedAt)
+      .limit(1);
+    return row ?? null;
   }
 
   async finalizeStuckAsFailed(_reason: string): Promise<number> {
-    try {
-      const result = await this.dbInstance
-        .update(generate)
-        .set({ completedAt: new Date(), status: "FAILED" })
-        .where(inArray(generate.status, ["CREATED", "ONGOING"]));
-      return result.changes;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const result = await this.dbInstance
+      .update(generate)
+      .set({ completedAt: new Date(), status: "FAILED" })
+      .where(inArray(generate.status, ["CREATED", "ONGOING"]));
+    return result.changes;
   }
 
   async insertGenerateInput(
     row: Omit<GenerateInput, "id">
   ): Promise<GenerateInput> {
-    try {
-      const [created] = await this.dbInstance
-        .insert(generateInput)
-        .values({ ...row, id: crypto.randomUUID() })
-        .returning();
-      if (!created) {
-        throw new Error("Failed to insert generate_input");
-      }
-      return created;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    const [created] = await this.dbInstance
+      .insert(generateInput)
+      .values({ ...row, id: crypto.randomUUID() })
+      .returning();
+    if (!created) {
+      throw new Error("Failed to insert generate_input");
     }
+    return created;
   }
 
   async findGenerateInputByGenerateId(
     genId: string
   ): Promise<GenerateInput | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(generateInput)
-        .where(eq(generateInput.generateId, genId));
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [row] = await this.dbInstance
+      .select()
+      .from(generateInput)
+      .where(eq(generateInput.generateId, genId));
+    return row ?? null;
   }
 
   async appendChunkResult(params: {
@@ -202,7 +139,7 @@ export class GenerateDrizzleRepository implements GenerateRepository {
   }): Promise<void> {
     try {
       const { generateId, record } = params;
-      await this.dbInstance.transaction((tx) => {
+      this.dbInstance.transaction((tx) => {
         tx.delete(generateChunkResult)
           .where(
             and(
@@ -223,34 +160,20 @@ export class GenerateDrizzleRepository implements GenerateRepository {
           .run();
       });
     } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
       logger.error("Error occurred while appending chunk result:", {
         error,
         params,
       });
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+      throw error;
     }
   }
 
   async loadChunkResults(generateId: string): Promise<GenerateChunkResult[]> {
-    try {
-      return await this.dbInstance
-        .select()
-        .from(generateChunkResult)
-        .where(eq(generateChunkResult.generateId, generateId))
-        .orderBy(generateChunkResult.index);
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    return await this.dbInstance
+      .select()
+      .from(generateChunkResult)
+      .where(eq(generateChunkResult.generateId, generateId))
+      .orderBy(generateChunkResult.index);
   }
 
   async findChunkSummaries(
@@ -259,66 +182,48 @@ export class GenerateDrizzleRepository implements GenerateRepository {
     limit: number,
     cutoffMs: number
   ): Promise<ChunkSummary[]> {
-    try {
-      const [firstChunk] = await this.dbInstance
-        .select({ createdAt: generateChunkResult.createdAt })
-        .from(generateChunkResult)
-        .where(eq(generateChunkResult.generateId, generateId))
-        .orderBy(generateChunkResult.createdAt)
-        .limit(1);
+    const [firstChunk] = await this.dbInstance
+      .select({ createdAt: generateChunkResult.createdAt })
+      .from(generateChunkResult)
+      .where(eq(generateChunkResult.generateId, generateId))
+      .orderBy(generateChunkResult.createdAt)
+      .limit(1);
 
-      if (!firstChunk) {
-        return [];
-      }
-
-      if (firstChunk.createdAt.getTime() < Date.now() - cutoffMs) {
-        return [];
-      }
-
-      const conditions = [eq(generateChunkResult.generateId, generateId)];
-      if (since !== null) {
-        conditions.push(gt(generateChunkResult.createdAt, new Date(since)));
-      }
-
-      const rows = await this.dbInstance
-        .select()
-        .from(generateChunkResult)
-        .where(and(...conditions))
-        .orderBy(generateChunkResult.createdAt)
-        .limit(limit);
-
-      return rows.map((r) => ({
-        createdAt: r.createdAt.getTime(),
-        index: r.index,
-        kind: r.kind,
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        payload: JSON.parse(r.payload) as ChunkSummary["payload"],
-      }));
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    if (!firstChunk) {
+      return [];
     }
+
+    if (firstChunk.createdAt.getTime() < Date.now() - cutoffMs) {
+      return [];
+    }
+
+    const conditions = [eq(generateChunkResult.generateId, generateId)];
+    if (since !== null) {
+      conditions.push(gt(generateChunkResult.createdAt, new Date(since)));
+    }
+
+    const rows = await this.dbInstance
+      .select()
+      .from(generateChunkResult)
+      .where(and(...conditions))
+      .orderBy(generateChunkResult.createdAt)
+      .limit(limit);
+
+    return rows.map((r) => ({
+      createdAt: r.createdAt.getTime(),
+      index: r.index,
+      kind: r.kind,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      payload: JSON.parse(r.payload) as ChunkSummary["payload"],
+    }));
   }
 
   async deleteOldChunks(olderThanDays: number): Promise<number> {
-    try {
-      const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
-      const result = await this.dbInstance
-        .delete(generateChunkResult)
-        .where(lt(generateChunkResult.createdAt, new Date(cutoff)));
-      return result.changes;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const cutoff = Date.now() - olderThanDays * 24 * 60 * 60 * 1000;
+    const result = await this.dbInstance
+      .delete(generateChunkResult)
+      .where(lt(generateChunkResult.createdAt, new Date(cutoff)));
+    return result.changes;
   }
 
   async finalizeGenerateTransaction(params: {
@@ -450,15 +355,10 @@ export class GenerateDrizzleRepository implements GenerateRepository {
       }
 
       if (rollbackErrors.length > 0) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          cause: new AggregateError(rollbackErrors, "Saga rollback failed"),
-          message: "Internal server error",
-        });
+        logger.error("Saga rollback failed", { rollbackErrors });
       }
 
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+      throw error;
     }
   }
 }

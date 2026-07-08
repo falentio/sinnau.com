@@ -12,30 +12,43 @@ const logger = getLogger(["sinnau.com", "orpc", "middleware"]);
 
 export { requireAuth };
 
-export const publicProcedure = base.use(async ({ next, path }) => {
-  const start = hrtime.bigint();
-  let result: Awaited<ReturnType<typeof next>>;
-  let isError = false;
-  try {
-    result = await next();
-  } catch (error) {
-    isError = true;
-    throw error;
-  } finally {
-    const end = hrtime.bigint();
-    wideEventStorage.push(["orpc", "procedures"], {
-      duration: Number(end - start) / 1_000_000,
-      error: isError,
-      procedure: path.join("."),
-    });
-    logger.info("Procedure completed ", () => ({
-      duration: Number(end - start) / 1_000_000,
-      error: isError,
-      procedure: path.join("."),
-    }));
-  }
-  return result as Awaited<ReturnType<typeof next<Context>>>;
-});
+export const publicProcedure = base
+  .use(async ({ next, path }) => {
+    const start = hrtime.bigint();
+    let result: Awaited<ReturnType<typeof next>>;
+    let isError = false;
+    try {
+      result = await next();
+    } catch (error) {
+      isError = true;
+      throw error;
+    } finally {
+      const end = hrtime.bigint();
+      wideEventStorage.push(["orpc", "procedures"], {
+        duration: Number(end - start) / 1_000_000,
+        error: isError,
+        procedure: path.join("."),
+      });
+      logger.info("Procedure completed ", () => ({
+        duration: Number(end - start) / 1_000_000,
+        error: isError,
+        procedure: path.join("."),
+      }));
+    }
+    return result as Awaited<ReturnType<typeof next<Context>>>;
+  })
+  .use(async ({ next }) => {
+    try {
+      return await next();
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  });
 
 export const authorizedProcedure = publicProcedure.use(requireAuth);
 

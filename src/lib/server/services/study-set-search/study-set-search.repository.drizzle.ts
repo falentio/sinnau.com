@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { sql } from "drizzle-orm";
 
 import type { DB } from "../../infras/db/client.ts";
@@ -40,8 +39,9 @@ export class StudySetSearchDrizzleRepository implements StudySetSearchRepository
   //   - `setup()` is called explicitly during boot (or by the test
   //     env) rather than from the constructor, so module import
   //     does not perform the backfill.
-  // Failures bubble up as raw Error; the ORPCError wrapper below
-  // (in `search`) translates them for the request scope.
+  // Failures bubble up as raw Error; the global error handler in
+  // `api/context.ts` translates them into INTERNAL_SERVER_ERROR for the
+  // request scope.
   setup(): void {
     this.dbInstance.run(
       sql.raw(
@@ -67,27 +67,18 @@ export class StudySetSearchDrizzleRepository implements StudySetSearchRepository
 
   // oxlint-disable-next-line require-await
   async search(params: StudySetSearchParams): Promise<StudySetSearchResult[]> {
-    try {
-      // oxlint-disable-next-line no-unsafe-type-assertion
-      const rows = this.dbInstance.all(
-        sql`SELECT s.id, s.title, s.description, s.slug, s.owner_id AS ownerId
-				FROM study_set_fts fts
-				JOIN study_set s ON s.id = fts.study_set_id
-				WHERE study_set_fts MATCH ${params.query}
-					AND s.visibility = 'PUBLIC'
-					AND s.deleted_at IS NULL
-				ORDER BY rank
-				LIMIT ${params.limit}`
-      ) as StudySetSearchResult[];
+    // oxlint-disable-next-line no-unsafe-type-assertion
+    const rows = this.dbInstance.all(
+      sql`SELECT s.id, s.title, s.description, s.slug, s.owner_id AS ownerId
+			FROM study_set_fts fts
+			JOIN study_set s ON s.id = fts.study_set_id
+			WHERE study_set_fts MATCH ${params.query}
+				AND s.visibility = 'PUBLIC'
+				AND s.deleted_at IS NULL
+			ORDER BY rank
+			LIMIT ${params.limit}`
+    ) as StudySetSearchResult[];
 
-      return rows;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    return rows;
   }
 }

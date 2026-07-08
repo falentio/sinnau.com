@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
@@ -26,19 +25,10 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
   async insertFlashcards(
     rows: Omit<Flashcard, "createdAt" | "updatedAt" | "isAiGenerated">[]
   ): Promise<Flashcard[]> {
-    try {
-      if (rows.length === 0) {
-        return [];
-      }
-      return await this.dbInstance.insert(flashcard).values(rows).returning();
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    if (rows.length === 0) {
+      return [];
     }
+    return await this.dbInstance.insert(flashcard).values(rows).returning();
   }
 
   async updateFlashcard(
@@ -46,21 +36,12 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
     ownerId: string,
     patch: FlashcardUpdatePatch
   ): Promise<Flashcard | null> {
-    try {
-      const [updated] = await this.dbInstance
-        .update(flashcard)
-        .set(patch)
-        .where(and(eq(flashcard.id, id), eq(flashcard.ownerId, ownerId)))
-        .returning();
-      return updated ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [updated] = await this.dbInstance
+      .update(flashcard)
+      .set(patch)
+      .where(and(eq(flashcard.id, id), eq(flashcard.ownerId, ownerId)))
+      .returning();
+    return updated ?? null;
   }
 
   async deleteFlashcards(ids: string[], ownerId: string): Promise<boolean> {
@@ -89,88 +70,47 @@ export class FlashcardDrizzleRepository implements FlashcardRepository {
       ) {
         return false;
       }
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+      throw error;
     }
   }
 
   async findFlashcardById(id: string): Promise<Flashcard | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(flashcard)
-        .where(eq(flashcard.id, id))
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [row] = await this.dbInstance
+      .select()
+      .from(flashcard)
+      .where(eq(flashcard.id, id))
+      .limit(1);
+    return row ?? null;
   }
 
   async findFlashcardsByIds(ids: string[]): Promise<Flashcard[]> {
-    try {
-      if (ids.length === 0) {
-        return [];
-      }
-      return await this.dbInstance
-        .select()
-        .from(flashcard)
-        .where(inArray(flashcard.id, ids));
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
+    if (ids.length === 0) {
+      return [];
     }
+    return await this.dbInstance
+      .select()
+      .from(flashcard)
+      .where(inArray(flashcard.id, ids));
   }
 
   async findFlashcardsByStudySet(studySetId: string): Promise<Flashcard[]> {
-    try {
-      return await this.dbInstance
-        .select()
-        .from(flashcard)
-        .where(eq(flashcard.studySetId, studySetId))
-        .orderBy(desc(flashcard.createdAt));
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    return await this.dbInstance
+      .select()
+      .from(flashcard)
+      .where(eq(flashcard.studySetId, studySetId))
+      .orderBy(desc(flashcard.createdAt));
   }
 
   async findChapter(chapterId: string): Promise<FlashcardChapterRef | null> {
-    try {
-      const [row] = await this.dbInstance
-        .select({
-          id: chapter.id,
-          ownerId: chapter.ownerId,
-          studySetId: chapter.studySetId,
-        })
-        .from(chapter)
-        .where(eq(chapter.id, chapterId))
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
+    const [row] = await this.dbInstance
+      .select({
+        id: chapter.id,
+        ownerId: chapter.ownerId,
+        studySetId: chapter.studySetId,
+      })
+      .from(chapter)
+      .where(eq(chapter.id, chapterId))
+      .limit(1);
+    return row ?? null;
   }
 }
