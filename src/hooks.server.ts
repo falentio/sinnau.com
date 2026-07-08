@@ -1,4 +1,6 @@
 import "$lib/server/infras/logging";
+import { hrtime } from "node:process";
+
 import { dev } from "$app/env";
 import { building } from "$app/environment";
 import { setClient } from "$lib/orpc";
@@ -69,6 +71,8 @@ const wellKnownHeaders = [
   "accept-language",
   "accept-encoding",
   "accept",
+  "cf-connecting-ip",
+  "cf-ipcountry",
   "content-type",
   "content-length",
   "x-client-id",
@@ -88,6 +92,7 @@ const getWellKnownHeaders = (request: Request) => {
 
 const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
   const requestId = nanoid(32);
+  const requestStart = hrtime.bigint();
   const initialWideEventData = {
     production: !dev,
     request: {
@@ -116,6 +121,11 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
       return result;
     } catch (error) {
       if (isRedirect(error)) {
+        wideEventStorage.assign({
+          response: {
+            status: error.status,
+          },
+        });
         throw error;
       }
       if (isHttpError(error)) {
@@ -123,40 +133,46 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
           http: {
             status: error.status || 500,
           },
+          isError: true,
         });
-      }
-      if (error instanceof Error) {
+      } else if (error instanceof Error) {
         wideEventStorage.assign({
           error: {
             message: error.message,
             name: error.name,
+            stack: error.stack,
           },
           http: {
             status: 500,
           },
+          isError: true,
         });
       }
       throw error;
     } finally {
-      logger.info("Request completed.", () => ({ ...wideEventStorage.get() }));
+      const durationMs = Number(hrtime.bigint() - requestStart) / 1_000_000;
+      logger.info("Request completed.", () => ({
+        ...wideEventStorage.get(),
+        durationMs,
+      }));
     }
   });
 };
 
 const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
+  wideEventStorage.assign({
+    app: {
+      buildDate: env.APP_BUILD_DATE,
+      sha: env.APP_SHA,
+      version: env.APP_VERSION,
+    },
+  });
   const response = await resolve(event);
   try {
     response.headers.set("x-powered-by", "Sinnau");
     response.headers.set("x-sinnau-version", env.APP_VERSION);
     response.headers.set("x-sinnau-sha", env.APP_SHA);
     response.headers.set("x-ily", "ANA");
-    wideEventStorage.assign({
-      app: {
-        buildDate: env.APP_BUILD_DATE,
-        sha: env.APP_SHA,
-        version: env.APP_VERSION,
-      },
-    });
   } catch (error) {
     logger.error("Failed to set x-powered-by header", () => ({
       error: error instanceof Error ? error.message : String(error),
