@@ -51,6 +51,7 @@ LABEL org.opencontainers.image.title="sinnau" \
 
 ENV NODE_ENV=production \
     ENVIRONMENT=production \
+    NODE_OPTIONS="--enable-source-maps --unhandled-rejections=strict" \
     PORT=11085 \
     HOST=0.0.0.0 \
     BODY_SIZE_LIMIT=50M \

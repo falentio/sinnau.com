@@ -16,6 +16,9 @@ const getReporters = (): Reporters => {
 };
 
 export default defineConfig({
+  build: {
+    sourcemap: true,
+  },
   plugins: [tailwindcss(), sveltekit()],
   server: {
     allowedHosts: ["*.localhost", "localhost", "*.falentio"],
