@@ -12,6 +12,7 @@ export type RunLLMFn = (input: {
   languageStyle: string;
   extractionType: string;
   storage: GenerationStorage;
+  generateId: string;
 }) => Promise<{ totalChunkCount: number; successCount: number }>;
 
 export type FinalizeTransactionFn = (input: {

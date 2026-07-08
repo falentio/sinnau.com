@@ -22,6 +22,7 @@ const events: ChunkRecord[] = [];
 
 const result = await generate({
   content: matematika,
+  generateId: `dev-${id}`,
   languageModel: getDefaultModel(),
   storage: {
     appendChunkResult: async (record) => {

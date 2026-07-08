@@ -6,6 +6,8 @@ import {
 } from "@logtape/logtape";
 import { getPrettyFormatter } from "@logtape/pretty";
 
+import { setupAxiom, startAxiomFlush } from "./axiom.ts";
+
 const getSink = () => {
   if (dev) {
     return getConsoleSink({
@@ -19,19 +21,31 @@ const getSink = () => {
   });
 };
 
+const axiom = setupAxiom();
+if (axiom) {
+  startAxiomFlush(axiom.client);
+}
+
+const sinks = {
+  console: getSink(),
+  ...(axiom ? { axiom: axiom.sink } : {}),
+};
+
+const loggerSinks = axiom ? ["console", "axiom"] : ["console"];
+
 await configure({
   loggers: [
     {
       category: ["sinnau.com"],
       lowestLevel: dev ? "debug" : "info",
-      sinks: ["console"],
+      sinks: loggerSinks,
     },
     {
       category: ["logtape", "meta"],
       lowestLevel: "warning",
-      sinks: ["console"],
+      sinks: loggerSinks,
     },
   ],
   reset: true,
-  sinks: { console: getSink() },
+  sinks,
 });

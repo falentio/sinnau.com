@@ -49,6 +49,7 @@ const runMockPipeline = async () => {
   const { text } = await parse({ pdf: new File([], "test.pdf") });
   const result = await runLLM({
     extractionType: "normal",
+    generateId: "gen-test",
     languageStyle: "student-friendly",
     pdfText: text,
     storage,

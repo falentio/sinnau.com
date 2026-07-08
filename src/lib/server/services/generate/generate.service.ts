@@ -278,9 +278,21 @@ export class GenerateService {
     let successCount = 0;
     let successfulChunks: SuccessRecord[] = [];
 
+    const loadSuccessfulChunks = async (): Promise<SuccessRecord[]> => {
+      const rows = await this.repo.loadChunkResults(gId);
+      return (
+        rows
+          .filter((r) => r.kind === "success")
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          .map((r) => JSON.parse(r.payload) as SuccessRecord)
+      );
+    };
+
+    const generationStart = performance.now();
     try {
       const result = await this.pipeline.runLLM({
         extractionType,
+        generateId: gId,
         languageStyle,
         pdfText,
         storage,
@@ -289,26 +301,35 @@ export class GenerateService {
       totalChunkCount = tc;
       successCount = sc;
 
-      const rows = await this.repo.loadChunkResults(gId);
-      successfulChunks = rows
-        .filter((r) => r.kind === "success")
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        .map((r) => JSON.parse(r.payload) as SuccessRecord);
+      logger.info("Generation LLM phase finished", () => ({
+        durationMs: Math.round(performance.now() - generationStart),
+        generateId: gId,
+        successCount,
+        totalChunkCount,
+      }));
+
+      successfulChunks = await loadSuccessfulChunks();
     } catch (error) {
-      logger.error("Error occurred while running LLM: {error}", { error });
-      const rows = await this.repo.loadChunkResults(gId);
-      successfulChunks = rows
-        .filter((r) => r.kind === "success")
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        .map((r) => JSON.parse(r.payload) as SuccessRecord);
+      logger.error("Error occurred while running LLM: {error}", () => ({
+        durationMs: Math.round(performance.now() - generationStart),
+        error,
+        generateId: gId,
+        successCount: successfulChunks.length,
+      }));
+      successfulChunks = await loadSuccessfulChunks();
       successCount = successfulChunks.length;
     }
 
     if (successCount === 0) {
+      logger.error("Generation failed: no successful chunks", () => ({
+        generateId: gId,
+        totalChunkCount,
+      }));
       await this.retryStatusUpdate(gId, "FAILED", Date.now());
       return;
     }
 
+    const finalizeStart = performance.now();
     try {
       await this.pipeline.finalizeTransaction({
         generateId: gId,
@@ -316,12 +337,24 @@ export class GenerateService {
         studySetId,
         successfulChunks,
       });
+      logger.info("Generation finalized", () => ({
+        durationMs: Math.round(performance.now() - finalizeStart),
+        generateId: gId,
+        successCount,
+      }));
     } catch {
+      logger.error("Generation finalize failed", () => ({ generateId: gId }));
       return;
     }
 
     const status =
       successCount === totalChunkCount ? "COMPLETED" : "PARTIAL_COMPLETED";
+    logger.info("Generation status updated", () => ({
+      generateId: gId,
+      status,
+      successCount,
+      totalChunkCount,
+    }));
     await this.retryStatusUpdate(gId, status, Date.now());
   }
 

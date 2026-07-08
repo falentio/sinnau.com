@@ -29,6 +29,7 @@ type RunLLMImpl = (input: {
   languageStyle: string;
   extractionType: string;
   storage: GenerationStorage;
+  generateId: string;
 }) => Promise<{ totalChunkCount: number; successCount: number }>;
 
 export const createRunLLMDefault =
@@ -38,6 +39,7 @@ export const createRunLLMDefault =
       content: input.pdfText,
       extractionType:
         input.extractionType === "exhaustive" ? "exhaustive" : "normal",
+      generateId: input.generateId,
       languageModel: getDefaultModel(),
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       languageStyle: input.languageStyle as LanguageStyleId | undefined,

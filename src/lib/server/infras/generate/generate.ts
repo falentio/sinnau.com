@@ -1,11 +1,25 @@
 import { chunkContent } from "$lib/server/infras/generate/chunk";
 import { valibotSchema } from "@ai-sdk/valibot";
+import { getLogger } from "@logtape/logtape";
 import { generateText, stepCountIs, tool } from "ai";
 import type { LanguageModel, LanguageModelUsage, ModelMessage } from "ai";
 import * as v from "valibot";
 
 import { composeSystemPrompt } from "./language-style";
 import type { LanguageStyleId } from "./language-style";
+
+const logger = getLogger(["sinnau.com", "generate", "infra"]);
+
+const modelMeta = (
+  model: LanguageModel
+): { modelId: string; provider: string } => {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- LanguageModel is branded; read meta defensively
+  const m = model as Record<string, unknown>;
+  return {
+    modelId: typeof m.modelId === "string" ? m.modelId : "unknown",
+    provider: typeof m.provider === "string" ? m.provider : "unknown",
+  };
+};
 
 export const ChapterSchema = v.object({
   slug: v.pipe(
@@ -321,6 +335,7 @@ export interface GenerationStorage {
 }
 
 export interface GenerateDeps {
+  readonly generateId: string;
   readonly languageModel: LanguageModel;
   readonly storage: GenerationStorage;
   readonly maxSteps: number;
@@ -329,6 +344,7 @@ export interface GenerateDeps {
 
 export interface GenerateOptions {
   content: string;
+  generateId: string;
   chunkSize?: number;
   groupSize?: number;
   extractionType?: ExtractionType;
@@ -473,6 +489,12 @@ export const processChunk = async (opts: {
   chunk: GroupedChunk;
   deps: GenerateDeps;
 }): Promise<ChunkRecord> => {
+  const { generateId } = opts.deps;
+  const chunkStart = performance.now();
+  logger.debug("Processing chunk", () => ({
+    generateId,
+    index: opts.chunk.index,
+  }));
   try {
     const records = await opts.deps.storage.loadChunkResults();
     const successes = records.filter(
@@ -491,13 +513,32 @@ export const processChunk = async (opts: {
       temperature: 0.2,
       tools: createTool(sink),
     });
-    return buildSuccessRecord({
+    const record = buildSuccessRecord({
       content: sink,
       index: opts.chunk.index,
       stepCount: result.steps.length,
       usage: result.totalUsage,
     });
+    logger.debug("Chunk processed", () => ({
+      durationMs: Math.round(performance.now() - chunkStart),
+      generateId,
+      index: record.index,
+      stepCount: record.stepCount,
+      tokens: record.tokenUsage,
+    }));
+    return record;
   } catch (error) {
+    const err =
+      error instanceof Error
+        ? { message: error.message, name: error.name, stack: error.stack }
+        : { message: String(error), name: "Error", stack: undefined };
+    logger.debug("Chunk failed", () => ({
+      durationMs: Math.round(performance.now() - chunkStart),
+      error: { message: err.message, name: err.name },
+      generateId,
+      index: opts.chunk.index,
+      stack: err.stack,
+    }));
     return toFailureRecord(opts.chunk.index, error);
   }
 };
@@ -511,12 +552,20 @@ export const processChunkGroup = async (opts: {
     const records = await opts.deps.storage.loadChunkResults();
     const isProcessed = records.find((r) => r.index === chunk.index);
     if (isProcessed) {
+      logger.debug("Skipping already-processed chunk", () => ({
+        generateId: opts.deps.generateId,
+        index: chunk.index,
+      }));
       continue;
     }
     const successes = records.filter(
       (r): r is SuccessRecord => r.kind === "success"
     );
     if (sumInputTokens(successes) >= opts.maxTokens) {
+      logger.debug("Token limit reached, stopping group", () => ({
+        generateId: opts.deps.generateId,
+        maxTokens: opts.maxTokens,
+      }));
       break;
     }
     const record = await processChunk({ chunk, deps: opts.deps });
@@ -533,6 +582,7 @@ export const generate = async (
   const maxTokens = getMaxTokens(maxSteps);
 
   const deps: GenerateDeps = {
+    generateId: opts.generateId,
     languageModel: opts.languageModel,
     maxSteps,
     storage: opts.storage,
@@ -547,6 +597,22 @@ export const generate = async (
   if (groups.length === 0) {
     throw new Error("No content to generate");
   }
+
+  logger.info("Generation run started", () => ({
+    chunkSize,
+    contentLength: opts.content.length,
+    extractionType: opts.extractionType ?? "normal",
+    generateId: opts.generateId,
+    groupSize,
+    languageStyle: opts.languageStyle ?? "student-friendly",
+    maxSteps,
+    maxTokens,
+    modelId: modelMeta(opts.languageModel).modelId,
+    provider: modelMeta(opts.languageModel).provider,
+    totalChunks,
+  }));
+
+  const runStart = performance.now();
 
   const [firstGroup, ...restGroups] = groups;
   if (firstGroup) {
@@ -571,10 +637,32 @@ export const generate = async (
     (r): r is FailureRecord => r.kind === "failure"
   );
 
+  const isTokenLimitReached = sumInputTokens(successes) >= maxTokens;
+  const durationMs = Math.round(performance.now() - runStart);
+
+  logger.info("Generation run finished", () => ({
+    durationMs,
+    failedChunks: failedChunks.map((f) => f.index),
+    generateId: opts.generateId,
+    isTokenLimitReached,
+    processedChunks: records.length,
+    stepCount: summary.stepCount,
+    tokens: summary.tokenUsage,
+    totalChunks,
+  }));
+
+  if (isTokenLimitReached) {
+    logger.warn("Generation token limit reached", () => ({
+      generateId: opts.generateId,
+      maxTokens,
+      totalChunks,
+    }));
+  }
+
   return {
     ...summary,
     failedChunks,
-    isTokenLimitReached: sumInputTokens(successes) >= maxTokens,
+    isTokenLimitReached,
     processedChunks: records.length,
     totalChunks,
   };
