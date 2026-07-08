@@ -110,6 +110,7 @@ export class GenerateService {
     }
 
     let pdfText: string;
+    const parseStart = performance.now();
     try {
       const result = await this.pipeline.parseLiteparse({ pdf: input.pdf });
       pdfText = result.text;
@@ -118,6 +119,10 @@ export class GenerateService {
         message: "Failed to parse the PDF file",
       });
     }
+    logger.info("Generation parse finished", () => ({
+      durationMs: Math.round(performance.now() - parseStart),
+      inputLength: pdfText.length,
+    }));
 
     const studySet = await this.studySetService.createStudySet(
       {
@@ -150,11 +155,22 @@ export class GenerateService {
       isInputTruncated: truncated,
     });
 
+    logger.info("Generation input prepared", () => ({
+      generateId: generateRow.id,
+      inputLength: inputText.length,
+      isInputTruncated: truncated,
+    }));
+
     this.activeOwners.add(owner);
+    logger.info("Generation concurrency", () => ({
+      activeGenerations: this.activeOwners.size,
+      generateId: generateRow.id,
+    }));
 
     const pipelinePromise = this.runPipeline({
       extractionType: input.extractionType ?? "normal",
       generateId: generateRow.id,
+      isInputTruncated: truncated,
       languageStyle: input.languageStyle ?? "student-friendly",
       ownerId: owner,
       pdfText,
@@ -244,6 +260,7 @@ export class GenerateService {
   private async runPipeline(params: {
     extractionType: string;
     generateId: string;
+    isInputTruncated?: boolean;
     languageStyle: string;
     ownerId: string;
     pdfText: string;
@@ -293,6 +310,7 @@ export class GenerateService {
       const result = await this.pipeline.runLLM({
         extractionType,
         generateId: gId,
+        isInputTruncated: params.isInputTruncated,
         languageStyle,
         pdfText,
         storage,

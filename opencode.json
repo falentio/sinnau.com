@@ -4,6 +4,10 @@
     "Svelte": {
       "type": "remote",
       "url": "https://mcp.svelte.dev/mcp"
+    },
+    "Axiom": {
+      "type": "remote",
+      "url": "https://mcp.axiom.co/mcp"
     }
   }
 }

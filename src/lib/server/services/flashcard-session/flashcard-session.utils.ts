@@ -184,18 +184,18 @@ const hubStubs = {
         overdue: [
           makeQueueItem(3, "overdue", {
             ...state,
-            flashcardId: padId(FLASHCARD_ID_PREFIX, 3),
             due: new Date(Date.now() - 2 * 24 * 60 * 60_000),
+            flashcardId: padId(FLASHCARD_ID_PREFIX, 3),
           }),
           makeQueueItem(4, "overdue", {
             ...state,
-            flashcardId: padId(FLASHCARD_ID_PREFIX, 4),
             due: new Date(Date.now() - 3 * 24 * 60 * 60_000),
+            flashcardId: padId(FLASHCARD_ID_PREFIX, 4),
           }),
           makeQueueItem(5, "overdue", {
             ...state,
-            flashcardId: padId(FLASHCARD_ID_PREFIX, 5),
             due: new Date(Date.now() - 5 * 24 * 60 * 60_000),
+            flashcardId: padId(FLASHCARD_ID_PREFIX, 5),
           }),
         ],
       },

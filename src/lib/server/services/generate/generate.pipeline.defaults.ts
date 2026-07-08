@@ -25,6 +25,7 @@ export const createParseLiteparseDefault =
   };
 
 type RunLLMImpl = (input: {
+  isInputTruncated?: boolean;
   pdfText: string;
   languageStyle: string;
   extractionType: string;
@@ -40,6 +41,7 @@ export const createRunLLMDefault =
       extractionType:
         input.extractionType === "exhaustive" ? "exhaustive" : "normal",
       generateId: input.generateId,
+      isInputTruncated: input.isInputTruncated,
       languageModel: getDefaultModel(),
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       languageStyle: input.languageStyle as LanguageStyleId | undefined,

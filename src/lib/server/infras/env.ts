@@ -46,7 +46,7 @@ export const env = {
   get APP_SHA() {
     const value = read("APP_SHA");
     if (value === undefined) {
-      return "unknown";
+      return "<unknown>";
     }
     return value;
   },
@@ -69,6 +69,15 @@ export const env = {
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean) ?? []
     );
+  },
+  get AXIOM_DATASET() {
+    return read("AXIOM_DATASET");
+  },
+  get AXIOM_TOKEN() {
+    return read("AXIOM_TOKEN");
+  },
+  get AXIOM_URL() {
+    return read("AXIOM_URL") ?? "https://api.axiom.co";
   },
   get BETTER_AUTH_API_KEY() {
     return read("BETTER_AUTH_API_KEY");

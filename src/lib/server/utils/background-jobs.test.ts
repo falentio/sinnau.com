@@ -8,7 +8,7 @@ import { waitUntil, waitForAll } from "./background-jobs.ts";
 let recorder: ReturnType<typeof createLogRecorder>;
 
 const errorMessage = (props: Record<string, unknown>): string | undefined => {
-  const error = props.error;
+  const { error } = props;
   return error instanceof Error ? error.message : undefined;
 };
 

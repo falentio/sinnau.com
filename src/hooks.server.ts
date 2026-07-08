@@ -1,4 +1,5 @@
 import "$lib/server/infras/logging";
+import { dev } from "$app/env";
 import { building } from "$app/environment";
 import { setClient } from "$lib/orpc";
 import { createServerClient } from "$lib/orpc.server";
@@ -88,6 +89,7 @@ const getWellKnownHeaders = (request: Request) => {
 const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
   const requestId = nanoid(32);
   const initialWideEventData = {
+    production: !dev,
     request: {
       headers: getWellKnownHeaders(event.request),
       ip:
@@ -146,6 +148,8 @@ const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
   try {
     response.headers.set("x-powered-by", "Sinnau");
     response.headers.set("x-sinnau-version", env.APP_VERSION);
+    response.headers.set("x-sinnau-sha", env.APP_SHA);
+    response.headers.set("x-ily", "ANA");
     wideEventStorage.assign({
       app: {
         buildDate: env.APP_BUILD_DATE,
@@ -164,7 +168,7 @@ const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(
   wideEventStorageHandle,
+  watermarkHeaderHandle,
   betterAuthHandle,
-  authGuardHandle,
-  watermarkHeaderHandle
+  authGuardHandle
 );

@@ -8,6 +8,7 @@ export type ParseLiteparseFn = (input: {
 }) => Promise<{ text: string }>;
 
 export type RunLLMFn = (input: {
+  isInputTruncated?: boolean;
   pdfText: string;
   languageStyle: string;
   extractionType: string;

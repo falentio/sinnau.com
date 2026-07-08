@@ -60,7 +60,9 @@ export const actions: Actions = {
       redirect(303, `/session/${params.studySetId}/flashcard/${session.id}/`);
       return { success: true as const };
     } catch (error) {
-      if (isRedirect(error)) throw error;
+      if (isRedirect(error)) {
+        throw error;
+      }
       return fail(500, { message: "Gagal memulai sesi review" });
     }
   },

@@ -348,6 +348,7 @@ export interface GenerateOptions {
   chunkSize?: number;
   groupSize?: number;
   extractionType?: ExtractionType;
+  isInputTruncated?: boolean;
   languageModel: LanguageModel;
   storage: GenerationStorage;
   languageStyle?: LanguageStyleId;
@@ -491,7 +492,7 @@ export const processChunk = async (opts: {
 }): Promise<ChunkRecord> => {
   const { generateId } = opts.deps;
   const chunkStart = performance.now();
-  logger.debug("Processing chunk", () => ({
+  logger.info("Processing chunk", () => ({
     generateId,
     index: opts.chunk.index,
   }));
@@ -519,7 +520,7 @@ export const processChunk = async (opts: {
       stepCount: result.steps.length,
       usage: result.totalUsage,
     });
-    logger.debug("Chunk processed", () => ({
+    logger.info("Chunk processed", () => ({
       durationMs: Math.round(performance.now() - chunkStart),
       generateId,
       index: record.index,
@@ -532,9 +533,13 @@ export const processChunk = async (opts: {
       error instanceof Error
         ? { message: error.message, name: error.name, stack: error.stack }
         : { message: String(error), name: "Error", stack: undefined };
-    logger.debug("Chunk failed", () => ({
+    logger.info("Chunk failed", () => ({
       durationMs: Math.round(performance.now() - chunkStart),
       error: { message: err.message, name: err.name },
+      generateId,
+      index: opts.chunk.index,
+    }));
+    logger.debug("Chunk failed (stack)", () => ({
       generateId,
       index: opts.chunk.index,
       stack: err.stack,
@@ -604,6 +609,7 @@ export const generate = async (
     extractionType: opts.extractionType ?? "normal",
     generateId: opts.generateId,
     groupSize,
+    isInputTruncated: opts.isInputTruncated ?? false,
     languageStyle: opts.languageStyle ?? "student-friendly",
     maxSteps,
     maxTokens,
@@ -640,12 +646,22 @@ export const generate = async (
   const isTokenLimitReached = sumInputTokens(successes) >= maxTokens;
   const durationMs = Math.round(performance.now() - runStart);
 
+  const inputSide = summary.tokenUsage.input + summary.tokenUsage.cacheRead;
+  const cacheHitRatio =
+    inputSide > 0
+      ? Math.round((100 * summary.tokenUsage.cacheRead) / inputSide)
+      : 0;
+
   logger.info("Generation run finished", () => ({
+    cacheHitRatio,
+    contentLength: opts.content.length,
     durationMs,
     failedChunks: failedChunks.map((f) => f.index),
+    flashcardCount: summary.content.flashcard.length,
     generateId: opts.generateId,
     isTokenLimitReached,
     processedChunks: records.length,
+    quizCount: summary.content.quiz.length,
     stepCount: summary.stepCount,
     tokens: summary.tokenUsage,
     totalChunks,

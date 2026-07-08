@@ -50,6 +50,7 @@ LABEL org.opencontainers.image.title="sinnau" \
       org.opencontainers.image.licenses="UNLICENSED"
 
 ENV NODE_ENV=production \
+    ENVIRONMENT=production \
     PORT=11085 \
     HOST=0.0.0.0 \
     BODY_SIZE_LIMIT=50M \

@@ -150,8 +150,9 @@ describe.concurrent(AiLimitService, () => {
       repo.sumUsageInWindow.mockResolvedValue(0);
       repo.markRefunded.mockResolvedValue(true);
 
-      const lookupPlan = async () =>
-        Promise.reject(new Error("Plan service unavailable"));
+      const lookupPlan = async () => {
+        throw new Error("Plan service unavailable");
+      };
       // eslint-disable-next-line no-unsafe-type-assertion
       const service = new AiLimitService(
         repo,

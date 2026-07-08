@@ -25,7 +25,6 @@ export default defineConfig({
     },
   },
   test: {
-    setupFiles: ["./vitest.setup.ts"],
     coverage: {
       enabled: false,
       exclude: [
@@ -60,5 +59,6 @@ export default defineConfig({
       },
     ],
     reporters: getReporters(),
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
