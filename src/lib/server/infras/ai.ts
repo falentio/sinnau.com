@@ -1,9 +1,6 @@
 import { building } from "$app/env";
 import { env } from "$lib/server/infras/env";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { getLogger } from "@logtape/logtape";
-
-const logger = getLogger(["sinnau.com", "ai", "util"]);
 
 const getClient = () => {
   if (process.env.VITEST || building) {
@@ -14,15 +11,6 @@ const getClient = () => {
     return createOpenAICompatible({
       apiKey: env.AI_APIKEY,
       baseURL: env.AI_BASEURL,
-      async fetch(...args) {
-        const init: RequestInit = args[1] ?? {};
-        const body = JSON.parse(init.body as string);
-        logger.debug("AI request body", () => ({
-          keys: Object.keys(body),
-          thinking: body.thinking,
-        }));
-        return await fetch(...args);
-      },
       name: env.AI_PROVIDER_NAME,
     });
   }
