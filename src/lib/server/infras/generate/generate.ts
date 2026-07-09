@@ -123,8 +123,7 @@ const groupChunk = (chunks: string[], groupSize: number): GroupedChunk[][] => {
 const siblingChunkMessage = (
   heading: string,
   intro: string,
-  content: Contents,
-  allChapterSlugs: string[] = []
+  content: Contents
 ) => {
   const message = [] as string[];
   // oxlint-disable-next-line unicorn/no-immediate-mutation -- improve readability by separating message construction into multiple lines
@@ -164,6 +163,16 @@ const siblingChunkMessage = (
   if (content.flashcard.length === 0) {
     message.push("No flashcards generated yet.");
   }
+  return {
+    content: message.join("\n"),
+    role: "user",
+  } as const;
+};
+
+export const allChaptersMessage = (allChapterSlugs: string[]) => {
+  const message = [] as string[];
+  // oxlint-disable-next-line unicorn/no-immediate-mutation
+  message.push("# All Chapters");
 
   message.push("");
   message.push("# All Chapters");
@@ -178,32 +187,25 @@ const siblingChunkMessage = (
   if (allChapterSlugs.length === 0) {
     message.push("No chapters generated yet.");
   }
+
   return {
     content: message.join("\n"),
     role: "user",
   } as const;
 };
 
-export const previousContentMessage = (
-  content: Contents,
-  allChapterSlugs: string[] = []
-) =>
+export const previousContentMessage = (content: Contents) =>
   siblingChunkMessage(
     "Previous content",
     "This is the content that previous chunk has generated. Do not add same content again if it only rephrase.",
-    content,
-    allChapterSlugs
+    content
   );
 
-export const nextContentMessage = (
-  content: Contents,
-  allChapterSlugs: string[] = []
-) =>
+export const nextContentMessage = (content: Contents) =>
   siblingChunkMessage(
     "Next chunk content",
     "This is the content that the next chunk has generated. Do not add same content again if it only rephrase.",
-    content,
-    allChapterSlugs
+    content
   );
 
 const currentChunkMessage = (currentChunk: string) =>
@@ -403,15 +405,18 @@ export const buildSiblingMessages = (
   index: number,
   chunks: readonly SuccessRecord[]
 ): ModelMessage[] => {
-  const all = collectChapterSlugs(chunks);
   const messages: ModelMessage[] = [];
+  const all = collectChapterSlugs(chunks);
+  if (all.length > 0) {
+    messages.push(allChaptersMessage(all));
+  }
   const prev = chunks.find((c) => c.index === index - 1);
   if (prev) {
-    messages.push(previousContentMessage(prev.content, all));
+    messages.push(previousContentMessage(prev.content));
   }
   const next = chunks.find((c) => c.index === index + 1);
   if (next) {
-    messages.push(nextContentMessage(next.content, all));
+    messages.push(nextContentMessage(next.content));
   }
   return messages;
 };
@@ -578,10 +583,15 @@ export const processChunkGroup = async (opts: {
   }
 };
 
+const getDefaultChunkSize = (contentLength: number): number => {
+  const n = Math.floor(contentLength / 10_000);
+  return 11_000 + n * 100;
+};
+
 export const generate = async (
   opts: GenerateOptions
 ): Promise<GenerateResult> => {
-  const chunkSize = opts.chunkSize ?? 13_000;
+  const chunkSize = opts.chunkSize ?? getDefaultChunkSize(opts.content.length);
   const groupSize = opts.groupSize ?? 3;
   const maxSteps = getStep(opts.extractionType ?? "normal");
   const maxTokens = getMaxTokens(maxSteps);

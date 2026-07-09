@@ -84,7 +84,7 @@ export const env = {
   },
   get BETTER_AUTH_SECRET() {
     if (building) {
-      return "dev-secret";
+      return "danksndkasndnasndkk";
     }
     return required("BETTER_AUTH_SECRET");
   },
