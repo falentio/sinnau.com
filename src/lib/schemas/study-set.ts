@@ -1,6 +1,11 @@
 import * as v from "valibot";
 
 import { createPrefixedIdSchema } from "./id-schema.ts";
+import {
+  STUDY_SET_DESCRIPTION_MAX_LENGTH,
+  STUDY_SET_TITLE_MAX_LENGTH,
+  STUDY_SET_TITLE_MIN_LENGTH,
+} from "./study-set.constant.ts";
 
 export const STUDY_SET_ID_PREFIX = "sts";
 
@@ -9,12 +14,21 @@ export const STUDY_SET_VISIBILITIES = ["PUBLIC", "PRIVATE"] as const;
 export const trimmedTitleSchema = v.pipe(
   v.string(),
   v.trim(),
-  v.minLength(5, "Judul minimal 5 karakter setelah dipangkas"),
-  v.maxLength(50, "Judul maksimal 50 karakter")
+  v.minLength(
+    STUDY_SET_TITLE_MIN_LENGTH,
+    "Judul minimal 5 karakter setelah dipangkas"
+  ),
+  v.maxLength(STUDY_SET_TITLE_MAX_LENGTH, "Judul maksimal 50 karakter")
 );
 
 export const descriptionSchema = v.optional(
-  v.pipe(v.string(), v.maxLength(2000, "Deskripsi maksimal 2000 karakter"))
+  v.pipe(
+    v.string(),
+    v.maxLength(
+      STUDY_SET_DESCRIPTION_MAX_LENGTH,
+      "Deskripsi maksimal 2000 karakter"
+    )
+  )
 );
 
 const filenameSchema = v.pipe(
