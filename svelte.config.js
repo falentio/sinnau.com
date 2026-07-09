@@ -7,7 +7,11 @@ const config = {
     runes: ({ filename }) =>
       filename.split(/[/\\]/u).includes("node_modules") ? undefined : true,
   },
-  kit: { adapter: adapter() },
+  kit: {
+    adapter: adapter({
+      precompress: false,
+    }),
+  },
 };
 
 export default config;
