@@ -1,7 +1,6 @@
 import { totalmem } from "node:os";
 import { hrtime } from "node:process";
 
-import { dev } from "$app/env";
 import { getLogger } from "@logtape/logtape";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -14,19 +13,20 @@ const logger = getLogger(["sinnau.com", "db", "client"]);
 
 const MMAP_CAP = 512 * 1024 * 1024;
 
+const SLOW_QUERY_MESSAGE = "Slow query detected";
+const SLOW_QUERY_TRESHOLD_MS = 10;
+
 const proxyDatabase = (sqlite: Database.Database): Database.Database => {
   const exec = sqlite.exec.bind(sqlite);
-  const REPORT_SLOW_QUERIES_MS = 5;
   sqlite.exec = (sql) => {
     const start = hrtime.bigint();
     try {
-      logger.debug("Executing SQL: {sql}", () => ({ sql }));
       return exec(sql);
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-      if (durationMs > REPORT_SLOW_QUERIES_MS) {
-        logger.debug("Execution completed in {duration} ms", () => ({
-          duration: durationMs.toFixed(2),
+      if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+        logger.warn(SLOW_QUERY_MESSAGE, () => ({
+          durationMs,
           sql,
         }));
       }
@@ -42,9 +42,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         return fn(...args);
       } finally {
         const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-        if (durationMs > REPORT_SLOW_QUERIES_MS) {
-          logger.debug("Transaction completed in {duration} ms", () => ({
-            duration: durationMs.toFixed(2),
+        if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+          logger.warn("Slow transaction", () => ({
+            durationMs,
           }));
         }
       }
@@ -66,9 +66,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         } finally {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
-          if (durationMs > REPORT_SLOW_QUERIES_MS) {
-            logger.debug("Prepared statement run in {duration} ms", () => ({
-              duration: durationMs.toFixed(2),
+          if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+            logger.warn(SLOW_QUERY_MESSAGE, () => ({
+              durationMs,
               sql,
             }));
           }
@@ -83,9 +83,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         } finally {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
-          if (durationMs > REPORT_SLOW_QUERIES_MS) {
-            logger.debug("Prepared statement raw in {duration} ms", () => ({
-              duration: durationMs.toFixed(2),
+          if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+            logger.warn(SLOW_QUERY_MESSAGE, () => ({
+              durationMs,
               sql,
             }));
           }
@@ -95,9 +95,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
       return prepared;
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-      if (durationMs > REPORT_SLOW_QUERIES_MS) {
-        logger.debug("Prepared statement in {duration} ms", () => ({
-          duration: durationMs.toFixed(2),
+      if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+        logger.warn(SLOW_QUERY_MESSAGE, () => ({
+          durationMs,
           sql,
         }));
       }
