@@ -5,7 +5,7 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 const getClient = () => {
   if (process.env.VITEST || building) {
     // oxlint-disable-next-line typescript/no-explicit-any
-    return undefined as any;
+    return undefined as never;
   }
   if (env.AI_COMPATIBILITY === "openai") {
     return createOpenAICompatible({
