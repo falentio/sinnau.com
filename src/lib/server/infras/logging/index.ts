@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import { dev } from "$app/environment";
 import {
   configure,
@@ -34,6 +36,7 @@ const sinks = {
 const loggerSinks = axiom ? ["console", "axiom"] : ["console"];
 
 await configure({
+  contextLocalStorage: new AsyncLocalStorage(),
   loggers: [
     {
       category: ["sinnau.com"],

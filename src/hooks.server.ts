@@ -11,7 +11,7 @@ import { auth } from "$lib/server/infras/auth";
 import { env } from "$lib/server/infras/env";
 import { generateService } from "$lib/server/services/generate";
 import { nanoid } from "$lib/server/utils/nanoid";
-import { getLogger } from "@logtape/logtape";
+import { getLogger, lazy, withContext } from "@logtape/logtape";
 import { redirect, isHttpError, isRedirect } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
@@ -39,7 +39,11 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
   };
 
   wideEventStorage.assign({
-    user: { id: event.locals.user?.id },
+    user: {
+      lastLoginMethod: event.locals.user?.lastLoginMethod,
+      role: event.locals.user?.role,
+    },
+    userId: event.locals.user?.id,
   });
 
   return await svelteKitHandler({ auth, building, event, resolve });
@@ -108,55 +112,63 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
     requestId,
     route: event.route,
   } satisfies WideEventStorage.WideEventData;
-  return wideEventStorage.run(initialWideEventData, async () => {
-    try {
-      const result = await resolve(event);
-      result.headers.set("x-request-id", requestId);
-      wideEventStorage.assign({
-        response: {
-          headers: Object.fromEntries(result.headers.entries()),
-          status: result.status,
-        },
-      });
-      return result;
-    } catch (error) {
-      if (isRedirect(error)) {
-        wideEventStorage.assign({
-          response: {
-            status: error.status,
-          },
-        });
-        throw error;
-      }
-      if (isHttpError(error)) {
-        wideEventStorage.assign({
-          http: {
-            status: error.status || 500,
-          },
-          isError: true,
-        });
-      } else if (error instanceof Error) {
-        wideEventStorage.assign({
-          error: {
-            message: error.message,
-            name: error.name,
-            stack: error.stack,
-          },
-          http: {
-            status: 500,
-          },
-          isError: true,
-        });
-      }
-      throw error;
-    } finally {
-      const durationMs = Number(hrtime.bigint() - requestStart) / 1_000_000;
-      logger.info("Request completed.", () => ({
-        ...wideEventStorage.get(),
-        durationMs,
-      }));
-    }
-  });
+  return await withContext(
+    {
+      app: lazy(() => wideEventStorage.get().app),
+      requestId: lazy(() => wideEventStorage.get().requestId),
+      userId: lazy(() => wideEventStorage.get().userId),
+    },
+    async () =>
+      await wideEventStorage.run(initialWideEventData, async () => {
+        try {
+          const result = await resolve(event);
+          result.headers.set("x-request-id", requestId);
+          wideEventStorage.assign({
+            response: {
+              headers: Object.fromEntries(result.headers.entries()),
+              status: result.status,
+            },
+          });
+          return result;
+        } catch (error) {
+          if (isRedirect(error)) {
+            wideEventStorage.assign({
+              response: {
+                status: error.status,
+              },
+            });
+            throw error;
+          }
+          if (isHttpError(error)) {
+            wideEventStorage.assign({
+              http: {
+                status: error.status || 500,
+              },
+              isError: true,
+            });
+          } else if (error instanceof Error) {
+            wideEventStorage.assign({
+              error: {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+              },
+              http: {
+                status: 500,
+              },
+              isError: true,
+            });
+          }
+          throw error;
+        } finally {
+          const durationMs = Number(hrtime.bigint() - requestStart) / 1_000_000;
+          logger.info("Request completed.", () => ({
+            ...wideEventStorage.get(),
+            durationMs,
+          }));
+        }
+      })
+  );
 };
 
 const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
