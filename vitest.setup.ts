@@ -5,5 +5,9 @@ configureSync({
     { category: [], lowestLevel: "debug", sinks: ["null"] },
     { category: ["logtape", "meta"], lowestLevel: "warning", sinks: ["null"] },
   ],
-  sinks: { null: () => {} },
+  sinks: {
+    null: () => {
+      /* empty */
+    },
+  },
 });
