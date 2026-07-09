@@ -479,6 +479,16 @@ export const summarizeResults = (
     stepCount += chunk.stepCount;
   }
 
+  content.chapter = content.chapter.filter((chapter) => {
+    const hasFlashcard = content.flashcard.some(
+      (flashcard) => flashcard.chapterSlug === chapter.slug
+    );
+    const hasQuiz = content.quiz.some(
+      (quiz) => quiz.chapterSlug === chapter.slug
+    );
+    return hasFlashcard || hasQuiz;
+  });
+
   return { content, stepCount, tokenUsage };
 };
 
@@ -585,7 +595,7 @@ export const processChunkGroup = async (opts: {
 
 const getDefaultChunkSize = (contentLength: number): number => {
   const n = Math.floor(contentLength / 10_000);
-  return 11_000 + n * 100;
+  return 11_000 + n * 188;
 };
 
 export const generate = async (

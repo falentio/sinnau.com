@@ -1,6 +1,7 @@
 import { getDefaultModel } from "$lib/server/infras/ai";
 import { valibotSchema } from "@ai-sdk/valibot";
-import { generateText, Output } from "ai";
+import { getLogger } from "@logtape/logtape";
+import { generateText, tool } from "ai";
 import { string, object } from "valibot";
 
 export interface InferStudyNameAndDescriptionInput {
@@ -49,12 +50,28 @@ const truncateText = (text: string, maxLength: number): string => {
   return text.slice(0, maxLength);
 };
 
+const logger = getLogger(["sinnau.com", "generate", "infra"]);
+
 export const inferStudyNameAndDescription = async ({
   text,
   filename,
 }: InferStudyNameAndDescriptionInput): Promise<InferStudyNameAndDescriptionOutput> => {
   const truncated = truncateText(text, 6000);
-  const result = await generateText({
+  const output = {
+    description: "",
+    name: "",
+  } as InferStudyNameAndDescriptionOutput;
+
+  const setStudySetNameAndDescription = tool({
+    description: "Set the name and description of the study set",
+    execute: (input) => {
+      output.name = input.name;
+      output.description = input.description;
+    },
+    inputSchema: valibotSchema(studySetSchema),
+  });
+
+  await generateText({
     messages: [
       {
         content: `Filename is ${filename}.\nHere is the content of first few chars \n\n---\n${truncated}`,
@@ -62,12 +79,14 @@ export const inferStudyNameAndDescription = async ({
       },
     ],
     model: getDefaultModel(),
-    output: Output.object({
-      description: "The output representing study set name and description.",
-      schema: valibotSchema(studySetSchema),
-    }),
     system: SYSTEM_PROMPT,
+    tools: { setStudySetNameAndDescription },
   });
 
-  return result.output;
+  logger.debug("Infer study name and description result", {
+    input: { filename },
+    output,
+  });
+
+  return output;
 };
