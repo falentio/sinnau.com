@@ -35,11 +35,15 @@ const extractError = (error: unknown) => {
 };
 
 export const publicProcedure = base
-  .use(async ({ next, path }) => {
+  .use(async ({ next, path, context }) => {
     const start = hrtime.bigint();
     let result: Awaited<ReturnType<typeof next>>;
     let isError = false;
     try {
+      logger.debug("Procedure started", () => ({
+        context,
+        procedure: path.join("."),
+      }));
       result = await next();
     } catch (error) {
       isError = true;

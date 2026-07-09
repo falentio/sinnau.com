@@ -18,9 +18,7 @@
 
   const { data }: Props = $props();
 
-  const generateId = $derived(data.generateId);
   const initialCheck = $derived(data.initialCheck);
-  const studySetId = $derived(data.studySetId);
 
   const ESTIMATED_DURATION_MS = 20 * 60 * 1000;
   const POLL_INTERVAL_MS = 15_000;
@@ -43,24 +41,19 @@
   // svelte-ignore state_referenced_locally
   const startedAt = $state(initialCheck.startedAt);
   const totalElapsedMs = $derived(Date.now() - startedAt);
-  const progress = $derived(
-    Math.min(totalElapsedMs / ESTIMATED_DURATION_MS, 0.95)
-  );
   const estimatedCompletedAt = $derived(
     new Date(Date.now() + Math.max(ESTIMATED_DURATION_MS - totalElapsedMs, 0))
   );
 
-  const statusText = $derived(
-    status === "CREATED"
-      ? "Memulai pembuatan materi…"
-      : status === "ONGOING"
-        ? "Membuat materimu…"
-        : status === "FAILED"
-          ? "Gagal membuat materi"
-          : status === "PARTIAL_COMPLETED"
-            ? "Sebagian materi berhasil dibuat"
-            : "Materi siap"
-  );
+  const STATUS_TEXT_MAP: Record<string, string> = {
+    COMPLETED: "Materi siap",
+    CREATED: "Memulai pembuatan materi…",
+    FAILED: "Gagal membuat materi",
+    ONGOING: "Membuat materimu…",
+    PARTIAL_COMPLETED: "Sebagian materi berhasil dibuat",
+  };
+
+  const statusText = $derived(STATUS_TEXT_MAP[status] ?? "Membuat materimu…");
 
   const isTerminal = $derived(
     status === "COMPLETED" ||
@@ -119,14 +112,12 @@
   });
 </script>
 
-<div class="max-w-md w-full flex justify-start mx-auto">
+<div class="max-w-2xl w-full flex justify-start mx-auto">
   <Button href="/home" variant="ghost"
     ><HugeiconsIcon icon={ArrowLeft01Icon} /> Kembali
   </Button>
 </div>
 <div class="flex flex-col items-center py-8">
-  <ProgressRing {progress} />
-
   <h1 class="mt-6 text-center text-lg font-semibold text-foreground">
     {statusText}
   </h1>
@@ -172,7 +163,7 @@
   {/if}
 
   {#if items.length > 0}
-    <div class="mt-10 w-full max-w-md">
+    <div class="mt-10 w-full max-w-2xl px-6">
       <p
         class="mb-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground"
       >
