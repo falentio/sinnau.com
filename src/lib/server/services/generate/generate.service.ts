@@ -173,7 +173,7 @@ export class GenerateService {
       isInputTruncated: truncated,
       languageStyle: input.languageStyle ?? "student-friendly",
       ownerId: owner,
-      pdfText,
+      pdfText: inputText,
       studySetId: studySet.id,
     });
 

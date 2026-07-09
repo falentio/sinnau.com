@@ -209,6 +209,36 @@ describe.concurrent(GenerateService, () => {
           isInputTruncated: true,
         })
       );
+
+      await vi.waitFor(() => {
+        expect(pipeline.runLLM).toHaveBeenCalledWith(
+          expect.objectContaining({
+            pdfText: longText.slice(0, 500_000),
+          })
+        );
+      });
+    });
+
+    it("passes the full (untruncated) text to the pipeline when under the limit", async ({
+      expect,
+    }) => {
+      const { pipeline, service } = setupService();
+      const shortText = "a".repeat(100);
+      pipeline.parseLiteparse.mockResolvedValue({ text: shortText });
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        { description: "desc", pdf, title: "Set" },
+        "user-1"
+      );
+
+      await vi.waitFor(() => {
+        expect(pipeline.runLLM).toHaveBeenCalledWith(
+          expect.objectContaining({
+            pdfText: shortText,
+          })
+        );
+      });
     });
   });
 
