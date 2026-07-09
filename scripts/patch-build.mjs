@@ -34,7 +34,7 @@ writeFileSync(buildIndex, code);
 // 2. Remove client source maps from the build. Server-side maps are kept so that
 //    `NODE_OPTIONS=--enable-source-maps` (see Dockerfile) can still produce mapped
 //    stack traces. Client maps are never needed over HTTP and must not be served.
-function removeMapFiles(dir) {
+const removeMapFiles = (dir) => {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) {
@@ -43,6 +43,6 @@ function removeMapFiles(dir) {
       rmSync(full);
     }
   }
-}
+};
 
 removeMapFiles(join(root, "build", "client"));
