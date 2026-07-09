@@ -41,9 +41,9 @@
   let advancedMode = $state(false);
   let selectedPdf = $state<File | null>(null);
 
-  const submitGenerate = async (data: CreateGenerateInput) => {
+  const submitGenerate = async (input: CreateGenerateInput) => {
     try {
-      const result = await client.generate.create(data);
+      const result = await client.generate.create(input);
       toast.success("Pembuatan modul dimulai.", {
         position: "top-right",
       });
@@ -95,7 +95,7 @@
   );
 
   const { form: formData, enhance, submitting } = form;
-  const titleCount = $derived($formData.title.trim().length);
+  const titleCount = $derived(($formData.title ?? "").trim().length);
   const descriptionCount = $derived(($formData.description ?? "").length);
   const selectedVisibilityLabel = $derived(
     visibilityItems.find((item) => item.value === $formData.visibility)
@@ -111,11 +111,6 @@
       data.languageStyles.find((s) => s.isDefault)?.label ??
       "Ramah Pelajar"
   );
-
-  const { errors } = form;
-  $effect(() => {
-    console.log($errors);
-  });
 
   const handlePdfChange = (e: Event) => {
     const input = e.currentTarget as HTMLInputElement;
@@ -150,86 +145,6 @@
   enctype="multipart/form-data"
   use:enhance
 >
-  <Form.Field {form} name="title">
-    <Form.Control>
-      {#snippet children({ props })}
-        <div class="flex items-center justify-between gap-3">
-          <Form.Label>Judul</Form.Label>
-          <span class="text-xs text-muted-foreground">{titleCount}/50</span>
-        </div>
-        <Input
-          {...props}
-          bind:value={$formData.title}
-          placeholder="Contoh: Aljabar Linear Dasar"
-          disabled={$submitting}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.Description>Gunakan judul yang mudah dikenali.</Form.Description>
-    <Form.FieldErrors />
-  </Form.Field>
-
-  <Form.Field {form} name="description">
-    <Form.Control>
-      {#snippet children({ props })}
-        <div class="flex items-center justify-between gap-3">
-          <Form.Label>Deskripsi</Form.Label>
-          <span class="text-xs text-muted-foreground"
-            >{descriptionCount}/2000</span
-          >
-        </div>
-        <Textarea
-          {...props}
-          bind:value={$formData.description}
-          placeholder="Ringkas isi modul, tujuan belajar, atau topik yang akan dibahas."
-          disabled={$submitting}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.Description>Opsional, tapi membantu memberi konteks.</Form.Description
-    >
-    <Form.FieldErrors />
-  </Form.Field>
-
-  <Form.Field {form} name="visibility">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Visibilitas</Form.Label>
-        <Select.Root
-          type="single"
-          name="visibility"
-          items={visibilityItems}
-          bind:value={$formData.visibility}
-          disabled={$submitting}
-        >
-          <Select.Trigger
-            {...props}
-            class="w-full"
-            aria-label="Pilih visibilitas"
-          >
-            <span class="min-w-0 flex-1 truncate text-left"
-              >{selectedVisibilityLabel}</span
-            >
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Group>
-              <Select.Label>Visibilitas</Select.Label>
-              {#each visibilityItems as item (item.value)}
-                <Select.Item value={item.value} label={item.label}>
-                  {item.label}
-                </Select.Item>
-              {/each}
-            </Select.Group>
-          </Select.Content>
-        </Select.Root>
-      {/snippet}
-    </Form.Control>
-    <Form.Description
-      >Privat hanya untukmu, publik bisa diakses lewat tautan langsung.</Form.Description
-    >
-    <Form.FieldErrors />
-  </Form.Field>
-
   <Form.Field {form} name="pdf">
     <Form.Control>
       {#snippet children({ props })}
@@ -274,6 +189,45 @@
     <Form.FieldErrors />
   </Form.Field>
 
+  <Form.Field {form} name="visibility">
+    <Form.Control>
+      {#snippet children({ props })}
+        <Form.Label>Visibilitas</Form.Label>
+        <Select.Root
+          type="single"
+          name="visibility"
+          items={visibilityItems}
+          bind:value={$formData.visibility}
+          disabled={$submitting}
+        >
+          <Select.Trigger
+            {...props}
+            class="w-full"
+            aria-label="Pilih visibilitas"
+          >
+            <span class="min-w-0 flex-1 truncate text-left"
+              >{selectedVisibilityLabel}</span
+            >
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              <Select.Label>Visibilitas</Select.Label>
+              {#each visibilityItems as item (item.value)}
+                <Select.Item value={item.value} label={item.label}>
+                  {item.label}
+                </Select.Item>
+              {/each}
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>
+      {/snippet}
+    </Form.Control>
+    <Form.Description
+      >Privat hanya untukmu, publik bisa diakses lewat tautan langsung.</Form.Description
+    >
+    <Form.FieldErrors />
+  </Form.Field>
+
   <button
     type="button"
     onclick={() => (advancedMode = !advancedMode)}
@@ -284,6 +238,48 @@
   </button>
 
   {#if advancedMode}
+    <Form.Field {form} name="title">
+      <Form.Control>
+        {#snippet children({ props })}
+          <div class="flex items-center justify-between gap-3">
+            <Form.Label>Judul</Form.Label>
+            <span class="text-xs text-muted-foreground">{titleCount}/50</span>
+          </div>
+          <Input
+            {...props}
+            bind:value={$formData.title}
+            placeholder="Contoh: Aljabar Linear Dasar"
+            disabled={$submitting}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.Description>Gunakan judul yang mudah dikenali.</Form.Description>
+      <Form.FieldErrors />
+    </Form.Field>
+
+    <Form.Field {form} name="description">
+      <Form.Control>
+        {#snippet children({ props })}
+          <div class="flex items-center justify-between gap-3">
+            <Form.Label>Deskripsi</Form.Label>
+            <span class="text-xs text-muted-foreground"
+              >{descriptionCount}/2000</span
+            >
+          </div>
+          <Textarea
+            {...props}
+            bind:value={$formData.description}
+            placeholder="Ringkas isi modul, tujuan belajar, atau topik yang akan dibahas."
+            disabled={$submitting}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.Description
+        >Opsional, tapi membantu memberi konteks.</Form.Description
+      >
+      <Form.FieldErrors />
+    </Form.Field>
+
     <Form.Field {form} name="extractionType">
       <Form.Control>
         <Form.Label>Tipe Ekstraksi</Form.Label>
