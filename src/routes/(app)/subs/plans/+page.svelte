@@ -1,131 +1,85 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
+  import { client } from "$lib/orpc";
+  import type { PlanCatalogItem } from "$lib/schemas/plan";
+  import {
+    PLAN_DURATION_PAID_MONTHS,
+    PLAN_TIER_RANK as tierRank,
+  } from "$lib/schemas/plan.constant";
 
+  import type { PageData } from "./$types";
   import ActivePlanBanner from "./_components/active-plan-banner.svelte";
   import PlanCard from "./_components/plan-card.svelte";
 
-  interface Duration {
-    months: 1 | 6 | 12;
-    grossAmount: number;
-    label: string;
-    savingsLabel: string;
-  }
-  interface Plan {
-    key: "LITE" | "PLUS" | "PREMIUM";
-    name: string;
-    monthlyPrice: number;
-    benefits: string[];
-    durations: Duration[];
-  }
-
-  const plans: Plan[] = [
-    {
-      benefits: [
-        "Unlimited quiz attempts",
-        "FSRS flashcard session",
-        "Weak chapter spot analysis",
-      ],
-      durations: [
-        {
-          grossAmount: 30_000,
-          label: "Bayar 1 bulan",
-          months: 1,
-          savingsLabel: "harga penuh",
-        },
-        {
-          grossAmount: 150_000,
-          label: "Bayar 5 bulan",
-          months: 6,
-          savingsLabel: "hemat 1 bulan",
-        },
-        {
-          grossAmount: 270_000,
-          label: "Bayar 9 bulan",
-          months: 12,
-          savingsLabel: "hemat 3 bulan",
-        },
-      ],
-      key: "LITE",
-      monthlyPrice: 30_000,
-      name: "Lite",
-    },
-    {
-      benefits: [
-        "Semua benefit Lite",
-        "2× batas generate",
-        "Riwayat belajar panjang",
-      ],
-      durations: [
-        {
-          grossAmount: 50_000,
-          label: "Bayar 1 bulan",
-          months: 1,
-          savingsLabel: "harga penuh",
-        },
-        {
-          grossAmount: 250_000,
-          label: "Bayar 5 bulan",
-          months: 6,
-          savingsLabel: "hemat 1 bulan",
-        },
-        {
-          grossAmount: 450_000,
-          label: "Bayar 9 bulan",
-          months: 12,
-          savingsLabel: "hemat 3 bulan",
-        },
-      ],
-      key: "PLUS",
-      monthlyPrice: 50_000,
-      name: "Plus",
-    },
-    {
-      benefits: [
-        "Semua benefit Lite",
-        "6× batas generate",
-        "Priority saat jam sibuk",
-        "Akses fitur beta lebih dulu",
-      ],
-      durations: [
-        {
-          grossAmount: 100_000,
-          label: "Bayar 1 bulan",
-          months: 1,
-          savingsLabel: "harga penuh",
-        },
-        {
-          grossAmount: 500_000,
-          label: "Bayar 5 bulan",
-          months: 6,
-          savingsLabel: "hemat 1 bulan",
-        },
-        {
-          grossAmount: 900_000,
-          label: "Bayar 9 bulan",
-          months: 12,
-          savingsLabel: "hemat 3 bulan",
-        },
-      ],
-      key: "PREMIUM",
-      monthlyPrice: 100_000,
-      name: "Premium",
-    },
-  ];
-
-  const activePlan: {
-    plan: "LITE" | "PLUS" | "PREMIUM";
-    daily: number;
-    weekly: number;
-  } | null = { daily: 12, plan: "PLUS", weekly: 30 };
-
-  const tierRank: Record<Plan["key"], number> = {
-    LITE: 1,
-    PLUS: 2,
-    PREMIUM: 3,
-  };
+  let { data }: { data: PageData } = $props();
 
   let duration = $state("12");
-  const selectedDuration = $derived(Number(duration) as 1 | 6 | 12);
+  let selectedDuration = $derived(Number(duration) as 1 | 6 | 12);
+
+  let checkoutError = $state<string | null>(null);
+
+  const toPlanCardDuration = (d: PlanCatalogItem["durations"][number]) => {
+    const paidMonths = PLAN_DURATION_PAID_MONTHS[d.months];
+    const savings = d.months - paidMonths;
+    return {
+      grossAmount: d.grossAmount,
+      label: `Bayar ${paidMonths} bulan`,
+      months: d.months,
+      savingsLabel: savings === 0 ? "harga penuh" : `hemat ${savings} bulan`,
+    };
+  };
+
+  const plans = $derived(
+    data.plans.map((p) => ({
+      benefits: p.benefits,
+      durations: p.durations.map(toPlanCardDuration),
+      key: p.key,
+      monthlyPrice: p.monthlyPrice,
+      name: p.name,
+    }))
+  );
+
+  const activePlanKey = $derived(data.activePlan?.planKey ?? null);
+  const isDowngrade = (planKey: "LITE" | "PLUS" | "PREMIUM") => {
+    if (!activePlanKey) {
+      return false;
+    }
+    return tierRank[planKey] < tierRank[activePlanKey];
+  };
+
+  const handleCheckout = async (
+    planKey: "LITE" | "PLUS" | "PREMIUM",
+    durationMonths: 1 | 6 | 12
+  ) => {
+    checkoutError = null;
+    try {
+      const result = await client.plan.checkout({ durationMonths, planKey });
+
+      const qrUrl =
+        result.paymentData.actions.find((a) => a.name === "generate-qr-code")
+          ?.url ?? "";
+
+      sessionStorage.setItem(
+        `checkout:${result.orderId}`,
+        JSON.stringify({
+          durationMonths,
+          expiresAt: result.expiresAt,
+          grossAmount: result.grossAmount,
+          planKey,
+          qrUrl,
+        })
+      );
+
+      await goto(`/subs/checkout/${result.orderId}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        checkoutError = error.message;
+        return;
+      }
+      checkoutError = "Gagal memproses pesanan. Coba lagi.";
+    }
+  };
 </script>
 
 <svelte:head>
@@ -150,12 +104,20 @@
     </p>
   </header>
 
-  {#if activePlan}
+  {#if checkoutError}
+    <div
+      class="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+    >
+      {checkoutError}
+    </div>
+  {/if}
+
+  {#if data.activePlan}
     <div class="pb-8 md:pb-10">
       <ActivePlanBanner
-        plan={activePlan.plan}
-        daily={activePlan.daily}
-        weekly={activePlan.weekly}
+        plan={data.activePlan.planKey}
+        daily={data.activePlan.daily}
+        weekly={data.activePlan.weekly}
       />
     </div>
   {/if}
@@ -183,40 +145,24 @@
     </Tabs.Root>
   </div>
 
-  <section
-    class="grid grid-cols-1 gap-4 pt-8 md:grid-cols-12 md:gap-5 md:pt-10 pb-16"
-  >
-    <div class="md:col-span-5">
+  <section class="flex flex-col gap-4 pt-8 md:gap-5 md:pt-10 pb-16">
+    {#each plans as plan, i}
       <PlanCard
-        plan={plans[0]}
+        {plan}
         {selectedDuration}
-        disabled={activePlan
-          ? tierRank[plans[0].key] < tierRank[activePlan.plan]
-          : false}
+        variant={i === 1 ? "featured" : "default"}
+        disabled={isDowngrade(plan.key)}
+        onselect={handleCheckout}
       />
-    </div>
-
-    <div class="md:col-span-7">
-      <PlanCard plan={plans[1]} {selectedDuration} variant="featured" />
-    </div>
-
-    <div class="md:col-span-12">
-      <PlanCard plan={plans[2]} {selectedDuration} variant="wide" />
-    </div>
+    {/each}
   </section>
 
   <footer
-    class="flex flex-col gap-3 border-t border-border/60 py-10 text-[13px] text-muted-foreground md:flex-row md:items-center md:justify-between"
+    class="flex flex-col gap-3 border-t border-border/60 py-10 text-[13px] text-muted-foreground"
   >
     <p>
       Pembayaran diproses lewat QRIS. Pesanan kedaluwarsa otomatis setelah 15
       menit jika belum dibayar.
     </p>
-    <a
-      href="/subs/history"
-      class="font-medium text-foreground/70 underline-offset-4 transition-colors hover:text-foreground hover:underline"
-    >
-      Lihat pesanan sebelumnya
-    </a>
   </footer>
 </div>

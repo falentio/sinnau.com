@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { ArrowRight01Icon } from "$lib/components/features/icons";
   import { PlanStatusBadge, formatIdr } from "$lib/components/features/plan";
-  import { HugeiconsIcon } from "@hugeicons/svelte";
 
   type OrderStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
   type Order = {
@@ -26,15 +24,10 @@
   const sku = $derived(
     `${order.planKey.toLowerCase()}-${order.durationMonths}m`
   );
-  const isPending = $derived(order.status === "PENDING");
-  const isInteractive = $derived(isPending);
 </script>
 
-<a
-  href={isInteractive ? `/subs/checkout/${order.id}` : undefined}
-  aria-disabled={!isInteractive}
-  class="group flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3.5 transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] last:border-b-0 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-inset active:bg-muted/60 md:gap-4 md:px-6 md:py-4"
-  class:pointer-events-none={!isInteractive}
+<div
+  class="flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3.5 last:border-b-0 md:gap-4 md:px-6 md:py-4"
 >
   <div
     class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.04] font-heading text-xs font-semibold tabular-nums text-foreground/80"
@@ -71,11 +64,5 @@
     >
       {formatIdr(order.grossAmount)}
     </span>
-    {#if isInteractive}
-      <HugeiconsIcon
-        icon={ArrowRight01Icon}
-        class="size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5"
-      />
-    {/if}
   </div>
-</a>
+</div>

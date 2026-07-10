@@ -33,19 +33,15 @@
   } = $props();
 
   const isFeatured = $derived(variant === "featured");
-  const isWide = $derived(variant === "wide");
   const duration = $derived(
     plan.durations.find((d) => d.months === selectedDuration) ??
-      plan.durations[0]
+      plan.durations[0]!
   );
 </script>
 
 <article
   class={[
-    "group relative flex overflow-hidden rounded-3xl border bg-card transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-    isWide
-      ? "flex-col p-6 md:flex-row md:items-stretch md:gap-8 md:p-8"
-      : "flex-col p-6 md:p-8",
+    "group relative flex flex-col overflow-hidden rounded-3xl border bg-card p-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex-row md:items-stretch md:gap-8 md:p-8",
     isFeatured
       ? "border-amber-500/30 bg-gradient-to-b from-amber-500/[0.06] via-card to-card shadow-[0_1px_0_0_rgba(217,119,6,0.08)] ring-1 ring-amber-500/10"
       : "border-border/60 ring-1 ring-foreground/[0.04]",
@@ -58,7 +54,7 @@
     ></div>
   {/if}
 
-  <div class={["flex flex-col", isWide ? "md:flex-1" : "flex-1"]}>
+  <div class="flex flex-1 flex-col">
     <header class="flex items-baseline justify-between gap-4">
       <div class="flex flex-col gap-1">
         <div class="flex items-center gap-2">
@@ -115,12 +111,7 @@
     </ul>
   </div>
 
-  <div
-    class={[
-      "flex flex-col",
-      isWide ? "mt-6 md:mt-0 md:w-72 md:shrink-0 md:justify-end" : "mt-8",
-    ]}
-  >
+  <div class="mt-8 flex flex-col md:mt-0 md:w-72 md:shrink-0 md:justify-end">
     <button
       type="button"
       {disabled}
