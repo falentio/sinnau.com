@@ -1,4 +1,4 @@
-import { env } from "$lib/server/infras/env.ts";
+import { env } from "$lib/server/infras/env";
 
 import { MidtransClient } from "./client.ts";
 

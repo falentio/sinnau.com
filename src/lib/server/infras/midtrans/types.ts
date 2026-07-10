@@ -71,7 +71,7 @@ export const qrisChargeResponseSchema = v.object({
 // ─── Webhook body (QRIS) ────────────────────────────────────────────
 
 export const webhookBodySchema = v.object({
-  acquirer: v.string(),
+  acquirer: v.optional(v.string()),
   currency: v.string(),
   fraud_status: v.string(),
   gross_amount: v.string(),
