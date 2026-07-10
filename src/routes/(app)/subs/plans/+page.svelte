@@ -1,5 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import ActivePlanBanner from "$lib/components/features/subs/active-plan-banner.svelte";
+  import PlanCard from "$lib/components/features/subs/plan-card.svelte";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import { client } from "$lib/orpc";
   import type { PlanCatalogItem } from "$lib/schemas/plan";
@@ -9,8 +11,6 @@
   } from "$lib/schemas/plan.constant";
 
   import type { PageData } from "./$types";
-  import ActivePlanBanner from "./_components/active-plan-banner.svelte";
-  import PlanCard from "./_components/plan-card.svelte";
 
   let { data }: { data: PageData } = $props();
 

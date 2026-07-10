@@ -2,7 +2,7 @@
   import { PlanStatusBadge, formatIdr } from "$lib/components/features/plan";
 
   type OrderStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
-  type Order = {
+  interface Order {
     id: string;
     planKey: "LITE" | "PLUS" | "PREMIUM";
     planName: string;
@@ -10,7 +10,7 @@
     grossAmount: number;
     createdAt: Date;
     status: OrderStatus;
-  };
+  }
 
   let { order }: { order: Order } = $props();
 

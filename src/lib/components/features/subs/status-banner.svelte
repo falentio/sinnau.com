@@ -11,12 +11,12 @@
   let { status }: { status: OrderStatus } = $props();
 
   const meta = {
-    PAID: {
-      accent: "text-emerald-700 dark:text-emerald-400",
-      bg: "bg-emerald-500/[0.06] border-emerald-500/20",
-      body: "Paket kamu sudah aktif. Kuota generate sudah ditambahkan.",
-      icon: Tick02Icon,
-      label: "Pembayaran berhasil",
+    CANCELLED: {
+      accent: "text-muted-foreground",
+      bg: "bg-muted/40 border-border/60",
+      body: "Pesanan ini tidak dilanjutkan. Tidak ada paket yang diaktifkan.",
+      icon: Cancel01Icon,
+      label: "Pesanan dibatalkan",
     },
     EXPIRED: {
       accent: "text-amber-700 dark:text-amber-400",
@@ -25,12 +25,12 @@
       icon: Alert02Icon,
       label: "Pesanan kedaluwarsa",
     },
-    CANCELLED: {
-      accent: "text-muted-foreground",
-      bg: "bg-muted/40 border-border/60",
-      body: "Pesanan ini tidak dilanjutkan. Tidak ada paket yang diaktifkan.",
-      icon: Cancel01Icon,
-      label: "Pesanan dibatalkan",
+    PAID: {
+      accent: "text-emerald-700 dark:text-emerald-400",
+      bg: "bg-emerald-500/[0.06] border-emerald-500/20",
+      body: "Paket kamu sudah aktif. Kuota generate sudah ditambahkan.",
+      icon: Tick02Icon,
+      label: "Pembayaran berhasil",
     },
     PENDING: {
       accent: "text-muted-foreground",

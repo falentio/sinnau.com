@@ -5,14 +5,13 @@
     ArrowRight01Icon,
   } from "$lib/components/features/icons";
   import { formatIdr } from "$lib/components/features/plan";
+  import ExpiryCountdown from "$lib/components/features/subs/expiry-countdown.svelte";
+  import QrisDisplay from "$lib/components/features/subs/qris-display.svelte";
+  import StatusBanner from "$lib/components/features/subs/status-banner.svelte";
   import { client } from "$lib/orpc";
   import { PLAN_NAME } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { onMount } from "svelte";
-
-  import ExpiryCountdown from "./_components/expiry-countdown.svelte";
-  import QrisDisplay from "./_components/qris-display.svelte";
-  import StatusBanner from "./_components/status-banner.svelte";
 
   type OrderStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
   type PlanKey = "LITE" | "PLUS" | "PREMIUM";

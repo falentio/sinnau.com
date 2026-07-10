@@ -1,11 +1,11 @@
 <script lang="ts">
   import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
+  import AiLimitCard from "$lib/components/features/subs/ai-limit-card.svelte";
+  import OrderRow from "$lib/components/features/subs/order-row.svelte";
   import { PLAN_MONTHLY_PRICE, PLAN_NAME } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
-  import AiLimitCard from "./_components/ai-limit-card.svelte";
-  import OrderRow from "./_components/order-row.svelte";
 
   type PlanKey = "LITE" | "PLUS" | "PREMIUM";
   const planName: Record<PlanKey, string> = PLAN_NAME;

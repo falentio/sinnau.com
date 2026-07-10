@@ -3,20 +3,20 @@
   import { formatIdr } from "$lib/components/features/plan";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
-  type Duration = {
+  interface Duration {
     months: 1 | 6 | 12;
     grossAmount: number;
     label: string;
     savingsLabel: string;
-  };
+  }
 
-  type Plan = {
+  interface Plan {
     key: "LITE" | "PLUS" | "PREMIUM";
     name: string;
     monthlyPrice: number;
     benefits: string[];
     durations: Duration[];
-  };
+  }
 
   let {
     plan,
@@ -35,7 +35,7 @@
   const isFeatured = $derived(variant === "featured");
   const duration = $derived(
     plan.durations.find((d) => d.months === selectedDuration) ??
-      plan.durations[0]!
+      (plan.durations[0] as (typeof plan.durations)[number])
   );
 </script>
 
