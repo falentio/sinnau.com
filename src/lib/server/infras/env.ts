@@ -115,6 +115,15 @@ export const env = {
   get LITEPARSE_BASEURL() {
     return required("LITEPARSE_BASEURL");
   },
+  get MIDTRANS_IS_PRODUCTION() {
+    return (read("MIDTRANS_IS_PRODUCTION") ?? "false") === "true";
+  },
+  get MIDTRANS_SERVER_KEY() {
+    if (building) {
+      return "";
+    }
+    return required("MIDTRANS_SERVER_KEY");
+  },
 } as const;
 
 export type Env = typeof env;
