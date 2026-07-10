@@ -1,0 +1,430 @@
+import {
+  PLAN_DAILY_DIVISOR,
+  PLAN_WEEKLY_DIVISOR,
+} from "$lib/schemas/plan.constant";
+import { ORPCError } from "@orpc/server";
+import { describe, it, vi } from "vitest";
+
+import type { MidtransClient } from "../../infras/midtrans/client.ts";
+import type { WebhookBody } from "../../infras/midtrans/types.ts";
+import type { PlanGuard } from "./plan.guard.ts";
+import { PlanService } from "./plan.service.ts";
+import {
+  createMockGuard,
+  createMockRepository,
+  createOrderFixture,
+  createPaymentFixture,
+  createUserPlanFixture,
+  EMPTY_ORDER_LIST,
+  captureError,
+} from "./plan.testing.ts";
+
+const makeWebhookBody = (
+  overrides: Partial<WebhookBody> = {}
+): WebhookBody => ({
+  currency: "IDR",
+  fraud_status: "accept",
+  gross_amount: "30000",
+  merchant_id: "mid",
+  order_id: "ord_test",
+  payment_type: "qris",
+  signature_key: "sig",
+  status_code: "200",
+  status_message: "OK",
+  transaction_id: "txn-1",
+  transaction_status: "settlement",
+  transaction_time: "2024-01-01 00:00:00",
+  ...overrides,
+});
+
+const createMockMidtrans = () => {
+  const midtrans = {
+    createQris: vi.fn(),
+  } as unknown as MidtransClient;
+  (
+    midtrans.createQris as unknown as ReturnType<typeof vi.fn>
+  ).mockResolvedValue({
+    acquirer: "gopay",
+    actions: [{ method: "GET", name: "generate-qr-code", url: "https://qr" }],
+    currency: "IDR",
+    expiry_time: undefined,
+    fraud_status: "accept",
+    gross_amount: "30000",
+    merchant_id: "mid",
+    order_id: "ord_test",
+    payment_type: "qris",
+    qr_string: "QRCODE",
+    status_code: "201",
+    status_message: "OK",
+    transaction_id: "txn-1",
+    transaction_status: "pending",
+    transaction_time: "2024-01-01 00:00:00",
+  });
+  return midtrans;
+};
+
+const setupService = (midtrans = createMockMidtrans()) => {
+  const repo = createMockRepository();
+  const guard = createMockGuard();
+  guard.requireOwner.mockImplementation((id) => id as string);
+
+  repo.findActiveUserPlan.mockResolvedValue(null);
+  repo.findOrdersByUser.mockResolvedValue(EMPTY_ORDER_LIST);
+  repo.findOrderById.mockResolvedValue(null);
+  repo.findPaymentByTransactionId.mockResolvedValue(null);
+  repo.findPaymentByOrderId.mockResolvedValue(null);
+  repo.findPaidOrdersForUser.mockResolvedValue([]);
+  repo.insertOrder.mockImplementation(
+    async (row) => createOrderFixture(row) as never
+  );
+  repo.insertPayment.mockImplementation(
+    async (row) => createPaymentFixture(row) as never
+  );
+  repo.updateOrderStatus.mockImplementation(
+    async (id, status) => createOrderFixture({ id, status }) as never
+  );
+  repo.setOrderAppliedAt.mockImplementation(
+    async (id, ms) =>
+      createOrderFixture({ appliedAt: new Date(ms), id }) as never
+  );
+  repo.updatePayment.mockImplementation(
+    async (id, patch) => createPaymentFixture({ id, ...patch }) as never
+  );
+  repo.upsertUserPlan.mockImplementation(
+    async (row) => createUserPlanFixture(row) as never
+  );
+
+  const service = new PlanService(
+    repo,
+    guard as unknown as PlanGuard,
+    midtrans
+  );
+  return { guard, midtrans, repo, service };
+};
+
+describe.concurrent("PlanService unit tests", () => {
+  describe("checkout", () => {
+    it("throws UNAUTHORIZED when the caller is not authenticated", async ({
+      expect,
+    }) => {
+      const { guard, service } = setupService();
+      guard.requireOwner.mockImplementation(() => {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Authentication is required",
+        });
+      });
+      const err = await captureError(
+        service.checkout({ durationMonths: 1, planKey: "LITE" }, null)
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("rejects a downgrade from an active higher-tier plan", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findActiveUserPlan.mockResolvedValue(
+        createUserPlanFixture({ planKey: "PREMIUM", userId: "user-1" })
+      );
+      const err = await captureError(
+        service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1")
+      );
+      expect(err).toMatchObject({ code: "DOWNGRADE_NOT_ALLOWED" });
+    });
+
+    it("creates a pending order and payment, then returns QRIS instructions", async ({
+      expect,
+    }) => {
+      const { midtrans, repo, service } = setupService();
+      const result = await service.checkout(
+        { durationMonths: 1, planKey: "LITE" },
+        "user-1"
+      );
+
+      expect(result.currency).toBe("IDR");
+      expect(result.paymentType).toBe("QRIS");
+      expect(result.grossAmount).toBe(30_000);
+      expect(result.paymentData.qrString).toBe("QRCODE");
+      expect(result.orderId).toMatch(/^ord_/u);
+
+      const insertedOrder = repo.insertOrder.mock.calls[0]?.[0];
+      expect(insertedOrder).toMatchObject({
+        grossAmount: 30_000,
+        planKey: "LITE",
+        sku: "lite-1m",
+        status: "PENDING",
+      });
+
+      const insertedPayment = repo.insertPayment.mock.calls[0]?.[0];
+      expect(insertedPayment).toMatchObject({
+        amount: 30_000,
+        gateway: "midtrans",
+        gatewayOrderId: result.orderId,
+        orderId: result.orderId,
+        status: "PENDING",
+      });
+
+      expect(midtrans.createQris).toHaveBeenCalledWith({
+        payment_type: "qris",
+        transaction_details: { gross_amount: 30_000, order_id: result.orderId },
+      });
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          gatewayTransactionId: "txn-1",
+        })
+      );
+    });
+
+    it("computes the 6-month discounted gross amount", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const result = await service.checkout(
+        { durationMonths: 6, planKey: "PLUS" },
+        "user-1"
+      );
+      expect(result.grossAmount).toBe(250_000);
+      expect(repo.insertOrder.mock.calls[0]?.[0].sku).toBe("plus-6m");
+    });
+
+    it("throws PAYMENT_GATEWAY_ERROR when Midtrans fails", async ({
+      expect,
+    }) => {
+      const midtrans = createMockMidtrans();
+      (
+        midtrans.createQris as unknown as ReturnType<typeof vi.fn>
+      ).mockRejectedValue(new Error("network down"));
+      const { service } = setupService(midtrans);
+      const err = await captureError(
+        service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1")
+      );
+      expect(err).toMatchObject({ code: "PAYMENT_GATEWAY_ERROR" });
+    });
+  });
+
+  describe("listOrders", () => {
+    it("requires authentication", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireOwner.mockImplementation(() => {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Authentication is required",
+        });
+      });
+      const err = await captureError(service.listOrders({ page: 1 }, null));
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("delegates to the repository with the page and owner id", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const list = await service.listOrders({ page: 2 }, "user-1");
+      expect(list).toBe(EMPTY_ORDER_LIST);
+      expect(repo.findOrdersByUser).toHaveBeenCalledWith("user-1", 2);
+    });
+  });
+
+  describe("listPlans", () => {
+    it("returns the full hardcoded catalog with discounted prices", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+      const plans = service.listPlans();
+      expect(plans).toHaveLength(3);
+      const lite = plans.find((p) => p.key === "LITE");
+      const premium = plans.find((p) => p.key === "PREMIUM");
+      expect(lite?.monthlyPrice).toBe(30_000);
+      expect(lite?.durations).toEqual([
+        { discountLabel: expect.any(String), grossAmount: 30_000, months: 1 },
+        { discountLabel: expect.any(String), grossAmount: 150_000, months: 6 },
+        { discountLabel: expect.any(String), grossAmount: 270_000, months: 12 },
+      ]);
+      expect(premium?.durations.find((d) => d.months === 12)?.grossAmount).toBe(
+        900_000
+      );
+    });
+  });
+
+  describe("getAiLimitPlanForUser", () => {
+    it("requires authentication", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireOwner.mockImplementation(() => {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Authentication is required",
+        });
+      });
+      const err = await captureError(service.getAiLimitPlanForUser(null));
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("throws NO_ACTIVE_PLAN when the user has no active plan", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+      const err = await captureError(service.getAiLimitPlanForUser("user-1"));
+      expect(err).toMatchObject({ code: "NO_ACTIVE_PLAN" });
+    });
+
+    it("maps the monthly limit to daily and weekly windows", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findActiveUserPlan.mockResolvedValue(
+        createUserPlanFixture({ planKey: "LITE", userId: "user-1" })
+      );
+      const lite = await service.getAiLimitPlanForUser("user-1");
+      expect(lite).toEqual({
+        daily: Math.ceil(60 / PLAN_DAILY_DIVISOR),
+        planKey: "LITE",
+        weekly: Math.ceil(60 / PLAN_WEEKLY_DIVISOR),
+      });
+
+      repo.findActiveUserPlan.mockResolvedValue(
+        createUserPlanFixture({ planKey: "PREMIUM", userId: "user-1" })
+      );
+      const premium = await service.getAiLimitPlanForUser("user-1");
+      expect(premium).toEqual({
+        daily: Math.ceil(360 / PLAN_DAILY_DIVISOR),
+        planKey: "PREMIUM",
+        weekly: Math.ceil(360 / PLAN_WEEKLY_DIVISOR),
+      });
+    });
+  });
+
+  describe("handleWebhook", () => {
+    it("returns undefined when the order does not exist", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+      const result = await service.handleWebhook(makeWebhookBody());
+      expect(result).toBeUndefined();
+    });
+
+    it("ignores an unrecognized transaction status", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test" })
+      );
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "frobnicate" })
+      );
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+    });
+
+    it("skips reprocessing an already-applied settlement", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PAID" })
+      );
+      repo.findPaymentByTransactionId.mockResolvedValue(
+        createPaymentFixture({
+          gatewayTransactionId: "txn-1",
+          status: "SUCCESS",
+        })
+      );
+      await service.handleWebhook(makeWebhookBody());
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+      expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+    });
+
+    it("ignores webhooks for a terminal order", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "CANCELLED" })
+      );
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "expire" })
+      );
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+    });
+
+    it("ignores an invalid status transition", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PAID" })
+      );
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "expire" })
+      );
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+    });
+
+    it("does not update payment on a pending notification", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PENDING" })
+      );
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "pending" })
+      );
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+      expect(repo.updatePayment).not.toHaveBeenCalled();
+    });
+
+    it("applies the plan on settlement", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        durationMonths: 6,
+        id: "ord_test",
+        planKey: "PLUS",
+        status: "PENDING",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({ orderId: "ord_test" })
+      );
+      const appliedAt = Date.now();
+      repo.findPaidOrdersForUser.mockResolvedValue([
+        createOrderFixture({
+          appliedAt: new Date(appliedAt),
+          durationMonths: 6,
+          planKey: "PLUS",
+          status: "PAID",
+        }),
+      ]);
+
+      await service.handleWebhook(makeWebhookBody());
+
+      expect(repo.updateOrderStatus).toHaveBeenCalledWith("ord_test", "PAID");
+      expect(repo.setOrderAppliedAt).toHaveBeenCalledWith(
+        "ord_test",
+        expect.any(Number)
+      );
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          gatewayTransactionId: "txn-1",
+          status: "SUCCESS",
+        })
+      );
+      expect(repo.upsertUserPlan).toHaveBeenCalledWith(
+        expect.objectContaining({ planKey: "PLUS", userId: order.userId })
+      );
+    });
+
+    it("revokes the plan on a reversal (refund) of a paid order", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PAID" })
+      );
+      repo.findPaidOrdersForUser.mockResolvedValue([]);
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "refund" })
+      );
+
+      expect(repo.updateOrderStatus).toHaveBeenCalledWith(
+        "ord_test",
+        "CANCELLED"
+      );
+      expect(repo.deleteUserPlan).toHaveBeenCalledWith(expect.any(String));
+      expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+    });
+  });
+});

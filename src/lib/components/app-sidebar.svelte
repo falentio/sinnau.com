@@ -60,7 +60,7 @@
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
-                <a href="/subs/usage" {...props}>
+                <a href="/subs/plans" {...props}>
                   <HugeiconsIcon icon={CrownIcon} />
                   <span>Subskripsi</span>
                 </a>

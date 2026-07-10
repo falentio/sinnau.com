@@ -15,6 +15,7 @@ const getBaseUrl = (): BetterAuthOptions["baseURL"] => {
         "localhost:*",
         "*.ts.net:*",
         "*.falentio:*",
+        "*.trycloudflare.com",
       ],
     };
   }

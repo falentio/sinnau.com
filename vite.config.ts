@@ -21,7 +21,12 @@ export default defineConfig({
   },
   plugins: [tailwindcss(), sveltekit()],
   server: {
-    allowedHosts: ["*.localhost", "localhost", "*.falentio"],
+    allowedHosts: [
+      "*.localhost",
+      "localhost",
+      "*.falentio",
+      "*.trycloudflare.com",
+    ],
     port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5173,
     watch: {
       ignored: ["**/node_modules/**", "**/dist/**", "./.worktrees/**"],

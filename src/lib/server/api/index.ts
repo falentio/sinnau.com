@@ -3,6 +3,7 @@ import { chapterRouter } from "$lib/server/services/chapter/chapter.router";
 import { flashcardSessionRouter } from "$lib/server/services/flashcard-session/flashcard-session.router";
 import { flashcardRouter } from "$lib/server/services/flashcard/flashcard.router";
 import { generateRouter } from "$lib/server/services/generate/generate.router";
+import { planRouter } from "$lib/server/services/plan/plan.router";
 import { quizSessionRouter } from "$lib/server/services/quiz-session/quiz-session.router";
 import { quizRouter } from "$lib/server/services/quiz/quiz.router";
 import { studySetSearchRouter } from "$lib/server/services/study-set-search/study-set-search.router";
@@ -27,6 +28,7 @@ export const router = {
     message: "pong",
     timestamp: Date.now(),
   })),
+  plan: planRouter,
   quiz: quizRouter,
   quizSession: quizSessionRouter,
   studySet: studySetRouter,

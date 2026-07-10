@@ -43,6 +43,13 @@
       "when": 1783431767330,
       "tag": "20260707134247_condemned_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1783675708030,
+      "tag": "20260710092828_faulty_clea",
+      "breakpoints": true
     }
   ]
 }

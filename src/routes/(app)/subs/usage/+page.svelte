@@ -1,115 +1,103 @@
 <script lang="ts">
-  import Button from "$lib/components/ui/button/button.svelte";
-  import CardContent from "$lib/components/ui/card/card-content.svelte";
-  import CardDescription from "$lib/components/ui/card/card-description.svelte";
-  import CardFooter from "$lib/components/ui/card/card-footer.svelte";
-  import CardHeader from "$lib/components/ui/card/card-header.svelte";
-  import CardTitle from "$lib/components/ui/card/card-title.svelte";
-  import Card from "$lib/components/ui/card/card.svelte";
-  import Progress from "$lib/components/ui/progress/progress.svelte";
-  import Separator from "$lib/components/ui/separator/separator.svelte";
+  import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
 
-  const relativeTimeFormatter = new Intl.RelativeTimeFormat("id-ID", {
-    numeric: "auto",
-    style: "long",
-  });
+  import AiLimitCard from "./_components/ai-limit-card.svelte";
 
-  const remainingPercentage = (remaining: number, limit: number) => {
-    if (limit <= 0) {
-      return 0;
-    }
-    return Math.max(0, Math.min(100, Math.round((remaining / limit) * 100)));
+  type PlanKey = "LITE" | "PLUS" | "PREMIUM";
+  const planName: Record<PlanKey, string> = {
+    LITE: "Lite",
+    PLUS: "Plus",
+    PREMIUM: "Premium",
   };
-
-  const formatTimeUntilReset = (resetAt: Date | string) => {
-    const remainingMs = new Date(resetAt).getTime() - Date.now();
-    const minute = 60 * 1000;
-    const hour = 60 * minute;
-    const day = 24 * hour;
-    const remaining = Math.max(remainingMs, 0);
-
-    if (remaining >= day) {
-      return relativeTimeFormatter.format(Math.ceil(remaining / day), "day");
-    }
-    if (remaining >= hour) {
-      return relativeTimeFormatter.format(Math.ceil(remaining / hour), "hour");
-    }
-    if (remaining >= minute) {
-      return relativeTimeFormatter.format(
-        Math.ceil(remaining / minute),
-        "minute"
-      );
-    }
-
-    return relativeTimeFormatter.format(0, "second");
+  const planPrice: Record<PlanKey, number> = {
+    LITE: 30_000,
+    PLUS: 50_000,
+    PREMIUM: 100_000,
   };
-
-  const limitStatus = {
-    daily: {
-      limit: 10,
-      remaining: 7,
-      resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    },
-    planKey: "FREE" as const,
-    weekly: {
-      limit: 70,
-      remaining: 50,
-      resetAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    },
-  };
-
-  const usageLimits = [
-    { key: "daily", label: "Harian", ...limitStatus.daily },
-    { key: "weekly", label: "Mingguan", ...limitStatus.weekly },
-  ];
 </script>
 
-<div class="my-3">
-  <h1 class="text-lg font-medium">Penggunaan subskripsi</h1>
-</div>
+<svelte:head>
+  <title>Paket aktif · Sinnau</title>
+</svelte:head>
 
-<Card>
-  <CardHeader>
-    <CardTitle>{limitStatus.planKey}</CardTitle>
-    <CardDescription>
-      {#if limitStatus.planKey === "FREE"}
-        Upgrade untuk mendapatkan kuota pembuatan konten yang lebih besar.
-      {:else}
-        Pantau sisa kuota pembuatan konten dari paket aktif Anda.
-      {/if}
-    </CardDescription>
-  </CardHeader>
-  <CardContent class="space-y-4">
-    {#each usageLimits as usage, index (usage.key)}
-      {@const remainingQuotaPercentage = remainingPercentage(
-        usage.remaining,
-        usage.limit
-      )}
-      {#if index > 0}
-        <Separator />
-      {/if}
+<div class="mx-auto w-full max-w-3xl px-6 pt-10 md:pt-14">
+  <header class="flex flex-col gap-2 pb-10 md:pb-12">
+    <span
+      class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+    >
+      Paket aktif
+    </span>
+    <h1
+      class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
+    >
+      {planName.PLUS}
+    </h1>
+    <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+      Kuota generate kamu saat ini. Kuota di-reset tiap awal bulan, mengikuti
+      tanggal aktivasi paket.
+    </p>
+  </header>
 
-      <div class="space-y-2">
-        <div class="flex items-center justify-between gap-4">
-          <p class="text-sm font-medium">{usage.label}</p>
-          <p class="text-right text-sm text-muted-foreground">
-            <span class="font-medium text-card-foreground"
-              >{remainingQuotaPercentage}%</span
-            >
-            • reset {formatTimeUntilReset(usage.resetAt)}
-          </p>
-        </div>
-        <Progress
-          value={remainingQuotaPercentage}
-          max={100}
-          aria-label={`${usage.label} ${remainingQuotaPercentage}% tersisa`}
-        />
+  <section class="flex flex-col gap-4 pb-12">
+    <div
+      class="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/50 px-4 py-3"
+    >
+      <div
+        class="flex size-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/20 dark:text-amber-300"
+      >
+        <HugeiconsIcon icon={CrownIcon} class="size-4" strokeWidth={1.75} />
       </div>
-    {/each}
-  </CardContent>
-  {#if limitStatus.planKey === "FREE"}
-    <CardFooter class="justify-end">
-      <Button href="/subs/pricing">Upgrade Paket</Button>
-    </CardFooter>
-  {/if}
-</Card>
+      <div class="flex flex-1 flex-col">
+        <span class="text-sm font-medium text-foreground">
+          {planName.PLUS} · 6 bulan
+        </span>
+        <span class="text-xs text-muted-foreground">
+          Diperpanjang dari aktivasi sebelumnya
+        </span>
+      </div>
+      <a
+        href="/subs/plans"
+        class="group/btn inline-flex h-8 items-center gap-1 rounded-full bg-foreground px-3.5 text-[13px] font-medium text-background transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-foreground/85 active:scale-[0.98]"
+      >
+        Perpanjang
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          class="size-3 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:translate-x-0.5"
+        />
+      </a>
+    </div>
+
+    <AiLimitCard
+      plan="PLUS"
+      daily={12}
+      weekly={30}
+      monthlyPrice={planPrice.PLUS}
+    />
+  </section>
+
+  <section
+    class="flex flex-col gap-3 border-t border-border/60 py-10 md:flex-row md:items-center md:justify-between"
+  >
+    <div class="flex flex-col gap-1">
+      <span
+        class="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
+      >
+        Riwayat
+      </span>
+      <p class="text-sm text-muted-foreground">
+        Lihat pesanan dan status pembayarannya.
+      </p>
+    </div>
+    <a
+      href="/subs/history"
+      class="group/link inline-flex h-9 items-center gap-1.5 self-start rounded-full border border-border/60 bg-background/60 px-4 text-sm font-medium text-foreground/80 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-foreground/30 hover:bg-background hover:text-foreground active:scale-[0.98] md:self-auto"
+    >
+      Riwayat pesanan
+      <HugeiconsIcon
+        icon={ArrowRight01Icon}
+        class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/link:translate-x-0.5"
+      />
+    </a>
+  </section>
+</div>
