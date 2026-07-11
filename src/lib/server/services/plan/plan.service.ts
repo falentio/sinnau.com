@@ -1,6 +1,8 @@
 import type {
   CheckoutInput,
   CheckoutOutput,
+  GetOrder,
+  GetOrderInput,
   ListOrdersInput,
 } from "$lib/schemas/plan";
 import {
@@ -34,6 +36,33 @@ import type { PlanGuard } from "./plan.guard.ts";
 import type { OrderListResult, PlanRepository } from "./plan.repository.ts";
 
 const webhookLogger = getLogger(["sinnau.com", "plan", "webhook"]);
+const orderLogger = getLogger(["sinnau.com", "plan", "order"]);
+
+const isQrisPayload = (
+  value: unknown
+): value is { actions: { name: unknown; url: unknown }[] } => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const { actions } = value as { actions?: unknown };
+  if (!Array.isArray(actions)) {
+    return false;
+  }
+  return true;
+};
+
+const isGenerateQrAction = (
+  value: unknown
+): value is {
+  name: string;
+  url: string;
+} => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const { name, url } = value as { name?: unknown; url?: unknown };
+  return name === "generate-qr-code" && typeof url === "string";
+};
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const TERMINAL_STATUSES = new Set(["EXPIRED", "CANCELLED"]);
@@ -268,6 +297,48 @@ export class PlanService {
   ): Promise<OrderListResult> {
     const owner = this.guard.requireOwner(userId);
     return await this.repo.findOrdersByUser(owner, input.page ?? 1);
+  }
+
+  async getOrder(
+    input: GetOrderInput,
+    userId: string | null | undefined
+  ): Promise<GetOrder> {
+    const owner = this.guard.requireOwner(userId);
+    const order = await this.guard.assertOrderVisibleByIdOrNotFound(
+      input.orderId,
+      owner
+    );
+    const payment = await this.repo.findPaymentByOrderId(order.id);
+    const qrUrl = payment ? PlanService.parseQrisUrl(payment.payload) : null;
+    return { ...order, qrUrl };
+  }
+
+  static parseQrisUrl(payload: string | null): string | null {
+    if (payload === null) {
+      return null;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(payload);
+    } catch (error) {
+      orderLogger.warn("Failed to parse payment payload as JSON", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+    if (!isQrisPayload(parsed)) {
+      orderLogger.warn("Payment payload is missing actions array");
+      return null;
+    }
+    const action = parsed.actions.find(
+      (a): a is { name: string; url: string } =>
+        isGenerateQrAction(a as unknown)
+    );
+    if (!action) {
+      orderLogger.warn("Payment payload has no generate-qr-code action");
+      return null;
+    }
+    return action.url;
   }
 
   // eslint-disable-next-line class-methods-use-this

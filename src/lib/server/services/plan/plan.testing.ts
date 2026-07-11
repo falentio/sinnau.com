@@ -40,6 +40,8 @@ export type MockedPlanGuard = {
 };
 
 export const createMockGuard = (): MockedPlanGuard => ({
+  assertOrderVisibleByIdOrNotFound:
+    vi.fn<PlanGuard["assertOrderVisibleByIdOrNotFound"]>(),
   requireOwner: vi.fn<PlanGuard["requireOwner"]>(),
 });
 

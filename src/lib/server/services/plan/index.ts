@@ -4,7 +4,7 @@ import { PlanDrizzleRepository } from "./plan.repository.drizzle.ts";
 import { PlanService } from "./plan.service.ts";
 
 const planRepo = new PlanDrizzleRepository();
-export const planGuard = new PlanGuard();
+export const planGuard = new PlanGuard(planRepo);
 export const planService = new PlanService(planRepo, planGuard, midtrans);
 
 // eslint-disable-next-line promise-function-async

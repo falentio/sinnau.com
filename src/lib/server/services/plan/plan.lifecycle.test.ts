@@ -36,7 +36,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(),
+      new PlanGuard(env.repo),
       createStubMidtrans()
     );
 
@@ -71,7 +71,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(),
+      new PlanGuard(env.repo),
       createStubMidtrans()
     );
 
@@ -109,7 +109,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(),
+      new PlanGuard(env.repo),
       createStubMidtrans()
     );
 
@@ -150,7 +150,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(),
+      new PlanGuard(env.repo),
       createStubMidtrans()
     );
 

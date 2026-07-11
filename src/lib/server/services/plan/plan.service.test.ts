@@ -67,6 +67,15 @@ const setupService = (midtrans = createMockMidtrans()) => {
   const repo = createMockRepository();
   const guard = createMockGuard();
   guard.requireOwner.mockImplementation((id) => id as string);
+  guard.assertOrderVisibleByIdOrNotFound.mockImplementation(
+    async (id, _userId) => {
+      const order = await repo.findOrderById(id);
+      if (!order || order.userId !== _userId) {
+        throw new ORPCError("NOT_FOUND", { message: "Order not found" });
+      }
+      return order;
+    }
+  );
 
   repo.findActiveUserPlan.mockResolvedValue(null);
   repo.findOrdersByUser.mockResolvedValue(EMPTY_ORDER_LIST);
@@ -426,5 +435,186 @@ describe.concurrent("PlanService unit tests", () => {
       expect(repo.deleteUserPlan).toHaveBeenCalledWith(expect.any(String));
       expect(repo.upsertUserPlan).not.toHaveBeenCalled();
     });
+  });
+
+  describe.concurrent("getOrder", () => {
+    const validPayload = JSON.stringify({
+      actions: [
+        { method: "GET", name: "generate-qr-code", url: "https://qr.example" },
+        { method: "GET", name: "deeplink-redirect", url: "https://deeplink" },
+      ],
+    });
+
+    it("throws UNAUTHORIZED when the caller is not authenticated", async ({
+      expect,
+    }) => {
+      const { guard, service } = setupService();
+      guard.requireOwner.mockImplementation(() => {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Authentication is required",
+        });
+      });
+      const err = await captureError(
+        service.getOrder({ orderId: "ord_x" }, null)
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("returns the order with qrUrl when a payment row with a valid QRIS payload exists", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        id: "ord_test",
+        userId: "user-1",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({ orderId: "ord_test", payload: validPayload })
+      );
+
+      const result = await service.getOrder({ orderId: "ord_test" }, "user-1");
+
+      expect(result).toEqual({ ...order, qrUrl: "https://qr.example" });
+    });
+
+    it("returns qrUrl null when there is no payment row for the order", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        id: "ord_test",
+        userId: "user-1",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(null);
+
+      const result = await service.getOrder({ orderId: "ord_test" }, "user-1");
+
+      expect(result.qrUrl).toBeNull();
+      expect(result.id).toBe(order.id);
+    });
+
+    it("returns qrUrl null when the payment payload is null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        id: "ord_test",
+        userId: "user-1",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({ orderId: "ord_test", payload: null })
+      );
+
+      const result = await service.getOrder({ orderId: "ord_test" }, "user-1");
+
+      expect(result.qrUrl).toBeNull();
+    });
+
+    it("returns qrUrl null when the payment payload is malformed JSON", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        id: "ord_test",
+        userId: "user-1",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({
+          orderId: "ord_test",
+          payload: "not-json{",
+        })
+      );
+
+      const result = await service.getOrder({ orderId: "ord_test" }, "user-1");
+
+      expect(result.qrUrl).toBeNull();
+    });
+
+    it("returns qrUrl null when the payload has no generate-qr-code action", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        id: "ord_test",
+        userId: "user-1",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({
+          orderId: "ord_test",
+          payload: JSON.stringify({
+            actions: [{ method: "GET", name: "deeplink-redirect", url: "x" }],
+          }),
+        })
+      );
+
+      const result = await service.getOrder({ orderId: "ord_test" }, "user-1");
+
+      expect(result.qrUrl).toBeNull();
+    });
+
+    it("throws NOT_FOUND when findOrderById returns null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(null);
+      const err = await captureError(
+        service.getOrder({ orderId: "ord_missing" }, "user-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws NOT_FOUND when the order is owned by a different user (leak-prevention)", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_other", userId: "user-2" })
+      );
+      const err = await captureError(
+        service.getOrder({ orderId: "ord_other" }, "user-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+  });
+});
+
+describe.concurrent("PlanService.parseQrisUrl", () => {
+  it("returns the URL of the generate-qr-code action for a valid payload", async ({
+    expect,
+  }) => {
+    const payload = JSON.stringify({
+      actions: [
+        { method: "GET", name: "generate-qr-code", url: "https://qr.example" },
+        { method: "GET", name: "deeplink-redirect", url: "https://deeplink" },
+      ],
+    });
+    expect(PlanService.parseQrisUrl(payload)).toBe("https://qr.example");
+  });
+
+  it("returns null when the payload is null", async ({ expect }) => {
+    expect(PlanService.parseQrisUrl(null)).toBeNull();
+  });
+
+  it("returns null and warns when the payload is malformed JSON", async ({
+    expect,
+  }) => {
+    expect(PlanService.parseQrisUrl("not-json{")).toBeNull();
+  });
+
+  it("returns null and warns when the payload has no generate-qr-code action", async ({
+    expect,
+  }) => {
+    const payload = JSON.stringify({
+      actions: [{ method: "GET", name: "deeplink-redirect", url: "x" }],
+    });
+    expect(PlanService.parseQrisUrl(payload)).toBeNull();
   });
 });

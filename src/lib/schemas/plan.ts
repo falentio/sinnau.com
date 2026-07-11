@@ -84,6 +84,17 @@ export const listOrdersOutputSchema = v.object({
 });
 export type ListOrdersOutput = v.InferOutput<typeof listOrdersOutputSchema>;
 
+// ─── Get order ────────────────────────────────────────────────────────
+
+export const getOrderInputSchema = v.object({ orderId: orderIdSchema });
+export type GetOrderInput = v.InferOutput<typeof getOrderInputSchema>;
+
+export const getOrderOutputSchema = v.object({
+  ...orderSchema.entries,
+  qrUrl: v.nullable(v.string()),
+});
+export type GetOrder = v.InferOutput<typeof getOrderOutputSchema>;
+
 // ─── List plans (public catalog) ─────────────────────────────────────
 
 export const planCatalogDurationSchema = v.object({

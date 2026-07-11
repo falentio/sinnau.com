@@ -56,21 +56,6 @@
     try {
       const result = await client.plan.checkout({ durationMonths, planKey });
 
-      const qrUrl =
-        result.paymentData.actions.find((a) => a.name === "generate-qr-code")
-          ?.url ?? "";
-
-      sessionStorage.setItem(
-        `checkout:${result.orderId}`,
-        JSON.stringify({
-          durationMonths,
-          expiresAt: result.expiresAt,
-          grossAmount: result.grossAmount,
-          planKey,
-          qrUrl,
-        })
-      );
-
       await goto(`/subs/checkout/${result.orderId}`);
     } catch (error) {
       if (error instanceof Error) {
