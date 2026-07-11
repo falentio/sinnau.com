@@ -82,6 +82,109 @@ describe.concurrent("PlanDrizzleRepository", () => {
       const page2 = await env.repo.findOrdersByUser(env.ownerId, 2);
       expect(page2.data).toHaveLength(5);
     });
+
+    describe("findOrdersByUser with excludeStatuses", () => {
+      it("returns all orders when excludeStatuses is omitted", async ({
+        expect,
+      }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_paid", status: "PAID" });
+        await env.seedOrder({ id: "ord_pending", status: "PENDING" });
+        const result = await env.repo.findOrdersByUser(env.ownerId, 1);
+        expect(result.data).toHaveLength(2);
+        expect(result.pagination.total).toBe(2);
+      });
+
+      it("filters out a single excluded status from both data and count", async ({
+        expect,
+      }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_paid", status: "PAID" });
+        await env.seedOrder({ id: "ord_pending", status: "PENDING" });
+        const result = await env.repo.findOrdersByUser(env.ownerId, 1, [
+          "PENDING",
+        ]);
+        expect(result.data.map((o) => o.id)).toEqual(["ord_paid"]);
+        expect(result.pagination.total).toBe(1);
+        expect(result.pagination.totalPages).toBe(1);
+      });
+
+      it("filters out multiple excluded statuses", async ({ expect }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_paid", status: "PAID" });
+        await env.seedOrder({ id: "ord_pending", status: "PENDING" });
+        await env.seedOrder({ id: "ord_expired", status: "EXPIRED" });
+        await env.seedOrder({ id: "ord_cancelled", status: "CANCELLED" });
+        const result = await env.repo.findOrdersByUser(env.ownerId, 1, [
+          "PENDING",
+          "EXPIRED",
+        ]);
+        expect(result.data.map((o) => o.id).toSorted()).toEqual([
+          "ord_cancelled",
+          "ord_paid",
+        ]);
+        expect(result.pagination.total).toBe(2);
+      });
+
+      it("treats an empty excludeStatuses array as no filter", async ({
+        expect,
+      }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_paid", status: "PAID" });
+        await env.seedOrder({ id: "ord_pending", status: "PENDING" });
+        const result = await env.repo.findOrdersByUser(env.ownerId, 1, []);
+        expect(result.data).toHaveLength(2);
+        expect(result.pagination.total).toBe(2);
+      });
+
+      it("returns empty data and zero total when every row is excluded", async ({
+        expect,
+      }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_pending1", status: "PENDING" });
+        await env.seedOrder({ id: "ord_pending2", status: "PENDING" });
+        const result = await env.repo.findOrdersByUser(env.ownerId, 1, [
+          "PENDING",
+        ]);
+        expect(result.data).toEqual([]);
+        expect(result.pagination).toMatchObject({
+          limit: 20,
+          page: 1,
+          total: 0,
+          totalPages: 1,
+        });
+      });
+
+      it("paginates filtered results correctly", async ({ expect }) => {
+        await using env = new PlanTestEnv();
+        for (let i = 0; i < 25; i += 1) {
+          await env.seedOrder({
+            id: `ord_paid_${i.toString().padStart(2, "0")}`,
+            status: "PAID",
+          });
+        }
+        for (let i = 0; i < 5; i += 1) {
+          await env.seedOrder({
+            id: `ord_pending_${i.toString().padStart(2, "0")}`,
+            status: "PENDING",
+          });
+        }
+        const page1 = await env.repo.findOrdersByUser(env.ownerId, 1, [
+          "PENDING",
+        ]);
+        expect(page1.data).toHaveLength(20);
+        expect(page1.pagination).toMatchObject({
+          limit: 20,
+          page: 1,
+          total: 25,
+          totalPages: 2,
+        });
+        const page2 = await env.repo.findOrdersByUser(env.ownerId, 2, [
+          "PENDING",
+        ]);
+        expect(page2.data).toHaveLength(5);
+      });
+    });
   });
 
   describe("payment table", () => {

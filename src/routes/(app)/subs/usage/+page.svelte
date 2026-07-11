@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudySetPagination from "$lib/components/features/app/study-set-pagination.svelte";
   import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
   import AiLimitCard from "$lib/components/features/subs/ai-limit-card.svelte";
   import OrderRow from "$lib/components/features/subs/order-row.svelte";
@@ -19,6 +20,18 @@
       planName: planName[o.planKey],
     }))
   );
+
+  const orderCountLabel = $derived.by(() => {
+    const { total } = data.pagination;
+    if (total === 0) {
+      return null;
+    }
+    const visible = data.orders.length;
+    if (visible < total) {
+      return `Menampilkan ${visible} dari ${total} pesanan`;
+    }
+    return `${total} pesanan`;
+  });
 </script>
 
 <svelte:head>
@@ -126,9 +139,16 @@
       <p class="text-sm text-muted-foreground">
         Pesanan yang sudah selesai — aktif, kedaluwarsa, atau dibatalkan.
       </p>
+      {#if orderCountLabel}
+        <p
+          class="text-xs font-medium tracking-tight text-muted-foreground/80 tabular-nums"
+        >
+          {orderCountLabel}
+        </p>
+      {/if}
     </header>
 
-    {#if orders.length === 0}
+    {#if data.pagination.total === 0}
       <div
         class="rounded-2xl border border-dashed border-border/60 bg-card/50 px-6 py-10 text-center text-sm text-muted-foreground"
       >
@@ -142,6 +162,11 @@
           <OrderRow {order} />
         {/each}
       </div>
+      {#if data.pagination.totalPages > 1}
+        <div class="mt-2">
+          <StudySetPagination pagination={data.pagination} />
+        </div>
+      {/if}
     {/if}
   </section>
 </div>

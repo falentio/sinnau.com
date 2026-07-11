@@ -1,20 +1,34 @@
-import { client } from "$lib/orpc";
+import { createServerClient } from "$lib/orpc.server";
+import { error } from "@sveltejs/kit";
 
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ depends }) => {
+const parsePage = (raw: string | null): number => {
+  if (raw === null || raw === "") {
+    return 1;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    error(400, { message: "page invalid" });
+  }
+  return parsed;
+};
+
+export const load: PageServerLoad = async ({ depends, url }) => {
   depends("plan:ai-limit");
   depends("plan:orders");
 
+  const page = parsePage(url.searchParams.get("page"));
+
+  const client = createServerClient();
   const [activePlan, ordersResult] = await Promise.all([
     client.plan.getAiLimit().catch(() => null),
-    client.plan.listOrders({ page: 1 }),
+    client.plan.listOrders({ excludeStatuses: ["PENDING"], page }),
   ]);
-
-  const orders = ordersResult.data.filter((o) => o.status !== "PENDING");
 
   return {
     activePlan,
-    orders,
+    orders: ordersResult.data,
+    pagination: ordersResult.pagination,
   };
 };

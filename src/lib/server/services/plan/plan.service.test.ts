@@ -229,7 +229,24 @@ describe.concurrent("PlanService unit tests", () => {
       const { repo, service } = setupService();
       const list = await service.listOrders({ page: 2 }, "user-1");
       expect(list).toBe(EMPTY_ORDER_LIST);
-      expect(repo.findOrdersByUser).toHaveBeenCalledWith("user-1", 2);
+      expect(repo.findOrdersByUser).toHaveBeenCalledWith(
+        "user-1",
+        2,
+        undefined
+      );
+    });
+
+    it("plumbs excludeStatuses through to the repository", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      await service.listOrders(
+        { excludeStatuses: ["PENDING"], page: 1 },
+        "user-1"
+      );
+      expect(repo.findOrdersByUser).toHaveBeenCalledWith("user-1", 1, [
+        "PENDING",
+      ]);
     });
   });
 

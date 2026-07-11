@@ -34,7 +34,11 @@ export interface PlanRepository {
   // ── order ──
   insertOrder(row: NewOrder): Promise<Order>;
   findOrderById(id: string): Promise<Order | null>;
-  findOrdersByUser(userId: string, page: number): Promise<OrderListResult>;
+  findOrdersByUser(
+    userId: string,
+    page: number,
+    excludeStatuses?: OrderStatus[]
+  ): Promise<OrderListResult>;
   findPaidOrdersForUser(userId: string): Promise<Order[]>;
   updateOrderStatus(id: string, status: OrderStatus): Promise<Order | null>;
   setOrderAppliedAt(id: string, appliedAtMs: number): Promise<Order | null>;

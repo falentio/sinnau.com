@@ -56,7 +56,10 @@ export type CheckoutOutput = v.InferOutput<typeof checkoutOutputSchema>;
 
 // ─── List orders ──────────────────────────────────────────────────────
 
-export const listOrdersInputSchema = v.object({ page: pageSchema });
+export const listOrdersInputSchema = v.object({
+  excludeStatuses: v.optional(v.array(orderStatusSchema)),
+  page: pageSchema,
+});
 export type ListOrdersInput = v.InferOutput<typeof listOrdersInputSchema>;
 
 export const orderSchema = v.object({

@@ -296,7 +296,11 @@ export class PlanService {
     userId: string | null | undefined
   ): Promise<OrderListResult> {
     const owner = this.guard.requireOwner(userId);
-    return await this.repo.findOrdersByUser(owner, input.page ?? 1);
+    return await this.repo.findOrdersByUser(
+      owner,
+      input.page ?? 1,
+      input.excludeStatuses
+    );
   }
 
   async getOrder(

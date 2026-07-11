@@ -45,7 +45,11 @@
 </script>
 
 {#if status !== "PENDING"}
-  <div class="flex items-start gap-3 rounded-2xl border px-4 py-3 {m.bg}">
+  <div
+    role="alert"
+    aria-atomic="true"
+    class="flex items-start gap-3 rounded-2xl border px-4 py-3 {m.bg}"
+  >
     <div
       class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-background/60 {m.accent}"
     >

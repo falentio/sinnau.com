@@ -33,3 +33,9 @@
     {mm}:{ss}
   </span>
 </div>
+
+{#if expired}
+  <div role="alert" class="sr-only">
+    Pesanan kedaluwarsa. Buat pesanan baru dari halaman paket.
+  </div>
+{/if}

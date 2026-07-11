@@ -1,6 +1,6 @@
 import { PLAN_PAGE_LIMIT } from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, notInArray, sql } from "drizzle-orm";
 
 import type { DB } from "../../infras/db/client.ts";
 import { db as defaultDb } from "../../infras/db/client.ts";
@@ -146,22 +146,28 @@ export class PlanDrizzleRepository implements PlanRepository {
 
   async findOrdersByUser(
     userId: string,
-    page: number
+    page: number,
+    excludeStatuses?: OrderStatus[]
   ): Promise<OrderListResult> {
     try {
       const limit = PLAN_PAGE_LIMIT;
       const offset = (page - 1) * limit;
+      const filters = [eq(order.userId, userId)];
+      if (excludeStatuses && excludeStatuses.length > 0) {
+        filters.push(notInArray(order.status, excludeStatuses));
+      }
+      const whereClause = and(...filters);
       const rows = await this.dbInstance
         .select()
         .from(order)
-        .where(eq(order.userId, userId))
+        .where(whereClause)
         .orderBy(desc(order.createdAt))
         .limit(limit)
         .offset(offset);
       const [{ total } = { total: 0 }] = await this.dbInstance
         .select({ total: sql<number>`count(*)` })
         .from(order)
-        .where(eq(order.userId, userId));
+        .where(whereClause);
       const totalCount = total;
       return {
         data: rows,
