@@ -1,21 +1,119 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import {
     ArrowLeft01Icon,
     ArrowRight01Icon,
   } from "$lib/components/features/icons";
   import { formatIdr } from "$lib/components/features/plan";
+  import {
+    AUTO_NAVIGATE_MS,
+    computePollIntervalMs,
+    POLL_RETRY_MS,
+  } from "$lib/components/features/subs/checkout-poll";
   import ExpiryCountdown from "$lib/components/features/subs/expiry-countdown.svelte";
   import QrisDisplay from "$lib/components/features/subs/qris-display.svelte";
   import StatusBanner from "$lib/components/features/subs/status-banner.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import { client } from "$lib/orpc";
+  import type { GetOrder } from "$lib/schemas/plan";
   import { PLAN_NAME } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { toast } from "svelte-sonner";
 
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
+  // svelte-ignore state_referenced_locally
+  let order = $state<GetOrder>(data.order);
   let orderId = $derived($page.params.orderId);
+  let isVerifying = $state(false);
+  let isPolling = $state(false);
+  let isRetrying = $state(false);
+  let pollTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
+  let autoNavigateTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
+
+  const isTerminal = $derived(
+    order.status === "PAID" ||
+      order.status === "EXPIRED" ||
+      order.status === "CANCELLED"
+  );
+
+  const handleVerify = async () => {
+    if (isVerifying) {
+      return;
+    }
+    isVerifying = true;
+    try {
+      const fresh = await client.plan.getOrder({ orderId: order.id });
+      order = fresh;
+      if (fresh.status === "PAID") {
+        if (autoNavigateTimeout) {
+          clearTimeout(autoNavigateTimeout);
+          autoNavigateTimeout = null;
+        }
+        await goto("/subs/usage");
+      } else if (fresh.status === "PENDING") {
+        toast.info("Midtrans masih memproses pembayaran. Tunggu sebentar…");
+      } else {
+        toast.error(
+          "Pesanan sudah tidak berlaku. Buat pesanan baru dari halaman paket."
+        );
+      }
+    } catch (error) {
+      const code = (error as { code?: string } | null)?.code;
+      if (code === "NOT_FOUND") {
+        toast.error("Pesanan tidak ditemukan");
+      } else {
+        toast.error("Gagal memverifikasi, coba lagi");
+      }
+    } finally {
+      isVerifying = false;
+    }
+  };
+
+  const poll = async () => {
+    if (isTerminal) {
+      return;
+    }
+    isPolling = true;
+    isRetrying = false;
+    try {
+      const fresh = await client.plan.getOrder({ orderId: order.id });
+      order = fresh;
+      if (fresh.status === "PAID" && !autoNavigateTimeout) {
+        autoNavigateTimeout = setTimeout(() => {
+          autoNavigateTimeout = null;
+          void goto("/subs/usage");
+        }, AUTO_NAVIGATE_MS);
+      }
+    } catch {
+      isRetrying = true;
+      isPolling = false;
+      pollTimeout = setTimeout(poll, POLL_RETRY_MS);
+      return;
+    }
+    isPolling = false;
+    if (!isTerminal) {
+      pollTimeout = setTimeout(poll, computePollIntervalMs(order.createdAt));
+    }
+  };
+
+  $effect(() => () => {
+    if (pollTimeout) {
+      clearTimeout(pollTimeout);
+    }
+    if (autoNavigateTimeout) {
+      clearTimeout(autoNavigateTimeout);
+    }
+  });
+
+  $effect(() => {
+    if (!isTerminal) {
+      void poll();
+    }
+  });
 </script>
 
 <svelte:head>
@@ -57,14 +155,26 @@
     <section
       class="md:col-span-7 md:row-span-2 flex flex-col items-center gap-5 rounded-3xl border border-border/60 bg-card p-6 ring-1 ring-foreground/[0.04] md:p-10"
     >
-      <StatusBanner status={data.order.status} />
+      <StatusBanner status={order.status} />
 
-      {#if data.order.qrUrl}
+      {#if isPolling || isRetrying}
+        <p
+          class="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80"
+        >
+          <span
+            aria-hidden="true"
+            class="inline-block size-1.5 animate-pulse rounded-full bg-muted-foreground/60"
+          ></span>
+          Memperbarui status…
+        </p>
+      {/if}
+
+      {#if order.qrUrl}
         <QrisDisplay
-          qrUrl={data.order.qrUrl}
-          alt={`QRIS untuk ${PLAN_NAME[data.order.planKey]} ${data.order.durationMonths} bulan`}
+          qrUrl={order.qrUrl}
+          alt={`QRIS untuk ${PLAN_NAME[order.planKey]} ${order.durationMonths} bulan`}
         />
-      {:else if data.order.status === "PENDING"}
+      {:else if order.status === "PENDING"}
         <div
           class="flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-6 py-8 text-center"
         >
@@ -74,8 +184,8 @@
         </div>
       {/if}
 
-      {#if data.order.expiresAt && data.order.status === "PENDING"}
-        <ExpiryCountdown expiresAt={data.order.expiresAt} />
+      {#if order.expiresAt && order.status === "PENDING"}
+        <ExpiryCountdown expiresAt={order.expiresAt} />
       {/if}
     </section>
 
@@ -91,9 +201,9 @@
         <h2
           class="font-heading text-xl font-semibold tracking-[-0.02em] text-foreground"
         >
-          {PLAN_NAME[data.order.planKey]}
+          {PLAN_NAME[order.planKey]}
           <span class="text-muted-foreground">·</span>
-          {data.order.durationMonths} bulan
+          {order.durationMonths} bulan
         </h2>
       </div>
 
@@ -101,13 +211,13 @@
         <div class="flex items-baseline justify-between text-sm">
           <dt class="text-muted-foreground">Paket</dt>
           <dd class="font-medium text-foreground">
-            {PLAN_NAME[data.order.planKey]}
+            {PLAN_NAME[order.planKey]}
           </dd>
         </div>
         <div class="flex items-baseline justify-between text-sm">
           <dt class="text-muted-foreground">Durasi</dt>
           <dd class="font-medium text-foreground tabular-nums">
-            {data.order.durationMonths} bulan
+            {order.durationMonths} bulan
           </dd>
         </div>
         <div class="flex items-baseline justify-between text-sm">
@@ -130,20 +240,20 @@
         <span
           class="font-heading text-2xl font-semibold tabular-nums tracking-tight text-foreground"
         >
-          {formatIdr(data.order.grossAmount)}
+          {formatIdr(order.grossAmount)}
         </span>
       </div>
 
-      <a
-        href="/subs/usage"
-        class="group/btn mt-2 inline-flex h-11 w-full items-center justify-center gap-2 self-end rounded-full bg-foreground px-5 text-sm font-medium text-background transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-foreground/85 active:scale-[0.98]"
+      <Button
+        type="button"
+        onclick={handleVerify}
+        disabled={isVerifying}
+        aria-busy={isVerifying}
+        class="h-11 w-full justify-center gap-2 self-end rounded-full"
       >
-        Saya sudah bayar
-        <HugeiconsIcon
-          icon={ArrowRight01Icon}
-          class="size-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:translate-x-0.5"
-        />
-      </a>
+        {autoNavigateTimeout ? "Mengalihkan..." : "Saya sudah bayar"}
+        <HugeiconsIcon icon={ArrowRight01Icon} class="size-4" />
+      </Button>
 
       <p class="text-center text-[11px] leading-relaxed text-muted-foreground">
         Klik tombol di atas setelah pembayaran. Halaman akan otomatis
