@@ -1,5 +1,7 @@
 <script lang="ts">
   import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import { PLAN_NAME_FALLBACK } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   type PlanKey = "LITE" | "PLUS" | "PREMIUM";
@@ -19,6 +21,7 @@
     weekly: number;
   } = $props();
 
+  const planLabel = $derived(planName[plan] ?? PLAN_NAME_FALLBACK);
   const monthly = $derived(daily * 10);
 </script>
 
@@ -49,7 +52,7 @@
         <h2
           class="font-heading text-xl font-semibold tracking-[-0.02em] text-foreground md:text-2xl"
         >
-          {planName[plan]}
+          {planLabel}
         </h2>
         <p class="text-sm text-muted-foreground">
           {monthly} generate per bulan
@@ -62,16 +65,15 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <a
+      <Button
         href="/subs/usage"
-        class="group/link inline-flex h-9 items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-4 text-sm font-medium text-foreground/80 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-foreground/30 hover:bg-background hover:text-foreground active:scale-[0.98]"
+        variant="outline"
+        size="default"
+        class="h-9 gap-1.5 px-4"
       >
         Detail
-        <HugeiconsIcon
-          icon={ArrowRight01Icon}
-          class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/link:translate-x-0.5"
-        />
-      </a>
+        <HugeiconsIcon icon={ArrowRight01Icon} class="size-3.5" />
+      </Button>
     </div>
   </div>
 </aside>

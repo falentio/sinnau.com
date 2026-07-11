@@ -3,7 +3,12 @@
   import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
   import AiLimitCard from "$lib/components/features/subs/ai-limit-card.svelte";
   import OrderRow from "$lib/components/features/subs/order-row.svelte";
-  import { PLAN_MONTHLY_PRICE, PLAN_NAME } from "$lib/schemas/plan.constant";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import {
+    PLAN_MONTHLY_PRICE,
+    PLAN_NAME,
+    PLAN_NAME_FALLBACK,
+  } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
@@ -17,7 +22,7 @@
   const orders = $derived(
     data.orders.map((o) => ({
       ...o,
-      planName: planName[o.planKey],
+      planName: planName[o.planKey] ?? PLAN_NAME_FALLBACK,
     }))
   );
 
@@ -82,12 +87,9 @@
             Diperpanjang dari aktivasi sebelumnya
           </span>
         </div>
-        <a
-          href="/subs/plans"
-          class="group/btn inline-flex h-8 items-center gap-1 rounded-full bg-foreground px-3.5 text-[13px] font-medium text-background transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-foreground/85 active:scale-[0.98]"
-        >
+        <Button href="/subs/plans" variant="default" size="sm">
           Perpanjang
-        </a>
+        </Button>
       </div>
 
       <AiLimitCard

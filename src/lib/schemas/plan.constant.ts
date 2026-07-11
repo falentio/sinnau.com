@@ -59,6 +59,7 @@ export const PLAN_NAME: Record<(typeof PLAN_KEYS)[number], string> = {
   PLUS: "Plus",
   PREMIUM: "Premium",
 };
+export const PLAN_NAME_FALLBACK = "Tidak Diketahui";
 
 export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
   LITE: [

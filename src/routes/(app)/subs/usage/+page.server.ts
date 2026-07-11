@@ -22,6 +22,9 @@ export const load: PageServerLoad = async ({ depends, url }) => {
 
   const client = createServerClient();
   const [activePlan, ordersResult] = await Promise.all([
+    // oxlint-disable-next-line no-warning-comments
+    // TODO: refactor getAiLimit to return null instead of throwing NO_ACTIVE_PLAN,
+    // then remove this catch so unexpected errors propagate to the error boundary
     client.plan.getAiLimit().catch(() => null),
     client.plan.listOrders({ excludeStatuses: ["PENDING"], page }),
   ]);

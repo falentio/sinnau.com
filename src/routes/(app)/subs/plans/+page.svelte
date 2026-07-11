@@ -15,7 +15,13 @@
   let { data }: { data: PageData } = $props();
 
   let duration = $state("12");
-  let selectedDuration = $derived(Number(duration) as 1 | 6 | 12);
+  let selectedDuration: 1 | 6 | 12 = $derived.by(() => {
+    const n = Number(duration);
+    if (n === 1 || n === 6 || n === 12) {
+      return n;
+    }
+    return 1;
+  });
 
   let checkoutError = $state<string | null>(null);
 

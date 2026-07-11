@@ -3,6 +3,7 @@
   import { formatIdr } from "$lib/components/features/plan";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
+  import { PLAN_NAME_FALLBACK } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   type PlanKey = "LITE" | "PLUS" | "PREMIUM";
@@ -39,6 +40,11 @@
       name: "Premium",
     },
   };
+  const planMetaFallback: {
+    name: string;
+    benefits: string[];
+    monthly: number;
+  } = { benefits: [], monthly: 0, name: PLAN_NAME_FALLBACK };
 
   let {
     plan,
@@ -52,7 +58,7 @@
     monthlyPrice: number;
   } = $props();
 
-  const meta = $derived(planMeta[plan]);
+  const meta = $derived(planMeta[plan] ?? planMetaFallback);
   const monthly = $derived(meta.monthly);
   const dailyPct = $derived(
     Math.max(0, Math.min(100, Math.round((daily / monthly) * 100)))
