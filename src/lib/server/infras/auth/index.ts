@@ -44,6 +44,13 @@ if (
 
 export const auth = betterAuth({
   ...config,
+  account: {
+    accountLinking: {
+      disableImplicitLinking: false,
+      enabled: true,
+      trustedProviders: ["google", "github"],
+    },
+  },
   baseURL: getBaseUrl(),
   database: drizzleAdapter(db, {
     provider: "sqlite",
@@ -61,6 +68,7 @@ export const auth = betterAuth({
           return {
             data: {
               ...user,
+              emailVerified: true,
               role: isAdmin ? "admin" : "user",
             },
           };
