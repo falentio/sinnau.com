@@ -1,4 +1,6 @@
 <script lang="ts">
+  import * as Accordion from "$lib/components/ui/accordion/index.js";
+
   import { reveal } from "./reveal";
 
   const faqs = [
@@ -35,12 +37,6 @@
       q: "Bisa edit atau tambah kartu sendiri?",
     },
   ] as const;
-
-  let openIndex = $state<number | null>(null);
-
-  const toggle = (idx: number) => {
-    openIndex = openIndex === idx ? null : idx;
-  };
 </script>
 
 <section
@@ -56,41 +52,26 @@
   </div>
 
   <div class="mx-auto mt-12 max-w-[42rem]" use:reveal={{ delay: 80 }}>
-    {#each faqs as faq, i (faq.q)}
-      <button
-        class="group flex w-full items-start justify-between gap-4 py-5 text-left {i <
-        faqs.length - 1
-          ? 'border-b'
-          : ''}"
-        onclick={() => toggle(i)}
-        aria-expanded={openIndex === i}
-      >
-        <div class="min-w-0">
-          <div
-            class="text-[15px] font-medium leading-snug text-foreground text-pretty"
+    <Accordion.Root type="single" class="w-full rounded-none border-0">
+      {#each faqs as faq (faq.q)}
+        <Accordion.Item
+          value={faq.q}
+          class="border-b-0 px-0 data-open:bg-transparent"
+        >
+          <Accordion.Trigger
+            class="px-0 py-5 text-[15px] font-medium leading-snug text-foreground hover:no-underline"
           >
             {faq.q}
-          </div>
-          <div
-            class="grid overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style="grid-template-rows: {openIndex === i ? '1fr' : '0fr'}"
+          </Accordion.Trigger>
+          <Accordion.Content
+            class="overflow-hidden px-0 text-[13.5px] leading-relaxed text-muted-foreground"
           >
-            <div class="min-h-0 overflow-hidden">
-              <p
-                class="pt-3 text-[13.5px] leading-relaxed text-muted-foreground text-pretty"
-              >
-                {faq.a}
-              </p>
-            </div>
-          </div>
-        </div>
-        <span
-          class="grid size-6 shrink-0 place-items-center rounded-md border text-[13px] text-muted-foreground transition-colors group-hover:text-foreground"
-          aria-hidden="true"
-        >
-          {openIndex === i ? "\u2212" : "+"}
-        </span>
-      </button>
-    {/each}
+            <p class="pt-3 pb-5 text-pretty">
+              {faq.a}
+            </p>
+          </Accordion.Content>
+        </Accordion.Item>
+      {/each}
+    </Accordion.Root>
   </div>
 </section>
