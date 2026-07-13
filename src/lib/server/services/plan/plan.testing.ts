@@ -1,4 +1,5 @@
 import {
+  ADMIN_GRANT_ID_PREFIX,
   ORDER_ID_PREFIX,
   PAYMENT_ID_PREFIX,
   PLAN_ID_PREFIX,
@@ -8,11 +9,20 @@ import { getTestingDb } from "$lib/server/infras/db/testing";
 import { vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
-import type { Order, Payment, UserPlan } from "../../infras/db/schema/plan.ts";
+import type {
+  AdminGrant,
+  Order,
+  Payment,
+  UserPlan,
+} from "../../infras/db/schema/plan.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type { PlanGuard } from "./plan.guard.ts";
 import { PlanDrizzleRepository } from "./plan.repository.drizzle";
-import type { OrderListResult, PlanRepository } from "./plan.repository.ts";
+import type {
+  AdminGrantListResult,
+  OrderListResult,
+  PlanRepository,
+} from "./plan.repository.ts";
 
 export type MockedPlanRepository = {
   [K in keyof PlanRepository]: MockedFunction<PlanRepository[K]>;
@@ -20,6 +30,8 @@ export type MockedPlanRepository = {
 
 export const createMockRepository = (): MockedPlanRepository => ({
   deleteUserPlan: vi.fn<PlanRepository["deleteUserPlan"]>(),
+  findActiveAdminGrantsForUser:
+    vi.fn<PlanRepository["findActiveAdminGrantsForUser"]>(),
   findActiveUserPlan: vi.fn<PlanRepository["findActiveUserPlan"]>(),
   findOrderById: vi.fn<PlanRepository["findOrderById"]>(),
   findOrdersByUser: vi.fn<PlanRepository["findOrdersByUser"]>(),
@@ -27,7 +39,9 @@ export const createMockRepository = (): MockedPlanRepository => ({
   findPaymentByOrderId: vi.fn<PlanRepository["findPaymentByOrderId"]>(),
   findPaymentByTransactionId:
     vi.fn<PlanRepository["findPaymentByTransactionId"]>(),
+  insertAdminGrant: vi.fn<PlanRepository["insertAdminGrant"]>(),
   insertOrder: vi.fn<PlanRepository["insertOrder"]>(),
+  listAdminGrants: vi.fn<PlanRepository["listAdminGrants"]>(),
   insertPayment: vi.fn<PlanRepository["insertPayment"]>(),
   setOrderAppliedAt: vi.fn<PlanRepository["setOrderAppliedAt"]>(),
   updateOrderStatus: vi.fn<PlanRepository["updateOrderStatus"]>(),
@@ -42,6 +56,8 @@ export type MockedPlanGuard = {
 export const createMockGuard = (): MockedPlanGuard => ({
   assertOrderVisibleByIdOrNotFound:
     vi.fn<PlanGuard["assertOrderVisibleByIdOrNotFound"]>(),
+  assertUserExistsOrNotFound: vi.fn<PlanGuard["assertUserExistsOrNotFound"]>(),
+  requireAdmin: vi.fn<PlanGuard["requireAdmin"]>(),
   requireOwner: vi.fn<PlanGuard["requireOwner"]>(),
 });
 
@@ -89,6 +105,26 @@ export const createPaymentFixture = (
   userId: "owner-1",
   ...overrides,
 });
+
+export const createAdminGrantFixture = (
+  overrides: Partial<AdminGrant> = {}
+): AdminGrant => ({
+  durationMonths: 1,
+  expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  grantedAt: new Date(),
+  grantedBy: "admin-1",
+  id: generateId(ADMIN_GRANT_ID_PREFIX),
+  note: null,
+  planKey: "LITE",
+  startedAt: new Date(),
+  userId: "owner-1",
+  ...overrides,
+});
+
+export const EMPTY_ADMIN_GRANT_LIST: AdminGrantListResult = {
+  data: [],
+  pagination: { limit: 20, page: 1, total: 0, totalPages: 1 },
+};
 
 export const EMPTY_ORDER_LIST: OrderListResult = {
   data: [],
@@ -181,6 +217,23 @@ export class PlanTestEnv implements AsyncDisposable {
       payload: null,
       status: "PENDING",
       updatedAt: new Date(),
+      userId: this.ownerId,
+      ...overrides,
+    });
+  }
+
+  async seedAdminGrant(
+    overrides: Partial<AdminGrant> = {}
+  ): Promise<AdminGrant> {
+    return await this.repo.insertAdminGrant({
+      durationMonths: 1,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      grantedAt: new Date(),
+      grantedBy: this.ownerId,
+      id: generateId(ADMIN_GRANT_ID_PREFIX),
+      note: null,
+      planKey: "LITE",
+      startedAt: new Date(),
       userId: this.ownerId,
       ...overrides,
     });

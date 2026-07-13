@@ -1,4 +1,8 @@
+import { PLAN_KEYS } from "$lib/schemas/plan.constant";
+
 import type {
+  AdminGrant,
+  NewAdminGrant,
   NewOrder,
   NewPayment,
   NewUserPlan,
@@ -19,6 +23,25 @@ export interface OrderListPagination {
 export interface OrderListResult {
   data: Order[];
   pagination: OrderListPagination;
+}
+
+export interface AdminGrantListPagination {
+  limit: number;
+  page: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AdminGrantListResult {
+  data: AdminGrant[];
+  pagination: AdminGrantListPagination;
+}
+
+export interface ListAdminGrantsFilters {
+  grantedBy?: string;
+  page: number;
+  planKey?: (typeof PLAN_KEYS)[number];
+  userId?: string;
 }
 
 export type PaymentUpdatePatch = Partial<
@@ -51,4 +74,14 @@ export interface PlanRepository {
     transactionId: string
   ): Promise<Payment | null>;
   updatePayment(id: string, patch: PaymentUpdatePatch): Promise<Payment | null>;
+
+  // ── admin_grant ──
+  insertAdminGrant(row: NewAdminGrant): Promise<AdminGrant>;
+  findActiveAdminGrantsForUser(
+    userId: string,
+    nowMs: number
+  ): Promise<AdminGrant[]>;
+  listAdminGrants(
+    filters: ListAdminGrantsFilters
+  ): Promise<AdminGrantListResult>;
 }

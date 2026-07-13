@@ -32,9 +32,9 @@ export const PLAN_MONTHLY_PRICE: Record<(typeof PLAN_KEYS)[number], number> = {
 
 // Monthly AI generate limit per tier
 export const PLAN_MONTHLY_LIMIT: Record<(typeof PLAN_KEYS)[number], number> = {
-  LITE: 60_000,
-  PLUS: 120_000,
-  PREMIUM: 360_000,
+  LITE: 60,
+  PLUS: 120,
+  PREMIUM: 360,
 };
 
 // Months the user actually pays for, per purchased duration
@@ -85,3 +85,10 @@ export const PLAN_DAYS_PER_MONTH = 30;
 
 // Pending QRIS payment window (minutes)
 export const PLAN_QRIS_EXPIRY_MINUTES = 15;
+
+// Admin-grant constants (issue #23)
+export const ADMIN_GRANT_ID_PREFIX = "agr";
+export const ADMIN_GRANT_MIN_MONTHS = 1;
+export const ADMIN_GRANT_MAX_MONTHS = 24;
+export const ADMIN_GRANT_NOTE_MAX_LENGTH = 500;
+export const ADMIN_GRANT_PAGE_LIMIT = 20;

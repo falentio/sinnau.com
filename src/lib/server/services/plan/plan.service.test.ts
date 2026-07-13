@@ -1,3 +1,4 @@
+import type { GrantPlanInput, ListGrantsInput } from "$lib/schemas/plan";
 import {
   PLAN_DAILY_DIVISOR,
   PLAN_WEEKLY_DIVISOR,
@@ -10,11 +11,13 @@ import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import type { PlanGuard } from "./plan.guard.ts";
 import { PlanService } from "./plan.service.ts";
 import {
+  createAdminGrantFixture,
   createMockGuard,
   createMockRepository,
   createOrderFixture,
   createPaymentFixture,
   createUserPlanFixture,
+  EMPTY_ADMIN_GRANT_LIST,
   EMPTY_ORDER_LIST,
   captureError,
 } from "./plan.testing.ts";
@@ -77,18 +80,41 @@ const setupService = (midtrans = createMockMidtrans()) => {
     }
   );
 
+  guard.requireAdmin.mockImplementation((id) => {
+    if (!id)
+      throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
+    return id as string;
+  });
+  guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
+    if (id === "missing-user") {
+      throw new ORPCError("NOT_FOUND", { message: "User not found" });
+    }
+    return {
+      banned: false,
+      email: `${id}@e.com`,
+      emailVerified: true,
+      id,
+      name: "User",
+    } as never;
+  });
+
   repo.findActiveUserPlan.mockResolvedValue(null);
   repo.findOrdersByUser.mockResolvedValue(EMPTY_ORDER_LIST);
   repo.findOrderById.mockResolvedValue(null);
   repo.findPaymentByTransactionId.mockResolvedValue(null);
   repo.findPaymentByOrderId.mockResolvedValue(null);
   repo.findPaidOrdersForUser.mockResolvedValue([]);
+  repo.findActiveAdminGrantsForUser.mockResolvedValue([]);
   repo.insertOrder.mockImplementation(
     async (row) => createOrderFixture(row) as never
   );
   repo.insertPayment.mockImplementation(
     async (row) => createPaymentFixture(row) as never
   );
+  repo.insertAdminGrant.mockImplementation(
+    async (row) => createAdminGrantFixture(row) as never
+  );
+  repo.listAdminGrants.mockResolvedValue(EMPTY_ADMIN_GRANT_LIST);
   repo.updateOrderStatus.mockImplementation(
     async (id, status) => createOrderFixture({ id, status }) as never
   );
@@ -599,6 +625,129 @@ describe.concurrent("PlanService unit tests", () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+  });
+
+  describe.concurrent("grantPlan", () => {
+    const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+    it("throws UNAUTHORIZED when admin id is null", async ({ expect }) => {
+      const { service } = setupService();
+      const input: GrantPlanInput = {
+        durationMonths: 1,
+        planKey: "LITE",
+        userId: "user-1",
+      };
+      const err = await captureError(service.grantPlan(input, null));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("throws FORBIDDEN when admin id is undefined", async ({ expect }) => {
+      const { service } = setupService();
+      const input: GrantPlanInput = {
+        durationMonths: 1,
+        planKey: "LITE",
+        userId: "user-1",
+      };
+      const err = await captureError(service.grantPlan(input, undefined));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("throws NOT_FOUND when the target user does not exist", async ({
+      expect,
+    }) => {
+      const { guard, service } = setupService();
+      guard.assertUserExistsOrNotFound.mockRejectedValue(
+        new ORPCError("NOT_FOUND", { message: "User not found" })
+      );
+      const input: GrantPlanInput = {
+        durationMonths: 1,
+        planKey: "LITE",
+        userId: "missing-user",
+      };
+      const err = await captureError(service.grantPlan(input, "admin-1"));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("grants a plan, updating the user's active plan", async ({ expect }) => {
+      const { guard, repo, service } = setupService();
+      guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
+        if (id === "missing-user") {
+          throw new ORPCError("NOT_FOUND", { message: "User not found" });
+        }
+        return {
+          banned: false,
+          email: `${id}@e.com`,
+          emailVerified: true,
+          id,
+          name: "User",
+        } as never;
+      });
+
+      const now = Date.now();
+      const input: GrantPlanInput = {
+        durationMonths: 3,
+        planKey: "PREMIUM",
+        userId: "target-user",
+      };
+
+      await service.grantPlan(input, "admin-1");
+
+      expect(repo.insertAdminGrant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          durationMonths: 3,
+          grantedBy: "admin-1",
+          userId: "target-user",
+        })
+      );
+      expect(repo.upsertUserPlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "target-user",
+          planKey: "PREMIUM",
+        })
+      );
+    });
+  });
+
+  describe.concurrent("listGrants", () => {
+    it("throws UNAUTHORIZED when admin id is null", async ({ expect }) => {
+      const { service } = setupService();
+      const input: ListGrantsInput = { page: 1 };
+      const err = await captureError(service.listGrants(input, null));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("returns the paginated grant list from the repository", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const row = createAdminGrantFixture({
+        durationMonths: 1,
+        grantedBy: "admin-1",
+        id: "grant-1",
+        userId: "user-1",
+      });
+      repo.listAdminGrants.mockResolvedValue({
+        data: [row],
+        pagination: {
+          limit: 10,
+          page: 1,
+          total: 1,
+          totalPages: 1,
+        },
+      });
+
+      const result = await service.listGrants({ page: 1 }, "admin-1");
+
+      expect(repo.listAdminGrants).toHaveBeenCalledWith({ page: 1 });
+      expect(result).toEqual({
+        data: [expect.objectContaining({ id: "grant-1" })],
+        pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },
+      });
     });
   });
 });

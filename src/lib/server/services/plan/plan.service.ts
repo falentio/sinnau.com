@@ -3,9 +3,14 @@ import type {
   CheckoutOutput,
   GetOrder,
   GetOrderInput,
+  GrantPlanInput,
+  GrantPlanOutput,
+  ListGrantsInput,
+  ListGrantsOutput,
   ListOrdersInput,
 } from "$lib/schemas/plan";
 import {
+  ADMIN_GRANT_ID_PREFIX,
   ORDER_ID_PREFIX,
   PAYMENT_ID_PREFIX,
   PLAN_DAILY_DIVISOR,
@@ -25,6 +30,8 @@ import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 
 import type {
+  AdminGrant,
+  NewAdminGrant,
   Order,
   OrderStatus,
   PaymentStatus,
@@ -33,7 +40,11 @@ import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type { PlanGuard } from "./plan.guard.ts";
-import type { OrderListResult, PlanRepository } from "./plan.repository.ts";
+import type {
+  AdminGrantListResult,
+  OrderListResult,
+  PlanRepository,
+} from "./plan.repository.ts";
 
 const webhookLogger = getLogger(["sinnau.com", "plan", "webhook"]);
 const orderLogger = getLogger(["sinnau.com", "plan", "order"]);
@@ -319,6 +330,45 @@ export class PlanService {
     const payment = await this.repo.findPaymentByOrderId(order.id);
     const qrUrl = payment ? PlanService.parseQrisUrl(payment.payload) : null;
     return { ...order, qrUrl };
+  }
+
+  async grantPlan(
+    input: GrantPlanInput,
+    adminId: string | null | undefined
+  ): Promise<AdminGrant> {
+    const admin = this.guard.requireAdmin(adminId);
+    const user = await this.guard.assertUserExistsOrNotFound(input.userId);
+    const now = Date.now();
+    const durationMs = input.durationMonths * MONTH_MS;
+    const grant: NewAdminGrant = {
+      durationMonths: input.durationMonths,
+      expiresAt: new Date(now + durationMs),
+      grantedAt: new Date(now),
+      grantedBy: admin,
+      id: generateId(ADMIN_GRANT_ID_PREFIX),
+      note: input.note ?? null,
+      planKey: input.planKey,
+      startedAt: new Date(now),
+      userId: user.id,
+    };
+    await this.repo.upsertUserPlan({
+      createdAt: new Date(now),
+      expiresAt: grant.expiresAt,
+      id: generateId(PLAN_ID_PREFIX),
+      planKey: input.planKey,
+      startedAt: grant.startedAt,
+      updatedAt: new Date(now),
+      userId: user.id,
+    });
+    return await this.repo.insertAdminGrant(grant);
+  }
+
+  async listGrants(
+    input: ListGrantsInput,
+    adminId: string | null | undefined
+  ): Promise<AdminGrantListResult> {
+    this.guard.requireAdmin(adminId);
+    return await this.repo.listAdminGrants(input);
   }
 
   static parseQrisUrl(payload: string | null): string | null {

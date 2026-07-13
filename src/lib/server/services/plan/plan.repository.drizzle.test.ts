@@ -1,9 +1,10 @@
 import { user } from "$lib/server/infras/db/schema/auth-schema";
 import { order, payment, userPlan } from "$lib/server/infras/db/schema/plan";
+import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
 import { describe, it } from "vitest";
 
-import { PlanTestEnv } from "./plan.testing.ts";
+import { PlanTestEnv, captureError } from "./plan.testing.ts";
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -304,6 +305,169 @@ describe.concurrent("PlanDrizzleRepository", () => {
       expect(
         await env.repo.findActiveUserPlan(env.ownerId, Date.now())
       ).toBeNull();
+    });
+  });
+
+  describe("admin_grant table", () => {
+    it("insertAdminGrant returns the inserted row with the agr_ id prefix", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const row = await env.seedAdminGrant({ id: "agr_test1" });
+      expect(row.id).toBe("agr_test1");
+      expect(row.planKey).toBe("LITE");
+      expect(row.userId).toBe(env.ownerId);
+    });
+
+    it("insertAdminGrant with a non-existent userId surfaces INTERNAL_SERVER_ERROR", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const error = await captureError(
+        env.repo.insertAdminGrant({
+          durationMonths: 1,
+          expiresAt: new Date(Date.now() + MONTH_MS),
+          grantedAt: new Date(),
+          grantedBy: null,
+          id: "agr_orphan",
+          note: null,
+          planKey: "LITE",
+          startedAt: new Date(),
+          userId: "user-does-not-exist",
+        })
+      );
+      expect(error).toBeInstanceOf(ORPCError);
+      expect(error).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+
+    it("findActiveAdminGrantsForUser returns only grants where expiresAt > nowMs", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const now = Date.now();
+      await env.seedAdminGrant({
+        expiresAt: new Date(now + MONTH_MS),
+        id: "agr_active",
+        startedAt: new Date(now - 1000),
+      });
+      await env.seedAdminGrant({
+        expiresAt: new Date(now - MONTH_MS),
+        id: "agr_expired",
+        startedAt: new Date(now - 2 * MONTH_MS),
+      });
+      const active = await env.repo.findActiveAdminGrantsForUser(
+        env.ownerId,
+        now
+      );
+      expect(active).toHaveLength(1);
+      expect(active[0]?.id).toBe("agr_active");
+    });
+
+    it("findActiveAdminGrantsForUser returns rows sorted by startedAt asc", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const now = Date.now();
+      await env.seedAdminGrant({
+        expiresAt: new Date(now + MONTH_MS),
+        id: "agr_late",
+        startedAt: new Date(now - 1000),
+      });
+      await env.seedAdminGrant({
+        expiresAt: new Date(now + 2 * MONTH_MS),
+        id: "agr_early",
+        startedAt: new Date(now - 10_000),
+      });
+      const rows = await env.repo.findActiveAdminGrantsForUser(
+        env.ownerId,
+        now
+      );
+      expect(rows.map((r) => r.id)).toEqual(["agr_early", "agr_late"]);
+    });
+
+    it("listAdminGrants with no filters returns all rows paginated", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      for (let i = 0; i < 25; i += 1) {
+        await env.seedAdminGrant({
+          id: `agr_${i.toString().padStart(2, "0")}`,
+        });
+      }
+      const page1 = await env.repo.listAdminGrants({ page: 1 });
+      expect(page1.data).toHaveLength(20);
+      expect(page1.pagination).toMatchObject({
+        limit: 20,
+        page: 1,
+        total: 25,
+        totalPages: 2,
+      });
+      const page2 = await env.repo.listAdminGrants({ page: 2 });
+      expect(page2.data).toHaveLength(5);
+    });
+
+    it("listAdminGrants with userId filter returns only that user's grants", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      await env.seedAdminGrant({ id: "agr_owner_a" });
+      const otherUser = env.seedUser({ name: "Other" });
+      await env.repo.insertAdminGrant({
+        durationMonths: 1,
+        expiresAt: new Date(Date.now() + MONTH_MS),
+        grantedAt: new Date(),
+        grantedBy: null,
+        id: "agr_owner_b",
+        note: null,
+        planKey: "LITE",
+        startedAt: new Date(),
+        userId: otherUser,
+      });
+      const result = await env.repo.listAdminGrants({
+        page: 1,
+        userId: env.ownerId,
+      });
+      expect(result.data.map((r) => r.id)).toEqual(["agr_owner_a"]);
+      expect(result.pagination.total).toBe(1);
+    });
+
+    it("listAdminGrants with grantedBy filter returns only grants by that admin", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.seedAdminGrant({ grantedBy: admin, id: "agr_by_admin" });
+      await env.seedAdminGrant({ id: "agr_no_admin", grantedBy: null });
+      const result = await env.repo.listAdminGrants({
+        grantedBy: admin,
+        page: 1,
+      });
+      expect(result.data.map((r) => r.id)).toEqual(["agr_by_admin"]);
+    });
+
+    it("listAdminGrants with planKey filter returns only grants for that plan", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      await env.seedAdminGrant({ id: "agr_lite", planKey: "LITE" });
+      await env.seedAdminGrant({ id: "agr_plus", planKey: "PLUS" });
+      const result = await env.repo.listAdminGrants({
+        page: 1,
+        planKey: "LITE",
+      });
+      expect(result.data.map((r) => r.id)).toEqual(["agr_lite"]);
+    });
+
+    it("listAdminGrants page 2 returns the next page", async ({ expect }) => {
+      await using env = new PlanTestEnv();
+      for (let i = 0; i < 21; i += 1) {
+        await env.seedAdminGrant({
+          id: `agr_${i.toString().padStart(2, "0")}`,
+        });
+      }
+      const page2 = await env.repo.listAdminGrants({ page: 2 });
+      expect(page2.data).toHaveLength(1);
+      expect(page2.pagination).toMatchObject({ page: 2, total: 21 });
     });
   });
 

@@ -2,6 +2,10 @@ import * as v from "valibot";
 
 import { createPrefixedIdSchema } from "./id-schema.ts";
 import {
+  ADMIN_GRANT_ID_PREFIX,
+  ADMIN_GRANT_MAX_MONTHS,
+  ADMIN_GRANT_MIN_MONTHS,
+  ADMIN_GRANT_NOTE_MAX_LENGTH,
   ORDER_ID_PREFIX,
   ORDER_STATUSES,
   PAYMENT_ID_PREFIX,
@@ -131,6 +135,74 @@ export const getAiLimitPlanForUserOutputSchema = v.object({
 export type GetAiLimitPlanForUserOutput = v.InferOutput<
   typeof getAiLimitPlanForUserOutputSchema
 >;
+
+// ─── Admin grants (issue #23) ────────────────────────────────────────
+
+const adminGrantIdSchema = createPrefixedIdSchema(ADMIN_GRANT_ID_PREFIX);
+
+const adminGrantDurationMonthsSchema = v.pipe(
+  v.number(),
+  v.integer("Duration must be an integer number of months"),
+  v.minValue(
+    ADMIN_GRANT_MIN_MONTHS,
+    `Duration must be at least ${ADMIN_GRANT_MIN_MONTHS} month(s)`
+  ),
+  v.maxValue(
+    ADMIN_GRANT_MAX_MONTHS,
+    `Duration must be at most ${ADMIN_GRANT_MAX_MONTHS} months`
+  )
+);
+
+export const grantPlanInputSchema = v.object({
+  durationMonths: adminGrantDurationMonthsSchema,
+  note: v.optional(
+    v.pipe(
+      v.string(),
+      v.maxLength(
+        ADMIN_GRANT_NOTE_MAX_LENGTH,
+        `Note must be at most ${ADMIN_GRANT_NOTE_MAX_LENGTH} characters`
+      )
+    )
+  ),
+  planKey: planKeySchema,
+  userId: v.string(),
+});
+export type GrantPlanInput = v.InferOutput<typeof grantPlanInputSchema>;
+
+export const adminGrantSchema = v.object({
+  durationMonths: adminGrantDurationMonthsSchema,
+  expiresAt: v.date(),
+  grantedAt: v.date(),
+  grantedBy: v.nullable(v.string()),
+  id: adminGrantIdSchema,
+  note: v.nullable(v.string()),
+  planKey: planKeySchema,
+  startedAt: v.date(),
+  userId: v.string(),
+});
+export type AdminGrant = v.InferOutput<typeof adminGrantSchema>;
+
+export const grantPlanOutputSchema = adminGrantSchema;
+export type GrantPlanOutput = v.InferOutput<typeof grantPlanOutputSchema>;
+
+export const listGrantsInputSchema = v.object({
+  grantedBy: v.optional(v.string()),
+  page: pageSchema,
+  planKey: v.optional(planKeySchema),
+  userId: v.optional(v.string()),
+});
+export type ListGrantsInput = v.InferOutput<typeof listGrantsInputSchema>;
+
+export const listGrantsOutputSchema = v.object({
+  data: v.array(adminGrantSchema),
+  pagination: v.object({
+    limit: v.number(),
+    page: v.number(),
+    total: v.number(),
+    totalPages: v.number(),
+  }),
+});
+export type ListGrantsOutput = v.InferOutput<typeof listGrantsOutputSchema>;
 
 // Re-export shared primitives for callers that need them
 export {

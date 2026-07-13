@@ -114,9 +114,37 @@ export const payment = sqliteTable(
   ]
 );
 
+export const adminGrant = sqliteTable(
+  "admin_grant",
+  {
+    durationMonths: integer("duration_months").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    grantedAt: integer("granted_at", { mode: "timestamp_ms" }).notNull(),
+    grantedBy: text("granted_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    id: text("id").primaryKey(),
+    note: text("note"),
+    planKey: text("plan_key", { enum: PLAN_KEYS }).$type<PlanKey>().notNull(),
+    startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("admin_grant_userId_expiresAt_idx").on(table.userId, table.expiresAt),
+    index("admin_grant_grantedBy_grantedAt_idx").on(
+      table.grantedBy,
+      table.grantedAt
+    ),
+  ]
+);
+
 export type UserPlan = typeof userPlan.$inferSelect;
 export type NewUserPlan = typeof userPlan.$inferInsert;
 export type Order = typeof order.$inferSelect;
 export type NewOrder = typeof order.$inferInsert;
 export type Payment = typeof payment.$inferSelect;
 export type NewPayment = typeof payment.$inferInsert;
+export type AdminGrant = typeof adminGrant.$inferSelect;
+export type NewAdminGrant = typeof adminGrant.$inferInsert;

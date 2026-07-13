@@ -1,11 +1,21 @@
-import { PLAN_PAGE_LIMIT } from "$lib/schemas/plan.constant";
+import {
+  ADMIN_GRANT_PAGE_LIMIT,
+  PLAN_PAGE_LIMIT,
+} from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, gte, lte, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, lte, notInArray, sql } from "drizzle-orm";
 
 import type { DB } from "../../infras/db/client.ts";
 import { db as defaultDb } from "../../infras/db/client.ts";
-import { order, payment, userPlan } from "../../infras/db/schema/plan.ts";
+import {
+  adminGrant,
+  order,
+  payment,
+  userPlan,
+} from "../../infras/db/schema/plan.ts";
 import type {
+  AdminGrant,
+  NewAdminGrant,
   NewOrder,
   NewPayment,
   NewUserPlan,
@@ -16,6 +26,8 @@ import type {
   UserPlan,
 } from "../../infras/db/schema/plan.ts";
 import type {
+  AdminGrantListResult,
+  ListAdminGrantsFilters,
   OrderListResult,
   PaymentUpdatePatch,
   PlanRepository,
@@ -322,6 +334,104 @@ export class PlanDrizzleRepository implements PlanRepository {
         .where(eq(payment.id, id))
         .returning();
       return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async insertAdminGrant(row: NewAdminGrant): Promise<AdminGrant> {
+    try {
+      const [created] = await this.dbInstance
+        .insert(adminGrant)
+        .values(row)
+        .returning();
+      if (!created) {
+        throw new Error("Failed to insert admin grant");
+      }
+      return created;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findActiveAdminGrantsForUser(
+    userId: string,
+    nowMs: number
+  ): Promise<AdminGrant[]> {
+    try {
+      return await this.dbInstance
+        .select()
+        .from(adminGrant)
+        .where(
+          and(
+            eq(adminGrant.userId, userId),
+            gt(adminGrant.expiresAt, new Date(nowMs))
+          )
+        )
+        .orderBy(sql`${adminGrant.startedAt} asc`);
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async listAdminGrants(
+    filters: ListAdminGrantsFilters
+  ): Promise<AdminGrantListResult> {
+    try {
+      const limit = ADMIN_GRANT_PAGE_LIMIT;
+      const page = filters.page;
+      const offset = (page - 1) * limit;
+      const conditions: ReturnType<typeof eq>[] = [];
+      if (filters.userId !== undefined) {
+        conditions.push(eq(adminGrant.userId, filters.userId));
+      }
+      if (filters.grantedBy !== undefined) {
+        conditions.push(eq(adminGrant.grantedBy, filters.grantedBy));
+      }
+      if (filters.planKey !== undefined) {
+        conditions.push(eq(adminGrant.planKey, filters.planKey));
+      }
+      const whereClause =
+        conditions.length > 0 ? and(...conditions) : undefined;
+
+      const rows = await this.dbInstance
+        .select()
+        .from(adminGrant)
+        .where(whereClause)
+        .orderBy(desc(adminGrant.grantedAt))
+        .limit(limit)
+        .offset(offset);
+
+      const [{ total } = { total: 0 }] = await this.dbInstance
+        .select({ total: sql<number>`count(*)` })
+        .from(adminGrant)
+        .where(whereClause);
+      const totalCount = total;
+
+      return {
+        data: rows,
+        pagination: {
+          limit,
+          page,
+          total: totalCount,
+          totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+        },
+      };
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;

@@ -3,6 +3,7 @@ import { describe, it, vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
 import type { Order } from "../../infras/db/schema/plan.ts";
+import type { UserRepository } from "../user/user.repository.ts";
 import { PlanGuard } from "./plan.guard.ts";
 import type { PlanRepository } from "./plan.repository.ts";
 import { captureError, createOrderFixture } from "./plan.testing.ts";
@@ -11,8 +12,14 @@ type MockedPlanRepository = {
   [K in keyof PlanRepository]: MockedFunction<PlanRepository[K]>;
 };
 
+type MockedUserRepository = {
+  [K in keyof UserRepository]: MockedFunction<UserRepository[K]>;
+};
+
 const createMockRepository = (): MockedPlanRepository => ({
   deleteUserPlan: vi.fn<PlanRepository["deleteUserPlan"]>(),
+  findActiveAdminGrantsForUser:
+    vi.fn<PlanRepository["findActiveAdminGrantsForUser"]>(),
   findActiveUserPlan: vi.fn<PlanRepository["findActiveUserPlan"]>(),
   findOrderById: vi.fn<PlanRepository["findOrderById"]>(),
   findOrdersByUser: vi.fn<PlanRepository["findOrdersByUser"]>(),
@@ -20,7 +27,9 @@ const createMockRepository = (): MockedPlanRepository => ({
   findPaymentByOrderId: vi.fn<PlanRepository["findPaymentByOrderId"]>(),
   findPaymentByTransactionId:
     vi.fn<PlanRepository["findPaymentByTransactionId"]>(),
+  insertAdminGrant: vi.fn<PlanRepository["insertAdminGrant"]>(),
   insertOrder: vi.fn<PlanRepository["insertOrder"]>(),
+  listAdminGrants: vi.fn<PlanRepository["listAdminGrants"]>(),
   insertPayment: vi.fn<PlanRepository["insertPayment"]>(),
   setOrderAppliedAt: vi.fn<PlanRepository["setOrderAppliedAt"]>(),
   updateOrderStatus: vi.fn<PlanRepository["updateOrderStatus"]>(),
@@ -28,10 +37,15 @@ const createMockRepository = (): MockedPlanRepository => ({
   upsertUserPlan: vi.fn<PlanRepository["upsertUserPlan"]>(),
 });
 
+const createMockUserRepository = (): MockedUserRepository => ({
+  findUserById: vi.fn<UserRepository["findUserById"]>(),
+});
+
 const setupGuard = () => {
   const repo = createMockRepository();
-  const guard = new PlanGuard(repo);
-  return { guard, repo };
+  const userRepo = createMockUserRepository();
+  const guard = new PlanGuard(repo, userRepo as unknown as UserRepository);
+  return { guard, repo, userRepo };
 };
 
 const throwUnauthorized = () => {
@@ -119,6 +133,66 @@ describe.concurrent("PlanGuard unit", () => {
       expect(err).toMatchObject({
         code: "NOT_FOUND",
         message: "Order not found",
+      });
+    });
+  });
+
+  describe("requireAdmin", () => {
+    it("returns the admin id when present", async ({ expect }) => {
+      const { guard } = setupGuard();
+      expect(guard.requireAdmin("admin-123")).toBe("admin-123");
+    });
+
+    it("throws FORBIDDEN when null", async ({ expect }) => {
+      const { guard } = setupGuard();
+      const err = await captureError((async () => guard.requireAdmin(null))());
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("throws FORBIDDEN when undefined", async ({ expect }) => {
+      const { guard } = setupGuard();
+      const err = await captureError(
+        (async () => guard.requireAdmin(undefined))()
+      );
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+    });
+
+    it("does not fetch the user (defense-in-depth only)", async ({
+      expect,
+    }) => {
+      const { guard, userRepo } = setupGuard();
+      guard.requireAdmin("admin-123");
+      expect(userRepo.findUserById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("assertUserExistsOrNotFound", () => {
+    it("returns the user row when the id resolves", async ({ expect }) => {
+      const { guard, userRepo } = setupGuard();
+      const user = {
+        banned: false,
+        email: "u@e.com",
+        emailVerified: true,
+        id: "user-1",
+        name: "U",
+      } as never;
+      userRepo.findUserById.mockResolvedValue(user);
+      const result = await guard.assertUserExistsOrNotFound("user-1");
+      expect(result).toBe(user);
+      expect(userRepo.findUserById).toHaveBeenCalledWith("user-1");
+    });
+
+    it("throws NOT_FOUND when the user does not exist", async ({ expect }) => {
+      const { guard, userRepo } = setupGuard();
+      userRepo.findUserById.mockResolvedValue(null);
+      const err = await captureError(
+        guard.assertUserExistsOrNotFound("u-missing")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({
+        code: "NOT_FOUND",
+        message: "User not found",
       });
     });
   });
