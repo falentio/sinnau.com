@@ -42,10 +42,10 @@
 
 <article
   class={[
-    "group relative flex flex-col overflow-hidden rounded-3xl border bg-card p-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:flex-row md:items-stretch md:gap-8 md:p-8",
+    "group relative flex flex-col overflow-hidden rounded-3xl border bg-card p-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:flex-row lg:items-stretch lg:gap-8 lg:p-8",
     isFeatured
-      ? "border-amber-500/30 bg-gradient-to-b from-amber-500/[0.06] via-card to-card shadow-[0_1px_0_0_rgba(217,119,6,0.08)] ring-1 ring-amber-500/10"
-      : "border-border/60 ring-1 ring-foreground/[0.04]",
+      ? "border-amber-500/30 bg-linear-to-b from-amber-500/6 via-card to-card shadow-[0_1px_0_0_rgba(217,119,6,0.08)] ring-1 ring-amber-500/10"
+      : "border-border/60 ring-1 ring-foreground/4",
     disabled && "opacity-60 saturate-50",
   ]}
 >
@@ -60,7 +60,7 @@
       <div class="flex flex-col gap-1">
         <div class="flex items-center gap-2">
           <h3
-            class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-3xl"
+            class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground lg:text-3xl"
           >
             {plan.name}
           </h3>
@@ -73,7 +73,7 @@
           {/if}
         </div>
         <p class="text-sm text-muted-foreground">
-          {plan.benefits.length} benefit utama · pembayaran sekali
+          {plan.benefits.length} benefit utama
         </p>
       </div>
 
@@ -84,7 +84,7 @@
           per bulan
         </span>
         <span
-          class="font-heading text-2xl font-semibold tabular-nums tracking-tight text-foreground md:text-3xl"
+          class="font-heading text-2xl font-semibold tabular-nums tracking-tight text-foreground lg:text-3xl"
         >
           {formatIdr(plan.monthlyPrice)}
         </span>
@@ -112,7 +112,7 @@
     </ul>
   </div>
 
-  <div class="mt-8 flex flex-col md:mt-0 md:w-72 md:shrink-0 md:justify-end">
+  <div class="mt-8 flex flex-col lg:mt-0 lg:w-72 lg:shrink-0 lg:justify-end">
     <button
       type="button"
       {disabled}
@@ -157,7 +157,7 @@
             : "bg-foreground text-background ",
         ])}
       >
-        Lanjut bayar
+        Pilih paket
       </span>
     </button>
   </div>

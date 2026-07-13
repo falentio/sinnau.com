@@ -13,9 +13,9 @@
   > = {
     LITE: {
       benefits: [
-        "Unlimited quiz attempts",
-        "FSRS flashcard session",
-        "Weak chapter spot analysis",
+        "Quiz tanpa batas",
+        "Sesi flashcard dengan FSRS",
+        "Analisis kelemahan per bab",
       ],
       monthly: 60,
       name: "Lite",

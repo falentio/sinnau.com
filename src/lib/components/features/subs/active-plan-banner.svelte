@@ -55,7 +55,7 @@
           {planLabel}
         </h2>
         <p class="text-sm text-muted-foreground">
-          {monthly} generate per bulan
+          {monthly} kali generate per bulan
           <span class="mx-1.5 text-foreground/20">·</span>
           <span class="tabular-nums">{daily}/hari</span>
           <span class="mx-1 text-foreground/20">·</span>

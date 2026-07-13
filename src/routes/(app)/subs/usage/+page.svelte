@@ -56,15 +56,15 @@
       {#if data.activePlan}
         {planName[data.activePlan.planKey]}
       {:else}
-        Belum ada paket
+        Aktifkan paket
       {/if}
     </h1>
     <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
       {#if data.activePlan}
-        Kuota generate kamu saat ini. Kuota di-reset tiap awal bulan, mengikuti
-        tanggal aktivasi paket.
+        Kuota generate kamu saat ini. Reset tiap awal bulan sesuai tanggal
+        aktivasi paket.
       {:else}
-        Pilih paket untuk mulai generate soal dan flashcard tanpa batas.
+        Aktifkan paket untuk mulai generate soal dan flashcard dari AI.
       {/if}
     </p>
   </header>
@@ -84,7 +84,7 @@
             {planName[data.activePlan.planKey]}
           </span>
           <span class="text-xs text-muted-foreground">
-            Diperpanjang dari aktivasi sebelumnya
+            Diperpanjang dari periode sebelumnya
           </span>
         </div>
         <Button href="/subs/plans" variant="default" size="sm">

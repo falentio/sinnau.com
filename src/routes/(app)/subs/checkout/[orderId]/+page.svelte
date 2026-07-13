@@ -146,8 +146,8 @@
       Selesaikan pembayaran
     </h1>
     <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-      Scan QR di bawah ini dari aplikasi bank atau e-wallet kamu. Pembayaran
-      akan diverifikasi otomatis.
+      Scan QR code di bawah dengan aplikasi bank atau e-wallet favoritmu.
+      Pembayaran terverifikasi otomatis.
     </p>
   </header>
 
@@ -256,8 +256,8 @@
       </Button>
 
       <p class="text-center text-[11px] leading-relaxed text-muted-foreground">
-        Klik tombol di atas setelah pembayaran. Halaman akan otomatis
-        memperbarui status ketika Midtrans mengonfirmasi.
+        Klik tombol di atas setelah transfer. Status akan diperbarui otomatis
+        saat pembayaran dikonfirmasi.
       </p>
     </section>
   </div>
@@ -266,8 +266,7 @@
     class="flex flex-col gap-3 border-t border-border/60 py-8 text-[13px] text-muted-foreground md:flex-row md:items-center md:justify-between"
   >
     <p>
-      Tidak jadi bayar? Pesanan akan otomatis kedaluwarsa dan tidak memotong
-      kuota kamu.
+      Tidak jadi bayar? Pesanan kedaluwarsa otomatis — tidak ada yang terpotong.
     </p>
     <a
       href="/subs/plans"

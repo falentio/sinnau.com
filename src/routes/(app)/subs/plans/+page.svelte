@@ -3,6 +3,7 @@
   import ActivePlanBanner from "$lib/components/features/subs/active-plan-banner.svelte";
   import PlanCard from "$lib/components/features/subs/plan-card.svelte";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
+  import Faq from "$lib/features/landing-page/faq.svelte";
   import { client } from "$lib/orpc";
   import type { PlanCatalogItem } from "$lib/schemas/plan";
   import {
@@ -77,7 +78,7 @@
   <title>Paket · Sinnau</title>
 </svelte:head>
 
-<div class="mx-auto w-full max-w-6xl px-6 pt-10 md:pt-14">
+<div class="mx-auto w-full max-w-4xl px-6 pt-10 md:pt-14">
   <header class="flex flex-col gap-2 pb-8 md:pb-10">
     <span
       class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
@@ -87,11 +88,11 @@
     <h1
       class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
     >
-      Paket belajar
+      Pilih paket belajarmu
     </h1>
     <p class="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
       Pilih paket yang sesuai ritme belajarmu. Bayar sekali, aktif sampai durasi
-      habis — tidak ada perpanjangan otomatis.
+      habis — tanpa perpanjangan otomatis.
     </p>
   </header>
 
@@ -123,7 +124,7 @@
         Durasi
       </span>
       <p class="text-sm text-muted-foreground">
-        Ganti durasi untuk melihat harga dan penghematan.
+        Makin panjang durasi, makin besar penghematanmu.
       </p>
     </div>
 
@@ -136,7 +137,7 @@
     </Tabs.Root>
   </div>
 
-  <section class="flex flex-col gap-4 pt-8 md:gap-5 md:pt-10 pb-16">
+  <section class="flex flex-col gap-4 pt-8 md:gap-5 md:pt-10 pb-8">
     {#each plans as plan, i}
       <PlanCard
         {plan}
@@ -148,12 +149,14 @@
     {/each}
   </section>
 
+  <Faq />
+
   <footer
-    class="flex flex-col gap-3 border-t border-border/60 py-10 text-[13px] text-muted-foreground"
+    class="flex flex-col gap-3 border-t border-border/60 mt-32 py-10 text-[13px] text-muted-foreground"
   >
     <p>
-      Pembayaran diproses lewat QRIS. Pesanan kedaluwarsa otomatis setelah 15
-      menit jika belum dibayar.
+      Pembayaran melalui QRIS. Pesanan kedaluwarsa otomatis dalam 15 menit jika
+      belum dibayar.
     </p>
   </footer>
 </div>

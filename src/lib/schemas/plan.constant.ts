@@ -32,9 +32,9 @@ export const PLAN_MONTHLY_PRICE: Record<(typeof PLAN_KEYS)[number], number> = {
 
 // Monthly AI generate limit per tier
 export const PLAN_MONTHLY_LIMIT: Record<(typeof PLAN_KEYS)[number], number> = {
-  LITE: 60,
-  PLUS: 120,
-  PREMIUM: 360,
+  LITE: 60_000,
+  PLUS: 120_000,
+  PREMIUM: 360_000,
 };
 
 // Months the user actually pays for, per purchased duration
@@ -63,12 +63,17 @@ export const PLAN_NAME_FALLBACK = "Tidak Diketahui";
 
 export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
   LITE: [
-    "Unlimited quiz attempts",
-    "FSRS flashcard session",
-    "Weak chapter spot analysis",
+    "Batas generate hingga 60 modul per bulan",
+    "Quiz tanpa batas",
+    "Sesi flashcard dengan FSRS",
+    "Analisis kelemahan per bab",
   ],
-  PLUS: ["All Lite benefits", "2x generate limit"],
-  PREMIUM: ["All Lite benefits", "6x generate limit"],
+  PLUS: ["Semua keuntungan Lite", "Batas generate 2× lebih besar"],
+  PREMIUM: [
+    "Semua keuntungan Lite",
+    "Batas generate 6× lebih besar",
+    "Prioritas dukungan pelanggan",
+  ],
 };
 
 // Used to translate monthly limits into daily / weekly windows
