@@ -19,6 +19,7 @@
   import type { GetOrder } from "$lib/schemas/plan";
   import { PLAN_NAME } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
 
   import type { PageData } from "./$types";
@@ -100,19 +101,18 @@
     }
   };
 
-  $effect(() => () => {
-    if (pollTimeout) {
-      clearTimeout(pollTimeout);
-    }
-    if (autoNavigateTimeout) {
-      clearTimeout(autoNavigateTimeout);
-    }
-  });
-
   $effect(() => {
-    if (!isTerminal) {
+    untrack(() => {
       void poll();
-    }
+    });
+    return () => {
+      if (pollTimeout) {
+        clearTimeout(pollTimeout);
+      }
+      if (autoNavigateTimeout) {
+        clearTimeout(autoNavigateTimeout);
+      }
+    };
   });
 </script>
 
