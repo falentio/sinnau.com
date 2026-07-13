@@ -267,6 +267,10 @@ export class PlanService {
     let qris;
     try {
       qris = await this.midtrans.createQris({
+        custom_expiry: {
+          expiry_duration: 15,
+          unit: "minute",
+        },
         payment_type: "qris",
         transaction_details: { gross_amount: grossAmount, order_id: orderId },
       });
@@ -325,9 +329,9 @@ export class PlanService {
     try {
       parsed = JSON.parse(payload);
     } catch (error) {
-      orderLogger.warn("Failed to parse payment payload as JSON", {
+      orderLogger.warn("Failed to parse payment payload as JSON", () => ({
         error: error instanceof Error ? error.message : String(error),
-      });
+      }));
       return null;
     }
     if (!isQrisPayload(parsed)) {
