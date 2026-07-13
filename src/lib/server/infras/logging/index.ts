@@ -13,12 +13,16 @@ import { setupAxiom, startAxiomFlush } from "./axiom.ts";
 const getSink = () => {
   if (dev) {
     return getConsoleSink({
-      formatter: getPrettyFormatter({ properties: true }),
+      formatter: getPrettyFormatter({
+        levelStyle: ["bold", "underline"],
+        properties: true,
+        timestamp: "date-time",
+      }),
       nonBlocking: false,
     });
   }
   return getConsoleSink({
-    formatter: getJsonLinesFormatter(),
+    formatter: getJsonLinesFormatter({ message: "template" }),
     nonBlocking: true,
   });
 };
