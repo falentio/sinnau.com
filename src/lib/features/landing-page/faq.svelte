@@ -3,24 +3,36 @@
 
   const faqs = [
     {
-      a: "Unggah PDF, slide, atau dokumen teks. AI membuat flashcard dan soal kuis secara otomatis. Anda bisa tinjau, edit, atau tambah kartu sendiri sebelum mulai.",
-      q: "Bagaimana cara membuat modul belajar?",
+      a: "Daftar, lalu unggah PDF catatan atau slide pertama Anda. AI membuat flashcard dan soal kuis untuk Anda. Dalam dua menit, Anda sudah bisa mulai sesi pertama — tanpa bikin kartu manual.",
+      q: "Bagaimana cara mulai pakai sinnau?",
     },
     {
-      a: "FSRS (Free Spaced Repetition Scheduler) adalah algoritma open-source yang dipakai Anki dan ribuan alat belajar lainnya. Untuk setiap kartu, ia memprediksi kapan Anda mulai lupa dan menjadwalkan ulangan tepat sebelum itu terjadi.",
-      q: "Apa itu FSRS dan mengapa penting?",
+      a: "PDF catatan kuliah, slide presentasi, atau dokumen teks. Satu modul biasanya dari satu bab atau satu deck. Sistem mengekstrak konsep utama dan membangun kartu untuk masing-masing.",
+      q: "Materi apa saja yang bisa diunggah?",
     },
     {
-      a: "Ya. Daftar akun gratis dan langsung dapat tiga modul lengkap tanpa biaya. Untuk modul tambahan, pilih paket berbayar yang sesuai. Tidak perlu kartu kredit untuk mulai.",
+      a: "Kurang dari dua menit per bab. Begitu kartu muncul, langsung mulai sesi pertama. Tidak ada setup, tidak ada kartu yang harus diketik manual.",
+      q: "Berapa lama satu modul selesai dibuat?",
+    },
+    {
+      a: "FSRS (Free Spaced Repetition Scheduler) adalah algoritma open-source yang juga dipakai Anki. Untuk tiap kartu, ia memprediksi kapan Anda mulai lupa dan menjadwalkan ulangan tepat sebelum itu. Kartu yang sudah dikuasai jarang muncul; yang masih lemah muncul lebih sering.",
+      q: "Apa itu FSRS dan kenapa itu penting?",
+    },
+    {
+      a: "Quizlet mengulang dengan interval tetap dan mengharuskan Anda bikin kartu sendiri. Anki adaptif, tapi tetap manual. Sinnau menggabungkan keduanya: AI membuat kartu dari PDF Anda, FSRS menjadwalkan secara presisi.",
+      q: "Apa bedanya sinnau dengan Quizlet atau Anki?",
+    },
+    {
+      a: "Ya. Daftar dapat tiga modul lengkap tanpa biaya dan tanpa kartu kredit. Modul tambahan butuh paket berbayar. Batalkan kapan saja.",
       q: "Apakah sinnau gratis?",
     },
     {
-      a: "Kuis adaptif melacak konsep yang Anda kuasai dan menanyakan lebih banyak dari area yang masih lemah. Kartu yang terlewat muncul lagi sampai Anda menguasainya.",
-      q: "Bagaimana kuis adaptif bekerja?",
+      a: "Bisa. Set modul ke publik, lalu teman bisa akses lewat tautan langsung atau temukan di halaman jelajah. Modul privat hanya untuk Anda.",
+      q: "Bisa share modul ke teman?",
     },
     {
-      a: "Ya. Edit, tambah, atau hapus kartu mana pun kapan saja. Hasil AI adalah draf awal — Anda yang menyempurnakan.",
-      q: "Bisa edit kartu setelah dibuat?",
+      a: "Bisa. Edit, tambah, atau hapus kartu mana pun kapan saja. Hasil AI adalah draf awal — Anda yang menyempurnakan sesuai cara Anda memahami materi.",
+      q: "Bisa edit atau tambah kartu sendiri?",
     },
   ] as const;
 
@@ -55,7 +67,7 @@
       >
         <div class="min-w-0">
           <div
-            class="text-[15px] font-medium leading-snug text-[var(--landing-fg)] text-pretty"
+            class="text-[15px] font-medium leading-snug text-foreground text-pretty"
           >
             {faq.q}
           </div>
@@ -65,7 +77,7 @@
           >
             <div class="min-h-0 overflow-hidden">
               <p
-                class="pt-3 text-[13.5px] leading-relaxed text-[var(--landing-muted)] text-pretty"
+                class="pt-3 text-[13.5px] leading-relaxed text-muted-foreground text-pretty"
               >
                 {faq.a}
               </p>
@@ -73,7 +85,7 @@
           </div>
         </div>
         <span
-          class="grid size-6 shrink-0 place-items-center rounded-md border text-[13px] text-[var(--landing-muted)] transition-colors group-hover:text-[var(--landing-fg)]"
+          class="grid size-6 shrink-0 place-items-center rounded-md border text-[13px] text-muted-foreground transition-colors group-hover:text-foreground"
           aria-hidden="true"
         >
           {openIndex === i ? "\u2212" : "+"}

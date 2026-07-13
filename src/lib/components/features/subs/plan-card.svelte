@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Tick02Icon } from "$lib/components/features/icons";
   import { formatIdr } from "$lib/components/features/plan";
+  import { cn } from "$lib/utils";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   interface Duration {
@@ -116,12 +117,12 @@
       type="button"
       {disabled}
       onclick={() => onselect?.(plan.key, duration.months)}
-      class={[
+      class={cn([
         "group/btn relative flex flex-col gap-1 overflow-hidden rounded-2xl border p-5 text-left transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:border-ring disabled:pointer-events-none disabled:opacity-50",
         isFeatured
           ? "border-amber-500/25 bg-gradient-to-b from-amber-500/10 to-amber-500/[0.03] hover:from-amber-500/15 hover:to-amber-500/[0.05]"
           : "border-border/70 bg-background hover:border-foreground/30 hover:bg-muted/50",
-      ]}
+      ])}
     >
       <div class="flex items-baseline justify-between">
         <span
@@ -149,7 +150,12 @@
       </span>
 
       <span
-        class="mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:bg-foreground/90"
+        class={cn([
+          "mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:bg-foreground/90",
+          !isFeatured
+            ? "bg-background text-foreground border"
+            : "bg-foreground text-background ",
+        ])}
       >
         Lanjut bayar
       </span>
