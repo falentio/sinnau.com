@@ -16,7 +16,7 @@ export const planAdminGrantPlan = adminProcedure
   .errors(ERRORS)
   .input(grantPlanInputSchema)
   .output(grantPlanOutputSchema)
-  .handler(async ({ input, context }) => {
-    const row = await planService.grantPlan(input, context.user.id);
-    return row as GrantPlanOutput;
-  });
+  .handler(
+    async ({ input, context }) =>
+      planService.grantPlan(input, context.user.id) as Promise<GrantPlanOutput>
+  );
