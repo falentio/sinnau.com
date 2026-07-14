@@ -143,19 +143,19 @@ describe.concurrent("PlanGuard unit", () => {
       expect(guard.requireAdmin("admin-123")).toBe("admin-123");
     });
 
-    it("throws UNAUTHORIZED when null", async ({ expect }) => {
+    it("throws FORBIDDEN when null", async ({ expect }) => {
       const { guard } = setupGuard();
       const err = await captureError((async () => guard.requireAdmin(null))());
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
 
-    it("throws UNAUTHORIZED when undefined", async ({ expect }) => {
+    it("throws FORBIDDEN when undefined", async ({ expect }) => {
       const { guard } = setupGuard();
       const err = await captureError(
         (async () => guard.requireAdmin(undefined))()
       );
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
 
     it("does not fetch the user (defense-in-depth only)", async ({

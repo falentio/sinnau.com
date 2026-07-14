@@ -1,6 +1,7 @@
 import type { GrantPlanInput, ListGrantsInput } from "$lib/schemas/plan";
 import {
   PLAN_DAILY_DIVISOR,
+  PLAN_MONTHLY_LIMIT,
   PLAN_WEEKLY_DIVISOR,
 } from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
@@ -9,7 +10,7 @@ import { describe, it, vi } from "vitest";
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import type { PlanGuard } from "./plan.guard.ts";
-import { PlanService } from "./plan.service.ts";
+import { deriveUserPlan, PlanService } from "./plan.service.ts";
 import {
   createAdminGrantFixture,
   createMockGuard,
@@ -82,7 +83,7 @@ const setupService = (midtrans = createMockMidtrans()) => {
 
   guard.requireAdmin.mockImplementation((id) => {
     if (!id) {
-      throw new ORPCError("UNAUTHORIZED", { message: "Admin access required" });
+      throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
     }
     return id as string;
   });
@@ -327,9 +328,9 @@ describe.concurrent("PlanService unit tests", () => {
       );
       const lite = await service.getAiLimitPlanForUser("user-1");
       expect(lite).toEqual({
-        daily: Math.ceil(60_000 / PLAN_DAILY_DIVISOR),
+        daily: Math.ceil(PLAN_MONTHLY_LIMIT.LITE / PLAN_DAILY_DIVISOR),
         planKey: "LITE",
-        weekly: Math.ceil(60_000 / PLAN_WEEKLY_DIVISOR),
+        weekly: Math.ceil(PLAN_MONTHLY_LIMIT.LITE / PLAN_WEEKLY_DIVISOR),
       });
 
       repo.findActiveUserPlan.mockResolvedValue(
@@ -337,9 +338,9 @@ describe.concurrent("PlanService unit tests", () => {
       );
       const premium = await service.getAiLimitPlanForUser("user-1");
       expect(premium).toEqual({
-        daily: Math.ceil(360_000 / PLAN_DAILY_DIVISOR),
+        daily: Math.ceil(PLAN_MONTHLY_LIMIT.PREMIUM / PLAN_DAILY_DIVISOR),
         planKey: "PREMIUM",
-        weekly: Math.ceil(360_000 / PLAN_WEEKLY_DIVISOR),
+        weekly: Math.ceil(PLAN_MONTHLY_LIMIT.PREMIUM / PLAN_WEEKLY_DIVISOR),
       });
     });
   });
@@ -630,7 +631,7 @@ describe.concurrent("PlanService unit tests", () => {
   });
 
   describe.concurrent("grantPlan", () => {
-    it("throws UNAUTHORIZED when admin id is null", async ({ expect }) => {
+    it("throws FORBIDDEN when admin id is null", async ({ expect }) => {
       const { service } = setupService();
       const input: GrantPlanInput = {
         durationMonths: 1,
@@ -639,10 +640,10 @@ describe.concurrent("PlanService unit tests", () => {
       };
       const err = await captureError(service.grantPlan(input, null));
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
 
-    it("throws UNAUTHORIZED when admin id is undefined", async ({ expect }) => {
+    it("throws FORBIDDEN when admin id is undefined", async ({ expect }) => {
       const { service } = setupService();
       const input: GrantPlanInput = {
         durationMonths: 1,
@@ -651,7 +652,7 @@ describe.concurrent("PlanService unit tests", () => {
       };
       const err = await captureError(service.grantPlan(input, undefined!));
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
 
     it("throws NOT_FOUND when the target user does not exist", async ({
@@ -726,12 +727,12 @@ describe.concurrent("PlanService unit tests", () => {
   });
 
   describe.concurrent("listGrants", () => {
-    it("throws UNAUTHORIZED when admin id is null", async ({ expect }) => {
+    it("throws FORBIDDEN when admin id is null", async ({ expect }) => {
       const { service } = setupService();
       const input: ListGrantsInput = { page: 1 };
       const err = await captureError(service.listGrants(input, null));
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
 
     it("returns the paginated grant list from the repository", async ({
@@ -800,5 +801,174 @@ describe.concurrent("PlanService.parseQrisUrl", () => {
       actions: [{ method: "GET", name: "deeplink-redirect", url: "x" }],
     });
     expect(PlanService.parseQrisUrl(payload)).toBeNull();
+  });
+});
+
+const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+describe.concurrent("deriveUserPlan", () => {
+  it("returns null for an empty entry list", async ({ expect }) => {
+    const result = deriveUserPlan([], Date.now());
+    expect(result).toBeNull();
+  });
+
+  it("starts a fresh plan from a single grant", async ({ expect }) => {
+    const appliedAt = 1_000_000;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: true,
+          appliedAt,
+          durationMonths: 3,
+          planKey: "PLUS",
+        },
+      ],
+      appliedAt + 1
+    );
+    expect(result).toEqual({
+      expiresAt: appliedAt + 3 * MONTH_MS,
+      planKey: "PLUS",
+      startedAt: appliedAt,
+    });
+  });
+
+  it("extends same-tier via alwaysApply when grant has lower rank than current", async ({
+    expect,
+  }) => {
+    const day0 = 1_000_000;
+    const day15 = day0 + 15 * 24 * 60 * 60 * 1000;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: false,
+          appliedAt: day0,
+          durationMonths: 1,
+          planKey: "PREMIUM",
+        },
+        {
+          alwaysApply: true,
+          appliedAt: day15,
+          durationMonths: 2,
+          planKey: "LITE",
+        },
+      ],
+      day0
+    );
+    expect(result).toEqual({
+      expiresAt: day0 + MONTH_MS + 2 * MONTH_MS,
+      planKey: "PREMIUM",
+      startedAt: day0,
+    });
+  });
+
+  it("skips lower-tier order without alwaysApply on downgrade", async ({
+    expect,
+  }) => {
+    const day0 = 1_000_000;
+    const day15 = day0 + 15 * 24 * 60 * 60 * 1000;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: false,
+          appliedAt: day0,
+          durationMonths: 1,
+          planKey: "PREMIUM",
+        },
+        {
+          alwaysApply: false,
+          appliedAt: day15,
+          durationMonths: 1,
+          planKey: "LITE",
+        },
+      ],
+      day0
+    );
+    expect(result).toEqual({
+      expiresAt: day0 + MONTH_MS,
+      planKey: "PREMIUM",
+      startedAt: day0,
+    });
+  });
+
+  it("upgrades immediately when grant has a higher tier than current", async ({
+    expect,
+  }) => {
+    const day0 = 1_000_000;
+    const day15 = day0 + 15 * 24 * 60 * 60 * 1000;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: false,
+          appliedAt: day0,
+          durationMonths: 1,
+          planKey: "LITE",
+        },
+        {
+          alwaysApply: true,
+          appliedAt: day15,
+          durationMonths: 3,
+          planKey: "PREMIUM",
+        },
+      ],
+      day0
+    );
+    expect(result).toEqual({
+      expiresAt: day15 + 3 * MONTH_MS,
+      planKey: "PREMIUM",
+      startedAt: day15,
+    });
+  });
+
+  it("grants extend the current plan even when interleaved with orders", async ({
+    expect,
+  }) => {
+    const day0 = 1_000_000;
+    const day5 = day0 + 5 * 24 * 60 * 60 * 1000;
+    const day10 = day0 + 10 * 24 * 60 * 60 * 1000;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: false,
+          appliedAt: day0,
+          durationMonths: 1,
+          planKey: "PREMIUM",
+        },
+        {
+          alwaysApply: true,
+          appliedAt: day5,
+          durationMonths: 1,
+          planKey: "LITE",
+        },
+        {
+          alwaysApply: false,
+          appliedAt: day10,
+          durationMonths: 1,
+          planKey: "PLUS",
+        },
+      ],
+      day0
+    );
+    expect(result).toEqual({
+      expiresAt: day0 + MONTH_MS + MONTH_MS,
+      planKey: "PREMIUM",
+      startedAt: day0,
+    });
+  });
+
+  it("returns null when all entries have expired", async ({ expect }) => {
+    const appliedAt = 1_000_000;
+    const now = appliedAt + 2 * MONTH_MS + 1;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: true,
+          appliedAt,
+          durationMonths: 1,
+          planKey: "LITE",
+        },
+      ],
+      now
+    );
+    expect(result).toBeNull();
   });
 });

@@ -168,7 +168,7 @@ const isValidTransition = (from: string, to: string): boolean => {
   return false;
 };
 
-const deriveUserPlan = (
+export const deriveUserPlan = (
   orders: AppliedOrderEntry[],
   nowMs: number
 ): DerivedPlan | null => {
@@ -355,6 +355,8 @@ export class PlanService {
       userId: user.id,
     };
     const row = await this.repo.insertAdminGrant(grant);
+    // Grant is committed first (no transaction). Derivation failure must NOT
+    // roll back the grant — the grant row is the audit trail.
     await this.deriveAndUpsert(user.id);
     return row;
   }
@@ -498,9 +500,9 @@ export class PlanService {
 
     if (target === "PAID") {
       await this.repo.setOrderAppliedAt(order.id, Date.now());
-      await this.applyDerivedPlan(order.userId);
+      await this.deriveAndUpsert(order.userId);
     } else if (target === "CANCELLED" && prevStatus === "PAID") {
-      await this.applyDerivedPlan(order.userId);
+      await this.deriveAndUpsert(order.userId);
     }
 
     return updated;
@@ -546,9 +548,5 @@ export class PlanService {
       updatedAt: new Date(),
       userId,
     });
-  }
-
-  private async applyDerivedPlan(userId: string): Promise<void> {
-    return await this.deriveAndUpsert(userId);
   }
 }
