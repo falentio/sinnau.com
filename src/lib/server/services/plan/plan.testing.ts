@@ -41,8 +41,8 @@ export const createMockRepository = (): MockedPlanRepository => ({
     vi.fn<PlanRepository["findPaymentByTransactionId"]>(),
   insertAdminGrant: vi.fn<PlanRepository["insertAdminGrant"]>(),
   insertOrder: vi.fn<PlanRepository["insertOrder"]>(),
-  listAdminGrants: vi.fn<PlanRepository["listAdminGrants"]>(),
   insertPayment: vi.fn<PlanRepository["insertPayment"]>(),
+  listAdminGrants: vi.fn<PlanRepository["listAdminGrants"]>(),
   setOrderAppliedAt: vi.fn<PlanRepository["setOrderAppliedAt"]>(),
   updateOrderStatus: vi.fn<PlanRepository["updateOrderStatus"]>(),
   updatePayment: vi.fn<PlanRepository["updatePayment"]>(),
@@ -153,12 +153,14 @@ export class PlanTestEnv implements AsyncDisposable {
   readonly repo: PlanDrizzleRepository;
   readonly ownerId: string;
   readonly otherId: string;
+  readonly adminId: string;
 
   constructor() {
     this.db = getTestingDb();
     this.repo = new PlanDrizzleRepository(this.db);
     this.ownerId = this.seedUser({ name: "Owner" });
     this.otherId = this.seedUser({ name: "Other" });
+    this.adminId = this.seedAdmin();
   }
 
   seedUser(options: SeedUserOptions = {}): string {
@@ -173,6 +175,10 @@ export class PlanTestEnv implements AsyncDisposable {
       })
       .run();
     return id;
+  }
+
+  seedAdmin(options: SeedUserOptions = {}): string {
+    return this.seedUser({ name: "Admin", ...options });
   }
 
   async seedUserPlan(overrides: Partial<UserPlan> = {}): Promise<UserPlan> {
@@ -229,7 +235,7 @@ export class PlanTestEnv implements AsyncDisposable {
       durationMonths: 1,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       grantedAt: new Date(),
-      grantedBy: this.ownerId,
+      grantedBy: this.adminId,
       id: generateId(ADMIN_GRANT_ID_PREFIX),
       note: null,
       planKey: "LITE",

@@ -1,11 +1,10 @@
 import { midtrans } from "../../infras/midtrans/index.ts";
-import { UserDrizzleRepository } from "../user/user.repository.drizzle.ts";
+import { userRepo } from "../user/index.ts";
 import { PlanGuard } from "./plan.guard.ts";
 import { PlanDrizzleRepository } from "./plan.repository.drizzle.ts";
 import { PlanService } from "./plan.service.ts";
 
 const planRepo = new PlanDrizzleRepository();
-const userRepo = new UserDrizzleRepository();
 export const planGuard = new PlanGuard(planRepo, userRepo);
 export const planService = new PlanService(planRepo, planGuard, midtrans);
 

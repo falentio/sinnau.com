@@ -8,6 +8,7 @@ Source specs:
 - [Define order creation and checkout API contracts](https://github.com/falentio/sinnau.com/issues/11)
 - [Define webhook handling and transaction history semantics](https://github.com/falentio/sinnau.com/issues/12)
 - [Define AI-limit service integration for plan benefits](https://github.com/falentio/sinnau.com/issues/13)
+- [Admin grants for the plan service](https://github.com/falentio/sinnau.com/issues/23)
 
 ## Domain Boundary
 
@@ -55,6 +56,18 @@ interface Order {
   expiresAt: Date | null; // pending order expiry
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface AdminGrant {
+  id: string; // agr_*
+  userId: string; // → user.id
+  planKey: "LITE" | "PLUS" | "PREMIUM";
+  durationMonths: number; // 1-24
+  startedAt: Date;
+  expiresAt: Date;
+  grantedBy: string | null; // → user.id; null when the granting admin is later deleted
+  grantedAt: Date;
+  note: string | null; // optional, max 500 chars
 }
 
 interface Payment {
@@ -106,6 +119,11 @@ Example gross amounts:
 - `Order.status` is the domain lifecycle source of truth.
 - `Payment.status` mirrors the gateway attempt state; webhook handling does not create new payment rows.
 - `expiresAt` on an order is the pending payment expiry (from Midtrans QRIS expiry). `UserPlan.expiresAt` is the entitlement expiry.
+- Admin-grant ids are server-generated using `generateId("agr_")`.
+- `AdminGrant.durationMonths` is any integer in `[1, 24]`; range is enforced at the application layer (valibot), not at the DB layer.
+- `AdminGrant.expiresAt` is computed at write time as `startedAt + durationMonths * MONTH_MS`.
+- `AdminGrant.note` is optional free-text, max 500 characters (validated at the application layer).
+- `AdminGrant.grantedBy` is nullable; it is set to `NULL` on `ON DELETE SET NULL` to preserve audit history when the granting admin is later removed.
 - Timestamps are stored as `timestamp_ms`.
 
 ## Lifecycle Rules
@@ -116,6 +134,7 @@ Example gross amounts:
 4. **Re-purchase after expiry starts fresh.** After expiry, a new purchase begins from the payment-success date.
 5. **No grace period.** The plan is active up to and including `expiresAt`; after that, AI-gated features are unavailable until a new plan is purchased.
 6. **Pending/unpaid orders do not affect plan state.** Only successful payment confirmation modifies `UserPlan`.
+7. **Admin grants are union-append.** An active admin grant adds entitlement; it never cuts short an existing paid plan and is never silently skipped on tier mismatch. See "Admin → Lifecycle integration" below.
 
 ## Order Status Transitions
 
@@ -264,6 +283,51 @@ Resulting limits:
 | PLUS    | 120     | 12    | 30     |
 | PREMIUM | 360     | 36    | 90     |
 
+## Admin
+
+Admins (role `admin`) can grant a plan to any user without going through the Midtrans payment flow. Revocation is deferred to a future map.
+
+### AdminGrant
+
+See "Entities → AdminGrant" and "Persistence → admin_grant" above for the full row shape. There is no order row and no payment row for an admin grant — the audit trail is the `admin_grant` row alone (`grantedBy`, `grantedAt`, optional `note`).
+
+### admin.grantPlan
+
+```typescript
+interface GrantPlanInput {
+  userId: string;
+  planKey: "LITE" | "PLUS" | "PREMIUM";
+  durationMonths: number; // 1-24
+  note?: string; // optional, max 500 chars
+}
+```
+
+- Requires `adminProcedure` (role-gated).
+- Target user must exist (`NOT_FOUND` otherwise). Banned users and self-grant are allowed.
+- Writes an `admin_grant` row, then re-derives the target user's `user_plan` immediately.
+- Returns the inserted `AdminGrant` row.
+- Errors: `FORBIDDEN` (caller is not admin), `NOT_FOUND` (target user does not exist).
+
+### admin.listGrants
+
+```typescript
+interface ListGrantsInput {
+  userId?: string;
+  grantedBy?: string;
+  planKey?: "LITE" | "PLUS" | "PREMIUM";
+  page?: number; // default 1
+}
+```
+
+- Requires `adminProcedure` (role-gated).
+- Returns paginated grants, hard-coded `grantedAt desc` sort (no client sort input).
+- Pagination: 20 per page. No `status` filter (deferred to the revoke map).
+- Errors: `FORBIDDEN` (caller is not admin).
+
+### Lifecycle integration
+
+Admin grants participate in `deriveAndUpsert` alongside paid orders. The combined list is sorted by `appliedAt`/`startedAt` asc and fed to `deriveUserPlan` with an `alwaysApply: true` flag on grant rows. The L1 invariant is enforced inside `deriveUserPlan` — grants are never silently skipped on tier mismatch.
+
 ## AI-Limit Wiring
 
 The plan barrel file exports a lookup function:
@@ -277,7 +341,8 @@ export const lookupAiLimitPlan = (userId: string) =>
 
 ## Authorization
 
-- `checkout`, `listOrder`, and `getAiLimitPlanForUser` require authentication.
+- `checkout`, `listOrders`, `getOrder`, and `getAiLimitPlanForUser` require authentication.
+- `admin.grantPlan` and `admin.listGrants` require `adminProcedure` (role-gated).
 - `listPlans` is public.
 - `handleWebhook` is server-side only; signature verification is performed by `MidtransClient` before the event reaches the plan domain.
 
@@ -293,6 +358,12 @@ export const lookupAiLimitPlan = (userId: string) =>
   - Unique on `(gateway, gatewayTransactionId)`.
   - Index on `orderId`.
   - Index on `userId`.
+- `admin_grant` table: `id`, `userId`, `planKey`, `durationMonths`, `startedAt`, `expiresAt`, `grantedBy`, `grantedAt`, `note`.
+  - `userId` references `user.id` with `onDelete: "cascade"`.
+  - `grantedBy` references `user.id` with `onDelete: "set null"`.
+  - Index on `(userId, expiresAt)` (for `findActiveAdminGrantsForUser`).
+  - Index on `(grantedBy, grantedAt)` (for the list filter and default sort).
+  - No `revokedAt` / `revokedBy` columns — revoke is deferred.
 - All `userId` columns reference `user.id` with `onDelete: "cascade"`.
 - `payment.orderId` references `order.id` with `onDelete: "cascade"`.
 
@@ -301,6 +372,8 @@ export const lookupAiLimitPlan = (userId: string) =>
 - `planKey`: picklist from `PLAN_KEYS`.
 - `durationMonths`: picklist from `PLAN_DURATIONS`.
 - `page`: positive integer, default 1.
+- `durationMonths` (admin grant): integer in `[1, 24]`, enforced at the application layer.
+- `note` (admin grant): optional string, max 500 characters.
 - Use `queryParamIntegerSchema` (accepts HTTP query strings via `v.union([v.string(), v.number()])` + transform) where applicable.
 
 ## Errors
@@ -309,7 +382,8 @@ export const lookupAiLimitPlan = (userId: string) =>
 - `VALIDATION_FAILED`: invalid plan key, duration, or request payload.
 - `DOWNGRADE_NOT_ALLOWED`: user has an active higher-tier plan.
 - `NO_ACTIVE_PLAN`: AI-limit lookup called for a user with no active plan.
-- `NOT_FOUND`: order or payment not found.
+- `NOT_FOUND`: order, payment, or target user not found.
+- `FORBIDDEN`: caller is not an admin (raised by `adminProcedure` or `requireAdmin`).
 - `PAYMENT_GATEWAY_ERROR`: Midtrans API returned an error during checkout.
 
 ## Deferred / Out Of Scope
@@ -321,3 +395,6 @@ export const lookupAiLimitPlan = (userId: string) =>
 - Refund/chargeback policy beyond revoking the plan change (e.g., pro-rata, support workflow).
 - Audit/log retention rules.
 - Referral points or additional discounts.
+- `admin.revokeGrant` and lifetime grants.
+- Audit/log retention rules specific to `admin_grant`.
+- Notification to the user when granted a plan.

@@ -4,9 +4,7 @@ import type {
   GetOrder,
   GetOrderInput,
   GrantPlanInput,
-  GrantPlanOutput,
   ListGrantsInput,
-  ListGrantsOutput,
   ListOrdersInput,
 } from "$lib/schemas/plan";
 import {
@@ -84,10 +82,11 @@ interface DerivedPlan {
   expiresAt: number;
 }
 
-interface AppliedOrder {
-  planKey: (typeof PLAN_KEYS)[number];
-  durationMonths: (typeof PLAN_DURATIONS)[number];
+interface AppliedOrderEntry {
+  alwaysApply: boolean;
   appliedAt: number;
+  durationMonths: number;
+  planKey: (typeof PLAN_KEYS)[number];
 }
 
 const discountLabel = (months: (typeof PLAN_DURATIONS)[number]): string => {
@@ -170,7 +169,7 @@ const isValidTransition = (from: string, to: string): boolean => {
 };
 
 const deriveUserPlan = (
-  orders: AppliedOrder[],
+  orders: AppliedOrderEntry[],
   nowMs: number
 ): DerivedPlan | null => {
   const sorted = [...orders].toSorted((a, b) => a.appliedAt - b.appliedAt);
@@ -196,8 +195,13 @@ const deriveUserPlan = (
         planKey: o.planKey,
         startedAt: o.appliedAt,
       };
+    } else if (o.alwaysApply) {
+      current = {
+        expiresAt: current.expiresAt + durationMs,
+        planKey: current.planKey,
+        startedAt: current.startedAt,
+      };
     } else {
-      // downgrade while a higher tier is active is prohibited
       continue;
     }
   }
@@ -339,10 +343,9 @@ export class PlanService {
     const admin = this.guard.requireAdmin(adminId);
     const user = await this.guard.assertUserExistsOrNotFound(input.userId);
     const now = Date.now();
-    const durationMs = input.durationMonths * MONTH_MS;
     const grant: NewAdminGrant = {
       durationMonths: input.durationMonths,
-      expiresAt: new Date(now + durationMs),
+      expiresAt: new Date(now + input.durationMonths * MONTH_MS),
       grantedAt: new Date(now),
       grantedBy: admin,
       id: generateId(ADMIN_GRANT_ID_PREFIX),
@@ -351,16 +354,9 @@ export class PlanService {
       startedAt: new Date(now),
       userId: user.id,
     };
-    await this.repo.upsertUserPlan({
-      createdAt: new Date(now),
-      expiresAt: grant.expiresAt,
-      id: generateId(PLAN_ID_PREFIX),
-      planKey: input.planKey,
-      startedAt: grant.startedAt,
-      updatedAt: new Date(now),
-      userId: user.id,
-    });
-    return await this.repo.insertAdminGrant(grant);
+    const row = await this.repo.insertAdminGrant(grant);
+    await this.deriveAndUpsert(user.id);
+    return row;
   }
 
   async listGrants(
@@ -368,7 +364,12 @@ export class PlanService {
     adminId: string | null | undefined
   ): Promise<AdminGrantListResult> {
     this.guard.requireAdmin(adminId);
-    return await this.repo.listAdminGrants(input);
+    return await this.repo.listAdminGrants({
+      grantedBy: input.grantedBy,
+      page: input.page ?? 1,
+      planKey: input.planKey,
+      userId: input.userId,
+    });
   }
 
   static parseQrisUrl(payload: string | null): string | null {
@@ -505,20 +506,33 @@ export class PlanService {
     return updated;
   }
 
-  private async applyDerivedPlan(userId: string): Promise<void> {
-    const paid = await this.repo.findPaidOrdersForUser(userId);
-    const applied: AppliedOrder[] = [];
+  private async deriveAndUpsert(userId: string): Promise<void> {
+    const now = Date.now();
+    const [paid, grants] = await Promise.all([
+      this.repo.findPaidOrdersForUser(userId),
+      this.repo.findActiveAdminGrantsForUser(userId, now),
+    ]);
+    const entries: AppliedOrderEntry[] = [];
     for (const o of paid) {
       if (o.appliedAt === null) {
         continue;
       }
-      applied.push({
+      entries.push({
+        alwaysApply: false,
         appliedAt: o.appliedAt.getTime(),
         durationMonths: o.durationMonths,
         planKey: o.planKey,
       });
     }
-    const derived = deriveUserPlan(applied, Date.now());
+    for (const g of grants) {
+      entries.push({
+        alwaysApply: true,
+        appliedAt: g.startedAt.getTime(),
+        durationMonths: g.durationMonths,
+        planKey: g.planKey,
+      });
+    }
+    const derived = deriveUserPlan(entries, now);
     if (!derived) {
       await this.repo.deleteUserPlan(userId);
       return;
@@ -532,5 +546,9 @@ export class PlanService {
       updatedAt: new Date(),
       userId,
     });
+  }
+
+  private async applyDerivedPlan(userId: string): Promise<void> {
+    return await this.deriveAndUpsert(userId);
   }
 }

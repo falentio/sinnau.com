@@ -1,4 +1,4 @@
-import { PLAN_KEYS } from "$lib/schemas/plan.constant";
+import type { PLAN_KEYS } from "$lib/schemas/plan.constant";
 
 import type {
   AdminGrant,

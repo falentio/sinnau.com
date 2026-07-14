@@ -81,8 +81,9 @@ const setupService = (midtrans = createMockMidtrans()) => {
   );
 
   guard.requireAdmin.mockImplementation((id) => {
-    if (!id)
-      throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
+    if (!id) {
+      throw new ORPCError("UNAUTHORIZED", { message: "Admin access required" });
+    }
     return id as string;
   });
   guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
@@ -326,9 +327,9 @@ describe.concurrent("PlanService unit tests", () => {
       );
       const lite = await service.getAiLimitPlanForUser("user-1");
       expect(lite).toEqual({
-        daily: Math.ceil(60 / PLAN_DAILY_DIVISOR),
+        daily: Math.ceil(60_000 / PLAN_DAILY_DIVISOR),
         planKey: "LITE",
-        weekly: Math.ceil(60 / PLAN_WEEKLY_DIVISOR),
+        weekly: Math.ceil(60_000 / PLAN_WEEKLY_DIVISOR),
       });
 
       repo.findActiveUserPlan.mockResolvedValue(
@@ -336,9 +337,9 @@ describe.concurrent("PlanService unit tests", () => {
       );
       const premium = await service.getAiLimitPlanForUser("user-1");
       expect(premium).toEqual({
-        daily: Math.ceil(360 / PLAN_DAILY_DIVISOR),
+        daily: Math.ceil(360_000 / PLAN_DAILY_DIVISOR),
         planKey: "PREMIUM",
-        weekly: Math.ceil(360 / PLAN_WEEKLY_DIVISOR),
+        weekly: Math.ceil(360_000 / PLAN_WEEKLY_DIVISOR),
       });
     });
   });
@@ -629,8 +630,6 @@ describe.concurrent("PlanService unit tests", () => {
   });
 
   describe.concurrent("grantPlan", () => {
-    const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
-
     it("throws UNAUTHORIZED when admin id is null", async ({ expect }) => {
       const { service } = setupService();
       const input: GrantPlanInput = {
@@ -640,19 +639,19 @@ describe.concurrent("PlanService unit tests", () => {
       };
       const err = await captureError(service.grantPlan(input, null));
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
 
-    it("throws FORBIDDEN when admin id is undefined", async ({ expect }) => {
+    it("throws UNAUTHORIZED when admin id is undefined", async ({ expect }) => {
       const { service } = setupService();
       const input: GrantPlanInput = {
         durationMonths: 1,
         planKey: "LITE",
         userId: "user-1",
       };
-      const err = await captureError(service.grantPlan(input, undefined));
+      const err = await captureError(service.grantPlan(input, undefined!));
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
 
     it("throws NOT_FOUND when the target user does not exist", async ({
@@ -672,7 +671,9 @@ describe.concurrent("PlanService unit tests", () => {
       expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("grants a plan, updating the user's active plan", async ({ expect }) => {
+    it("inserts the grant first, then re-derives the user plan", async ({
+      expect,
+    }) => {
       const { guard, repo, service } = setupService();
       guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
         if (id === "missing-user") {
@@ -687,12 +688,19 @@ describe.concurrent("PlanService unit tests", () => {
         } as never;
       });
 
-      const now = Date.now();
       const input: GrantPlanInput = {
         durationMonths: 3,
         planKey: "PREMIUM",
         userId: "target-user",
       };
+
+      repo.findActiveAdminGrantsForUser.mockResolvedValue([
+        createAdminGrantFixture({
+          durationMonths: 3,
+          planKey: "PREMIUM",
+          userId: "target-user",
+        }),
+      ]);
 
       await service.grantPlan(input, "admin-1");
 
@@ -703,10 +711,15 @@ describe.concurrent("PlanService unit tests", () => {
           userId: "target-user",
         })
       );
+      expect(repo.findPaidOrdersForUser).toHaveBeenCalledWith("target-user");
+      expect(repo.findActiveAdminGrantsForUser).toHaveBeenCalledWith(
+        "target-user",
+        expect.any(Number)
+      );
       expect(repo.upsertUserPlan).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: "target-user",
           planKey: "PREMIUM",
+          userId: "target-user",
         })
       );
     });
@@ -718,7 +731,7 @@ describe.concurrent("PlanService unit tests", () => {
       const input: ListGrantsInput = { page: 1 };
       const err = await captureError(service.listGrants(input, null));
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
 
     it("returns the paginated grant list from the repository", async ({
@@ -743,7 +756,12 @@ describe.concurrent("PlanService unit tests", () => {
 
       const result = await service.listGrants({ page: 1 }, "admin-1");
 
-      expect(repo.listAdminGrants).toHaveBeenCalledWith({ page: 1 });
+      expect(repo.listAdminGrants).toHaveBeenCalledWith({
+        grantedBy: undefined,
+        page: 1,
+        planKey: undefined,
+        userId: undefined,
+      });
       expect(result).toEqual({
         data: [expect.objectContaining({ id: "grant-1" })],
         pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },

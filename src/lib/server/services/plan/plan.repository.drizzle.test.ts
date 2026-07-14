@@ -437,7 +437,7 @@ describe.concurrent("PlanDrizzleRepository", () => {
       await using env = new PlanTestEnv();
       const admin = env.seedUser({ name: "Admin" });
       await env.seedAdminGrant({ grantedBy: admin, id: "agr_by_admin" });
-      await env.seedAdminGrant({ id: "agr_no_admin", grantedBy: null });
+      await env.seedAdminGrant({ grantedBy: null, id: "agr_no_admin" });
       const result = await env.repo.listAdminGrants({
         grantedBy: admin,
         page: 1,

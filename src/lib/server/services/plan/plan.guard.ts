@@ -24,7 +24,7 @@ export class PlanGuard {
 
   requireAdmin(adminId: string | null | undefined): string {
     if (!adminId) {
-      throw new ORPCError("FORBIDDEN", {
+      throw new ORPCError("UNAUTHORIZED", {
         message: "Admin access required",
       });
     }

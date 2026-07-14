@@ -32,9 +32,9 @@ export const PLAN_MONTHLY_PRICE: Record<(typeof PLAN_KEYS)[number], number> = {
 
 // Monthly AI generate limit per tier
 export const PLAN_MONTHLY_LIMIT: Record<(typeof PLAN_KEYS)[number], number> = {
-  LITE: 60,
-  PLUS: 120,
-  PREMIUM: 360,
+  LITE: 60_000,
+  PLUS: 120_000,
+  PREMIUM: 360_000,
 };
 
 // Months the user actually pays for, per purchased duration
