@@ -16,6 +16,7 @@ import type {
   UserPlan,
 } from "../../infras/db/schema/plan.ts";
 import { generateId } from "../../utils/nanoid.ts";
+import type { UserRepository } from "../user/user.repository.ts";
 import type { PlanGuard } from "./plan.guard.ts";
 import { PlanDrizzleRepository } from "./plan.repository.drizzle";
 import type {
@@ -52,6 +53,14 @@ export const createMockRepository = (): MockedPlanRepository => ({
 export type MockedPlanGuard = {
   [K in keyof PlanGuard]: MockedFunction<PlanGuard[K]>;
 };
+
+export type MockedUserRepository = {
+  [K in keyof UserRepository]: MockedFunction<UserRepository[K]>;
+};
+
+export const createMockUserRepository = (): MockedUserRepository => ({
+  findUserById: vi.fn<UserRepository["findUserById"]>(),
+});
 
 export const createMockGuard = (): MockedPlanGuard => ({
   assertOrderVisibleByIdOrNotFound:
@@ -243,6 +252,11 @@ export class PlanTestEnv implements AsyncDisposable {
       userId: this.ownerId,
       ...overrides,
     });
+  }
+
+  // oxlint-disable-next-line class-methods-use-this
+  createGuard(): PlanGuard {
+    return createMockGuard() as unknown as PlanGuard;
   }
 
   // oxlint-disable-next-line require-await

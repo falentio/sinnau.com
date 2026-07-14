@@ -378,12 +378,12 @@ export const lookupAiLimitPlan = (userId: string) =>
 
 ## Errors
 
-- `UNAUTHORIZED`: missing auth.
+- `UNAUTHORIZED`: missing auth (missing identity session, or missing admin session via `requireAdmin`).
 - `VALIDATION_FAILED`: invalid plan key, duration, or request payload.
 - `DOWNGRADE_NOT_ALLOWED`: user has an active higher-tier plan.
 - `NO_ACTIVE_PLAN`: AI-limit lookup called for a user with no active plan.
 - `NOT_FOUND`: order, payment, or target user not found.
-- `FORBIDDEN`: caller is not an admin (raised by `adminProcedure` or `requireAdmin`).
+- `FORBIDDEN`: caller is not an admin (raised by `adminProcedure`).
 - `PAYMENT_GATEWAY_ERROR`: Midtrans API returned an error during checkout.
 
 ## Deferred / Out Of Scope

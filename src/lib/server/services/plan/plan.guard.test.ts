@@ -1,45 +1,15 @@
 import { ORPCError } from "@orpc/server";
-import { describe, it, vi } from "vitest";
-import type { MockedFunction } from "vitest";
+import { describe, it } from "vitest";
 
 import type { Order } from "../../infras/db/schema/plan.ts";
 import type { UserRepository } from "../user/user.repository.ts";
 import { PlanGuard } from "./plan.guard.ts";
-import type { PlanRepository } from "./plan.repository.ts";
-import { captureError, createOrderFixture } from "./plan.testing.ts";
-
-type MockedPlanRepository = {
-  [K in keyof PlanRepository]: MockedFunction<PlanRepository[K]>;
-};
-
-type MockedUserRepository = {
-  [K in keyof UserRepository]: MockedFunction<UserRepository[K]>;
-};
-
-const createMockRepository = (): MockedPlanRepository => ({
-  deleteUserPlan: vi.fn<PlanRepository["deleteUserPlan"]>(),
-  findActiveAdminGrantsForUser:
-    vi.fn<PlanRepository["findActiveAdminGrantsForUser"]>(),
-  findActiveUserPlan: vi.fn<PlanRepository["findActiveUserPlan"]>(),
-  findOrderById: vi.fn<PlanRepository["findOrderById"]>(),
-  findOrdersByUser: vi.fn<PlanRepository["findOrdersByUser"]>(),
-  findPaidOrdersForUser: vi.fn<PlanRepository["findPaidOrdersForUser"]>(),
-  findPaymentByOrderId: vi.fn<PlanRepository["findPaymentByOrderId"]>(),
-  findPaymentByTransactionId:
-    vi.fn<PlanRepository["findPaymentByTransactionId"]>(),
-  insertAdminGrant: vi.fn<PlanRepository["insertAdminGrant"]>(),
-  insertOrder: vi.fn<PlanRepository["insertOrder"]>(),
-  listAdminGrants: vi.fn<PlanRepository["listAdminGrants"]>(),
-  insertPayment: vi.fn<PlanRepository["insertPayment"]>(),
-  setOrderAppliedAt: vi.fn<PlanRepository["setOrderAppliedAt"]>(),
-  updateOrderStatus: vi.fn<PlanRepository["updateOrderStatus"]>(),
-  updatePayment: vi.fn<PlanRepository["updatePayment"]>(),
-  upsertUserPlan: vi.fn<PlanRepository["upsertUserPlan"]>(),
-});
-
-const createMockUserRepository = (): MockedUserRepository => ({
-  findUserById: vi.fn<UserRepository["findUserById"]>(),
-});
+import {
+  captureError,
+  createMockRepository,
+  createMockUserRepository,
+  createOrderFixture,
+} from "./plan.testing.ts";
 
 const setupGuard = () => {
   const repo = createMockRepository();
@@ -143,19 +113,19 @@ describe.concurrent("PlanGuard unit", () => {
       expect(guard.requireAdmin("admin-123")).toBe("admin-123");
     });
 
-    it("throws FORBIDDEN when null", async ({ expect }) => {
+    it("throws UNAUTHORIZED when null", async ({ expect }) => {
       const { guard } = setupGuard();
       const err = await captureError((async () => guard.requireAdmin(null))());
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
 
-    it("throws FORBIDDEN when undefined", async ({ expect }) => {
+    it("throws UNAUTHORIZED when undefined", async ({ expect }) => {
       const { guard } = setupGuard();
       const err = await captureError(
         (async () => guard.requireAdmin(undefined))()
       );
-      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
 
     it("does not fetch the user (defense-in-depth only)", async ({

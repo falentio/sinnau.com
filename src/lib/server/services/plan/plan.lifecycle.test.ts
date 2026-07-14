@@ -3,8 +3,6 @@ import { describe, it, vi } from "vitest";
 
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
-import { UserDrizzleRepository } from "../user/user.repository.drizzle.ts";
-import { PlanGuard } from "./plan.guard.ts";
 import { PlanService } from "./plan.service.ts";
 import { PlanTestEnv } from "./plan.testing.ts";
 
@@ -37,7 +35,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(env.repo, new UserDrizzleRepository()),
+      env.createGuard(),
       createStubMidtrans()
     );
 
@@ -72,7 +70,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(env.repo, new UserDrizzleRepository()),
+      env.createGuard(),
       createStubMidtrans()
     );
 
@@ -110,7 +108,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(env.repo, new UserDrizzleRepository()),
+      env.createGuard(),
       createStubMidtrans()
     );
 
@@ -151,7 +149,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     await using env = new PlanTestEnv();
     const service = new PlanService(
       env.repo,
-      new PlanGuard(env.repo, new UserDrizzleRepository()),
+      env.createGuard(),
       createStubMidtrans()
     );
 
