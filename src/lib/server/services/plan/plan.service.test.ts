@@ -203,6 +203,10 @@ describe.concurrent("PlanService unit tests", () => {
       });
 
       expect(midtrans.createQris).toHaveBeenCalledWith({
+        custom_expiry: {
+          expiry_duration: 15,
+          unit: "minute",
+        },
         payment_type: "qris",
         transaction_details: { gross_amount: 30_000, order_id: result.orderId },
       });

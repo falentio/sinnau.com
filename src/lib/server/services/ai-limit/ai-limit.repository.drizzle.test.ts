@@ -1,7 +1,7 @@
 import { AI_LIMIT_ID_PREFIX } from "$lib/schemas/ai-limit.constant";
 import { aiUsageLog } from "$lib/server/infras/db/schema/ai-limit";
 import { eq } from "drizzle-orm";
-import { describe, it } from "vitest";
+import { describe, it, vi } from "vitest";
 
 import { generateId } from "../../utils/nanoid.ts";
 import { AiLimitTestEnv } from "./ai-limit.testing.ts";
@@ -456,6 +456,8 @@ describe.concurrent("AiLimitDrizzleRepository", () => {
     }) => {
       await using env = new AiLimitTestEnv();
 
+      const now = new Date("2026-07-07T12:00:00Z");
+      vi.useFakeTimers({ now });
       const dayStart = new Date("2026-07-07T00:00:00Z");
       const dayEnd = new Date("2026-07-08T00:00:00Z");
       const weekStart = new Date("2026-07-06T00:00:00Z");
@@ -499,6 +501,8 @@ describe.concurrent("AiLimitDrizzleRepository", () => {
         const allLogs = env.db.select().from(aiUsageLog).all();
         expect(allLogs).toHaveLength(2);
       }
+
+      vi.useRealTimers();
     });
 
     it("returns the same id when referenceId is reused after the original log is refunded", async ({
