@@ -17,7 +17,7 @@ describe.concurrent(StudySetSearchGuard, () => {
 
     it("throws UNAUTHORIZED when userId is undefined", () => {
       const guard = new StudySetSearchGuard();
-      expect(() => guard.requireUser()).toThrow(ORPCError);
+      expect(() => guard.requireUser(undefined)).toThrow(ORPCError);
     });
 
     it("throws UNAUTHORIZED with the standard message", () => {
