@@ -65,3 +65,21 @@ jobs:
         with:
           tag_name: ${{ github.ref_name || inputs.tag }}
           generate_release_notes: true
+
+  deploy-fly:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - id: tag
+        run: |
+          RAW_TAG="${{ github.ref_name || inputs.tag }}"
+          VERSION="${RAW_TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - run: flyctl deploy --image ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.version }} --strategy immediate
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}

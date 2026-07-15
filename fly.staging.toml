@@ -1,17 +1,17 @@
-# fly.toml app configuration file generated for sinnau-com on 2026-07-04T11:34:50Z
+# fly.toml app configuration file for sinnau-com-staging
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'sinnau-com-production'
+app = 'sinnau-com-stagging'
 primary_region = 'sin'
 
 [build]
 
 [env]
 NODE_ENV = "production"
-ENVIRONMENT = "production"
-BETTER_AUTH_URL = "https://sinnau.com"
+ENVIRONMENT = "staging"
+BETTER_AUTH_URL = "https://stagging.sinnau.com"
 PORT = "11085"
 BODY_SIZE_LIMIT = "50M"
 
@@ -31,4 +31,4 @@ processes = ['app']
 memory = '1gb'
 cpu_kind = 'shared'
 cpus = 1
-memory_mb = 1024
+memory_mb = 512
