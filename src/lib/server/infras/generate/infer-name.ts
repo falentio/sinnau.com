@@ -60,7 +60,7 @@ export const inferStudyNameAndDescription = async ({
   const output = {
     description: "",
     name: "",
-  } as InferStudyNameAndDescriptionOutput;
+  };
 
   const setStudySetNameAndDescription = tool({
     description: "Set the name and description of the study set",
