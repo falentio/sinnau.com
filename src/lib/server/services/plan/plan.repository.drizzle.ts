@@ -394,7 +394,7 @@ export class PlanDrizzleRepository implements PlanRepository {
   ): Promise<AdminGrantListResult> {
     try {
       const limit = ADMIN_GRANT_PAGE_LIMIT;
-      const page = filters.page;
+      const { page } = filters;
       const offset = (page - 1) * limit;
       const conditions: ReturnType<typeof eq>[] = [];
       if (filters.userId !== undefined) {

@@ -14,6 +14,7 @@ export const planAdminListGrants = adminProcedure
   .errors(ERRORS)
   .input(listGrantsInputSchema)
   .output(listGrantsOutputSchema)
-  .handler(async ({ input, context }) =>
-    planService.listGrants(input, context.user.id)
+  .handler(
+    async ({ input, context }) =>
+      await planService.listGrants(input, context.user.id)
   );

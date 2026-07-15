@@ -1,8 +1,5 @@
-import {
-  grantPlanInputSchema,
-  grantPlanOutputSchema,
-  type GrantPlanOutput,
-} from "$lib/schemas/plan";
+import { grantPlanInputSchema, grantPlanOutputSchema } from "$lib/schemas/plan";
+import type { GrantPlanOutput } from "$lib/schemas/plan";
 import { adminProcedure } from "$lib/server/api/base";
 
 import { planService } from "../index";
@@ -18,5 +15,5 @@ export const planAdminGrantPlan = adminProcedure
   .output(grantPlanOutputSchema)
   .handler(
     async ({ input, context }) =>
-      planService.grantPlan(input, context.user.id) as Promise<GrantPlanOutput>
+      await planService.grantPlan(input, context.user.id)
   );

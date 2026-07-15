@@ -85,7 +85,7 @@ const setupService = (midtrans = createMockMidtrans()) => {
     if (!id) {
       throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
     }
-    return id as string;
+    return id;
   });
   guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
     if (id === "missing-user") {
@@ -107,28 +107,25 @@ const setupService = (midtrans = createMockMidtrans()) => {
   repo.findPaymentByOrderId.mockResolvedValue(null);
   repo.findPaidOrdersForUser.mockResolvedValue([]);
   repo.findActiveAdminGrantsForUser.mockResolvedValue([]);
-  repo.insertOrder.mockImplementation(
-    async (row) => createOrderFixture(row) as never
+  repo.insertOrder.mockImplementation(async (row) => createOrderFixture(row));
+  repo.insertPayment.mockImplementation(async (row) =>
+    createPaymentFixture(row)
   );
-  repo.insertPayment.mockImplementation(
-    async (row) => createPaymentFixture(row) as never
-  );
-  repo.insertAdminGrant.mockImplementation(
-    async (row) => createAdminGrantFixture(row) as never
+  repo.insertAdminGrant.mockImplementation(async (row) =>
+    createAdminGrantFixture(row)
   );
   repo.listAdminGrants.mockResolvedValue(EMPTY_ADMIN_GRANT_LIST);
-  repo.updateOrderStatus.mockImplementation(
-    async (id, status) => createOrderFixture({ id, status }) as never
+  repo.updateOrderStatus.mockImplementation(async (id, status) =>
+    createOrderFixture({ id, status })
   );
-  repo.setOrderAppliedAt.mockImplementation(
-    async (id, ms) =>
-      createOrderFixture({ appliedAt: new Date(ms), id }) as never
+  repo.setOrderAppliedAt.mockImplementation(async (id, ms) =>
+    createOrderFixture({ appliedAt: new Date(ms), id })
   );
-  repo.updatePayment.mockImplementation(
-    async (id, patch) => createPaymentFixture({ id, ...patch }) as never
+  repo.updatePayment.mockImplementation(async (id, patch) =>
+    createPaymentFixture({ id, ...patch })
   );
-  repo.upsertUserPlan.mockImplementation(
-    async (row) => createUserPlanFixture(row) as never
+  repo.upsertUserPlan.mockImplementation(async (row) =>
+    createUserPlanFixture(row)
   );
 
   const service = new PlanService(
@@ -810,7 +807,7 @@ describe.concurrent("PlanService.parseQrisUrl", () => {
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
-describe.concurrent("deriveUserPlan", () => {
+describe.concurrent(deriveUserPlan, () => {
   it("returns null for an empty entry list", async ({ expect }) => {
     const result = deriveUserPlan([], Date.now());
     expect(result).toBeNull();

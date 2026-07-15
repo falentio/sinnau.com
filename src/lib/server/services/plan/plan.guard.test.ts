@@ -14,7 +14,7 @@ import {
 const setupGuard = () => {
   const repo = createMockRepository();
   const userRepo = createMockUserRepository();
-  const guard = new PlanGuard(repo, userRepo as unknown as UserRepository);
+  const guard = new PlanGuard(repo, userRepo);
   return { guard, repo, userRepo };
 };
 
