@@ -5,9 +5,8 @@ import { configureSync } from "@logtape/logtape";
 
 try {
   loadEnvFile(".env");
-} catch (error) {
-  console.warn("Failed to load .env file:", error);
-}
+  // oxlint-disable-next-line no-empty
+} catch {}
 configureSync({
   contextLocalStorage: new AsyncLocalStorage(),
   loggers: [
