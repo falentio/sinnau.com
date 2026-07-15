@@ -119,6 +119,7 @@ export class ChapterTestEnv implements AsyncDisposable {
     ownerId: string,
     visibility: StudySetVisibility
   ): void {
+    const n = Math.random() * 1000;
     this.db
       .insert(studySet)
       .values({
@@ -126,8 +127,8 @@ export class ChapterTestEnv implements AsyncDisposable {
         files: [],
         id,
         ownerId,
-        slug: `set-${id.slice(0, 8)}`,
-        title: `Set ${id.slice(0, 8)}`,
+        slug: `set-${n}-${id.slice(0, 8)}`,
+        title: `Set-${n} ${id.slice(0, 8)}`,
         visibility,
       })
       .run();
