@@ -51,12 +51,24 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest
 
+      - id: version
+        run: |
+          RAW_TAG="${{ github.ref_name || inputs.tag }}"
+          echo "value=${RAW_TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - id: date
+        run: echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v7
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_BUILD_DATE=${{ steps.date.outputs.date }}
+            APP_SHA=${{ github.sha }}
+            APP_VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

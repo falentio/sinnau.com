@@ -1,5 +1,9 @@
 # syntax=docker/dockerfile:1.7
 
+ARG APP_BUILD_DATE=
+ARG APP_SHA=
+ARG APP_VERSION=
+
 FROM node:24-bookworm-slim AS base
 
 ENV PNPM_HOME=/pnpm \
@@ -49,7 +53,10 @@ LABEL org.opencontainers.image.title="sinnau" \
       org.opencontainers.image.source="https://github.com/falentio/sinnau.com" \
       org.opencontainers.image.licenses="UNLICENSED"
 
-ENV NODE_ENV=production \
+ENV APP_BUILD_DATE=$APP_BUILD_DATE \
+    APP_SHA=$APP_SHA \
+    APP_VERSION=$APP_VERSION \
+    NODE_ENV=production \
     ENVIRONMENT=production \
     NODE_OPTIONS="--enable-source-maps --unhandled-rejections=strict" \
     PORT=11085 \
