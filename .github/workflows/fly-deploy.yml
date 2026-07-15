@@ -37,4 +37,4 @@ jobs:
 
       - run: flyctl deploy --image ghcr.io/${{ github.repository }}:staging-${{ github.sha }} --config fly.staging.toml --strategy immediate
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGGING }}
