@@ -48,6 +48,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 FROM base AS runner
 
+ARG APP_BUILD_DATE
+ARG APP_SHA
+ARG APP_VERSION
+
 LABEL org.opencontainers.image.title="sinnau" \
       org.opencontainers.image.description="Sinnau SvelteKit app (adapter-node)" \
       org.opencontainers.image.source="https://github.com/falentio/sinnau.com" \
