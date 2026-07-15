@@ -11,8 +11,9 @@ import { auth } from "$lib/server/infras/auth";
 import { env } from "$lib/server/infras/env";
 import { generateService } from "$lib/server/services/generate";
 import { nanoid } from "$lib/server/utils/nanoid";
+import { TokenBucketRateLimiter } from "$lib/server/utils/rate-limiter";
 import { getLogger, lazy, withContext } from "@logtape/logtape";
-import { redirect, isHttpError, isRedirect } from "@sveltejs/kit";
+import { redirect, isHttpError, isRedirect, error } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
@@ -130,6 +131,7 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
             },
           });
           return result;
+          // oxlint-disable-next-line no-shadow
         } catch (error) {
           if (isRedirect(error)) {
             wideEventStorage.assign({
@@ -185,6 +187,7 @@ const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
     response.headers.set("x-sinnau-version", env.APP_VERSION);
     response.headers.set("x-sinnau-sha", env.APP_SHA);
     response.headers.set("x-ily", "ANA");
+    // oxlint-disable-next-line no-shadow
   } catch (error) {
     logger.error("Failed to set x-powered-by header", () => ({
       error: error instanceof Error ? error.message : String(error),
@@ -194,9 +197,62 @@ const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
+const ipRateLimiter = new TokenBucketRateLimiter({
+  capacity: 2005,
+  refillInterval: 60_000,
+  refillRate: 300,
+});
+
+const userRateLimiter = new TokenBucketRateLimiter({
+  capacity: 1108,
+  refillInterval: 60_000,
+  refillRate: 100,
+});
+
+const rateLimiterHandle: Handle = async ({ event, resolve }) => {
+  const ip =
+    event.request.headers.get("cf-connecting-ip") ??
+    event.getClientAddress() ??
+    "unknown";
+  const userId = event.locals.user?.id;
+  const ipResult = ipRateLimiter.consume(ip);
+  wideEventStorage.assign({
+    rateLimit: {
+      ip: {
+        address: ip,
+        remaining: ipResult.remaining,
+        reset: ipResult.reset,
+      },
+    },
+  });
+  if (!ipResult.allowed) {
+    error(429, "Too many requests from this IP address.");
+  }
+
+  if (!userId) {
+    return await resolve(event);
+  }
+
+  const userResult = userRateLimiter.consume(userId);
+  wideEventStorage.assign({
+    rateLimit: {
+      user: {
+        remaining: userResult.remaining,
+        reset: userResult.reset,
+      },
+    },
+  });
+  if (!userResult.allowed) {
+    error(429, "Too many requests from this user.");
+  }
+
+  return await resolve(event);
+};
+
 export const handle = sequence(
   wideEventStorageHandle,
   watermarkHeaderHandle,
   betterAuthHandle,
-  authGuardHandle
+  authGuardHandle,
+  rateLimiterHandle
 );
