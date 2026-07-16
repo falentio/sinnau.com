@@ -63,6 +63,18 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       expect(results[0]?.title).toBe("Public Biology");
     });
 
+    it("does not expose ownerId in search results", async ({ expect }) => {
+      await using env = new StudySetSearchTestEnv();
+      env.seedStudySet({
+        description: "Intro to biology",
+        title: "Biology 101",
+      });
+
+      const results = await env.repo.search(searchParams("Biology"));
+      expect(results).toHaveLength(1);
+      expect(results[0]).not.toHaveProperty("ownerId");
+    });
+
     it("does not return soft-deleted study sets", async ({ expect }) => {
       await using env = new StudySetSearchTestEnv();
       env.seedStudySet({ title: "Active Biology" });

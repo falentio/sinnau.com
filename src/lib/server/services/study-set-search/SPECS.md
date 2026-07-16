@@ -35,7 +35,6 @@ interface StudySetSearchResult {
   slug: string;
   title: string;
   description: string | null;
-  ownerId: string;
 }
 ```
 
@@ -47,7 +46,6 @@ Every row in the result is a public, non-deleted study set. The FTS index only e
 - `slug` is the existing study-set slug. The search projection does not regenerate, validate, or re-sanitize slugs. `slug` is also a searchable FTS column, so a query that matches the slug can return a row even when `title` and `description` do not contain it.
 - `title` is the current `studySet.title` of the matching row. The FTS index is matched case-insensitively, but the returned `title` preserves the stored casing.
 - `description` is the current `studySet.description`, or `null` when the underlying row has no description. The FTS index treats `NULL` as the empty string for matching purposes.
-- `ownerId` is the `studySet.ownerId` of the matching row. It is not used to filter the result; the index-level visibility filter is the only filter that applies.
 
 ## Visibility And Authorization
 
@@ -56,7 +54,6 @@ Every row in the result is a public, non-deleted study set. The FTS index only e
 - The FTS query always filters to `visibility = 'PUBLIC' AND deleted_at IS NULL`; the filter is part of the query itself, not of the application layer, so an FTS row that drifts out of the visible set can never be returned.
 - The service does not perform any per-row visibility check on the result; the index-level filter is the sole visibility gate.
 - There is no FORBIDDEN path: private and soft-deleted rows are simply absent from the index, so the result never reveals their existence.
-- `ownerId` is not used to filter results; owners can also search for other users' public study sets.
 
 ## Query
 
