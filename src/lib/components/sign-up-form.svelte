@@ -21,6 +21,7 @@
       ),
       password: v.pipe(
         v.string(),
+        v.trim(),
         v.minLength(8, "Kata sandi minimal 8 karakter."),
         v.maxLength(128, "Kata sandi maksimal 128 karakter.")
       ),

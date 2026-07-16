@@ -8,7 +8,11 @@
       v.email("Email tidak valid."),
       v.maxLength(255, "Email maksimal 255 karakter.")
     ),
-    password: v.pipe(v.string(), v.minLength(1, "Kata sandi wajib diisi.")),
+    password: v.pipe(
+      v.string(),
+      v.trim(),
+      v.minLength(1, "Kata sandi wajib diisi.")
+    ),
   });
 
   type LoginForm = v.InferOutput<typeof formSchema>;
