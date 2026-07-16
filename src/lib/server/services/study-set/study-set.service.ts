@@ -104,6 +104,8 @@ export class StudySetService {
     input: DeleteStudySetInput,
     ownerId: string
   ): Promise<StudySet> {
+    await this.guard.assertOwnerOrForbidden(input.id, ownerId);
+
     const result = await this.repo.deleteStudySet(input.id, ownerId);
     if (!result) {
       throw new ORPCError("NOT_FOUND", { message: "Study set not found" });
