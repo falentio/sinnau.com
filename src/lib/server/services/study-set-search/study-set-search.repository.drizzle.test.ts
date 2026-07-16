@@ -51,7 +51,6 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       expect(results[0]?.description).toBe("Intro to biology");
       expect(results[0]?.id).toBeDefined();
       expect(results[0]?.slug).toBeDefined();
-      expect(results[0]?.ownerId).toBeDefined();
     });
 
     it("does not return private study sets", async ({ expect }) => {
@@ -309,7 +308,6 @@ describe.concurrent("StudySetSearchDrizzleRepository", () => {
       const results = await env.repo.search(searchParams("Biology"));
       expect(results).toHaveLength(1);
       expect(results[0]?.id).toBe(id);
-      expect(results[0]?.ownerId).toBe(newOwnerId);
     });
   });
 

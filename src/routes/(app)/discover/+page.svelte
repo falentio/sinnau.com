@@ -54,7 +54,6 @@
       description:
         "Modul pembelajaran komprehensif mencakup teori dasar, latihan soal, dan rangkuman materi untuk persiapan ujian.",
       id: `sts_stub_${String(i + 1).padStart(2, "0")}`,
-      ownerId: "usr_stub_owner",
       slug: `stub-modul-${i + 1}`,
       title: `Modul Belajar ${i + 1}: ${STUB_TITLES[i]}`,
     })

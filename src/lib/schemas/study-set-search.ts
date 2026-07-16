@@ -22,7 +22,6 @@ export const searchStudySetsInputSchema = v.object({
 export const studySetSearchSchema = v.object({
   description: v.nullable(v.string()),
   id: v.string(),
-  ownerId: v.string(),
   slug: v.string(),
   title: v.string(),
 });

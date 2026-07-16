@@ -69,7 +69,7 @@ export class StudySetSearchDrizzleRepository implements StudySetSearchRepository
   async search(params: StudySetSearchParams): Promise<StudySetSearchResult[]> {
     // oxlint-disable-next-line no-unsafe-type-assertion
     const rows = this.dbInstance.all(
-      sql`SELECT s.id, s.title, s.description, s.slug, s.owner_id AS ownerId
+      sql`SELECT s.id, s.title, s.description, s.slug
 			FROM study_set_fts fts
 			JOIN study_set s ON s.id = fts.study_set_id
 			WHERE study_set_fts MATCH ${params.query}

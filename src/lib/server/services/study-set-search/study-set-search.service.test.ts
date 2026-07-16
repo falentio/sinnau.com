@@ -63,7 +63,6 @@ describe.concurrent(StudySetSearchService, () => {
       {
         description: null,
         id: "sts_1",
-        ownerId: "usr_1",
         slug: "bio-101",
         title: "Biology 101",
       },
