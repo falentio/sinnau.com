@@ -14,6 +14,7 @@ export const config = {
   },
   database: drizzleAdapter(new Database(":memory:"), { provider: "sqlite" }),
   emailAndPassword: {
+    autoSignIn: false,
     enabled: true,
     requireEmailVerification: false,
   },

@@ -73,7 +73,8 @@
         serverError = getErrorMessage(error);
         return;
       }
-      await goto(resolve("/(app)/home"));
+      serverError = "Pendaftaran berhasil! Silakan masuk.";
+      setTimeout(() => goto(resolve("/(auth)/login")), 1500);
     } catch (error) {
       serverError = getErrorMessage(error as { message?: string });
     } finally {
