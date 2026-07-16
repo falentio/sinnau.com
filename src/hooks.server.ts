@@ -13,7 +13,7 @@ import { generateService } from "$lib/server/services/generate";
 import { nanoid } from "$lib/server/utils/nanoid";
 import { TokenBucketRateLimiter } from "$lib/server/utils/rate-limiter";
 import { getLogger, lazy, withContext } from "@logtape/logtape";
-import { redirect, isHttpError, isRedirect, error } from "@sveltejs/kit";
+import { redirect, isHttpError, isRedirect } from "@sveltejs/kit";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
@@ -47,7 +47,25 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
     userId: event.locals.user?.id,
   });
 
-  return await svelteKitHandler({ auth, building, event, resolve });
+  const response = await svelteKitHandler({ auth, building, event, resolve });
+
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("X-Retry-After") ?? "";
+    return new Response(
+      JSON.stringify({ message: "Too many requests. Please try again later." }),
+      {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": retryAfter,
+          "X-Retry-After": retryAfter,
+        },
+      }
+    );
+  }
+
+  return response;
 };
 
 const guardedRoutes: ((routeId: string) => boolean)[] = [
@@ -226,7 +244,23 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
     },
   });
   if (!ipResult.allowed) {
-    error(429, "Too many requests from this IP address.");
+    const retryAfter = Math.ceil(ipResult.reset / 1000);
+    return new Response(
+      JSON.stringify({ message: "Too many requests from this IP address." }),
+      {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(retryAfter),
+          "X-RateLimit-Limit": String(ipRateLimiter.capacity),
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(
+            Math.ceil((Date.now() + ipResult.reset) / 1000)
+          ),
+        },
+      }
+    );
   }
 
   if (!userId) {
@@ -243,7 +277,23 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
     },
   });
   if (!userResult.allowed) {
-    error(429, "Too many requests from this user.");
+    const retryAfter = Math.ceil(userResult.reset / 1000);
+    return new Response(
+      JSON.stringify({ message: "Too many requests from this user." }),
+      {
+        status: 429,
+        statusText: "Too Many Requests",
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(retryAfter),
+          "X-RateLimit-Limit": String(userRateLimiter.capacity),
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(
+            Math.ceil((Date.now() + userResult.reset) / 1000)
+          ),
+        },
+      }
+    );
   }
 
   return await resolve(event);

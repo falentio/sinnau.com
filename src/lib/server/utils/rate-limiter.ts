@@ -21,7 +21,7 @@ export interface ConsumeResult {
 
 export class TokenBucketRateLimiter {
   private readonly buckets: QuickLRU<string, Bucket>;
-  private readonly capacity: number;
+  readonly capacity: number;
   private readonly refillRate: number;
   private readonly refillInterval: number;
 
