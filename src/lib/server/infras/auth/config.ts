@@ -45,7 +45,7 @@ export const config = {
   },
   plugins: [
     admin(),
-    apiKey({}),
+    apiKey({ enableSessionForAPIKeys: true }),
     lastLoginMethod({
       storeInDatabase: true,
     }),
