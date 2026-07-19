@@ -106,6 +106,10 @@ export class ChapterService {
     input: GetChaptersInput,
     userId: string
   ): Promise<Chapter[]> {
+    await this.guard.assertStudySetVisibleByIdOrNotFound(
+      input.studySetId,
+      userId
+    );
     return await this.repo.findChaptersByStudySet(userId, input.studySetId);
   }
 

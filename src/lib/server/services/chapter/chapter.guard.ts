@@ -45,6 +45,16 @@ export class ChapterGuard {
     return ch;
   }
 
+  async assertStudySetVisibleByIdOrNotFound(
+    studySetId: string,
+    userId: string
+  ): Promise<void> {
+    await this.resolvedStudySetGuard.assertStudySetVisibleByIdOrNotFound(
+      studySetId,
+      userId
+    );
+  }
+
   async assertStudySetOwnerOrForbidden(
     studySetId: string,
     ownerId: string
