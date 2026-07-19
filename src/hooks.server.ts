@@ -50,19 +50,22 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
   const response = await svelteKitHandler({ auth, building, event, resolve });
 
   if (response.status === 429) {
-    const retryAfter = response.headers.get("X-Retry-After") ?? "";
-    return new Response(
-      JSON.stringify({ message: "Too many requests. Please try again later." }),
-      {
-        status: 429,
-        statusText: "Too Many Requests",
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": retryAfter,
-          "X-Retry-After": retryAfter,
-        },
+    if (!response.headers.has("Content-Type")) {
+      response.headers.set("Content-Type", "application/json");
+    }
+    const retryAfter = response.headers.get("X-Retry-After");
+    if (retryAfter) {
+      if (!response.headers.has("Retry-After")) {
+        response.headers.set("Retry-After", retryAfter);
       }
-    );
+      response.headers.set(
+        "X-RateLimit-Reset",
+        String(Math.floor(Date.now() / 1000) + Number(retryAfter))
+      );
+    }
+    if (!response.headers.has("X-RateLimit-Remaining")) {
+      response.headers.set("X-RateLimit-Remaining", "0");
+    }
   }
 
   return response;
