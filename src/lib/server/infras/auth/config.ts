@@ -96,6 +96,7 @@ export const config = {
     max: 100,
     window: 60,
   },
+  secret: "dasdsa",
   session: {
     freshAge: 60 * 5,
   },
