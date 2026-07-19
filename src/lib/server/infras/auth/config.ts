@@ -3,6 +3,7 @@ import { dash } from "@better-auth/infra";
 import { betterAuth } from "better-auth";
 import type { BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAuthMiddleware, APIError } from "better-auth/api";
 import { admin, lastLoginMethod } from "better-auth/plugins";
 import Database from "better-sqlite3";
 
@@ -17,6 +18,30 @@ export const config = {
     autoSignIn: false,
     enabled: true,
     requireEmailVerification: false,
+  },
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/sign-up/email") {
+        return;
+      }
+      const body = (ctx.body ?? {}) as {
+        confirmPassword?: unknown;
+        password?: unknown;
+      };
+      if (
+        typeof body.confirmPassword !== "string" ||
+        body.confirmPassword.length === 0
+      ) {
+        throw new APIError("BAD_REQUEST", {
+          message: "Konfirmasi kata sandi wajib diisi.",
+        });
+      }
+      if (body.password !== body.confirmPassword) {
+        throw new APIError("BAD_REQUEST", {
+          message: "Konfirmasi kata sandi tidak cocok.",
+        });
+      }
+    }),
   },
   plugins: [
     admin(),
