@@ -54,13 +54,13 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
     return new Response(
       JSON.stringify({ message: "Too many requests. Please try again later." }),
       {
-        status: 429,
-        statusText: "Too Many Requests",
         headers: {
           "Content-Type": "application/json",
           "Retry-After": retryAfter,
           "X-Retry-After": retryAfter,
         },
+        status: 429,
+        statusText: "Too Many Requests",
       }
     );
   }
@@ -75,6 +75,7 @@ const guardedRoutes: ((routeId: string) => boolean)[] = [
 const authGuardHandle: Handle = async ({ event, resolve }) => {
   const routeId = event.route.id ?? "";
   const requiresAuth = guardedRoutes.some((guard) => guard(routeId));
+  const loginPage = routeId.includes("(auth)");
   const loggedIn = !!event.locals.session;
 
   wideEventStorage.assign({
@@ -84,6 +85,9 @@ const authGuardHandle: Handle = async ({ event, resolve }) => {
   });
   if (requiresAuth && !loggedIn) {
     redirect(302, "/login");
+  }
+  if (loginPage && loggedIn) {
+    redirect(302, "/home");
   }
 
   return await resolve(event);
@@ -245,11 +249,9 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
   });
   if (!ipResult.allowed) {
     const retryAfter = Math.ceil(ipResult.reset / 1000);
-    return new Response(
-      JSON.stringify({ message: "Too many requests from this IP address." }),
+    return Response.json(
+      { message: "Too many requests from this IP address." },
       {
-        status: 429,
-        statusText: "Too Many Requests",
         headers: {
           "Content-Type": "application/json",
           "Retry-After": String(retryAfter),
@@ -259,6 +261,8 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
             Math.ceil((Date.now() + ipResult.reset) / 1000)
           ),
         },
+        status: 429,
+        statusText: "Too Many Requests",
       }
     );
   }
@@ -281,8 +285,6 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
     return new Response(
       JSON.stringify({ message: "Too many requests from this user." }),
       {
-        status: 429,
-        statusText: "Too Many Requests",
         headers: {
           "Content-Type": "application/json",
           "Retry-After": String(retryAfter),
@@ -292,6 +294,8 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
             Math.ceil((Date.now() + userResult.reset) / 1000)
           ),
         },
+        status: 429,
+        statusText: "Too Many Requests",
       }
     );
   }

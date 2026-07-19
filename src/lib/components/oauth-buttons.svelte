@@ -1,5 +1,9 @@
 <script lang="ts">
   import { authClient } from "$lib/hooks/auth.svelte";
+  import { GithubIcon, GoogleIcon } from "@hugeicons/core-free-icons";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
+
+  import Button from "./ui/button/button.svelte";
 
   let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
 
@@ -17,6 +21,11 @@
       provider,
     });
   };
+
+  const icons = {
+    github: GithubIcon,
+    google: GoogleIcon,
+  } as const;
 </script>
 
 {#if providers.length > 0}
@@ -28,14 +37,12 @@
 
   <div class="grid gap-3">
     {#each providers as provider (provider)}
-      <button
-        type="button"
+      <Button
         onclick={() => signIn(provider)}
         disabled={pendingProvider !== null}
-        class="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-input bg-background text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
       >
-        Lanjut dengan {labels[provider]}
-      </button>
+        <HugeiconsIcon icon={icons[provider]} /> {provider}</Button
+      >
     {/each}
   </div>
 {/if}
