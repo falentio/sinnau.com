@@ -1,0 +1,36 @@
+- generic [ref=f2e2]:
+    - generic [ref=f2e3]:
+        - generic [ref=f2e4]:
+            - link "Sinnau" [ref=f2e6] [cursor=pointer]:
+                - /url: /
+                - img [ref=f2e8]
+                - text: Sinnau
+            - generic [ref=f2e15]:
+                - generic [ref=f2e16]:
+                    - heading "Daftar" [level=1] [ref=f2e17]
+                    - paragraph [ref=f2e18]: Buat akun untuk mulai belajar
+                - generic [ref=f2e47]: User already exists. Use another email.
+                - generic [ref=f2e19]:
+                    - generic [ref=f2e20]: Nama
+                    - textbox "Nama" [ref=f2e21]: Case Dup
+                - generic [ref=f2e22]:
+                    - generic [ref=f2e23]: Email
+                    - textbox "Email" [ref=f2e24]:
+                        - /placeholder: m@example.com
+                        - text: testdup@example.com
+                - generic [ref=f2e25]:
+                    - generic [ref=f2e26]: Kata Sandi
+                    - textbox "Kata Sandi" [ref=f2e27]: password123
+                - generic [ref=f2e28]:
+                    - generic [ref=f2e29]: Konfirmasi Kata Sandi
+                    - textbox "Konfirmasi Kata Sandi" [ref=f2e30]: password123
+                - button "Daftar" [ref=f2e31]
+                - generic [ref=f2e32]:
+                    - text: Sudah punya akun?
+                    - link "Masuk" [ref=f2e33] [cursor=pointer]:
+                        - /url: /login
+        - generic [ref=f2e37]:
+            - img [ref=f2e39]
+            - heading "Turn notes into practice" [level=2] [ref=f2e44]
+            - paragraph [ref=f2e45]: Create study sets, generate flashcards, and keep each practice session focused.
+    - generic [ref=f2e46]: untitled page

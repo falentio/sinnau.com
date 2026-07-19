@@ -1,0 +1,7 @@
+[     853ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496:0
+[     950ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/sign-up/:0
+[     950ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/sign-up/:0
+[    1109ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/favicon.ico:0
+[   28484ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496:0
+[   28484ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/sign-up/:0
+[   28485ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/sign-up/:0

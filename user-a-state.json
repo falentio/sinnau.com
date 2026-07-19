@@ -1,0 +1,39 @@
+{
+  "cookies": [
+    {
+      "name": "__Secure-better-auth.session_token",
+      "value": "fWlAKa9mr0EmD6cFoZexc9HirD7C1EYs.5htDUWQnp5uWY2WRacigH4D2KnBLMPrI7%2Fm3VozjZKQ%3D",
+      "domain": "stagging.sinnau.com",
+      "path": "/",
+      "expires": 1784740526.043896,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "better-auth.last_used_login_method",
+      "value": "email",
+      "domain": "stagging.sinnau.com",
+      "path": "/",
+      "expires": 1786727726.044059,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://stagging.sinnau.com",
+      "localStorage": [
+        {
+          "name": "mode-watcher-theme",
+          "value": ""
+        },
+        {
+          "name": "mode-watcher-mode",
+          "value": "system"
+        }
+      ]
+    }
+  ]
+}

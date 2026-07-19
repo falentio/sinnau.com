@@ -68,6 +68,10 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 always run `pnpm run format`, `pnpm run lint:agent`, and `pnpm run check` before finalize your tasks
 
+## Fixes
+
+Use quality fix subagent to fix lint, format, and typecheck issue
+
 ---
 
 ## Testing

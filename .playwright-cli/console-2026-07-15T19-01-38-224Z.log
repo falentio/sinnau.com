@@ -1,0 +1,3 @@
+[   98544ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   98594ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/sign-up/email:0
+[   98639ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/sign-in/social:0

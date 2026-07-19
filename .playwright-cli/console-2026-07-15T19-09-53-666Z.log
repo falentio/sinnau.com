@@ -1,0 +1,2 @@
+[      65ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/EVIL.COM@evil.com:0
+[     136ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496:0

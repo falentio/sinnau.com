@@ -81,6 +81,8 @@ COPY --from=builder   --chown=node:node /app/package.json ./package.json
 
 USER node
 EXPOSE 11085
+
+RUN mkdir -p /app/data && chown -R node:node /app/data
 VOLUME ["/app/data"]
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

@@ -1,0 +1,35 @@
+- generic [ref=e2]:
+    - generic [ref=e3]:
+        - generic [ref=e4]:
+            - link "Sinnau" [ref=e6] [cursor=pointer]:
+                - /url: /
+                - img [ref=e8]
+                - text: Sinnau
+            - generic [ref=e15]:
+                - generic [ref=e16]:
+                    - heading "Daftar" [level=1] [ref=e17]
+                    - paragraph [ref=e18]: Buat akun untuk mulai belajar
+                - generic [ref=e19]:
+                    - generic [ref=e20]: Nama
+                    - textbox "Nama" [disabled]: <script>alert('xss')</script>
+                - generic [ref=e22]:
+                    - generic [ref=e23]: Email
+                    - textbox "Email" [disabled]:
+                        - /placeholder: m@example.com
+                        - text: xss-name@example.com
+                - generic [ref=e25]:
+                    - generic [ref=e26]: Kata Sandi
+                    - textbox "Kata Sandi" [disabled]: Password1!
+                - generic [ref=e28]:
+                    - generic [ref=e29]: Konfirmasi Kata Sandi
+                    - textbox "Konfirmasi Kata Sandi" [disabled]: Password1!
+                - button "Membuat..." [disabled]
+                - generic [ref=e32]:
+                    - text: Sudah punya akun?
+                    - link "Masuk" [ref=e33] [cursor=pointer]:
+                        - /url: /login
+        - generic [ref=e37]:
+            - img [ref=e39]
+            - heading "Turn notes into practice" [level=2] [ref=e44]
+            - paragraph [ref=e45]: Create study sets, generate flashcards, and keep each practice session focused.
+    - generic [ref=e46]: untitled page

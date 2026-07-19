@@ -1,0 +1,102 @@
+- generic [ref=f1e2]:
+    - generic [ref=f1e49]:
+        - generic [ref=f1e52]:
+            - link "Sinnau" [ref=f1e54] [cursor=pointer]:
+                - /url: /home
+                - img [ref=f1e56]
+                - text: Sinnau
+            - list [ref=f1e64]:
+                - listitem [ref=f1e65]:
+                    - link "Beranda" [ref=f1e66] [cursor=pointer]:
+                        - /url: /home
+                        - img [ref=f1e67]
+                        - generic [ref=f1e70]: Beranda
+                - listitem [ref=f1e71]:
+                    - link "Cari" [ref=f1e72] [cursor=pointer]:
+                        - /url: /discover
+                        - img [ref=f1e73]
+                        - generic [ref=f1e77]: Cari
+                - listitem [ref=f1e78]:
+                    - button "Modul" [ref=f1e79]:
+                        - img [ref=f1e80]
+                        - generic [ref=f1e83]: Modul
+                - listitem [ref=f1e84]:
+                    - link "Subskripsi" [ref=f1e85] [cursor=pointer]:
+                        - /url: /subs/plans
+                        - img [ref=f1e86]
+                        - generic [ref=f1e89]: Subskripsi
+            - list [ref=f1e91]:
+                - listitem [ref=f1e92]:
+                    - button "U Placeholder user@example.com" [ref=f1e93]:
+                        - generic [ref=f1e95]: U
+                        - generic [ref=f1e96]:
+                            - generic [ref=f1e97]: Placeholder
+                            - generic [ref=f1e98]: user@example.com
+            - button "Toggle Sidebar" [ref=f1e99]
+        - main [ref=f1e100]:
+            - main [ref=f1e104]:
+                - generic [ref=f1e106]:
+                    - generic [ref=f1e107]:
+                        - img [ref=f1e109]
+                        - generic [ref=f1e110]:
+                            - text: Selamat belajar!
+                            - heading "Rate Test 1" [level=2] [ref=f1e111]
+                        - button [ref=f1e113]:
+                            - img
+                    - group [ref=f1e114]:
+                        - textbox "Cari di modul pembelajaran..." [ref=f1e115]
+                        - group [ref=f1e116]:
+                            - img [ref=f1e117]
+                    - generic [ref=f1e124]:
+                        - link "Buat dengan AI" [ref=f1e125] [cursor=pointer]:
+                            - /url: /study/generate
+                            - img
+                            - text: Buat dengan AI
+                        - link "Buat manual" [ref=f1e126] [cursor=pointer]:
+                            - /url: /study/new
+                            - img
+                            - text: Buat manual
+                - generic [ref=f1e127]:
+                    - generic [ref=f1e131]:
+                        - link "Terbaru" [ref=f1e132] [cursor=pointer]:
+                            - /url: .?filter=latest
+                        - link "Baru dibuka" [ref=f1e133] [cursor=pointer]:
+                            - /url: .?filter=newly-opened
+                        - button [ref=f1e136]:
+                            - img
+                    - generic [ref=f1e137]:
+                        - generic [ref=f1e138]:
+                            - generic [ref=f1e139]:
+                                - img
+                            - generic [ref=f1e140]: Belum ada modul belajar
+                            - generic [ref=f1e141]: Kamu belum memiliki modul belajar, kami memiliki fitur generate menggunakan AI yang bisa membantumu.
+                        - generic [ref=f1e143]:
+                            - link "Buat manual" [ref=f1e144] [cursor=pointer]:
+                                - /url: /study/new
+                                - img
+                                - text: Buat manual
+                            - link "Buat dengan AI" [ref=f1e145] [cursor=pointer]:
+                                - /url: /study/generate
+                                - img
+                                - text: Buat dengan AI
+                - navigation "Navigasi utama" [ref=f1e148]:
+                    - link "Beranda" [ref=f1e149] [cursor=pointer]:
+                        - /url: /home/
+                        - img
+                        - text: Beranda
+                    - link "Jelajahi" [ref=f1e150] [cursor=pointer]:
+                        - /url: /discover/
+                        - img
+                        - text: Jelajahi
+                    - button "AI Studio" [ref=f1e151]:
+                        - img
+                        - text: Generate
+                    - button "Perpustakaan" [ref=f1e152]:
+                        - img
+                        - text: Pustaka
+                    - link "Premium" [ref=f1e153] [cursor=pointer]:
+                        - /url: /subs/plans/
+                        - img
+                        - text: Premium
+        - region "Notifications alt+T"
+    - generic [ref=f1e46]: untitled page

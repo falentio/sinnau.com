@@ -1,0 +1,15 @@
+[     419ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496:0
+[     420ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/login/:0
+[     488ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/favicon.ico:0
+[    6099ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6179ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6268ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6341ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6415ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6495ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6576ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6653ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[    6736ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   12555ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/sign-in/social:0
+[   17306ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/sign-in/social:0
+[   28057ms] [ERROR] Failed to load resource: the server responded with a status of 429 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0

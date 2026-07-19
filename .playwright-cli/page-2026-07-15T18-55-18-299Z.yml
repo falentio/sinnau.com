@@ -1,0 +1,9 @@
+- generic [ref=f4e3]:
+    - generic [ref=f4e6]:
+        - heading "This stagging.sinnau.com page can’t be found" [level=1] [ref=f4e7]:
+            - generic [ref=f4e8]: This stagging.sinnau.com page can’t be found
+        - paragraph [ref=f4e9]:
+            - text: "No webpage was found for the web address:"
+            - strong [ref=f4e10]: https://stagging.sinnau.com/api/auth/sign-in/email?redirect=https://evil.com
+        - generic [ref=f4e11]: HTTP ERROR 404
+    - button "Reload" [ref=f4e14] [cursor=pointer]

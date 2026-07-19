@@ -1,0 +1,26 @@
+- generic [ref=f4e3]:
+    - generic [ref=f4e4]:
+        - link "Sinnau" [ref=f4e6] [cursor=pointer]:
+            - /url: /
+            - img [ref=f4e8]
+            - text: Sinnau
+        - generic [ref=f4e15]:
+            - generic [ref=f4e16]:
+                - heading "Masuk" [level=1] [ref=f4e17]
+                - paragraph [ref=f4e18]: Masukkan email untuk masuk ke akun Anda
+            - generic [ref=f4e19]:
+                - generic [ref=f4e20]: Email
+                - textbox "Email" [ref=f4e21]:
+                    - /placeholder: m@example.com
+            - generic [ref=f4e22]:
+                - generic [ref=f4e23]: Kata Sandi
+                - textbox "Kata Sandi" [ref=f4e24]
+            - button "Masuk" [ref=f4e25]
+            - generic [ref=f4e26]:
+                - text: Belum punya akun?
+                - link "Daftar" [ref=f4e27] [cursor=pointer]:
+                    - /url: /sign-up
+    - generic [ref=f4e31]:
+        - img [ref=f4e33]
+        - heading "Study smarter with Sinnau" [level=2] [ref=f4e38]
+        - paragraph [ref=f4e39]: Create focused study sets, practice with flashcards, and keep your learning moving.

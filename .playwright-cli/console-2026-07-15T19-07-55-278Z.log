@@ -1,0 +1,20 @@
+[     146ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496:0
+[     147ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/login/:0
+[   54505ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   54608ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   54730ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   54985ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   55186ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   55380ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   55589ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   73762ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   73865ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/sign-in/email:0
+[   80862ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/sign-in/social:0
+[   80915ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/sign-in/social:0
+[   80964ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/sign-in/social:0
+[   88186ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/oauth/callback?code=test&state=test:0
+[   88236ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/oauth2/callback?code=test&state=test:0
+[   88286ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/callback?code=test&state=test:0
+[   88338ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://stagging.sinnau.com/api/auth/verify-email?code=test&state=test:0
+[   88394ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/oauth/callback?code=test&state=test:0
+[   91395ms] [WARNING] The resource https://stagging.sinnau.com/_app/immutable/assets/12.v8P7pN_g.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://stagging.sinnau.com/login/:0

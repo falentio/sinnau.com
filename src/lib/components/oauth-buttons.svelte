@@ -38,10 +38,11 @@
   <div class="grid gap-3">
     {#each providers as provider (provider)}
       <Button
+        variant="outline"
         onclick={() => signIn(provider)}
         disabled={pendingProvider !== null}
       >
-        <HugeiconsIcon icon={icons[provider]} /> {provider}</Button
+        <HugeiconsIcon icon={icons[provider]} /> {labels[provider]}</Button
       >
     {/each}
   </div>

@@ -41,6 +41,7 @@ export const config = {
     max: 100,
     window: 60,
   },
+  secret: "dasdsa",
 } satisfies BetterAuthOptions;
 
 export const auth = betterAuth(config);
