@@ -64,11 +64,15 @@
   const signUp = async (data: SignUpForm) => {
     pending = true;
     try {
-      const { error } = await authClient.signUp.email({
+      const body = {
+        confirmPassword: data.confirmPassword,
         email: data.email,
         name: data.name,
         password: data.password,
-      });
+      };
+      const { error } = await authClient.signUp.email(
+        body as Parameters<typeof authClient.signUp.email>[0]
+      );
       if (error) {
         serverError = getErrorMessage(error);
         return;
