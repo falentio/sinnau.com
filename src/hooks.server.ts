@@ -191,6 +191,25 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
   );
 };
 
+const revokeChangePasswordSessions: Handle = async ({ event, resolve }) => {
+  if (
+    event.request.method === "POST" &&
+    event.url.pathname.endsWith("/change-password")
+  ) {
+    const body = await event.request.clone().json();
+    if (!body.revokeOtherSessions) {
+      body.revokeOtherSessions = true;
+      const headers = new Headers(event.request.headers);
+      headers.delete("content-length");
+      event.request = new Request(event.request, {
+        body: JSON.stringify(body),
+        headers,
+      });
+    }
+  }
+  return await resolve(event);
+};
+
 const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
   wideEventStorage.assign({
     app: {
@@ -302,6 +321,7 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
 export const handle = sequence(
   wideEventStorageHandle,
   watermarkHeaderHandle,
+  revokeChangePasswordSessions,
   betterAuthHandle,
   authGuardHandle,
   rateLimiterHandle
