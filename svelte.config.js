@@ -11,6 +11,21 @@ const config = {
     adapter: adapter({
       precompress: false,
     }),
+    csp: {
+      directives: {
+        "base-uri": ["self"],
+        "connect-src": ["self", "ws:"],
+        "default-src": ["self"],
+        "font-src": ["self"],
+        "form-action": ["self"],
+        "frame-ancestors": ["none"],
+        "img-src": ["self", "data:", "https:"],
+        "object-src": ["none"],
+        "script-src": ["self"],
+        "style-src": ["self", "unsafe-inline"],
+      },
+      mode: "auto",
+    },
   },
 };
 

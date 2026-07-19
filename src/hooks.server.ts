@@ -117,6 +117,32 @@ const getWellKnownHeaders = (request: Request) => {
   return headers;
 };
 
+const securityHeadersHandle: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+  try {
+    response.headers.set(
+      "strict-transport-security",
+      "max-age=63072000; includeSubDomains; preload"
+    );
+    response.headers.set("x-frame-options", "DENY");
+    response.headers.set("x-content-type-options", "nosniff");
+    response.headers.set("x-xss-protection", "0");
+    response.headers.set("referrer-policy", "no-referrer");
+    response.headers.set(
+      "permissions-policy",
+      "camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=(), bluetooth=()"
+    );
+    response.headers.set("cross-origin-resource-policy", "same-origin");
+    response.headers.set("cross-origin-opener-policy", "same-origin");
+    // oxlint-disable-next-line no-shadow
+  } catch (error) {
+    logger.error("Failed to set security headers", () => ({
+      error: error instanceof Error ? error.message : String(error),
+    }));
+  }
+  return response;
+};
+
 const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
   const requestId = nanoid(32);
   const requestStart = hrtime.bigint();
@@ -304,6 +330,7 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(
+  securityHeadersHandle,
   wideEventStorageHandle,
   watermarkHeaderHandle,
   betterAuthHandle,
