@@ -272,6 +272,23 @@ describe.concurrent(StudySetService, () => {
   });
 
   describe("deleteStudySet", () => {
+    it("propagates FORBIDDEN from guard.assertOwnerOrForbidden", async ({
+      expect,
+    }) => {
+      const { guard, repo, service } = setupService();
+      guard.assertOwnerOrForbidden.mockImplementation(throwForbidden);
+      const err = await captureError(
+        service.deleteStudySet({ id: "set-1" }, "owner-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(guard.assertOwnerOrForbidden).toHaveBeenCalledWith(
+        "set-1",
+        "owner-1"
+      );
+      expect(repo.deleteStudySet).not.toHaveBeenCalled();
+    });
+
     it("throws NOT_FOUND when repo returns null", async ({ expect }) => {
       const { service } = setupService();
       const err = await captureError(

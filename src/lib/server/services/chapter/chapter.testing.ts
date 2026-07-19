@@ -39,6 +39,8 @@ export const createMockGuard = (): MockedChapterGuard => ({
   assertOwnerOrForbidden: vi.fn<ChapterGuard["assertOwnerOrForbidden"]>(),
   assertStudySetOwnerOrForbidden:
     vi.fn<ChapterGuard["assertStudySetOwnerOrForbidden"]>(),
+  assertStudySetVisibleByIdOrNotFound:
+    vi.fn<ChapterGuard["assertStudySetVisibleByIdOrNotFound"]>(),
   assertVisibleByIdOrNotFound:
     vi.fn<ChapterGuard["assertVisibleByIdOrNotFound"]>(),
 });
