@@ -22,7 +22,9 @@
 
   const studySetId = $derived(page.params.studySetId ?? "");
   const isStudySetRoute = $derived(
-    page.route.id?.includes("/study/[studySetId]/") ?? false
+    (page.route.id?.includes("/study/[studySetId]/") ||
+      page.route.id?.includes("/session/[studySetId]/")) ??
+      false
   );
   const isSubsRoute = $derived(
     page.route.id?.startsWith("/(app)/subs/") ?? false
