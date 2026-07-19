@@ -3,6 +3,7 @@ import { config } from "$lib/server/infras/auth/config";
 import { betterAuth } from "better-auth";
 import type { BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAuthMiddleware } from "better-auth/api";
 
 import { db } from "../db/client.ts";
 import { env } from "../env.ts";
@@ -75,6 +76,22 @@ export const auth = betterAuth({
         },
       },
     },
+  },
+  // oxlint-disable typescript/consistent-return typescript/no-unsafe-assignment
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/change-password") {
+        return {
+          context: {
+            ...ctx,
+            body: {
+              ...ctx.body,
+              revokeOtherSessions: true,
+            },
+          },
+        };
+      }
+    }),
   },
   secret: env.BETTER_AUTH_SECRET,
   socialProviders,
