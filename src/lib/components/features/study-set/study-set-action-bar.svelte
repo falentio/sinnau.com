@@ -26,7 +26,7 @@
 </script>
 
 <div
-  class="sticky bottom-0 z-50 flex justify-center pb-5 pt-3 data-[hidden=true]:hidden"
+  class="sticky bottom-0 z-50 flex justify-center pb-5 pt-3 data-[hidden=true]:hidden md:hidden"
   data-hidden={page.route.id?.includes("waiting-room")}
 >
   <nav

@@ -20,7 +20,7 @@
 </script>
 
 <div
-  class="sticky bottom-0 z-50 hidden justify-center pb-5 pt-3 group-has-data-[showbottombar=true]/app:flex"
+  class="sticky bottom-0 z-50 hidden justify-center pb-5 pt-3 group-has-data-[showbottombar=true]/app:flex md:!hidden"
 >
   <nav
     class="flex max-w-[calc(100%-2rem)] *:flex-1 items-center gap-1 overflow-x-auto rounded-full border border-border/50 bg-popover/90 p-1.5 text-popover-foreground shadow-[0_8px_32px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl"
