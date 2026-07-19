@@ -21,6 +21,36 @@ export const config = {
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/sign-out") {
+        const token = await ctx.getSignedCookie(
+          ctx.context.authCookies.sessionToken.name,
+          ctx.context.secret
+        );
+        if (typeof token !== "string") {
+          return;
+        }
+
+        const freshAge =
+          (ctx.context as { sessionConfig?: { freshAge?: number } })
+            .sessionConfig?.freshAge ?? 0;
+        if (!freshAge) {
+          return;
+        }
+
+        const session = await ctx.context.internalAdapter.findSession(token);
+        if (!session?.session) {
+          return;
+        }
+
+        const createdAt = new Date(session.session.createdAt).getTime();
+        if (Date.now() - createdAt >= freshAge * 1000) {
+          throw new APIError("FORBIDDEN", {
+            message: "Session is not fresh. Please sign in again.",
+          });
+        }
+        return;
+      }
+
       if (ctx.path !== "/sign-up/email") {
         return;
       }
@@ -60,11 +90,14 @@ export const config = {
       "/reset-password": { max: 9, window: 600 },
       "/send-verification-email": { max: 9, window: 600 },
       "/sign-in/email": { max: 15, window: 300 },
+      "/sign-out": { max: 3, window: 600 },
       "/sign-up/email": { max: 15, window: 300 },
-      "/verify-email": { max: 9, window: 600 },
     },
     max: 100,
     window: 60,
+  },
+  session: {
+    freshAge: 60 * 5,
   },
 } satisfies BetterAuthOptions;
 
