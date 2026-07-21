@@ -607,6 +607,91 @@ describe.concurrent("affiliate service", () => {
     });
   });
 
+  describe.concurrent("handlePaymentSuccess", () => {
+    it("inserts conversion with 35% commission on happy path", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findAffiliatedByUserId.mockResolvedValue("referrer-1");
+      repo.findConversionByTransactionId.mockResolvedValue(null);
+      repo.insertConversion.mockResolvedValue({
+        affiliateUserId: "referrer-1",
+        commissionAmount: 35_000,
+        createdAt: new Date(),
+        id: "afc_abc",
+        payoutId: null,
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        status: "PENDING" as const,
+        transactionId: "txn-1",
+      });
+
+      await service.handlePaymentSuccess({
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        transactionId: "txn-1",
+      });
+
+      expect(repo.insertConversion).toHaveBeenCalledWith({
+        affiliateUserId: "referrer-1",
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        transactionId: "txn-1",
+      });
+    });
+
+    it("does nothing when purchaser has no referrer", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findAffiliatedByUserId.mockResolvedValue(null);
+
+      await service.handlePaymentSuccess({
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        transactionId: "txn-1",
+      });
+
+      expect(repo.insertConversion).not.toHaveBeenCalled();
+    });
+
+    it("does nothing on self-referral", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findAffiliatedByUserId.mockResolvedValue("buyer-1");
+
+      await service.handlePaymentSuccess({
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        transactionId: "txn-1",
+      });
+
+      expect(repo.insertConversion).not.toHaveBeenCalled();
+    });
+
+    it("does nothing on duplicate transactionId", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findAffiliatedByUserId.mockResolvedValue("referrer-1");
+      repo.findConversionByTransactionId.mockResolvedValue({
+        affiliateUserId: "referrer-1",
+        commissionAmount: 35_000,
+        createdAt: new Date(),
+        id: "afc_existing",
+        payoutId: null,
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        status: "PENDING" as const,
+        transactionId: "txn-1",
+      });
+
+      await service.handlePaymentSuccess({
+        purchaseAmount: 100_000,
+        purchaserUserId: "buyer-1",
+        transactionId: "txn-1",
+      });
+
+      expect(repo.insertConversion).not.toHaveBeenCalled();
+    });
+  });
+
   describe.concurrent("listPendingPayouts", () => {
     it("returns pending payouts list for admin", async ({ expect }) => {
       const { repo, service } = setupService();

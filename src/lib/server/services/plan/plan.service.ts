@@ -1,3 +1,5 @@
+import { EventEmitter } from "node:events";
+
 import type {
   CheckoutInput,
   CheckoutOutput,
@@ -214,7 +216,14 @@ export const deriveUserPlan = (
   return current;
 };
 
-export class PlanService {
+export interface PlanServiceEvents {
+  "order:paid": [
+    payload: { userId: string; grossAmount: number; transactionId: string },
+  ];
+}
+
+// oxlint-disable-next-line unicorn/prefer-event-target -- Node.js EventEmitter provides typed event interfaces for server-only service
+export class PlanService extends EventEmitter<PlanServiceEvents> {
   private readonly repo: PlanRepository;
   private readonly guard: PlanGuard;
   private readonly midtrans: MidtransClient;
@@ -224,6 +233,7 @@ export class PlanService {
     guard: PlanGuard,
     midtrans: MidtransClient
   ) {
+    super();
     this.repo = repo;
     this.guard = guard;
     this.midtrans = midtrans;
@@ -341,7 +351,10 @@ export class PlanService {
     adminId: string | null | undefined
   ): Promise<AdminGrant> {
     const admin = this.guard.requireAdmin(adminId);
-    const user = await this.guard.assertUserExistsOrNotFound(input.userId);
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- AuthUser from Drizzle $inferSelect may contain any
+    const authUser = await this.guard.assertUserExistsOrNotFound(input.userId);
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- AuthUser.id is a concrete string field but parent type contains any
+    const targetUserId: string = authUser.id;
     const now = Date.now();
     const grant: NewAdminGrant = {
       durationMonths: input.durationMonths,
@@ -352,12 +365,13 @@ export class PlanService {
       note: input.note ?? null,
       planKey: input.planKey,
       startedAt: new Date(now),
-      userId: user.id,
+      userId: targetUserId,
     };
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- AdminGrant from Drizzle $inferSelect may contain any
     const row = await this.repo.insertAdminGrant(grant);
     // Grant is committed first (no transaction). Derivation failure must NOT
     // roll back the grant — the grant row is the audit trail.
-    await this.deriveAndUpsert(user.id);
+    await this.deriveAndUpsert(targetUserId);
     return row;
   }
 
@@ -501,6 +515,11 @@ export class PlanService {
     if (target === "PAID") {
       await this.repo.setOrderAppliedAt(order.id, Date.now());
       await this.deriveAndUpsert(order.userId);
+      this.emit("order:paid", {
+        grossAmount: order.grossAmount,
+        transactionId: body.transaction_id,
+        userId: order.userId,
+      });
     } else if (target === "CANCELLED" && prevStatus === "PAID") {
       await this.deriveAndUpsert(order.userId);
     }

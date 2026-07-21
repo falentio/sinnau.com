@@ -10,6 +10,7 @@ import type {
   RecordAffiliatePayoutInput,
   RecordAffiliateRelationshipInput,
 } from "$lib/schemas/affiliate";
+import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
 
 import {
@@ -237,5 +238,35 @@ export class AffiliateService {
       input.page ?? 1,
       input.limit ?? 10
     );
+  }
+
+  async handlePaymentSuccess(input: {
+    purchaserUserId: string;
+    purchaseAmount: number;
+    transactionId: string;
+  }): Promise<void> {
+    const affiliateUserId = await this.repo.findAffiliatedByUserId(
+      input.purchaserUserId
+    );
+    if (affiliateUserId === null || affiliateUserId === input.purchaserUserId) {
+      return;
+    }
+
+    const existing = await this.repo.findConversionByTransactionId(
+      input.transactionId
+    );
+    if (existing) {
+      return;
+    }
+
+    await this.repo.insertConversion({
+      affiliateUserId,
+      commissionAmount: Math.round(
+        input.purchaseAmount * AFFILIATE_COMMISSION_RATE
+      ),
+      purchaseAmount: input.purchaseAmount,
+      purchaserUserId: input.purchaserUserId,
+      transactionId: input.transactionId,
+    });
   }
 }
