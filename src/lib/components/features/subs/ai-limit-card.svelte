@@ -60,14 +60,14 @@
 
   const meta = $derived(planMeta[plan] ?? planMetaFallback);
   const monthly = $derived(meta.monthly);
+  const dailyRule = $derived(Math.round(monthly / 10));
+  const weeklyRule = $derived(Math.round(monthly / 4));
   const dailyPct = $derived(
-    Math.max(0, Math.min(100, Math.round((daily / monthly) * 100)))
+    Math.max(0, Math.min(100, Math.round((daily / dailyRule) * 100)))
   );
   const weeklyPct = $derived(
     Math.max(0, Math.min(100, Math.round(((weekly * 4) / monthly) * 100)))
   );
-  const dailyRule = $derived(Math.round(monthly / 10));
-  const weeklyRule = $derived(Math.round(monthly / 4));
 </script>
 
 <article
@@ -104,19 +104,14 @@
   <div class="mt-6 flex flex-col gap-5">
     <div class="flex flex-col gap-2.5">
       <div class="flex items-baseline justify-between">
-        <div class="flex items-baseline gap-2">
-          <span
-            class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-          >
-            Harian
-          </span>
-          <span
-            class="font-heading text-xl font-semibold tabular-nums tracking-tight text-foreground"
-          >
-            {daily}
-          </span>
-        </div>
-        <span class="font-mono text-[11px] tabular-nums text-muted-foreground">
+        <span
+          class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
+        >
+          Harian
+        </span>
+        <span
+          class="font-heading text-lg font-semibold tabular-nums tracking-tight text-foreground"
+        >
           {dailyPct}%
         </span>
       </div>
@@ -130,19 +125,14 @@
 
     <div class="flex flex-col gap-2.5">
       <div class="flex items-baseline justify-between">
-        <div class="flex items-baseline gap-2">
-          <span
-            class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-          >
-            Mingguan
-          </span>
-          <span
-            class="font-heading text-xl font-semibold tabular-nums tracking-tight text-foreground"
-          >
-            {weekly}
-          </span>
-        </div>
-        <span class="font-mono text-[11px] tabular-nums text-muted-foreground">
+        <span
+          class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
+        >
+          Mingguan
+        </span>
+        <span
+          class="font-heading text-lg font-semibold tabular-nums tracking-tight text-foreground"
+        >
           {weeklyPct}%
         </span>
       </div>

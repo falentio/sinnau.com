@@ -38,6 +38,24 @@
     }
     return `${total} pesanan`;
   });
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const planExpiry = $derived.by(() => {
+    const expiresAt = data.activePlan?.expiresAt;
+    if (!expiresAt) {
+      return null;
+    }
+    const label = expiresAt.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    const daysRemaining = Math.max(
+      0,
+      Math.ceil((expiresAt.getTime() - Date.now()) / DAY_MS)
+    );
+    return { daysRemaining, label };
+  });
 </script>
 
 <SeoHead
@@ -87,7 +105,12 @@
             {planName[data.activePlan.planKey]}
           </span>
           <span class="text-xs text-muted-foreground">
-            Paket diperpanjang — akses berlanjut
+            {#if planExpiry}
+              Berlaku sampai {planExpiry.label} ·
+              {planExpiry.daysRemaining} hari lagi
+            {:else}
+              Paket diperpanjang — akses berlanjut
+            {/if}
           </span>
         </div>
         <Button href="/subs/plans" variant="default" size="sm">

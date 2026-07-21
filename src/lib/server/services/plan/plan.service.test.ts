@@ -6,6 +6,7 @@ import {
 } from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
+import type { MockedFunction } from "vitest";
 
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
@@ -41,13 +42,14 @@ const makeWebhookBody = (
   ...overrides,
 });
 
-const createMockMidtrans = () => {
-  const midtrans = {
-    createQris: vi.fn(),
-  } as unknown as MidtransClient;
-  (
-    midtrans.createQris as unknown as ReturnType<typeof vi.fn>
-  ).mockResolvedValue({
+interface MidtransMock {
+  client: MidtransClient;
+  createQris: MockedFunction<MidtransClient["createQris"]>;
+}
+
+const createMockMidtrans = (): MidtransMock => {
+  const mock = vi.fn<MidtransClient["createQris"]>();
+  mock.mockResolvedValue({
     acquirer: "gopay",
     actions: [{ method: "GET", name: "generate-qr-code", url: "https://qr" }],
     currency: "IDR",
@@ -64,13 +66,23 @@ const createMockMidtrans = () => {
     transaction_status: "pending",
     transaction_time: "2024-01-01 00:00:00",
   });
-  return midtrans;
+  return {
+    client: { createQris: mock } as unknown as MidtransClient,
+    createQris: mock,
+  };
 };
 
-const setupService = (midtrans = createMockMidtrans()) => {
+const setupService = (midtransMock = createMockMidtrans()) => {
   const repo = createMockRepository();
   const guard = createMockGuard();
-  guard.requireOwner.mockImplementation((id) => id as string);
+  guard.requireOwner.mockImplementation((id) => {
+    if (id === null || id === undefined) {
+      throw new ORPCError("UNAUTHORIZED", {
+        message: "Authentication is required",
+      });
+    }
+    return id;
+  });
   guard.assertOrderVisibleByIdOrNotFound.mockImplementation(
     async (id, _userId) => {
       const order = await repo.findOrderById(id);
@@ -82,7 +94,7 @@ const setupService = (midtrans = createMockMidtrans()) => {
   );
 
   guard.requireAdmin.mockImplementation((id) => {
-    if (!id) {
+    if (id === null || id === undefined) {
       throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
     }
     return id;
@@ -92,12 +104,20 @@ const setupService = (midtrans = createMockMidtrans()) => {
       throw new ORPCError("NOT_FOUND", { message: "User not found" });
     }
     return {
-      banned: false,
+      affiliatedBy: null,
+      banExpires: null,
+      banReason: null,
+      banned: null,
+      createdAt: new Date(),
       email: `${id}@e.com`,
       emailVerified: true,
       id,
+      image: null,
+      lastLoginMethod: null,
       name: "User",
-    } as never;
+      role: null,
+      updatedAt: new Date(),
+    };
   });
 
   repo.findActiveUserPlan.mockResolvedValue(null);
@@ -131,9 +151,15 @@ const setupService = (midtrans = createMockMidtrans()) => {
   const service = new PlanService(
     repo,
     guard as unknown as PlanGuard,
-    midtrans
+    midtransMock.client
   );
-  return { guard, midtrans, repo, service };
+  return {
+    createQrisMock: midtransMock.createQris,
+    guard,
+    midtrans: midtransMock.client,
+    repo,
+    service,
+  };
 };
 
 describe.concurrent("PlanService unit tests", () => {
@@ -170,7 +196,7 @@ describe.concurrent("PlanService unit tests", () => {
     it("creates a pending order and payment, then returns QRIS instructions", async ({
       expect,
     }) => {
-      const { midtrans, repo, service } = setupService();
+      const { createQrisMock, repo, service } = setupService();
       const result = await service.checkout(
         { durationMonths: 1, planKey: "LITE" },
         "user-1"
@@ -199,7 +225,7 @@ describe.concurrent("PlanService unit tests", () => {
         status: "PENDING",
       });
 
-      expect(midtrans.createQris).toHaveBeenCalledWith({
+      expect(createQrisMock).toHaveBeenCalledWith({
         custom_expiry: {
           expiry_duration: 15,
           unit: "minute",
@@ -228,11 +254,9 @@ describe.concurrent("PlanService unit tests", () => {
     it("throws PAYMENT_GATEWAY_ERROR when Midtrans fails", async ({
       expect,
     }) => {
-      const midtrans = createMockMidtrans();
-      (
-        midtrans.createQris as unknown as ReturnType<typeof vi.fn>
-      ).mockRejectedValue(new Error("network down"));
-      const { service } = setupService(midtrans);
+      const midtransMock = createMockMidtrans();
+      midtransMock.createQris.mockRejectedValue(new Error("network down"));
+      const { service } = setupService(midtransMock);
       const err = await captureError(
         service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1")
       );
@@ -324,22 +348,34 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const { repo, service } = setupService();
+      const liteExpiresAt = new Date("2026-02-01T00:00:00.000Z");
       repo.findActiveUserPlan.mockResolvedValue(
-        createUserPlanFixture({ planKey: "LITE", userId: "user-1" })
+        createUserPlanFixture({
+          expiresAt: liteExpiresAt,
+          planKey: "LITE",
+          userId: "user-1",
+        })
       );
       const lite = await service.getAiLimitPlanForUser("user-1");
       expect(lite).toEqual({
         daily: Math.ceil(PLAN_MONTHLY_LIMIT.LITE / PLAN_DAILY_DIVISOR),
+        expiresAt: liteExpiresAt,
         planKey: "LITE",
         weekly: Math.ceil(PLAN_MONTHLY_LIMIT.LITE / PLAN_WEEKLY_DIVISOR),
       });
 
+      const premiumExpiresAt = new Date("2026-07-15T00:00:00.000Z");
       repo.findActiveUserPlan.mockResolvedValue(
-        createUserPlanFixture({ planKey: "PREMIUM", userId: "user-1" })
+        createUserPlanFixture({
+          expiresAt: premiumExpiresAt,
+          planKey: "PREMIUM",
+          userId: "user-1",
+        })
       );
       const premium = await service.getAiLimitPlanForUser("user-1");
       expect(premium).toEqual({
         daily: Math.ceil(PLAN_MONTHLY_LIMIT.PREMIUM / PLAN_DAILY_DIVISOR),
+        expiresAt: premiumExpiresAt,
         planKey: "PREMIUM",
         weekly: Math.ceil(PLAN_MONTHLY_LIMIT.PREMIUM / PLAN_WEEKLY_DIVISOR),
       });
@@ -651,7 +687,8 @@ describe.concurrent("PlanService unit tests", () => {
         planKey: "LITE",
         userId: "user-1",
       };
-      const err = await captureError(service.grantPlan(input, undefined!));
+      const noAdmin: string | null | undefined = undefined;
+      const err = await captureError(service.grantPlan(input, noAdmin));
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
@@ -682,12 +719,20 @@ describe.concurrent("PlanService unit tests", () => {
           throw new ORPCError("NOT_FOUND", { message: "User not found" });
         }
         return {
-          banned: false,
+          affiliatedBy: null,
+          banExpires: null,
+          banReason: null,
+          banned: null,
+          createdAt: new Date(),
           email: `${id}@e.com`,
           emailVerified: true,
           id,
+          image: null,
+          lastLoginMethod: null,
           name: "User",
-        } as never;
+          role: null,
+          updatedAt: new Date(),
+        };
       });
 
       const input: GrantPlanInput = {

@@ -264,6 +264,7 @@ interface AiLimitPlan {
   planKey: "LITE" | "PLUS" | "PREMIUM";
   daily: number;
   weekly: number;
+  expiresAt: Date;
 }
 ```
 
@@ -274,6 +275,7 @@ interface AiLimitPlan {
 - Maps monthly limits to daily/weekly limits:
   - `daily = ceil(monthly / 10)`
   - `weekly = ceil(monthly / 4)`
+- `expiresAt` is the active `UserPlan` entitlement expiry, surfaced so clients can show plan duration.
 
 Resulting limits:
 

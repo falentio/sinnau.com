@@ -129,6 +129,7 @@ export type ListPlansOutput = v.InferOutput<typeof listPlansOutputSchema>;
 
 export const getAiLimitPlanForUserOutputSchema = v.object({
   daily: v.number(),
+  expiresAt: v.date(),
   planKey: planKeySchema,
   weekly: v.number(),
 });

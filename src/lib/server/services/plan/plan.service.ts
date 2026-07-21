@@ -37,6 +37,7 @@ import type {
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import { generateId } from "../../utils/nanoid.ts";
+import type { AuthUser } from "../user/user.repository.ts";
 import type { PlanGuard } from "./plan.guard.ts";
 import type {
   AdminGrantListResult,
@@ -341,7 +342,9 @@ export class PlanService {
     adminId: string | null | undefined
   ): Promise<AdminGrant> {
     const admin = this.guard.requireAdmin(adminId);
-    const user = await this.guard.assertUserExistsOrNotFound(input.userId);
+    const user: AuthUser = await this.guard.assertUserExistsOrNotFound(
+      input.userId
+    );
     const now = Date.now();
     const grant: NewAdminGrant = {
       durationMonths: input.durationMonths,
@@ -354,7 +357,7 @@ export class PlanService {
       startedAt: new Date(now),
       userId: user.id,
     };
-    const row = await this.repo.insertAdminGrant(grant);
+    const row: AdminGrant = await this.repo.insertAdminGrant(grant);
     // Grant is committed first (no transaction). Derivation failure must NOT
     // roll back the grant — the grant row is the audit trail.
     await this.deriveAndUpsert(user.id);
@@ -429,6 +432,7 @@ export class PlanService {
 
   async getAiLimitPlanForUser(userId: string | null | undefined): Promise<{
     daily: number;
+    expiresAt: Date;
     planKey: (typeof PLAN_KEYS)[number];
     weekly: number;
   }> {
@@ -442,6 +446,7 @@ export class PlanService {
     const monthly = PLAN_MONTHLY_LIMIT[active.planKey];
     return {
       daily: Math.ceil(monthly / PLAN_DAILY_DIVISOR),
+      expiresAt: active.expiresAt,
       planKey: active.planKey,
       weekly: Math.ceil(monthly / PLAN_WEEKLY_DIVISOR),
     };
