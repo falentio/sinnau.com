@@ -3,7 +3,11 @@
   import { formatIdr } from "$lib/components/features/plan";
   import { Progress } from "$lib/components/ui/progress/index.js";
   import { Separator } from "$lib/components/ui/separator/index.js";
-  import { PLAN_NAME_FALLBACK } from "$lib/schemas/plan.constant";
+  import {
+    PLAN_DAILY_DIVISOR,
+    PLAN_NAME_FALLBACK,
+    PLAN_WEEKLY_DIVISOR,
+  } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   type PlanKey = "LITE" | "PLUS" | "PREMIUM";
@@ -60,13 +64,13 @@
 
   const meta = $derived(planMeta[plan] ?? planMetaFallback);
   const monthly = $derived(meta.monthly);
-  const dailyRule = $derived(Math.round(monthly / 10));
-  const weeklyRule = $derived(Math.round(monthly / 4));
+  const dailyRule = $derived(Math.ceil(monthly / PLAN_DAILY_DIVISOR));
+  const weeklyRule = $derived(Math.ceil(monthly / PLAN_WEEKLY_DIVISOR));
   const dailyPct = $derived(
     Math.max(0, Math.min(100, Math.round((daily / dailyRule) * 100)))
   );
   const weeklyPct = $derived(
-    Math.max(0, Math.min(100, Math.round(((weekly * 4) / monthly) * 100)))
+    Math.max(0, Math.min(100, Math.round((weekly / weeklyRule) * 100)))
   );
 </script>
 
