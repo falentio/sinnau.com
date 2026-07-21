@@ -213,6 +213,17 @@
           </div>
         </Sidebar.MenuButton>
       </Sidebar.MenuItem>
+      {#if user()?.role === "admin"}
+        <Sidebar.MenuItem>
+          <Sidebar.MenuButton size="sm">
+            {#snippet child({ props })}
+              <a href="/-11-/" {...props}>
+                <span>Admin Dashboard</span>
+              </a>
+            {/snippet}
+          </Sidebar.MenuButton>
+        </Sidebar.MenuItem>
+      {/if}
     </Sidebar.Menu>
   </Sidebar.Footer>
   <Sidebar.Rail />
