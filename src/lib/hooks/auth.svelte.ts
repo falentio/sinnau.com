@@ -1,8 +1,10 @@
 import { browser } from "$app/environment";
+import { env } from "$env/dynamic/public";
 import { apiKeyClient } from "@better-auth/api-key/client";
 import { dashClient } from "@better-auth/infra/client";
 import { adminClient, lastLoginMethodClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
+import posthog from "posthog-js";
 import { toast } from "svelte-sonner";
 
 export const authClient = createAuthClient({
@@ -38,16 +40,6 @@ let isPending = $state(true);
 
 let initialUser = $state(null as User | null);
 
-if (browser) {
-  authClient.useSession().subscribe((s) => {
-    ({ isPending } = s);
-    if (!isPending) {
-      session = s.data?.session ?? null;
-      user = s.data?.user ?? null;
-    }
-  });
-}
-
 export const setInitialUser = (u: () => User | null) => {
   initialUser = u();
 };
@@ -62,3 +54,27 @@ export const getUser = () => {
 export const getSession = () => session;
 
 export const getIsPending = () => isPending;
+
+if (browser) {
+  authClient.useSession().subscribe((s) => {
+    ({ isPending } = s);
+    if (!isPending) {
+      session = s.data?.session ?? null;
+      user = s.data?.user ?? null;
+    }
+  });
+
+  if (env.PUBLIC_POSTHOG_KEY !== undefined && env.PUBLIC_POSTHOG_KEY !== "") {
+    let identified = false;
+    $effect(() => {
+      const u = getUser();
+      if (u) {
+        identified = true;
+        posthog.identify(u.id, { email: u.email, name: u.name });
+      } else if (identified) {
+        identified = false;
+        posthog.reset();
+      }
+    });
+  }
+}
