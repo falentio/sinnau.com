@@ -2,6 +2,9 @@ import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
+  affiliatedBy: text("affiliated_by").references(() => user.id, {
+    onDelete: "set null",
+  }),
   banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
   banReason: text("ban_reason"),
   banned: integer("banned", { mode: "boolean" }).default(false),

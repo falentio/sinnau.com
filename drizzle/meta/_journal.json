@@ -22,6 +22,13 @@
       "when": 1783148573060,
       "tag": "20260704070253_curious_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1783159929693,
+      "tag": "20260704101209_red_micromacro",
+      "breakpoints": true
     }
   ]
 }

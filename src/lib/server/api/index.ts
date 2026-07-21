@@ -1,3 +1,4 @@
+import { affiliateRouter } from "$lib/server/services/affiliate/affiliate.router";
 import { chapterRouter } from "$lib/server/services/chapter/chapter.router";
 import { flashcardSessionRouter } from "$lib/server/services/flashcard-session/flashcard-session.router";
 import { flashcardRouter } from "$lib/server/services/flashcard/flashcard.router";
@@ -18,6 +19,7 @@ import {
 export { publicProcedure, authorizedProcedure, adminProcedure, requireAuth };
 
 export const router = {
+  affiliate: affiliateRouter,
   chapter: chapterRouter,
   flashcard: flashcardRouter,
   flashcardSession: flashcardSessionRouter,
