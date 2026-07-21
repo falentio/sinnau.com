@@ -2,6 +2,13 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
 </script>
 
 <div class="mx-auto max-w-2xl space-y-8 p-6">
@@ -19,21 +26,13 @@
       <div class="rounded-lg border p-4 text-center">
         <p class="text-sm text-muted-foreground">Pending Balance</p>
         <p class="text-2xl font-bold">
-          {new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-          }).format(data.summary.pendingBalance)}
+          {formatCurrency(data.summary.pendingBalance)}
         </p>
       </div>
       <div class="rounded-lg border p-4 text-center">
         <p class="text-sm text-muted-foreground">Total Earned</p>
         <p class="text-2xl font-bold">
-          {new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-          }).format(data.summary.totalEarned)}
+          {formatCurrency(data.summary.totalEarned)}
         </p>
       </div>
       <div class="rounded-lg border p-4 text-center">
@@ -45,11 +44,7 @@
     <section class="rounded-lg border p-4">
       <h2 class="text-lg font-semibold">Total Paid Out</h2>
       <p class="text-2xl font-bold">
-        {new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-          minimumFractionDigits: 0,
-        }).format(data.summary.totalPaid)}
+        {formatCurrency(data.summary.totalPaid)}
       </p>
     </section>
   {:else}

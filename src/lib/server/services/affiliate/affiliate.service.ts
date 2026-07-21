@@ -117,10 +117,10 @@ export class AffiliateService {
 
   async recordPayout(
     affiliateUserId: string,
-    adminUserId: string | null | undefined,
     method?: string,
     reference?: string,
-    note?: string
+    note?: string,
+    adminUserId?: string | null | undefined
   ): Promise<AffiliatePayout> {
     const admin = this.guard.requireAdmin(adminUserId);
 

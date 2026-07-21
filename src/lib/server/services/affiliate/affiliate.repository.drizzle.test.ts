@@ -10,7 +10,7 @@ import { describe, it } from "vitest";
 import { AffiliateTestEnv } from "./affiliate.testing";
 
 describe.concurrent("AffiliateDrizzleRepository", () => {
-  describe("insertProfile", () => {
+  describe.concurrent("insertProfile", () => {
     it("persists the row and returns it", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       const before = Date.now();
@@ -63,7 +63,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("findProfileByUserId", () => {
+  describe.concurrent("findProfileByUserId", () => {
     it("returns profile when found", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       await env.repo.insertProfile(env.userId, "test-slug", "Test");
@@ -82,7 +82,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("findProfileBySlug", () => {
+  describe.concurrent("findProfileBySlug", () => {
     it("returns profile when found", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       await env.repo.insertProfile(env.userId, "test-slug", "Test");
@@ -100,7 +100,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("insertConversion", () => {
+  describe.concurrent("insertConversion", () => {
     it("persists the conversion and returns it", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       const referrer = env.seedReferrer();
@@ -158,7 +158,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("findConversionByTransactionId", () => {
+  describe.concurrent("findConversionByTransactionId", () => {
     it("returns conversion when found", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       const referrer = env.seedReferrer();
@@ -185,7 +185,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("getDashboardSummary", () => {
+  describe.concurrent("getDashboardSummary", () => {
     it("returns summary with pending and paid breakdown", async ({
       expect,
     }) => {
@@ -196,7 +196,6 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       const admin = env.seedUser({ name: "Admin" });
       await env.repo.insertProfile(referrer, "ref-slug", "Referrer");
 
-      // Insert 3 commissions
       await env.repo.insertConversion({
         affiliateUserId: referrer,
         purchaserUserId: purchaser1,
@@ -219,7 +218,6 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
         transactionId: "txn-3",
       });
 
-      // Pay out full balance via insertPayout + markCommissionsAsPaid
       const payout = await env.repo.insertPayout({
         affiliateUserId: referrer,
         amount: 125000,
@@ -266,7 +264,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("listPendingPayouts", () => {
+  describe.concurrent("listPendingPayouts", () => {
     it("returns affiliates with pending balance", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       const referrer1 = env.seedReferrer();
@@ -284,9 +282,6 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
         transactionId: "txn-list-1",
       });
 
-      // referrer2 has profile but no commissions
-      // referrer2 should NOT appear in pending payouts
-
       const result = await env.repo.listPendingPayouts(1, 10);
 
       expect(result.data).toHaveLength(1);
@@ -295,6 +290,27 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(result.data[0]?.pendingBalance).toBe(30000);
       expect(result.data[0]?.conversionCount).toBe(1);
       expect(result.pagination.total).toBe(1);
+    });
+
+    it("falls back to 'unknown' slug when profile is missing", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        purchaserUserId: purchaser,
+        purchaseAmount: 100000,
+        commissionAmount: 30000,
+        transactionId: "txn-no-profile",
+      });
+
+      const result = await env.repo.listPendingPayouts(1, 10);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]?.slug).toBe("unknown");
     });
 
     it("excludes affiliates with zero pending balance", async ({ expect }) => {
@@ -355,7 +371,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("insertPayout", () => {
+  describe.concurrent("insertPayout", () => {
     it("persists the payout and returns it", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       const referrer = env.seedReferrer();
@@ -389,7 +405,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
-  describe("markCommissionsAsPaid", () => {
+  describe.concurrent("markCommissionsAsPaid", () => {
     it("marks all pending commissions for a user as PAID", async ({
       expect,
     }) => {
@@ -441,6 +457,224 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
         expect(c.status).toBe("PAID");
         expect(c.payoutId).toBe(payout!.id);
       }
+    });
+
+    it("returns 0 when there are no pending commissions", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        purchaserUserId: purchaser,
+        purchaseAmount: 100000,
+        commissionAmount: 30000,
+        transactionId: "txn-already-paid",
+      });
+
+      const payout = await env.repo.insertPayout({
+        affiliateUserId: referrer,
+        amount: 30000,
+        method: null,
+        reference: null,
+        note: null,
+        processedByAdminId: admin,
+      });
+      await env.repo.markCommissionsAsPaid(referrer, payout!.id);
+
+      const result = await env.repo.markCommissionsAsPaid(referrer, payout!.id);
+
+      expect(result).toBe(0);
+    });
+
+    it("does not touch already-PAID commissions on a second payout", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        purchaserUserId: purchaser,
+        purchaseAmount: 100000,
+        commissionAmount: 30000,
+        transactionId: "txn-keep-paid",
+      });
+
+      const payout1 = await env.repo.insertPayout({
+        affiliateUserId: referrer,
+        amount: 30000,
+        method: null,
+        reference: null,
+        note: null,
+        processedByAdminId: admin,
+      });
+      await env.repo.markCommissionsAsPaid(referrer, payout1!.id);
+
+      const payout2 = await env.repo.insertPayout({
+        affiliateUserId: referrer,
+        amount: 0,
+        method: null,
+        reference: null,
+        note: null,
+        processedByAdminId: admin,
+      });
+
+      const result = await env.repo.markCommissionsAsPaid(
+        referrer,
+        payout2!.id
+      );
+
+      expect(result).toBe(0);
+
+      const [commission] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.transactionId, "txn-keep-paid"))
+        .all();
+      expect(commission?.payoutId).toBe(payout1!.id);
+    });
+  });
+
+  describe.concurrent("findAffiliatedByUserId", () => {
+    it("returns affiliatedBy when set", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ name: "Purchaser" });
+
+      env.db
+        .update(user)
+        .set({ affiliatedBy: referrer })
+        .where(eq(user.id, purchaser))
+        .run();
+
+      const result = await env.repo.findAffiliatedByUserId(purchaser);
+
+      expect(result).toBe(referrer);
+    });
+
+    it("returns null when user has no affiliate", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const purchaser = env.seedUser({ name: "Purchaser" });
+
+      const result = await env.repo.findAffiliatedByUserId(purchaser);
+
+      expect(result).toBeNull();
+    });
+
+    it("returns null when user does not exist", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.findAffiliatedByUserId("non-existent");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe.concurrent("findUserById", () => {
+    it("returns user when found", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const userId = env.seedUser({ name: "Alice" });
+
+      const result = await env.repo.findUserById(userId);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(userId);
+      expect(result?.name).toBe("Alice");
+    });
+
+    it("returns null when user does not exist", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.findUserById("non-existent");
+
+      expect(result).toBeNull();
+    });
+  });
+});
+
+describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
+  describe.concurrent("foreign keys", () => {
+    it("rejects inserting a payout for a non-existent user", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const admin = env.seedUser({ name: "Admin" });
+
+      const insertOrphan = async () =>
+        await env.repo.insertPayout({
+          affiliateUserId: "does-not-exist",
+          amount: 100000,
+          method: null,
+          reference: null,
+          note: null,
+          processedByAdminId: admin,
+        });
+
+      await expect(insertOrphan()).rejects.toThrow();
+    });
+
+    it("rejects inserting a payout for a non-existent admin", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+
+      const insertOrphan = async () =>
+        await env.repo.insertPayout({
+          affiliateUserId: referrer,
+          amount: 100000,
+          method: null,
+          reference: null,
+          note: null,
+          processedByAdminId: "does-not-exist",
+        });
+
+      await expect(insertOrphan()).rejects.toThrow();
+    });
+  });
+
+  describe.concurrent("cascade from user deletion", () => {
+    it("removes affiliate profile when the user is deleted", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      await env.repo.insertProfile(referrer, "slug", "R");
+
+      env.db.delete(user).where(eq(user.id, referrer)).run();
+
+      const result = await env.repo.findProfileByUserId(referrer);
+      expect(result).toBeNull();
+    });
+
+    it("removes commissions when the affiliate user is deleted", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        purchaserUserId: purchaser,
+        purchaseAmount: 100000,
+        commissionAmount: 30000,
+        transactionId: "txn-cascade",
+      });
+
+      env.db.delete(user).where(eq(user.id, referrer)).run();
+
+      const result =
+        await env.repo.findConversionByTransactionId("txn-cascade");
+      expect(result).toBeNull();
     });
   });
 });

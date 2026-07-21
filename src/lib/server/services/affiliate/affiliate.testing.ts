@@ -4,7 +4,10 @@ import { vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
 import type { AffiliateGuard } from "./affiliate.guard";
-import type { AffiliateRepository } from "./affiliate.repository";
+import type {
+  AffiliateProfile,
+  AffiliateRepository,
+} from "./affiliate.repository";
 import { AffiliateDrizzleRepository } from "./affiliate.repository.drizzle";
 
 export type MockedAffiliateRepository = {
@@ -34,8 +37,18 @@ export type MockedAffiliateGuard = {
 export const createMockGuard = (): MockedAffiliateGuard => ({
   requireUser: vi.fn<AffiliateGuard["requireUser"]>(),
   requireAdmin: vi.fn<AffiliateGuard["requireAdmin"]>(),
-  assertProfileExistsOrNotFound:
-    vi.fn<AffiliateGuard["assertProfileExistsOrNotFound"]>(),
+});
+
+export const createAffiliateProfileFixture = (
+  overrides: Partial<AffiliateProfile> = {}
+): AffiliateProfile => ({
+  createdAt: new Date(),
+  id: "aff_abc123def456",
+  nameSnapshot: "Test User",
+  slug: "test-slug",
+  updatedAt: new Date(),
+  userId: "user-1",
+  ...overrides,
 });
 
 export const captureError = async (

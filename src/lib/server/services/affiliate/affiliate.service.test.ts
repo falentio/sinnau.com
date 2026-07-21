@@ -22,9 +22,6 @@ function setupService() {
   guard.requireUser.mockReturnValue("user-1");
   guard.requireAdmin.mockReturnValue("admin-1");
 
-  // TypeScript includes private fields in keyof; the test mock intentionally
-  // omits them. This cast is safe because the service only interacts with the
-  // guard's public methods.
   const service = new AffiliateService(
     repo,
     guard as unknown as AffiliateGuard
@@ -34,7 +31,7 @@ function setupService() {
 }
 
 describe.concurrent("AffiliateService", () => {
-  describe("claim", () => {
+  describe.concurrent("claim", () => {
     it("creates profile with auto-generated slug from user name", async ({
       expect,
     }) => {
@@ -56,7 +53,7 @@ describe.concurrent("AffiliateService", () => {
 
       const profile = await service.claim("user-1");
 
-      expect(profile.slug).toBe("test-user-ab12cd34");
+      expect(profile.slug).toMatch(/^test-user-[0-9A-Za-z]{8}$/u);
       expect(profile.userId).toBe("user-1");
       expect(profile.nameSnapshot).toBe("Test User");
     });
@@ -127,9 +124,27 @@ describe.concurrent("AffiliateService", () => {
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AFFILIATE_SLUG_CONFLICT" });
     });
+
+    it("throws AFFILIATE_SLUG_CONFLICT when insertProfile returns null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(null);
+      repo.findProfileBySlug.mockResolvedValue(null);
+      repo.findUserById.mockResolvedValue({
+        id: "user-1",
+        name: "Test User",
+      });
+      repo.insertProfile.mockResolvedValue(null);
+
+      const err = await captureError(service.claim("user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_SLUG_CONFLICT" });
+    });
   });
 
-  describe("resolveSlug", () => {
+  describe.concurrent("resolveSlug", () => {
     it("returns userId for a valid slug", async ({ expect }) => {
       const { repo, service } = setupService();
       repo.findProfileBySlug.mockResolvedValue({
@@ -144,6 +159,7 @@ describe.concurrent("AffiliateService", () => {
       const result = await service.resolveSlug("test-slug");
 
       expect(result).toEqual({ userId: "user-1" });
+      expect(repo.findProfileBySlug).toHaveBeenCalledWith("test-slug");
     });
 
     it("throws NOT_FOUND for unknown slug", async ({ expect }) => {
@@ -155,9 +171,18 @@ describe.concurrent("AffiliateService", () => {
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
+
+    it("sanitizes slug input before querying", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findProfileBySlug.mockResolvedValue(null);
+
+      await captureError(service.resolveSlug("Test Slug!"));
+
+      expect(repo.findProfileBySlug).toHaveBeenCalledWith("test-slug");
+    });
   });
 
-  describe("recordConversion", () => {
+  describe.concurrent("recordConversion", () => {
     const validInput = {
       transactionId: "txn-1",
       purchaserUserId: "buyer-1",
@@ -243,9 +268,23 @@ describe.concurrent("AffiliateService", () => {
       expect(result.commission).toBeNull();
       expect(repo.insertConversion).not.toHaveBeenCalled();
     });
+
+    it("returns no-op when insertConversion returns null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findAffiliatedByUserId.mockResolvedValue("referrer-1");
+      repo.findConversionByTransactionId.mockResolvedValue(null);
+      repo.insertConversion.mockResolvedValue(null);
+
+      const result = await service.recordConversion(validInput);
+
+      expect(result.created).toBe(false);
+      expect(result.commission).toBeNull();
+    });
   });
 
-  describe("recordPayout", () => {
+  describe.concurrent("recordPayout", () => {
     it("records full payout and marks commissions as paid", async ({
       expect,
     }) => {
@@ -280,9 +319,10 @@ describe.concurrent("AffiliateService", () => {
 
       const result = await service.recordPayout(
         "user-1",
-        "admin-1",
         "bank_transfer",
-        "REF-001"
+        "REF-001",
+        undefined,
+        "admin-1"
       );
 
       expect(result).toEqual(payout);
@@ -300,11 +340,47 @@ describe.concurrent("AffiliateService", () => {
       );
     });
 
+    it("forwards note parameter to insertPayout", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.getDashboardSummary.mockResolvedValue({
+        profile: null,
+        pendingBalance: 50000,
+        totalEarned: 50000,
+        totalPaid: 0,
+        conversionCount: 1,
+      });
+      repo.insertPayout.mockResolvedValue({
+        id: "afp_note",
+        affiliateUserId: "user-1",
+        amount: 50000,
+        method: null,
+        reference: null,
+        note: "First payout",
+        processedByAdminId: "admin-1",
+        createdAt: new Date(),
+      });
+      repo.markCommissionsAsPaid.mockResolvedValue(1);
+
+      await service.recordPayout(
+        "user-1",
+        undefined,
+        undefined,
+        "First payout",
+        "admin-1"
+      );
+
+      expect(repo.insertPayout).toHaveBeenCalledWith(
+        expect.objectContaining({ note: "First payout" })
+      );
+    });
+
     it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
       const { guard, service } = setupService();
       guard.requireAdmin.mockImplementation(throwUnauthorized);
 
-      const err = await captureError(service.recordPayout("user-1", null));
+      const err = await captureError(
+        service.recordPayout("user-1", undefined, undefined, undefined, null)
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "UNAUTHORIZED" });
@@ -322,14 +398,49 @@ describe.concurrent("AffiliateService", () => {
         conversionCount: 0,
       });
 
-      const err = await captureError(service.recordPayout("user-1", "admin-1"));
+      const err = await captureError(
+        service.recordPayout(
+          "user-1",
+          undefined,
+          undefined,
+          undefined,
+          "admin-1"
+        )
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AFFILIATE_NO_PENDING_BALANCE" });
     });
+
+    it("throws INTERNAL_SERVER_ERROR when insertPayout returns null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.getDashboardSummary.mockResolvedValue({
+        profile: null,
+        pendingBalance: 50000,
+        totalEarned: 50000,
+        totalPaid: 0,
+        conversionCount: 1,
+      });
+      repo.insertPayout.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.recordPayout(
+          "user-1",
+          undefined,
+          undefined,
+          undefined,
+          "admin-1"
+        )
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
   });
 
-  describe("getDashboardSummary", () => {
+  describe.concurrent("getDashboardSummary", () => {
     it("returns dashboard summary for authenticated user", async ({
       expect,
     }) => {
@@ -353,6 +464,7 @@ describe.concurrent("AffiliateService", () => {
       const result = await service.getDashboardSummary("user-1");
 
       expect(result).toEqual(summary);
+      expect(repo.getDashboardSummary).toHaveBeenCalledWith("user-1");
     });
 
     it("throws UNAUTHORIZED when userId is null", async ({ expect }) => {
@@ -366,7 +478,7 @@ describe.concurrent("AffiliateService", () => {
     });
   });
 
-  describe("listPendingPayouts", () => {
+  describe.concurrent("listPendingPayouts", () => {
     it("returns pending payouts list for admin", async ({ expect }) => {
       const { repo, service } = setupService();
       const list = {
@@ -386,6 +498,18 @@ describe.concurrent("AffiliateService", () => {
 
       expect(result).toEqual(list);
       expect(repo.listPendingPayouts).toHaveBeenCalledWith(1, 10);
+    });
+
+    it("forwards custom page and limit to repo", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.listPendingPayouts.mockResolvedValue({
+        data: [],
+        pagination: { page: 2, limit: 5, total: 0, totalPages: 1 },
+      });
+
+      await service.listPendingPayouts("admin-1", 2, 5);
+
+      expect(repo.listPendingPayouts).toHaveBeenCalledWith(2, 5);
     });
 
     it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {

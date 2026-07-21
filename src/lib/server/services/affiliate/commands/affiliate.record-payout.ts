@@ -20,9 +20,9 @@ export const affiliateRecordPayout = adminProcedure
     async ({ input, context }) =>
       await affiliateService.recordPayout(
         input.affiliateUserId,
-        context.user.id,
         input.method ?? undefined,
         input.reference ?? undefined,
-        input.note ?? undefined
+        input.note ?? undefined,
+        context.user.id
       )
   );

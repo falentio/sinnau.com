@@ -201,29 +201,24 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           pendingBalance: sum(affiliateCommission.commissionAmount).mapWith(
             Number
           ),
+          slug: affiliateProfile.slug,
         })
         .from(affiliateCommission)
         .where(eq(affiliateCommission.status, "PENDING"))
+        .leftJoin(
+          affiliateProfile,
+          eq(affiliateCommission.affiliateUserId, affiliateProfile.userId)
+        )
         .groupBy(affiliateCommission.affiliateUserId)
         .limit(limit)
         .offset(offset);
 
-      const data = await Promise.all(
-        rows.map(async (row) => {
-          const [profile] = await this.dbInstance
-            .select({ slug: affiliateProfile.slug })
-            .from(affiliateProfile)
-            .where(eq(affiliateProfile.userId, row.affiliateUserId))
-            .limit(1);
-
-          return {
-            affiliateUserId: row.affiliateUserId,
-            conversionCount: row.conversionCount,
-            pendingBalance: row.pendingBalance ?? 0,
-            slug: profile?.slug ?? "unknown",
-          };
-        })
-      );
+      const data = rows.map((row) => ({
+        affiliateUserId: row.affiliateUserId,
+        conversionCount: row.conversionCount,
+        pendingBalance: row.pendingBalance ?? 0,
+        slug: row.slug ?? "unknown",
+      }));
 
       return {
         data,

@@ -12,6 +12,7 @@ export const affiliateProfile = sqliteTable("affiliate_profile", {
   slug: text("slug").notNull().unique(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .$onUpdate(() => new Date())
     .notNull(),
   userId: text("user_id")
     .notNull()
@@ -57,3 +58,7 @@ export const affiliateCommission = sqliteTable("affiliate_commission", {
     .default("PENDING"),
   transactionId: text("transaction_id").notNull().unique(),
 });
+
+export type AffiliateProfile = typeof affiliateProfile.$inferSelect;
+export type AffiliatePayout = typeof affiliatePayout.$inferSelect;
+export type AffiliateCommission = typeof affiliateCommission.$inferSelect;

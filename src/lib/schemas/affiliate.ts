@@ -14,9 +14,7 @@ export {
   AFFILIATE_PAYOUT_ID_PREFIX,
 };
 
-export const AFFILIATE_COMMISSION_STATUSES_SCHEMA = v.picklist(
-  AFFILIATE_COMMISSION_STATUSES
-);
+export const commissionStatusSchema = v.picklist(AFFILIATE_COMMISSION_STATUSES);
 
 export const affiliateProfileIdSchema =
   createPrefixedIdSchema(AFFILIATE_ID_PREFIX);
@@ -101,7 +99,7 @@ export const affiliateCommissionSchema = v.object({
   payoutId: v.nullable(v.string()),
   purchaseAmount: v.number(),
   purchaserUserId: v.string(),
-  status: AFFILIATE_COMMISSION_STATUSES_SCHEMA,
+  status: commissionStatusSchema,
   transactionId: v.string(),
 });
 
