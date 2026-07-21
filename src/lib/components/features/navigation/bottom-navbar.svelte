@@ -6,8 +6,10 @@
     CrownIcon,
     Home01Icon,
     Search02Icon,
+    Settings02Icon,
   } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
+  import { getUser } from "$lib/hooks/auth.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   const isHomeActive = $derived(page.route.id === "/(app)/home");
@@ -73,5 +75,17 @@
       <HugeiconsIcon icon={CrownIcon} class="size-5" strokeWidth={1.5} />
       Premium
     </Button>
+
+    {#if getUser()?.role === "admin"}
+      <Button
+        href="/-11-/"
+        variant="ghost"
+        class="flex h-auto min-w-[3.5rem] flex-col gap-0.5 rounded-full px-3 py-2 text-[10px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.96]"
+        aria-label="Admin Dashboard"
+      >
+        <HugeiconsIcon icon={Settings02Icon} class="size-5" strokeWidth={1.5} />
+        Admin
+      </Button>
+    {/if}
   </nav>
 </div>

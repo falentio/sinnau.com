@@ -58,5 +58,18 @@
       </Sidebar.GroupContent>
     </Sidebar.Group>
   </Sidebar.Content>
+  <Sidebar.Footer>
+    <Sidebar.Menu>
+      <Sidebar.MenuItem>
+        <Sidebar.MenuButton size="sm">
+          {#snippet child({ props })}
+            <a href="/home" {...props}>
+              <span>Back to Home</span>
+            </a>
+          {/snippet}
+        </Sidebar.MenuButton>
+      </Sidebar.MenuItem>
+    </Sidebar.Menu>
+  </Sidebar.Footer>
   <Sidebar.Rail />
 </Sidebar.Root>
