@@ -1,31 +1,33 @@
 <script lang="ts">
   import {
     AiBeautifyIcon,
+    ArrowRight01Icon,
     Cards01Icon,
     FileUploadIcon,
   } from "$lib/components/features/icons";
+  import Button from "$lib/components/ui/button/button.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import { reveal } from "./reveal";
 
   const steps = [
     {
-      body: "Unggah PDF catatan kuliah, bab buku teks, atau slide. Sistem membaca dan mengekstrak konsep-konsep utamanya.",
+      body: "Unggah PDF catatan kuliah, bab buku teks, atau slide. Sistem membaca dan mengekstrak konsep utamanya.",
       icon: FileUploadIcon,
       number: "01",
-      title: "Unggah materi Anda.",
+      title: "Upload, langsung terproses.",
     },
     {
       body: "AI membangun flashcard dan soal kuis dari konten. Tinjau, edit, atau tambah kartu Anda sendiri sebelum mulai.",
       icon: AiBeautifyIcon,
       number: "02",
-      title: "AI membangun modul.",
+      title: "Kartu belajar langsung jadi.",
     },
     {
-      body: "FSRS menjadwalkan kartu di momen yang tepat. Kuis adaptif fokus ke konsep yang masih Anda lemah. Sesi makin singkat seiring Anda makin hafal.",
+      body: "Kartu muncul pas nyaris lupa. Kuis langsung fokus ke bagian yang masih lemah. Sesi makin singkat seiring Anda makin hafal.",
       icon: Cards01Icon,
       number: "03",
-      title: "Belajar dengan presisi.",
+      title: "Kuasai lebih cepat.",
     },
   ] as const;
 </script>
@@ -38,13 +40,12 @@
     <h2
       class="font-display text-[32px] leading-[1.04] tracking-[-0.03em] sm:text-[42px] text-balance"
     >
-      Dari PDF sampai paham,<br />dalam tiga langkah.
+      Dari PDF sampai siap ujian,<br />dalam tiga langkah.
     </h2>
     <p
       class="mt-4 max-w-[42ch] text-[14px] leading-relaxed text-[var(--landing-muted)] text-pretty"
     >
-      Tanpa membuat kartu manual. Tanpa menebak apa yang harus dipelajari
-      selanjutnya. Sistem yang menentukannya.
+      Tanpa kartu manual. Tanpa tebak-tebak. Tinggal belajar.
     </p>
   </div>
 
@@ -82,5 +83,12 @@
         </div>
       </article>
     {/each}
+  </div>
+
+  <div class="mt-10 text-center">
+    <Button href="/login/" size="lg" class="px-5">
+      Mulai Gratis
+      <HugeiconsIcon icon={ArrowRight01Icon} data-icon="inline-end" />
+    </Button>
   </div>
 </section>

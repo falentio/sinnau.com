@@ -26,28 +26,28 @@
           <span
             class="inline-block size-1.5 rounded-full bg-[var(--landing-accent)]"
           ></span>
-          Sistem belajar bertenaga AI
+          Flashcard &amp; kuis dari PDF
         </div>
 
         <h1
           class="font-display text-[36px] leading-[0.96] tracking-[-0.035em] text-balance sm:text-[48px] lg:text-[58px]"
         >
-          Unggah PDF.<br />
-          <span class="text-[var(--landing-accent)]">Ingat lebih lama,</span>
-          <span class="italic">belajar lebih sedikit.</span>
+          Ingat lebih lama, belajar lebih sedikit.<br />
+          <span class="text-[var(--landing-accent)] italic"
+            >Cukup unggah PDF.</span
+          >
         </h1>
 
         <p
           class="mt-5 max-w-[40ch] text-[15px] leading-relaxed text-[var(--landing-muted)] sm:text-[16px] text-pretty"
         >
-          Unggah catatan kuliah, slide, atau bab buku teks. AI membangun kartu
-          dan kuis dari halamannya. FSRS menjadwalkan ulangan tepat sebelum Anda
-          lupa.
+          AI mengubah catatan kuliah, slide, atau bab buku teks jadi kartu dan
+          kuis. Jadwal ulangannya otomatis pas sebelum Anda lupa.
         </p>
 
         <div class="mt-8 flex flex-wrap items-center gap-3">
           <Button href="/login/" size="lg" class="px-5">
-            Mulai gratis
+            Buat Kartu Pertamaku Gratis
             <HugeiconsIcon icon={ArrowRight01Icon} data-icon="inline-end" />
           </Button>
           <Button href="/#how-it-works" size="lg" variant="ghost" class="px-5">
@@ -56,7 +56,10 @@
         </div>
 
         <p class="mt-4 text-[12px] text-[var(--landing-muted)]">
-          Tanpa kartu kredit &middot; 3 modul pertama gratis
+          Tanpa kartu kredit &middot; 3 pelajaran pertama gratis
+        </p>
+        <p class="mt-2 text-[12px] text-[var(--landing-muted)]">
+          Digunakan oleh ribuan mahasiswa Indonesia
         </p>
       </div>
 

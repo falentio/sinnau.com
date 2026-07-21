@@ -88,11 +88,11 @@
     <h1
       class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
     >
-      Pilih paket belajarmu
+      Cari paket yang pas dengan ritme belajarmu
     </h1>
     <p class="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-      Pilih paket yang sesuai ritme belajarmu. Bayar sekali, aktif sampai durasi
-      habis — tanpa perpanjangan otomatis.
+      Bayar sekali, aktif sampai durasi habis. Kamu yang pegang kendali — nggak
+      ada tagihan kejutan.
     </p>
   </header>
 
@@ -155,8 +155,8 @@
     class="flex flex-col gap-3 border-t border-border/60 mt-32 py-10 text-[13px] text-muted-foreground"
   >
     <p>
-      Pembayaran melalui QRIS. Pesanan kedaluwarsa otomatis dalam 15 menit jika
-      belum dibayar.
+      Pembayaran melalui QRIS. Tidak jadi bayar? Pesanan kedaluwarsa otomatis —
+      tidak ada yang terpotong.
     </p>
   </footer>
 </div>

@@ -45,7 +45,7 @@
     <InputGroup>
       <InputGroupInput
         bind:value={search}
-        placeholder="Cari di modul pembelajaran..."
+        placeholder="Cari modul belajar..."
       />
       <InputGroupAddon align="inline-start">
         <HugeiconsIcon icon={Search02Icon} />

@@ -17,14 +17,14 @@
       <h2
         class="font-display text-[28px] leading-[1.06] tracking-[-0.03em] text-[var(--landing-bg)] sm:text-[38px] text-balance"
       >
-        Modul pertama Anda siap<br />dalam hitungan menit.
+        Belajar lebih pintar, bukan lebih keras<br />— langsung dari PDF Anda.
       </h2>
 
       <p
         class="mt-5 text-[14px] leading-relaxed text-[color-mix(in_oklch,var(--landing-bg)_60%,transparent)] text-pretty sm:text-[15px]"
       >
-        Unggah PDF pertama Anda dan dapatkan modul lengkap dengan flashcard dan
-        kuis. Tanpa pengaturan, tanpa kartu manual.
+        Cukup unggah PDF. Kami buatkan flashcard dan kuisnya — tanpa setup,
+        tanpa kartu manual.
       </p>
 
       <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -33,7 +33,7 @@
           size="lg"
           class="px-5 bg-[var(--landing-bg)] text-[var(--landing-fg)] hover:bg-[color-mix(in_oklch,var(--landing-bg)_90%,transparent)]"
         >
-          Mulai gratis
+          Mulai Belajar Gratis
           <HugeiconsIcon icon={ArrowRight01Icon} data-icon="inline-end" />
         </Button>
       </div>
@@ -41,8 +41,8 @@
       <p
         class="mt-4 text-[12px] text-[color-mix(in_oklch,var(--landing-bg)_40%,transparent)]"
       >
-        Tanpa kartu kredit &middot; 3 modul pertama gratis &middot; Batalkan
-        kapan saja
+        Coba 3 modul pertama gratis — tanpa kartu kredit. Batalkan kapan saja.
+        Mulai dalam 2 menit — langsung bisa dipakai.
       </p>
     </div>
   </div>

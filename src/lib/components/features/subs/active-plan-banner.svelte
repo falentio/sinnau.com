@@ -55,7 +55,7 @@
           {planLabel}
         </h2>
         <p class="text-sm text-muted-foreground">
-          {monthly} kali generate per bulan
+          Kuota bulanan: {monthly} kali
           <span class="mx-1.5 text-foreground/20">·</span>
           <span class="tabular-nums">{daily}/hari</span>
           <span class="mx-1 text-foreground/20">·</span>
@@ -71,7 +71,7 @@
         size="default"
         class="h-9 gap-1.5 px-4"
       >
-        Detail
+        Cek sisa kuota
         <HugeiconsIcon icon={ArrowRight01Icon} class="size-3.5" />
       </Button>
     </div>

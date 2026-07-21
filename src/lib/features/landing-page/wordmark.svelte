@@ -13,7 +13,7 @@
     size === "md" ? "text-[15px]" : "text-[13px]",
     className,
   ]}
-  aria-label="2sinnau, beranda"
+  aria-label="sinnau, beranda"
 >
   <span
     class="relative grid size-6 place-items-center rounded-[8px] bg-[var(--landing-fg)] text-[var(--landing-bg)]"

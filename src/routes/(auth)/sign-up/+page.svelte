@@ -6,8 +6,8 @@
 </script>
 
 <AuthLayout
-  heading="Turn notes into practice"
-  description="Create study sets, generate flashcards, and keep each practice session focused."
+  heading="Mulai perjalanan belajarmu"
+  description="Ubah catatan kuliah jadi nilai bagus."
   gradient="bottom-right"
 >
   <SignUpForm providers={data.oauthProviders} />

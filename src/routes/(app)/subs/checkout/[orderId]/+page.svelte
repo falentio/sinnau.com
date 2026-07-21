@@ -165,7 +165,7 @@
             aria-hidden="true"
             class="inline-block size-1.5 animate-pulse rounded-full bg-muted-foreground/60"
           ></span>
-          Memperbarui status…
+          Memeriksa pembayaran…
         </p>
       {/if}
 
@@ -251,7 +251,7 @@
         aria-busy={isVerifying}
         class="h-11 w-full justify-center gap-2 self-end rounded-full"
       >
-        {autoNavigateTimeout ? "Mengalihkan..." : "Saya sudah bayar"}
+        {autoNavigateTimeout ? "Memeriksa pembayaran…" : "Saya sudah bayar"}
         <HugeiconsIcon icon={ArrowRight01Icon} class="size-4" />
       </Button>
 
@@ -266,7 +266,8 @@
     class="flex flex-col gap-3 border-t border-border/60 py-8 text-[13px] text-muted-foreground md:flex-row md:items-center md:justify-between"
   >
     <p>
-      Tidak jadi bayar? Pesanan kedaluwarsa otomatis — tidak ada yang terpotong.
+      Tidak jadi? Biarkan saja — pesanan kedaluwarsa otomatis tanpa biaya apa
+      pun.
     </p>
     <a
       href="/subs/plans"

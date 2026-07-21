@@ -68,13 +68,11 @@
             <span
               class="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-700 dark:text-amber-400"
             >
-              Pilihan banyak pengguna
+              Paling diminati
             </span>
           {/if}
         </div>
-        <p class="text-sm text-muted-foreground">
-          {plan.benefits.length} benefit utama
-        </p>
+        <p class="text-sm text-muted-foreground">Akses fitur belajar lengkap</p>
       </div>
 
       <div class="flex flex-col items-end text-right">
@@ -157,7 +155,7 @@
             : "bg-foreground text-background ",
         ])}
       >
-        Pilih paket
+        Aktifkan paket ini
       </span>
     </button>
   </div>
@@ -169,7 +167,7 @@
       <span
         class="rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
       >
-        Tidak dapat diturunkan
+        Kamu sudah di paket ini
       </span>
     </div>
   {/if}

@@ -77,7 +77,7 @@
         serverError = getErrorMessage(error);
         return;
       }
-      serverError = "Pendaftaran berhasil! Silakan masuk.";
+      serverError = "Akun berhasil dibuat. Silakan masuk.";
       setTimeout(() => goto(resolve("/(auth)/login")), 1500);
     } catch (error) {
       serverError = getErrorMessage(error as { message?: string });
@@ -115,8 +115,8 @@
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
   <div class="flex flex-col gap-2 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight">Daftar</h1>
-    <p class="text-sm text-muted-foreground">Buat akun untuk mulai belajar</p>
+    <h1 class="text-2xl font-semibold tracking-tight">Mulai belajar</h1>
+    <p class="text-sm text-muted-foreground">Mulai belajar dalam 30 detik.</p>
   </div>
 
   {#if serverError}
@@ -189,8 +189,12 @@
   </Form.Field>
 
   <Form.Button class="w-full" disabled={$submitting || pending}>
-    {$submitting || pending ? "Membuat..." : "Daftar"}
+    {$submitting || pending ? "Mendaftarkan..." : "Mulai belajar gratis"}
   </Form.Button>
+
+  <p class="text-center text-[11px] text-muted-foreground">
+    Gratis selamanya. Tidak ada spam. Hapus kapan saja.
+  </p>
 
   <OAuthButtons {providers} />
 

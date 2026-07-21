@@ -21,8 +21,8 @@
     </EmptyMedia>
     <EmptyTitle>Belum ada modul belajar</EmptyTitle>
     <EmptyDescription>
-      Kamu belum memiliki modul belajar, kami memiliki fitur generate
-      menggunakan AI yang bisa membantumu.
+      Kamu belum punya modul belajar. Buat sendiri atau biarkan AI yang
+      menyusunnya — tinggal kasih topik.
     </EmptyDescription>
   </EmptyHeader>
   <EmptyContent>

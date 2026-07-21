@@ -6,8 +6,8 @@
 </script>
 
 <AuthLayout
-  heading="Study smarter with Sinnau"
-  description="Create focused study sets, practice with flashcards, and keep your learning moving."
+  heading="Belajar lebih pintar dengan Sinnau"
+  description="Lanjutkan dari tempat kamu berhenti."
   gradient="top-left"
 >
   <LoginForm providers={data.oauthProviders} />

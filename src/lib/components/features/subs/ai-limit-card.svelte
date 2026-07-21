@@ -23,8 +23,8 @@
     PLUS: {
       benefits: [
         "Semua benefit Lite",
-        "2× batas generate per bulan",
-        "Riwayat belajar lebih panjang",
+        "2× batas kuota per bulan",
+        "Riwayat lebih panjang",
       ],
       monthly: 120,
       name: "Plus",
@@ -32,7 +32,7 @@
     PREMIUM: {
       benefits: [
         "Semua benefit Lite",
-        "6× batas generate per bulan",
+        "6× batas kuota per bulan",
         "Priority saat jam sibuk",
         "Akses fitur beta lebih dulu",
       ],
@@ -122,7 +122,7 @@
       </div>
       <Progress value={dailyPct} max={100} class="h-1.5 bg-foreground/[0.06]" />
       <p class="text-[11px] text-muted-foreground">
-        Aturan {dailyRule} generate per hari
+        Sampai {dailyRule} generate per hari
       </p>
     </div>
 
@@ -152,7 +152,7 @@
         class="h-1.5 bg-foreground/[0.06]"
       />
       <p class="text-[11px] text-muted-foreground">
-        Aturan {weeklyRule} generate per minggu
+        Sampai {weeklyRule} generate per minggu
       </p>
     </div>
   </div>

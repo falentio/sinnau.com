@@ -9,32 +9,32 @@
       q: "Bagaimana cara mulai pakai sinnau?",
     },
     {
-      a: "PDF catatan kuliah, slide presentasi, atau dokumen teks. Satu modul biasanya dari satu bab atau satu deck. Sistem mengekstrak konsep utama dan membangun kartu untuk masing-masing.",
-      q: "Materi apa saja yang bisa diunggah?",
+      a: "Gratis. Langsung dapat tiga modul lengkap — tanpa kartu kredit.",
+      q: "Apakah sinnau gratis?",
     },
     {
       a: "Kurang dari dua menit per bab. Begitu kartu muncul, langsung mulai sesi pertama. Tidak ada setup, tidak ada kartu yang harus diketik manual.",
       q: "Berapa lama satu modul selesai dibuat?",
     },
     {
-      a: "FSRS (Free Spaced Repetition Scheduler) adalah algoritma open-source yang juga dipakai Anki. Untuk tiap kartu, ia memprediksi kapan Anda mulai lupa dan menjadwalkan ulangan tepat sebelum itu. Kartu yang sudah dikuasai jarang muncul; yang masih lemah muncul lebih sering.",
-      q: "Apa itu FSRS dan kenapa itu penting?",
+      a: "Iya. Setiap kartu dijadwalkan ulang tepat sebelum Anda mulai lupa — pakai algoritma yang sama dengan Anki.",
+      q: "Apakah metode sinnau benar-benar membantu saya ingat materi?",
     },
     {
-      a: "Quizlet mengulang dengan interval tetap dan mengharuskan Anda bikin kartu sendiri. Anki adaptif, tapi tetap manual. Sinnau menggabungkan keduanya: AI membuat kartu dari PDF Anda, FSRS menjadwalkan secara presisi.",
+      a: "Kalau ada yang kurang pas, Anda bisa edit, hapus, atau tambah kartu sendiri kapan saja. Hasil AI adalah draf awal — Anda yang menyempurnakan.",
+      q: "Bagaimana kalau kartu dari AI tidak sesuai?",
+    },
+    {
+      a: "Quizlet: kartu manual, jadwal tetap. Anki: kartu manual, jadwal adaptif. Sinnau: kartu otomatis dari PDF, jadwal adaptif.",
       q: "Apa bedanya sinnau dengan Quizlet atau Anki?",
     },
     {
-      a: "Ya. Daftar dapat tiga modul lengkap tanpa biaya dan tanpa kartu kredit. Modul tambahan butuh paket berbayar. Batalkan kapan saja.",
-      q: "Apakah sinnau gratis?",
+      a: "PDF catatan kuliah, slide presentasi, atau dokumen teks. Satu modul biasanya dari satu bab atau satu deck. Sistem mengekstrak konsep utama dan membangun kartu untuk masing-masing.",
+      q: "Materi apa saja yang bisa diunggah?",
     },
     {
       a: "Bisa. Set modul ke publik, lalu teman bisa akses lewat tautan langsung atau temukan di halaman jelajah. Modul privat hanya untuk Anda.",
       q: "Bisa share modul ke teman?",
-    },
-    {
-      a: "Bisa. Edit, tambah, atau hapus kartu mana pun kapan saja. Hasil AI adalah draf awal — Anda yang menyempurnakan sesuai cara Anda memahami materi.",
-      q: "Bisa edit atau tambah kartu sendiri?",
     },
   ] as const;
 </script>
@@ -47,7 +47,7 @@
     <h2
       class="font-display text-[32px] leading-[1.04] tracking-[-0.03em] sm:text-[42px] text-balance"
     >
-      Pertanyaan yang sering diajukan.
+      Ada pertanyaan?
     </h2>
   </div>
 
@@ -73,5 +73,14 @@
         </Accordion.Item>
       {/each}
     </Accordion.Root>
+
+    <div class="mt-10 text-center">
+      <a
+        href="/login/"
+        class="inline-flex items-center gap-1.5 text-[14px] font-medium text-[var(--landing-accent)] hover:underline"
+      >
+        Sudah siap? Daftar gratis, dapat tiga modul tanpa kartu kredit. &rarr;
+      </a>
+    </div>
   </div>
 </section>

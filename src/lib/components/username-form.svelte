@@ -9,8 +9,7 @@
 
   const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
-    error =
-      "Pemilihan username belum tersedia. Backend belum diimplementasikan.";
+    error = "Fitur ini belum tersedia. Coba lagi nanti.";
   };
 </script>
 
@@ -24,11 +23,11 @@
   {/if}
 
   <div class="grid gap-2">
-    <Label.Root for="username">Username</Label.Root>
+    <Label.Root for="username">Nama Pengguna</Label.Root>
     <Input
       id="username"
       type="text"
-      placeholder="username"
+      placeholder="nama_kamu"
       required
       bind:value={username}
     />

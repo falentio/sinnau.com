@@ -86,9 +86,11 @@
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
   <div class="flex flex-col gap-2 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight">Masuk</h1>
+    <h1 class="text-2xl font-semibold tracking-tight">
+      Selamat datang kembali
+    </h1>
     <p class="text-sm text-muted-foreground">
-      Masukkan email untuk masuk ke akun Anda
+      Lanjutkan dari mana kamu tinggalkan.
     </p>
   </div>
 
@@ -132,7 +134,7 @@
   </Form.Field>
 
   <Form.Button class="w-full" disabled={$submitting || pending}>
-    {$submitting || pending ? "Memproses..." : "Masuk"}
+    {$submitting || pending ? "Masuk..." : "Lanjutkan belajar"}
   </Form.Button>
 
   <OAuthButtons {providers} />
