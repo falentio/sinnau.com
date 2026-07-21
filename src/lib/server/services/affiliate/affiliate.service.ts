@@ -2,9 +2,13 @@ import type {
   AffiliateDashboardSummary,
   AffiliatePayout,
   AffiliateProfile,
+  AffiliateRelationship,
+  ListPendingPayoutsInput,
   PendingPayoutsList,
   RecordAffiliateConversionInput,
   RecordAffiliateConversionOutput,
+  RecordAffiliatePayoutInput,
+  RecordAffiliateRelationshipInput,
 } from "$lib/schemas/affiliate";
 import { ORPCError } from "@orpc/server";
 
@@ -25,14 +29,25 @@ export class AffiliateService {
     this.guard = guard;
   }
 
+  async getMyProfile(
+    userId: string | null | undefined
+  ): Promise<AffiliateProfile> {
+    const owner = this.guard.requireUser(userId);
+    const profile = await this.repo.findProfileByUserId(owner);
+    if (!profile) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Affiliate profile not found",
+      });
+    }
+    return profile;
+  }
+
   async claim(userId: string | null | undefined): Promise<AffiliateProfile> {
     const owner = this.guard.requireUser(userId);
 
     const existingProfile = await this.repo.findProfileByUserId(owner);
     if (existingProfile) {
-      throw new ORPCError("AFFILIATE_PROFILE_ALREADY_EXISTS", {
-        message: "You already have an affiliate profile",
-      });
+      return existingProfile;
     }
 
     const user = await this.repo.findUserById(owner);
@@ -80,18 +95,23 @@ export class AffiliateService {
   }
 
   async recordConversion(
-    input: RecordAffiliateConversionInput
+    input: RecordAffiliateConversionInput,
+    adminUserId: string | null | undefined
   ): Promise<RecordAffiliateConversionOutput> {
+    await this.guard.requireAdmin(adminUserId);
+
     const affiliateUserId = await this.repo.findAffiliatedByUserId(
       input.purchaserUserId
     );
 
-    if (!affiliateUserId) {
+    if (affiliateUserId === null) {
       return { commission: null, created: false };
     }
 
     if (affiliateUserId === input.purchaserUserId) {
-      return { commission: null, created: false };
+      throw new ORPCError("AFFILIATE_SELF_REFERRAL", {
+        message: "Cannot refer yourself",
+      });
     }
 
     const existing = await this.repo.findConversionByTransactionId(
@@ -116,55 +136,106 @@ export class AffiliateService {
   }
 
   async recordPayout(
-    affiliateUserId: string,
-    method?: string,
-    reference?: string,
-    note?: string,
-    adminUserId?: string | null | undefined
+    input: RecordAffiliatePayoutInput,
+    adminUserId: string | null | undefined
   ): Promise<AffiliatePayout> {
-    const admin = this.guard.requireAdmin(adminUserId);
+    const admin = await this.guard.requireAdmin(adminUserId);
 
-    const summary = await this.repo.getDashboardSummary(affiliateUserId);
+    const raw = await this.repo.getDashboardSummary(input.affiliateUserId);
+    const pendingBalance = raw.totalEarned - raw.totalPaid;
 
-    if (summary.pendingBalance <= 0) {
+    if (pendingBalance <= 0) {
       throw new ORPCError("AFFILIATE_NO_PENDING_BALANCE", {
         message: "No pending balance to payout",
       });
     }
 
     const payout = await this.repo.insertPayout({
-      affiliateUserId,
-      amount: summary.pendingBalance,
-      method: method ?? null,
-      note: note ?? null,
+      affiliateUserId: input.affiliateUserId,
+      amount: pendingBalance,
+      method: input.method ?? null,
+      note: input.note ?? null,
       processedByAdminId: admin,
-      reference: reference ?? null,
+      reference: input.reference ?? null,
     });
 
     if (!payout) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Failed to record payout",
+        message: "Internal server error",
       });
     }
 
-    await this.repo.markCommissionsAsPaid(affiliateUserId, payout.id);
+    await this.repo.markCommissionsAsPaid(input.affiliateUserId, payout.id);
 
     return payout;
+  }
+
+  async recordRelationship(
+    input: RecordAffiliateRelationshipInput,
+    adminUserId: string | null | undefined
+  ): Promise<AffiliateRelationship> {
+    await this.guard.requireAdmin(adminUserId);
+
+    if (input.referrerUserId === input.referredUserId) {
+      throw new ORPCError("AFFILIATE_SELF_REFERRAL", {
+        message: "Cannot refer yourself",
+      });
+    }
+
+    const existing = await this.repo.findRelationshipByReferredUserId(
+      input.referredUserId
+    );
+    if (existing) {
+      throw new ORPCError("AFFILIATE_RELATIONSHIP_ALREADY_EXISTS", {
+        message: "User already has a referrer",
+      });
+    }
+
+    return await this.repo.insertRelationship(
+      input.referrerUserId,
+      input.referredUserId
+    );
   }
 
   async getDashboardSummary(
     userId: string | null | undefined
   ): Promise<AffiliateDashboardSummary> {
     const owner = this.guard.requireUser(userId);
-    return await this.repo.getDashboardSummary(owner);
+    const raw = await this.repo.getDashboardSummary(owner);
+    return {
+      conversionCount: raw.conversionCount,
+      pendingBalance: raw.totalEarned - raw.totalPaid,
+      profile: raw.profile,
+      totalEarned: raw.totalEarned,
+      totalPaid: raw.totalPaid,
+    };
+  }
+
+  async getRelationshipForUser(
+    input: { referredUserId: string },
+    adminUserId: string | null | undefined
+  ): Promise<AffiliateRelationship> {
+    await this.guard.requireAdmin(adminUserId);
+
+    const relationship = await this.repo.findRelationshipByReferredUserId(
+      input.referredUserId
+    );
+    if (!relationship) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Affiliate relationship not found",
+      });
+    }
+    return relationship;
   }
 
   async listPendingPayouts(
-    adminUserId: string | null | undefined,
-    page = 1,
-    limit = 10
+    input: ListPendingPayoutsInput,
+    adminUserId: string | null | undefined
   ): Promise<PendingPayoutsList> {
-    this.guard.requireAdmin(adminUserId);
-    return await this.repo.listPendingPayouts(page, limit);
+    await this.guard.requireAdmin(adminUserId);
+    return await this.repo.listPendingPayouts(
+      input.page ?? 1,
+      input.limit ?? 10
+    );
   }
 }

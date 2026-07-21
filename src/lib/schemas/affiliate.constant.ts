@@ -1,6 +1,8 @@
 export const AFFILIATE_ID_PREFIX = "aff";
 export const AFFILIATE_COMMISSION_ID_PREFIX = "afc";
 export const AFFILIATE_PAYOUT_ID_PREFIX = "afp";
+export const AFFILIATE_RELATIONSHIP_ID_PREFIX = "afr";
+export const AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX = "afs";
 
 export const AFFILIATE_COMMISSION_STATUSES = ["PENDING", "PAID"] as const;
 

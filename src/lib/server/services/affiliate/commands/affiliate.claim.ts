@@ -7,9 +7,6 @@ import { authorizedProcedure } from "$lib/server/api/base";
 import { affiliateService } from "../index";
 
 const ERRORS = {
-  AFFILIATE_PROFILE_ALREADY_EXISTS: {
-    message: "You already have an affiliate profile",
-  },
   AFFILIATE_SLUG_CONFLICT: {
     message: "Failed to generate a unique slug after maximum retries",
   },

@@ -1,10 +1,12 @@
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle $onUpdate propagates any */
 import {
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
+  AFFILIATE_RELATIONSHIP_ID_PREFIX,
 } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
-import { and, count, eq, sum } from "drizzle-orm";
+import { and, count, eq, sql, sum } from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type { DB } from "../../infras/db/client.ts";
@@ -12,10 +14,12 @@ import {
   affiliateCommission,
   affiliatePayout,
   affiliateProfile,
+  affiliateRelationship,
 } from "../../infras/db/schema/affiliate.ts";
 import { user } from "../../infras/db/schema/auth-schema.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type {
+  AffiliateDashboardRawSummary,
   AffiliateRepository,
   InsertAffiliateConversionInput,
   InsertAffiliatePayoutInput,
@@ -132,7 +136,9 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async getDashboardSummary(userId: string) {
+  async getDashboardSummary(
+    userId: string
+  ): Promise<AffiliateDashboardRawSummary> {
     try {
       const profile = await this.findProfileByUserId(userId);
 
@@ -164,7 +170,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
       return {
         conversionCount: earnings?.conversionCount ?? 0,
-        pendingBalance: totalEarned - totalPaid,
         profile,
         totalEarned,
         totalPaid,
@@ -225,7 +230,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         pagination: {
           limit,
           page,
-          total: data.length > 0 ? totalAffiliates : data.length,
+          total: totalAffiliates,
           totalPages,
         },
       };
@@ -298,7 +303,57 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         .from(user)
         .where(eq(user.id, userId))
         .limit(1);
+      // oxlint-disable-next-line typescript/no-unsafe-return -- row?.affiliatedBy is any from Drizzle
       return row?.affiliatedBy ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async updateProfileBalance(
+    profileId: string,
+    points: number,
+    expectedVersion: number
+  ) {
+    try {
+      const [updated] = await this.dbInstance
+        .update(affiliateProfile)
+        .set({
+          points,
+          updatedAt: new Date(),
+          version: sql`${affiliateProfile.version} + 1`,
+        })
+        .where(
+          and(
+            eq(affiliateProfile.id, profileId),
+            eq(affiliateProfile.version, expectedVersion)
+          )
+        )
+        .returning();
+      return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findRelationshipByReferredUserId(referredUserId: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateRelationship)
+        .where(eq(affiliateRelationship.referredUserId, referredUserId))
+        .limit(1);
+      return row ?? null;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -311,6 +366,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
   async findUserById(userId: string) {
     try {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Drizzle user table has any in type chain
       const [row] = await this.dbInstance
         .select({ id: user.id, name: user.name })
         .from(user)
@@ -326,4 +382,26 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       });
     }
   }
+
+  async insertRelationship(referrerUserId: string, referredUserId: string) {
+    try {
+      const id = generateId(AFFILIATE_RELATIONSHIP_ID_PREFIX);
+      const [created] = await this.dbInstance
+        .insert(affiliateRelationship)
+        .values({ id, referredUserId, referrerUserId })
+        .returning();
+      if (!created) {
+        throw new Error("Failed to insert affiliate relationship");
+      }
+      return created;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
 }
+/* oxlint-enable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment */

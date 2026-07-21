@@ -14,9 +14,5 @@ export const affiliateListPendingPayouts = adminProcedure
   .output(pendingPayoutsListSchema)
   .handler(
     async ({ input, context }) =>
-      await affiliateService.listPendingPayouts(
-        context.user.id,
-        input.page ?? undefined,
-        input.limit ?? undefined
-      )
+      await affiliateService.listPendingPayouts(input, context.user.id)
   );

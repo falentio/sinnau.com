@@ -4,6 +4,8 @@ import {
   affiliateCommission,
   affiliatePayout,
   affiliateProfile,
+  affiliateRelationship,
+  affiliateSubscriptionEvent,
 } from "./affiliate.ts";
 import { user } from "./auth-schema.ts";
 import { chapter } from "./chapter.ts";
@@ -286,6 +288,39 @@ export const affiliatePayoutRelations = relations(
     processedByAdmin: one(user, {
       fields: [affiliatePayout.processedByAdminId],
       references: [user.id],
+    }),
+  })
+);
+
+export const affiliateRelationshipRelations = relations(
+  affiliateRelationship,
+  ({ many, one }) => ({
+    referredUser: one(user, {
+      fields: [affiliateRelationship.referredUserId],
+      references: [user.id],
+    }),
+    referrerUser: one(user, {
+      fields: [affiliateRelationship.referrerUserId],
+      references: [user.id],
+    }),
+    subscriptionEvents: many(affiliateSubscriptionEvent),
+  })
+);
+
+export const affiliateSubscriptionEventRelations = relations(
+  affiliateSubscriptionEvent,
+  ({ one }) => ({
+    referredUser: one(user, {
+      fields: [affiliateSubscriptionEvent.referredUserId],
+      references: [user.id],
+    }),
+    referrerUser: one(user, {
+      fields: [affiliateSubscriptionEvent.referrerUserId],
+      references: [user.id],
+    }),
+    relationship: one(affiliateRelationship, {
+      fields: [affiliateSubscriptionEvent.relationshipId],
+      references: [affiliateRelationship.id],
     }),
   })
 );

@@ -3,6 +3,7 @@ import { getTestingDb } from "$lib/server/infras/db/testing";
 import { vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
+import type { UserRepository } from "../user/user.repository";
 import type { AffiliateGuard } from "./affiliate.guard";
 import type {
   AffiliateProfile,
@@ -21,13 +22,25 @@ export const createMockRepository = (): MockedAffiliateRepository => ({
     vi.fn<AffiliateRepository["findConversionByTransactionId"]>(),
   findProfileBySlug: vi.fn<AffiliateRepository["findProfileBySlug"]>(),
   findProfileByUserId: vi.fn<AffiliateRepository["findProfileByUserId"]>(),
+  findRelationshipByReferredUserId:
+    vi.fn<AffiliateRepository["findRelationshipByReferredUserId"]>(),
   findUserById: vi.fn<AffiliateRepository["findUserById"]>(),
   getDashboardSummary: vi.fn<AffiliateRepository["getDashboardSummary"]>(),
   insertConversion: vi.fn<AffiliateRepository["insertConversion"]>(),
   insertPayout: vi.fn<AffiliateRepository["insertPayout"]>(),
   insertProfile: vi.fn<AffiliateRepository["insertProfile"]>(),
+  insertRelationship: vi.fn<AffiliateRepository["insertRelationship"]>(),
   listPendingPayouts: vi.fn<AffiliateRepository["listPendingPayouts"]>(),
   markCommissionsAsPaid: vi.fn<AffiliateRepository["markCommissionsAsPaid"]>(),
+  updateProfileBalance: vi.fn<AffiliateRepository["updateProfileBalance"]>(),
+});
+
+export type MockedUserRepository = {
+  [K in keyof UserRepository]: MockedFunction<UserRepository[K]>;
+};
+
+export const createMockUserRepository = (): MockedUserRepository => ({
+  findUserById: vi.fn<UserRepository["findUserById"]>(),
 });
 
 export type MockedAffiliateGuard = {
@@ -35,8 +48,8 @@ export type MockedAffiliateGuard = {
 };
 
 export const createMockGuard = (): MockedAffiliateGuard => ({
-  requireUser: vi.fn<AffiliateGuard["requireUser"]>(),
   requireAdmin: vi.fn<AffiliateGuard["requireAdmin"]>(),
+  requireUser: vi.fn<AffiliateGuard["requireUser"]>(),
 });
 
 export const createAffiliateProfileFixture = (
@@ -45,9 +58,11 @@ export const createAffiliateProfileFixture = (
   createdAt: new Date(),
   id: "aff_abc123def456",
   nameSnapshot: "Test User",
+  points: 0,
   slug: "test-slug",
   updatedAt: new Date(),
   userId: "user-1",
+  version: 1,
   ...overrides,
 });
 

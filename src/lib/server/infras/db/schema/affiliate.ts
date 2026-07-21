@@ -9,6 +9,7 @@ export const affiliateProfile = sqliteTable("affiliate_profile", {
     .notNull(),
   id: text("id").primaryKey(),
   nameSnapshot: text("name_snapshot").notNull(),
+  points: real("points").notNull().default(0),
   slug: text("slug").notNull().unique(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
@@ -18,6 +19,7 @@ export const affiliateProfile = sqliteTable("affiliate_profile", {
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
+  version: integer("version").notNull().default(1),
 });
 
 export const affiliatePayout = sqliteTable("affiliate_payout", {
@@ -59,6 +61,45 @@ export const affiliateCommission = sqliteTable("affiliate_commission", {
   transactionId: text("transaction_id").notNull().unique(),
 });
 
+export const affiliateRelationship = sqliteTable("affiliate_relationship", {
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+  id: text("id").primaryKey(),
+  referredUserId: text("referred_user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  referrerUserId: text("referrer_user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const affiliateSubscriptionEvent = sqliteTable(
+  "affiliate_subscription_event",
+  {
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    id: text("id").primaryKey(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    pointsAwarded: real("points_awarded").notNull(),
+    referredUserId: text("referred_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    referrerUserId: text("referrer_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    relationshipId: text("relationship_id")
+      .notNull()
+      .references(() => affiliateRelationship.id, { onDelete: "cascade" }),
+    sourceType: text("source_type").notNull(),
+  }
+);
+
 export type AffiliateProfile = typeof affiliateProfile.$inferSelect;
 export type AffiliatePayout = typeof affiliatePayout.$inferSelect;
 export type AffiliateCommission = typeof affiliateCommission.$inferSelect;
+export type AffiliateRelationship = typeof affiliateRelationship.$inferSelect;
+export type AffiliateSubscriptionEvent =
+  typeof affiliateSubscriptionEvent.$inferSelect;

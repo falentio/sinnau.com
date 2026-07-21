@@ -9,6 +9,7 @@ import { describe, it } from "vitest";
 
 import { AffiliateTestEnv } from "./affiliate.testing";
 
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Drizzle user table propagates any */
 describe.concurrent("AffiliateDrizzleRepository", () => {
   describe.concurrent("insertProfile", () => {
     it("persists the row and returns it", async ({ expect }) => {
@@ -110,17 +111,17 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       const conversion = await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-123",
       });
 
       expect(conversion).not.toBeNull();
       expect(conversion?.affiliateUserId).toBe(referrer);
       expect(conversion?.purchaserUserId).toBe(purchaser);
-      expect(conversion?.purchaseAmount).toBe(100000);
-      expect(conversion?.commissionAmount).toBe(30000);
+      expect(conversion?.purchaseAmount).toBe(100_000);
+      expect(conversion?.commissionAmount).toBe(30_000);
       expect(conversion?.transactionId).toBe("txn-123");
       expect(conversion?.status).toBe("PENDING");
       expect(conversion?.createdAt.getTime()).toBeGreaterThanOrEqual(before);
@@ -140,17 +141,17 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       await env.repo.insertProfile(referrer, "ref-slug", "Referrer");
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-123",
       });
 
       const duplicate = await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 50_000,
+        purchaseAmount: 200_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 200000,
-        commissionAmount: 50000,
         transactionId: "txn-123",
       });
 
@@ -166,9 +167,9 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       await env.repo.insertProfile(referrer, "ref-slug", "Referrer");
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-find",
       });
 
@@ -198,45 +199,45 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser1,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-1",
       });
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 50_000,
+        purchaseAmount: 200_000,
         purchaserUserId: purchaser2,
-        purchaseAmount: 200000,
-        commissionAmount: 50000,
         transactionId: "txn-2",
       });
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 45_000,
+        purchaseAmount: 150_000,
         purchaserUserId: purchaser1,
-        purchaseAmount: 150000,
-        commissionAmount: 45000,
         transactionId: "txn-3",
       });
 
       const payout = await env.repo.insertPayout({
         affiliateUserId: referrer,
-        amount: 125000,
+        amount: 125_000,
         method: "bank_transfer",
-        reference: null,
         note: null,
         processedByAdminId: admin,
+        reference: null,
       });
       expect(payout).not.toBeNull();
 
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- guaranteed by previous assertion
       await env.repo.markCommissionsAsPaid(referrer, payout!.id);
 
       const summary = await env.repo.getDashboardSummary(referrer);
 
       expect(summary.profile).not.toBeNull();
       expect(summary.profile?.slug).toBe("ref-slug");
-      expect(summary.totalEarned).toBe(125000);
-      expect(summary.totalPaid).toBe(125000);
-      expect(summary.pendingBalance).toBe(0);
+      expect(summary.totalEarned).toBe(125_000);
+      expect(summary.totalPaid).toBe(125_000);
       expect(summary.conversionCount).toBe(3);
     });
 
@@ -249,7 +250,6 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       expect(summary.totalEarned).toBe(0);
       expect(summary.totalPaid).toBe(0);
-      expect(summary.pendingBalance).toBe(0);
       expect(summary.conversionCount).toBe(0);
     });
 
@@ -276,9 +276,9 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer1,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-list-1",
       });
 
@@ -287,7 +287,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0]?.affiliateUserId).toBe(referrer1);
       expect(result.data[0]?.slug).toBe("slug-1");
-      expect(result.data[0]?.pendingBalance).toBe(30000);
+      expect(result.data[0]?.pendingBalance).toBe(30_000);
       expect(result.data[0]?.conversionCount).toBe(1);
       expect(result.pagination.total).toBe(1);
     });
@@ -301,9 +301,9 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-no-profile",
       });
 
@@ -322,20 +322,21 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-zero-1",
       });
 
       const payout = await env.repo.insertPayout({
         affiliateUserId: referrer,
-        amount: 30000,
+        amount: 30_000,
         method: null,
-        reference: null,
         note: null,
         processedByAdminId: admin,
+        reference: null,
       });
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- guaranteed by previous assertion
       await env.repo.markCommissionsAsPaid(referrer, payout!.id);
 
       const result = await env.repo.listPendingPayouts(1, 10);
@@ -353,9 +354,9 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
         await env.repo.insertProfile(ref, `slug-${i}`, `R${i}`);
         await env.repo.insertConversion({
           affiliateUserId: ref,
+          commissionAmount: 30_000,
+          purchaseAmount: 100_000,
           purchaserUserId: purchaser,
-          purchaseAmount: 100000,
-          commissionAmount: 30000,
           transactionId: `txn-page-${i}`,
         });
       }
@@ -380,16 +381,16 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       const payout = await env.repo.insertPayout({
         affiliateUserId: referrer,
-        amount: 100000,
+        amount: 100_000,
         method: "bank_transfer",
-        reference: "REF-001",
         note: "Monthly payout",
         processedByAdminId: admin,
+        reference: "REF-001",
       });
 
       expect(payout).not.toBeNull();
       expect(payout?.affiliateUserId).toBe(referrer);
-      expect(payout?.amount).toBe(100000);
+      expect(payout?.amount).toBe(100_000);
       expect(payout?.method).toBe("bank_transfer");
       expect(payout?.reference).toBe("REF-001");
       expect(payout?.note).toBe("Monthly payout");
@@ -417,30 +418,32 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-pay-1",
       });
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 50_000,
+        purchaseAmount: 200_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 200000,
-        commissionAmount: 50000,
         transactionId: "txn-pay-2",
       });
 
       const payout = await env.repo.insertPayout({
         affiliateUserId: referrer,
-        amount: 80000,
+        amount: 80_000,
         method: null,
-        reference: null,
         note: null,
         processedByAdminId: admin,
+        reference: null,
       });
+      expect(payout).not.toBeNull();
 
       const updatedCount = await env.repo.markCommissionsAsPaid(
         referrer,
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
         payout!.id
       );
 
@@ -455,6 +458,7 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(commissions).toHaveLength(2);
       for (const c of commissions) {
         expect(c.status).toBe("PAID");
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
         expect(c.payoutId).toBe(payout!.id);
       }
     });
@@ -470,22 +474,25 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-already-paid",
       });
 
       const payout = await env.repo.insertPayout({
         affiliateUserId: referrer,
-        amount: 30000,
+        amount: 30_000,
         method: null,
-        reference: null,
         note: null,
         processedByAdminId: admin,
+        reference: null,
       });
+      expect(payout).not.toBeNull();
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
       await env.repo.markCommissionsAsPaid(referrer, payout!.id);
 
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
       const result = await env.repo.markCommissionsAsPaid(referrer, payout!.id);
 
       expect(result).toBe(0);
@@ -502,33 +509,37 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-keep-paid",
       });
 
       const payout1 = await env.repo.insertPayout({
         affiliateUserId: referrer,
-        amount: 30000,
+        amount: 30_000,
         method: null,
-        reference: null,
         note: null,
         processedByAdminId: admin,
+        reference: null,
       });
+      expect(payout1).not.toBeNull();
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
       await env.repo.markCommissionsAsPaid(referrer, payout1!.id);
 
       const payout2 = await env.repo.insertPayout({
         affiliateUserId: referrer,
         amount: 0,
         method: null,
-        reference: null,
         note: null,
         processedByAdminId: admin,
+        reference: null,
       });
+      expect(payout2).not.toBeNull();
 
       const result = await env.repo.markCommissionsAsPaid(
         referrer,
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
         payout2!.id
       );
 
@@ -539,7 +550,10 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
         .from(affiliateCommission)
         .where(eq(affiliateCommission.transactionId, "txn-keep-paid"))
         .all();
-      expect(commission?.payoutId).toBe(payout1!.id);
+      expect(commission?.payoutId).toBe(
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- null checked via expect above
+        payout1!.id
+      );
     });
   });
 
@@ -611,11 +625,11 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       const insertOrphan = async () =>
         await env.repo.insertPayout({
           affiliateUserId: "does-not-exist",
-          amount: 100000,
+          amount: 100_000,
           method: null,
-          reference: null,
           note: null,
           processedByAdminId: admin,
+          reference: null,
         });
 
       await expect(insertOrphan()).rejects.toThrow();
@@ -630,11 +644,11 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       const insertOrphan = async () =>
         await env.repo.insertPayout({
           affiliateUserId: referrer,
-          amount: 100000,
+          amount: 100_000,
           method: null,
-          reference: null,
           note: null,
           processedByAdminId: "does-not-exist",
+          reference: null,
         });
 
       await expect(insertOrphan()).rejects.toThrow();
@@ -664,9 +678,9 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       await env.repo.insertProfile(referrer, "slug", "R");
       await env.repo.insertConversion({
         affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
         purchaserUserId: purchaser,
-        purchaseAmount: 100000,
-        commissionAmount: 30000,
         transactionId: "txn-cascade",
       });
 

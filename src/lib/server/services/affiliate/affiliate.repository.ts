@@ -1,15 +1,17 @@
+import type { PendingPayout, PendingPayoutsList } from "$lib/schemas/affiliate";
+
 import type {
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
-  PendingPayout,
-  PendingPayoutsList,
-} from "$lib/schemas/affiliate";
+  AffiliateRelationship,
+} from "../../infras/db/schema/affiliate.ts";
 
 export type {
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
+  AffiliateRelationship,
   PendingPayout,
   PendingPayoutsList,
 };
@@ -31,6 +33,13 @@ export interface InsertAffiliatePayoutInput {
   processedByAdminId: string;
 }
 
+export interface AffiliateDashboardRawSummary {
+  profile: AffiliateProfile | null;
+  totalEarned: number;
+  totalPaid: number;
+  conversionCount: number;
+}
+
 export interface AffiliateRepository {
   insertProfile(
     userId: string,
@@ -50,13 +59,7 @@ export interface AffiliateRepository {
     transactionId: string
   ): Promise<AffiliateCommission | null>;
 
-  getDashboardSummary(userId: string): Promise<{
-    profile: AffiliateProfile | null;
-    pendingBalance: number;
-    totalEarned: number;
-    totalPaid: number;
-    conversionCount: number;
-  }>;
+  getDashboardSummary(userId: string): Promise<AffiliateDashboardRawSummary>;
 
   listPendingPayouts(page: number, limit: number): Promise<PendingPayoutsList>;
 
@@ -72,4 +75,19 @@ export interface AffiliateRepository {
   findAffiliatedByUserId(userId: string): Promise<string | null>;
 
   findUserById(userId: string): Promise<{ id: string; name: string } | null>;
+
+  insertRelationship(
+    referrerUserId: string,
+    referredUserId: string
+  ): Promise<AffiliateRelationship>;
+
+  findRelationshipByReferredUserId(
+    referredUserId: string
+  ): Promise<AffiliateRelationship | null>;
+
+  updateProfileBalance(
+    profileId: string,
+    points: number,
+    expectedVersion: number
+  ): Promise<AffiliateProfile | null>;
 }
