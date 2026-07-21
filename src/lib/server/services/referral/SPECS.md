@@ -73,7 +73,7 @@ interface ReferralSubscriptionEvent {
 - Relationship rows store attribution only, not lifecycle status.
 - Subscription event rows store each referred subscription occurrence that awards points.
 - `idempotencyKey` is an opaque caller-provided string unique across point-affecting commands.
-- Timestamps are stored as Unix epoch milliseconds (`number`) via Drizzle's `mode: 'timestamp_ms'`.
+- Timestamps are stored as Date values via Drizzle's `mode: 'timestamp_ms'`.
 
 ## Slug Rules
 
@@ -277,7 +277,7 @@ interface ReferralRepository {
 - Use `v.pipe(v.number(), v.integer(), v.safeInteger())` plus a resulting-balance check for adjustments.
 - Use `v.pipe(v.number(), v.integer(), v.safeInteger(), v.minValue(1))` for `expectedVersion`.
 - Application entity IDs are validated with `v.string()` (the `generateId` prefix pattern has no UUID structure).
-- Timestamps use `v.number()` (Drizzle `mode: 'timestamp_ms'` returns epoch milliseconds).
+- Timestamps use `v.date()` (Drizzle `mode: 'timestamp_ms'` maps to `Date` objects).
 - Unknown fields are ignored by request payload schemas.
 
 ## Errors
