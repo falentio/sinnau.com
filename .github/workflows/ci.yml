@@ -8,6 +8,10 @@ on:
     branches: [main]
   workflow_call:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-and-test:
     runs-on: ubuntu-latest
@@ -18,22 +22,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11
+          cache: true
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
 
-      - run: corepack enable
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.local/share/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: pnpm-${{ runner.os }}-
-
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm run check
+
+      - run: pnpm run lint:agent
+
+      - run: pnpm run format:check
 
       - run: pnpm run db:check
 
