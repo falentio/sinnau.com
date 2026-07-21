@@ -1,3 +1,4 @@
+import { registerAffiliateEventListeners } from "$lib/server/services/affiliate/affiliate.events";
 import { affiliateRouter } from "$lib/server/services/affiliate/affiliate.router";
 import { aiLimitRouter } from "$lib/server/services/ai-limit/ai-limit.router";
 import { chapterRouter } from "$lib/server/services/chapter/chapter.router";
@@ -41,3 +42,5 @@ export const router = {
 };
 
 export type Router = typeof router;
+
+registerAffiliateEventListeners();

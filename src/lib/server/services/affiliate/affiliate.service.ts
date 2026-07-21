@@ -21,6 +21,12 @@ import {
 import type { AffiliateGuard } from "./affiliate.guard";
 import type { AffiliateRepository } from "./affiliate.repository";
 
+export interface HandlePaymentSuccessInput {
+  purchaserUserId: string;
+  purchaseAmount: number;
+  transactionId: string;
+}
+
 export class AffiliateService {
   private readonly repo: AffiliateRepository;
   private readonly guard: AffiliateGuard;
@@ -240,11 +246,7 @@ export class AffiliateService {
     );
   }
 
-  async handlePaymentSuccess(input: {
-    purchaserUserId: string;
-    purchaseAmount: number;
-    transactionId: string;
-  }): Promise<void> {
+  async handlePaymentSuccess(input: HandlePaymentSuccessInput): Promise<void> {
     const affiliateUserId = await this.repo.findAffiliatedByUserId(
       input.purchaserUserId
     );

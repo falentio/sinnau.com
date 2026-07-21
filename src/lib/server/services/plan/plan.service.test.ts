@@ -480,7 +480,7 @@ describe.concurrent("PlanService unit tests", () => {
       );
 
       const emitted: unknown[] = [];
-      service.on("order:paid", (payload) => {
+      service.events.on("order:paid", (payload) => {
         emitted.push(payload);
       });
 
@@ -505,7 +505,7 @@ describe.concurrent("PlanService unit tests", () => {
       );
 
       const emitted: unknown[] = [];
-      service.on("order:paid", (payload) => {
+      service.events.on("order:paid", (payload) => {
         emitted.push(payload);
       });
 

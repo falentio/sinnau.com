@@ -222,8 +222,9 @@ export interface PlanServiceEvents {
   ];
 }
 
-// oxlint-disable-next-line unicorn/prefer-event-target -- Node.js EventEmitter provides typed event interfaces for server-only service
-export class PlanService extends EventEmitter<PlanServiceEvents> {
+export class PlanService {
+  // oxlint-disable-next-line unicorn/prefer-event-target -- server-only code; EventEmitter has `emit`/`on` API with typed event maps that EventTarget lacks
+  readonly events = new EventEmitter<PlanServiceEvents>();
   private readonly repo: PlanRepository;
   private readonly guard: PlanGuard;
   private readonly midtrans: MidtransClient;
@@ -233,7 +234,6 @@ export class PlanService extends EventEmitter<PlanServiceEvents> {
     guard: PlanGuard,
     midtrans: MidtransClient
   ) {
-    super();
     this.repo = repo;
     this.guard = guard;
     this.midtrans = midtrans;
@@ -515,7 +515,7 @@ export class PlanService extends EventEmitter<PlanServiceEvents> {
     if (target === "PAID") {
       await this.repo.setOrderAppliedAt(order.id, Date.now());
       await this.deriveAndUpsert(order.userId);
-      this.emit("order:paid", {
+      this.events.emit("order:paid", {
         grossAmount: order.grossAmount,
         transactionId: body.transaction_id,
         userId: order.userId,
