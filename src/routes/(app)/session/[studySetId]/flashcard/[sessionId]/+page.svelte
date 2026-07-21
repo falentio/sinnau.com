@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invalidate } from "$app/navigation";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import FlashcardRatingRow from "$lib/components/features/flashcard-session/flashcard-rating-row.svelte";
   import FlashcardReviewCard from "$lib/components/features/flashcard-session/flashcard-review-card.svelte";
   import ReviewCompleteSummary from "$lib/components/features/flashcard-session/review-complete-summary.svelte";
@@ -54,6 +55,34 @@
     `/session/${studySetId}/flashcard/${sessionId}/results/`
   );
   const hubHref = $derived(`/session/${studySetId}/flashcard/`);
+
+  let hasTrackedStart = false;
+  $effect(() => {
+    if (total === 0 || hasTrackedStart) {
+      return;
+    }
+    hasTrackedStart = true;
+    track(AnalyticsEvent.FLASHCARD_SESSION_STARTED, {
+      session_id: sessionId,
+      study_set_id: studySetId,
+      total_cards: total,
+    });
+  });
+
+  $effect(() => {
+    if (isComplete) {
+      const distribution: Record<string, number> = {};
+      for (const r of submittedRatings) {
+        distribution[r] = (distribution[r] ?? 0) + 1;
+      }
+      track(AnalyticsEvent.FLASHCARD_SESSION_COMPLETED, {
+        cards_reviewed: submittedRatings.length,
+        rating_distribution: distribution,
+        session_id: sessionId,
+        study_set_id: studySetId,
+      });
+    }
+  });
 
   const computeIntervalsFor = (
     card: FlashcardQueueItem

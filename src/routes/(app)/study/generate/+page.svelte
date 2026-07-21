@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import {
     ArrowDown01Icon,
     ArrowLeft01Icon,
@@ -45,6 +46,18 @@
   const submitGenerate = async (input: CreateGenerateInput) => {
     try {
       const result = await client.generate.create(input);
+      track(AnalyticsEvent.STUDY_SET_CREATED, {
+        extraction_type: input.extractionType,
+        generate_id: result.generateId,
+        language_style: input.languageStyle,
+        method: "ai_generate",
+        visibility: input.visibility,
+      });
+      track(AnalyticsEvent.GENERATION_STARTED, {
+        extraction_type: input.extractionType,
+        generate_id: result.generateId,
+        language_style: input.languageStyle,
+      });
       toast.success("Pembuatan modul dimulai.", {
         position: "top-right",
       });

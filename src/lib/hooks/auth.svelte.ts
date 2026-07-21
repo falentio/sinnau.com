@@ -70,7 +70,11 @@ if (browser) {
       const u = getUser();
       if (u) {
         identified = true;
-        posthog.identify(u.id, { email: u.email, name: u.name });
+        posthog.identify(u.id, {
+          email: u.email,
+          is_test_user: u.role === "admin",
+          name: u.name,
+        });
       } else if (identified) {
         identified = false;
         posthog.reset();

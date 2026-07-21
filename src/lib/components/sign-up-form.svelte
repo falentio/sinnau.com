@@ -1,4 +1,5 @@
 <script lang="ts" module>
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import * as v from "valibot";
 
   const formSchema = v.pipe(
@@ -78,6 +79,7 @@
         return;
       }
       serverError = "Akun berhasil dibuat. Silakan masuk.";
+      track(AnalyticsEvent.USER_SIGNED_UP, { method: "email" });
       setTimeout(() => goto(resolve("/(auth)/login")), 1500);
     } catch (error) {
       serverError = getErrorMessage(error as { message?: string });

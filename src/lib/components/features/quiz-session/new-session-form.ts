@@ -1,6 +1,7 @@
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
 import { page } from "$app/state";
+import { AnalyticsEvent, track } from "$lib/analytics/events";
 import { client } from "$lib/orpc";
 import { createQuizSessionInputSchema } from "$lib/schemas/quiz-session";
 import { ORPCError } from "@orpc/client";
@@ -20,6 +21,12 @@ export const newSessionForm = () => {
       const session = await client.quizSession.create({
         ...data,
         studySetId,
+      });
+      track(AnalyticsEvent.QUIZ_SESSION_STARTED, {
+        has_chapter_filter:
+          data.chapterId !== undefined && data.chapterId !== "",
+        session_id: session.id,
+        study_set_id: studySetId,
       });
       toast.success("Sesi baru dibuat.", { position: "top-right" });
       await goto(
@@ -70,12 +77,12 @@ export const newSessionForm = () => {
   );
 
   const realSubmit = superFormResult.submit;
-  superFormResult.submit = async () => {
+  superFormResult.submit = () => {
     superFormResult.form.update((form) => ({
       ...form,
       chapterId: form.chapterId === "" ? undefined : form.chapterId,
     }));
-    await realSubmit();
+    realSubmit();
   };
 
   return { form: superFormResult };

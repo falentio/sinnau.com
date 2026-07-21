@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import { client } from "$lib/orpc";
 
   import type { PageData } from "./$types";
@@ -7,6 +8,7 @@
 
   let claiming = $state(false);
   let claimError = $state("");
+  let copied = $state(false);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -28,6 +30,22 @@
       claiming = false;
     }
   };
+
+  const handleCopy = async () => {
+    if (!data.summary.profile) {
+      return;
+    }
+    const url = new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com")
+      .href;
+    await navigator.clipboard.writeText(url);
+    copied = true;
+    track(AnalyticsEvent.AFFILIATE_LINK_COPIED, {
+      slug: data.summary.profile.slug,
+    });
+    setTimeout(() => {
+      copied = false;
+    }, 2000);
+  };
 </script>
 
 <div class="mx-auto max-w-2xl space-y-8 p-6">
@@ -36,9 +54,18 @@
   {#if data.summary.profile}
     <section class="rounded-lg border p-4">
       <h2 class="text-lg font-semibold">Your Referral Link</h2>
-      <p class="break-all rounded bg-muted p-2 font-mono text-sm">
-        {new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com").href}
-      </p>
+      <div class="flex items-center gap-2">
+        <p class="break-all rounded bg-muted p-2 font-mono text-sm">
+          {new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com")
+            .href}
+        </p>
+        <button
+          class="shrink-0 rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
+          onclick={handleCopy}
+        >
+          {copied ? "Tersalin!" : "Salin"}
+        </button>
+      </div>
     </section>
 
     <section class="grid grid-cols-3 gap-4">

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import ActivePlanBanner from "$lib/components/features/subs/active-plan-banner.svelte";
   import PlanCard from "$lib/components/features/subs/plan-card.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
@@ -63,6 +64,11 @@
     checkoutError = null;
     try {
       const result = await client.plan.checkout({ durationMonths, planKey });
+      track(AnalyticsEvent.PLAN_CHECKOUT_STARTED, {
+        duration_months: durationMonths,
+        order_id: result.orderId,
+        plan_key: planKey,
+      });
 
       await goto(`/subs/checkout/${result.orderId}`);
     } catch (error) {
