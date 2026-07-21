@@ -29,6 +29,7 @@ const setupService = () => {
   guard.assertOwnerOrForbidden.mockResolvedValue(createChapterFixture());
   guard.assertVisibleByIdOrNotFound.mockResolvedValue(createChapterFixture());
   guard.assertStudySetOwnerOrForbidden.mockResolvedValue();
+  guard.assertStudySetVisibleByIdOrNotFound.mockResolvedValue();
 
   // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new ChapterService(repo, guard as unknown as ChapterGuard);
@@ -318,10 +319,10 @@ describe.concurrent(ChapterService, () => {
   });
 
   describe("getChaptersByStudySet", () => {
-    it("forwards the user id and studySetId to the repo and returns its result", async ({
+    it("calls the visibility guard, then forwards user id and studySetId to the repo", async ({
       expect,
     }) => {
-      const { repo, service } = setupService();
+      const { guard, repo, service } = setupService();
       const list = [createChapterFixture({ id: "ch-1" })];
       repo.findChaptersByStudySet.mockResolvedValue(list);
       const studySetId = "11111111-1111-1111-1111-111111111111";
@@ -329,11 +330,35 @@ describe.concurrent(ChapterService, () => {
         { studySetId },
         "user-1"
       );
+      expect(guard.assertStudySetVisibleByIdOrNotFound).toHaveBeenCalledWith(
+        studySetId,
+        "user-1"
+      );
       expect(repo.findChaptersByStudySet).toHaveBeenCalledWith(
         "user-1",
         studySetId
       );
       expect(result).toBe(list);
+    });
+
+    it("propagates NOT_FOUND from the visibility guard and skips the repo call", async ({
+      expect,
+    }) => {
+      const { guard, repo, service } = setupService();
+      guard.assertStudySetVisibleByIdOrNotFound.mockImplementation(
+        throwNotFound
+      );
+      const studySetId = "11111111-1111-1111-1111-111111111111";
+      const err = await captureError(
+        service.getChaptersByStudySet({ studySetId }, "user-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+      expect(guard.assertStudySetVisibleByIdOrNotFound).toHaveBeenCalledWith(
+        studySetId,
+        "user-1"
+      );
+      expect(repo.findChaptersByStudySet).not.toHaveBeenCalled();
     });
   });
 
