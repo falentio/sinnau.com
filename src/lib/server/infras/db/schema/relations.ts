@@ -1,3 +1,5 @@
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Drizzle relation references */
+
 import { relations } from "drizzle-orm";
 
 import {

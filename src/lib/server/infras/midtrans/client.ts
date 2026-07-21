@@ -21,10 +21,10 @@ export interface MidtransEvents {
   "webhook:received": [body: WebhookBody];
 }
 
-export async function handleResponse<T>(
+export const handleResponse = async <T>(
   response: Response,
   schema: v.GenericSchema<T>
-): Promise<T> {
+): Promise<T> => {
   const json: unknown = await response.json();
   const code =
     typeof json === "object" && json !== null && "status_code" in json
@@ -38,7 +38,7 @@ export async function handleResponse<T>(
     throw new MidtransError(code, message);
   }
   return v.parse(schema, json);
-}
+};
 
 // oxlint-disable-next-line unicorn/prefer-event-target
 export class MidtransClient extends EventEmitter<MidtransEvents> {

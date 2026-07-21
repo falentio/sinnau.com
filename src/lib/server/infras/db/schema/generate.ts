@@ -10,6 +10,7 @@ import {
 import { user } from "./auth-schema.ts";
 import { studySet } from "./study-set.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export const GENERATE_STATUSES = [
   "CREATED",
   "ONGOING",

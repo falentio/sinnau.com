@@ -30,12 +30,12 @@ import type {
   FlashcardSessionReview,
 } from "../../infras/db/schema/flashcard-session.ts";
 import type { FlashcardSessionGuard } from "./flashcard-session.guard.ts";
-
-const logger = getLogger(["sinnau.com", "flashcard-session", "service"]);
 import type {
   FlashcardSessionRepository,
   QueueFlashcardWithState,
 } from "./flashcard-session.repository.ts";
+
+const logger = getLogger(["sinnau.com", "flashcard-session", "service"]);
 
 export type { FlashcardSession, FlashcardSessionReview, FlashcardCardState };
 

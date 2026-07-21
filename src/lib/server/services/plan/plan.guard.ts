@@ -13,8 +13,9 @@ export class PlanGuard {
     this.userRepo = userRepo;
   }
 
+  // oxlint-disable-next-line class-methods-use-this
   requireOwner(ownerId: string | null | undefined): string {
-    if (!ownerId) {
+    if (ownerId === null || ownerId === undefined || ownerId === "") {
       throw new ORPCError("UNAUTHORIZED", {
         message: "Authentication is required",
       });
@@ -22,8 +23,9 @@ export class PlanGuard {
     return ownerId;
   }
 
+  // oxlint-disable-next-line class-methods-use-this
   requireAdmin(adminId: string | null | undefined): string {
-    if (!adminId) {
+    if (adminId === null || adminId === undefined || adminId === "") {
       throw new ORPCError("FORBIDDEN", {
         message: "Admin access required",
       });
@@ -32,8 +34,10 @@ export class PlanGuard {
   }
 
   async assertUserExistsOrNotFound(userId: string): Promise<AuthUser> {
+    // AuthUser resolves to `any` because auth-schema.ts is ignored by oxlint
+    // oxlint-disable-next-line typescript/no-unsafe-assignment
     const row = await this.userRepo.findUserById(userId);
-    if (!row) {
+    if (row === null || row === undefined) {
       throw new ORPCError("NOT_FOUND", { message: "User not found" });
     }
     return row;

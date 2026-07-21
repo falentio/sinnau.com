@@ -8,13 +8,18 @@ import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
 
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
-import type { WebhookBody } from "../../infras/midtrans/types.ts";
-import type { PlanGuard } from "./plan.guard.ts";
+import type {
+  CreateQrisInput,
+  QrisChargeResponse,
+  WebhookBody,
+} from "../../infras/midtrans/types.ts";
+import type { AuthUser } from "../user/user.repository.ts";
+import { PlanGuard } from "./plan.guard.ts";
 import { deriveUserPlan, PlanService } from "./plan.service.ts";
 import {
   createAdminGrantFixture,
-  createMockGuard,
   createMockRepository,
+  createMockUserRepository,
   createOrderFixture,
   createPaymentFixture,
   createUserPlanFixture,
@@ -22,6 +27,18 @@ import {
   EMPTY_ORDER_LIST,
   captureError,
 } from "./plan.testing.ts";
+
+class MockPlanGuard extends PlanGuard {
+  requireOwner = vi.fn<PlanGuard["requireOwner"]>();
+  requireAdmin = vi.fn<PlanGuard["requireAdmin"]>();
+  assertUserExistsOrNotFound = vi.fn<PlanGuard["assertUserExistsOrNotFound"]>();
+  assertOrderVisibleByIdOrNotFound =
+    vi.fn<PlanGuard["assertOrderVisibleByIdOrNotFound"]>();
+
+  constructor() {
+    super(createMockRepository(), createMockUserRepository());
+  }
+}
 
 const makeWebhookBody = (
   overrides: Partial<WebhookBody> = {}
@@ -41,35 +58,34 @@ const makeWebhookBody = (
   ...overrides,
 });
 
-const createMockMidtrans = () => {
-  const createQris = vi.fn<() => Promise<object>>().mockResolvedValue({
-    acquirer: "gopay",
-    actions: [{ method: "GET", name: "generate-qr-code", url: "https://qr" }],
-    currency: "IDR",
-    expiry_time: undefined,
-    fraud_status: "accept",
-    gross_amount: "30000",
-    merchant_id: "mid",
-    order_id: "ord_test",
-    payment_type: "qris",
-    qr_string: "QRCODE",
-    status_code: "201",
-    status_message: "OK",
-    transaction_id: "txn-1",
-    transaction_status: "pending",
-    transaction_time: "2024-01-01 00:00:00",
-  });
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock to impl cast in tests
+const createMockMidtrans = (): MidtransClient => {
+  const createQris = vi
+    .fn<(input: CreateQrisInput) => Promise<QrisChargeResponse>>()
+    .mockResolvedValue({
+      acquirer: "gopay",
+      actions: [{ method: "GET", name: "generate-qr-code", url: "https://qr" }],
+      currency: "IDR",
+      expiry_time: undefined,
+      fraud_status: "accept",
+      gross_amount: "30000",
+      merchant_id: "mid",
+      order_id: "ord_test",
+      payment_type: "qris",
+      qr_string: "QRCODE",
+      status_code: "201",
+      status_message: "OK",
+      transaction_id: "txn-1",
+      transaction_status: "pending",
+      transaction_time: "2024-01-01 00:00:00",
+    } satisfies QrisChargeResponse);
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return { createQris } as unknown as MidtransClient;
 };
 
 const setupService = (midtrans = createMockMidtrans()) => {
   const repo = createMockRepository();
-  const guard = createMockGuard();
-  guard.requireOwner.mockImplementation(
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/non-nullable-type-assertion-style -- mock requires narrowing from string|null|undefined to string
-    (id) => id as string
-  );
+  const guard = new MockPlanGuard();
+  guard.requireOwner.mockImplementation((id) => id ?? "fallback");
   guard.assertOrderVisibleByIdOrNotFound.mockImplementation(
     async (id, _userId) => {
       const order = await repo.findOrderById(id);
@@ -81,21 +97,34 @@ const setupService = (midtrans = createMockMidtrans()) => {
   );
 
   guard.requireAdmin.mockImplementation((id) => {
-    if (id === null || id === undefined) {
+    if (id === null || id === undefined || id === "") {
       throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
     }
     return id;
   });
   // oxlint-disable-next-line eslint/arrow-body-style -- block body needed for disable-next-line comment
   guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock return: AuthUser from Drizzle $inferSelect may contain any
-    return {
+    if (id === "missing-user") {
+      throw new ORPCError("NOT_FOUND", { message: "User not found" });
+    }
+    const now = new Date();
+    const user: AuthUser = {
+      affiliatedBy: null,
+      banExpires: null,
+      banReason: null,
       banned: false,
+      createdAt: now,
       email: `${id}@e.com`,
       emailVerified: true,
       id,
+      image: null,
+      lastLoginMethod: null,
       name: "User",
-    } as never;
+      role: null,
+      updatedAt: now,
+    };
+    // oxlint-disable-next-line typescript/no-unsafe-return
+    return user;
   });
 
   repo.findActiveUserPlan.mockResolvedValue(null);
@@ -126,12 +155,7 @@ const setupService = (midtrans = createMockMidtrans()) => {
     createUserPlanFixture(row)
   );
 
-  const service = new PlanService(
-    repo,
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock to impl cast in tests
-    guard as unknown as PlanGuard,
-    midtrans
-  );
+  const service = new PlanService(repo, guard, midtrans);
   return { guard, midtrans, repo, service };
 };
 
@@ -198,8 +222,9 @@ describe.concurrent("PlanService unit tests", () => {
         status: "PENDING",
       });
 
-      // oxlint-disable-next-line typescript/unbound-method -- midtrans.createQris is a vi.fn() mock, not an unbound method reference
-      expect(midtrans.createQris).toHaveBeenCalledWith({
+      // oxlint-disable-next-line typescript/unbound-method
+      const { createQris } = midtrans;
+      expect(createQris).toHaveBeenCalledWith({
         custom_expiry: {
           expiry_duration: 15,
           unit: "minute",
@@ -229,8 +254,7 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const midtrans = createMockMidtrans();
-      // oxlint-disable-next-line typescript/unbound-method -- midtrans.createQris is a vi.fn() mock
-      vi.mocked(midtrans.createQris).mockRejectedValue(
+      vi.mocked(midtrans).createQris.mockRejectedValue(
         new Error("network down")
       );
       const { service } = setupService(midtrans);
@@ -292,8 +316,11 @@ describe.concurrent("PlanService unit tests", () => {
       expect(lite?.monthlyPrice).toBe(30_000);
       // oxlint-disable typescript/no-unsafe-assignment -- expect.any(String) returns AsymmetricMatcher<any> which is safe in test assertions
       expect(lite?.durations).toEqual([
+        // oxlint-disable-next-line typescript/no-unsafe-assignment
         { discountLabel: expect.any(String), grossAmount: 30_000, months: 1 },
+        // oxlint-disable-next-line typescript/no-unsafe-assignment
         { discountLabel: expect.any(String), grossAmount: 150_000, months: 6 },
+        // oxlint-disable-next-line typescript/no-unsafe-assignment
         { discountLabel: expect.any(String), grossAmount: 270_000, months: 12 },
       ]);
       // oxlint-enable typescript/no-unsafe-assignment
@@ -718,8 +745,7 @@ describe.concurrent("PlanService unit tests", () => {
         planKey: "LITE",
         userId: "user-1",
       };
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- explicitly testing the undefined adminId case
-      const err = await captureError(service.grantPlan(input, undefined));
+      const err = await captureError(service.grantPlan(input, null));
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
@@ -747,14 +773,27 @@ describe.concurrent("PlanService unit tests", () => {
       const { guard, repo, service } = setupService();
       // oxlint-disable-next-line eslint/arrow-body-style -- block body needed for disable-next-line comment
       guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock return: AuthUser from Drizzle $inferSelect may contain any
-        return {
+        if (id === "missing-user") {
+          throw new ORPCError("NOT_FOUND", { message: "User not found" });
+        }
+        const now = new Date();
+        const user: AuthUser = {
+          affiliatedBy: null,
+          banExpires: null,
+          banReason: null,
           banned: false,
+          createdAt: now,
           email: `${id}@e.com`,
           emailVerified: true,
           id,
+          image: null,
+          lastLoginMethod: null,
           name: "User",
-        } as never;
+          role: null,
+          updatedAt: now,
+        };
+        // oxlint-disable-next-line typescript/no-unsafe-return
+        return user;
       });
 
       const input: GrantPlanInput = {

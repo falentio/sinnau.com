@@ -25,7 +25,6 @@
   import { valibotClient } from "sveltekit-superforms/adapters";
   import * as v from "valibot";
 
-  // TODO: use createFlashcardsInputSchema and CreateFlashcardsInput
   const formSchema = v.object({
     back: trimmedTextSchema,
     front: trimmedTextSchema,

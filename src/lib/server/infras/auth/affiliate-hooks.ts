@@ -12,11 +12,13 @@ export const resolveAffiliateReferrer = async (ctx: {
     return {};
   }
 
+  /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle types not resolvable by oxlint */
   const [row] = await db
     .select({ id: userTable.id })
     .from(userTable)
     .where(eq(userTable.id, referrerId))
     .limit(1);
+  /* oxlint-enable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment */
 
   if (!row) {
     return {};

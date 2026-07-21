@@ -11,8 +11,8 @@ export const searchStudySetsInputSchema = v.object({
     v.trim(),
     v.minLength(STUDY_SET_SEARCH_QUERY_MIN_LENGTH),
     v.maxLength(STUDY_SET_SEARCH_QUERY_MAX_LENGTH),
-    // oxlint-disable-next-line no-control-regex
     v.regex(
+      // oxlint-disable-next-line no-control-regex
       /^[^\u0000-\u001F\u007F]*$/u,
       "Query must not contain control characters"
     )

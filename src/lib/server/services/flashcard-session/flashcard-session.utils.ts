@@ -80,7 +80,7 @@ const makeReview = (
   n: number,
   rating: FlashcardSessionReview["rating"],
   preState: FlashcardSessionReview["preState"] = "Review",
-  front: string = `Pertanyaan flashcard ${n}`
+  front = `Pertanyaan flashcard ${n}`
 ): FlashcardSessionReviewWithFront => ({
   flashcardId: padId(FLASHCARD_ID_PREFIX, n),
   front,
@@ -113,11 +113,11 @@ const zeroFillDueIn7Days = () => {
 
 const forecastWithCounts = (counts: number[]) => {
   const base = zeroFillDueIn7Days();
-  counts.forEach((c, i) => {
+  for (const [i, c] of counts.entries()) {
     if (base[i]) {
       base[i].count = c;
     }
-  });
+  }
   return base;
 };
 

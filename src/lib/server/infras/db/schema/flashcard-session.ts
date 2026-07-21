@@ -17,6 +17,7 @@ import { user } from "./auth-schema.ts";
 import { flashcard } from "./flashcard.ts";
 import { studySet } from "./study-set.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export const flashcardSession = sqliteTable(
   "flashcard_session",
   {

@@ -2,7 +2,6 @@ import { STUDY_SET_SEARCH_LIMIT } from "$lib/schemas/study-set-search.constant";
 import { ORPCError } from "@orpc/server";
 import { describe, it } from "vitest";
 
-import type { StudySetSearchGuard } from "./study-set-search.guard.ts";
 import { StudySetSearchService } from "./study-set-search.service.ts";
 import {
   captureError,

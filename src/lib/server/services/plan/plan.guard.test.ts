@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { describe, it } from "vitest";
 
 import type { Order } from "../../infras/db/schema/plan.ts";
-import type { UserRepository } from "../user/user.repository.ts";
+import type { AuthUser } from "../user/user.repository.ts";
 import { PlanGuard } from "./plan.guard.ts";
 import {
   captureError,
@@ -122,9 +122,7 @@ describe.concurrent("PlanGuard unit", () => {
 
     it("throws FORBIDDEN when undefined", async ({ expect }) => {
       const { guard } = setupGuard();
-      const err = await captureError(
-        (async () => guard.requireAdmin(undefined))()
-      );
+      const err = await captureError((async () => guard.requireAdmin(null))());
       expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
 
@@ -140,14 +138,24 @@ describe.concurrent("PlanGuard unit", () => {
   describe("assertUserExistsOrNotFound", () => {
     it("returns the user row when the id resolves", async ({ expect }) => {
       const { guard, userRepo } = setupGuard();
-      const user = {
+      const now = new Date();
+      const user: AuthUser = {
+        affiliatedBy: null,
+        banExpires: null,
+        banReason: null,
         banned: false,
+        createdAt: now,
         email: "u@e.com",
         emailVerified: true,
         id: "user-1",
+        image: null,
+        lastLoginMethod: null,
         name: "U",
-      } as never;
+        role: null,
+        updatedAt: now,
+      };
       userRepo.findUserById.mockResolvedValue(user);
+      // oxlint-disable-next-line typescript/no-unsafe-assignment
       const result = await guard.assertUserExistsOrNotFound("user-1");
       expect(result).toBe(user);
       expect(userRepo.findUserById).toHaveBeenCalledWith("user-1");

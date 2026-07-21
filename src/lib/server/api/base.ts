@@ -12,10 +12,20 @@ const logger = getLogger(["sinnau.com", "orpc", "middleware"]);
 
 export { requireAuth };
 
-const extractError = (error: unknown) => {
+const extractError = (
+  error: unknown
+): {
+  code: string;
+  data: unknown;
+  message: string;
+  name?: string;
+  stack?: string;
+} => {
   if (error instanceof ORPCError) {
     return {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- narrowed by instanceof but oxlint can't resolve ORPCError generic types
       code: error.code,
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- same as above
       data: error.data,
       message: error.message,
     };
@@ -23,6 +33,7 @@ const extractError = (error: unknown) => {
   if (error instanceof Error) {
     return {
       code: "INTERNAL_SERVER_ERROR",
+      data: undefined,
       message: error.message,
       name: error.name,
       stack: error.stack,
@@ -30,6 +41,7 @@ const extractError = (error: unknown) => {
   }
   return {
     code: "INTERNAL_SERVER_ERROR",
+    data: undefined,
     message: "Internal server error",
   };
 };
@@ -61,6 +73,7 @@ export const publicProcedure = base
         procedure: path.join("."),
       }));
     }
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- next() return type needs explicit context binding
     return result as Awaited<ReturnType<typeof next<Context>>>;
   })
   .use(async ({ next, path }) => {

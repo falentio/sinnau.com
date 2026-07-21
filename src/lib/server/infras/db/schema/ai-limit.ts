@@ -8,6 +8,7 @@ import {
 
 import { user } from "./auth-schema.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export const aiUsageLog = sqliteTable(
   "ai_usage_log",
   {

@@ -3,6 +3,7 @@ import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth-schema.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export const affiliateProfile = sqliteTable("affiliate_profile", {
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)

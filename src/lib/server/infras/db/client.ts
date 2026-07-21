@@ -35,7 +35,7 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
 
   const transaction = sqlite.transaction.bind(sqlite);
   type TransactionFn = typeof transaction;
-  sqlite.transaction = ((fn) => {
+  const proxyTransaction: TransactionFn = (fn) => {
     const wrappedFn = (...args: Parameters<typeof fn>) => {
       const start = hrtime.bigint();
       try {
@@ -50,10 +50,12 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
       }
     };
     return transaction(wrappedFn);
-  }) as TransactionFn;
+  };
+  sqlite.transaction = proxyTransaction;
 
   const prepare = sqlite.prepare.bind(sqlite);
   type PrepareFn = typeof prepare;
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle prepare has conditional return type
   sqlite.prepare = ((sql) => {
     const start = hrtime.bigint();
     try {
@@ -108,7 +110,7 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
 };
 
 export const createDb = (options: { fileName: string }) => {
-  if (process.env.VITEST) {
+  if (process.env.VITEST !== undefined) {
     options.fileName = ":memory:";
   }
   const { fileName } = options;

@@ -18,128 +18,137 @@ const findRecord = (level: LogRecord["level"]): LogRecord | undefined =>
       r.level === level && r.category.join(".") === "sinnau.com.background.util"
   );
 
-beforeEach(() => {
-  resetSync();
-  recorder = createLogRecorder();
-  configureSync({
-    loggers: [
-      {
-        category: ["sinnau.com", "background", "util"],
-        lowestLevel: "debug",
-        sinks: ["recorder"],
-      },
-    ],
-    reset: true,
-    sinks: { recorder: recorder.sink },
-  });
-});
-
-afterEach(() => {
-  resetSync();
-});
-
-describe(waitForAll, () => {
-  it("resolves immediately when no jobs were scheduled", async ({ expect }) => {
-    await expect(waitForAll()).resolves.toBeUndefined();
-  });
-
-  it("resolves after a single resolved promise", async ({ expect }) => {
-    waitUntil(Promise.resolve(42));
-    await expect(waitForAll()).resolves.toBeUndefined();
-  });
-
-  it("resolves after multiple promises resolve", async ({ expect }) => {
-    waitUntil(Promise.resolve(1));
-    waitUntil(Promise.resolve(2));
-    waitUntil(Promise.resolve(3));
-    await expect(waitForAll()).resolves.toBeUndefined();
-  });
-
-  it("logs and drains rejected promises without throwing", async ({
-    expect,
-  }) => {
-    waitUntil(Promise.reject(new Error("boom")));
-    waitUntil(Promise.resolve("ok"));
-
-    await expect(waitForAll()).resolves.toBeUndefined();
-    const record = findRecord("error");
-    expect(record).toBeDefined();
-    expect(errorMessage(record?.properties ?? {})).toBe("boom");
-  });
-
-  it("clears the pending set after drain", async ({ expect }) => {
-    waitUntil(Promise.resolve("a"));
-    waitUntil(Promise.resolve("b"));
-    await waitForAll();
-    await expect(waitForAll()).resolves.toBeUndefined();
-  });
-
-  it("accumulates jobs added after a drain", async ({ expect }) => {
-    await waitForAll();
-    waitUntil(Promise.resolve("new"));
-    await expect(waitForAll()).resolves.toBeUndefined();
-  });
-
-  it("eagerly catches rejection — no unhandled rejection if waitForAll never called", async ({
-    expect,
-  }) => {
-    waitUntil(Promise.reject(new Error("eager")));
-
-    await vi.waitFor(() => {
-      const record = findRecord("error");
-      expect(record).toBeDefined();
-      expect(errorMessage(record?.properties ?? {})).toBe("eager");
+describe("background-jobs", () => {
+  beforeEach(() => {
+    resetSync();
+    recorder = createLogRecorder();
+    configureSync({
+      loggers: [
+        {
+          category: ["logtape", "meta"],
+          lowestLevel: "warning",
+          sinks: ["meta"],
+        },
+        {
+          category: ["sinnau.com", "background", "util"],
+          lowestLevel: "debug",
+          sinks: ["recorder"],
+        },
+      ],
+      reset: true,
+      sinks: { meta: recorder.sink, recorder: recorder.sink },
     });
   });
 
-  it("removes resolved promise from pending via finally", async ({
-    expect,
-  }) => {
-    waitUntil(Promise.resolve("done"));
+  afterEach(() => {
+    resetSync();
+  });
 
-    await vi.waitFor(async () => {
+  describe(waitForAll, () => {
+    it("resolves immediately when no jobs were scheduled", async ({
+      expect,
+    }) => {
       await expect(waitForAll()).resolves.toBeUndefined();
     });
-  });
 
-  it("removes rejected promise from pending via finally", async ({
-    expect,
-  }) => {
-    waitUntil(Promise.reject(new Error("gone")));
+    it("resolves after a single resolved promise", async ({ expect }) => {
+      waitUntil(Promise.resolve(42));
+      await expect(waitForAll()).resolves.toBeUndefined();
+    });
 
-    await vi.waitFor(() => {
+    it("resolves after multiple promises resolve", async ({ expect }) => {
+      waitUntil(Promise.resolve(1));
+      waitUntil(Promise.resolve(2));
+      waitUntil(Promise.resolve(3));
+      await expect(waitForAll()).resolves.toBeUndefined();
+    });
+
+    it("logs and drains rejected promises without throwing", async ({
+      expect,
+    }) => {
+      waitUntil(Promise.reject(new Error("boom")));
+      waitUntil(Promise.resolve("ok"));
+
+      await expect(waitForAll()).resolves.toBeUndefined();
       const record = findRecord("error");
       expect(record).toBeDefined();
-      expect(errorMessage(record?.properties ?? {})).toBe("gone");
+      expect(errorMessage(record?.properties ?? {})).toBe("boom");
     });
-    await expect(waitForAll()).resolves.toBeUndefined();
-  });
 
-  it("warns when pending exceeds threshold, resets flag after drain", async ({
-    expect,
-  }) => {
-    for (let i = 0; i < 1001; i++) {
-      waitUntil(Promise.resolve(i));
-    }
+    it("clears the pending set after drain", async ({ expect }) => {
+      waitUntil(Promise.resolve("a"));
+      waitUntil(Promise.resolve("b"));
+      await waitForAll();
+      await expect(waitForAll()).resolves.toBeUndefined();
+    });
 
-    expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
-      1
-    );
+    it("accumulates jobs added after a drain", async ({ expect }) => {
+      await waitForAll();
+      waitUntil(Promise.resolve("new"));
+      await expect(waitForAll()).resolves.toBeUndefined();
+    });
 
-    await waitForAll();
-    expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
-      1
-    );
-  });
+    it("eagerly catches rejection — no unhandled rejection if waitForAll never called", async ({
+      expect,
+    }) => {
+      waitUntil(Promise.reject(new Error("eager")));
 
-  it("does not warn below threshold", async ({ expect }) => {
-    for (let i = 0; i < 999; i++) {
-      waitUntil(Promise.resolve(i));
-    }
+      await vi.waitFor(() => {
+        const record = findRecord("error");
+        expect(record).toBeDefined();
+        expect(errorMessage(record?.properties ?? {})).toBe("eager");
+      });
+    });
 
-    expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
-      0
-    );
-    await waitForAll();
+    it("removes resolved promise from pending via finally", async ({
+      expect,
+    }) => {
+      waitUntil(Promise.resolve("done"));
+
+      await vi.waitFor(async () => {
+        await expect(waitForAll()).resolves.toBeUndefined();
+      });
+    });
+
+    it("removes rejected promise from pending via finally", async ({
+      expect,
+    }) => {
+      waitUntil(Promise.reject(new Error("gone")));
+
+      await vi.waitFor(() => {
+        const record = findRecord("error");
+        expect(record).toBeDefined();
+        expect(errorMessage(record?.properties ?? {})).toBe("gone");
+      });
+      await expect(waitForAll()).resolves.toBeUndefined();
+    });
+
+    it("warns when pending exceeds threshold, resets flag after drain", async ({
+      expect,
+    }) => {
+      for (let i = 0; i < 1001; i += 1) {
+        waitUntil(Promise.resolve(i));
+      }
+
+      expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
+        1
+      );
+
+      await waitForAll();
+      expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
+        1
+      );
+    });
+
+    it("does not warn below threshold", async ({ expect }) => {
+      for (let i = 0; i < 999; i += 1) {
+        waitUntil(Promise.resolve(i));
+      }
+
+      expect(recorder.records.filter((r) => r.level === "warning").length).toBe(
+        0
+      );
+      await waitForAll();
+    });
   });
 });

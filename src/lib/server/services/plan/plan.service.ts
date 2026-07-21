@@ -351,10 +351,9 @@ export class PlanService {
     adminId: string | null | undefined
   ): Promise<AdminGrant> {
     const admin = this.guard.requireAdmin(adminId);
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- AuthUser from Drizzle $inferSelect may contain any
-    const authUser = await this.guard.assertUserExistsOrNotFound(input.userId);
-    // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- AuthUser.id is a concrete string field but parent type contains any
-    const targetUserId: string = authUser.id;
+    // AuthUser resolves to `any` because auth-schema.ts is ignored by oxlint
+    // oxlint-disable-next-line typescript/no-unsafe-assignment
+    const user = await this.guard.assertUserExistsOrNotFound(input.userId);
     const now = Date.now();
     const grant: NewAdminGrant = {
       durationMonths: input.durationMonths,
@@ -365,13 +364,15 @@ export class PlanService {
       note: input.note ?? null,
       planKey: input.planKey,
       startedAt: new Date(now),
-      userId: targetUserId,
+      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-assignment
+      userId: user.id,
     };
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- AdminGrant from Drizzle $inferSelect may contain any
     const row = await this.repo.insertAdminGrant(grant);
     // Grant is committed first (no transaction). Derivation failure must NOT
     // roll back the grant — the grant row is the audit trail.
-    await this.deriveAndUpsert(targetUserId);
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument
+    await this.deriveAndUpsert(user.id);
     return row;
   }
 

@@ -16,6 +16,7 @@ import {
 
 import { user } from "./auth-schema.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export type PlanKey = (typeof PLAN_KEYS)[number];
 export type PlanDuration = (typeof PLAN_DURATIONS)[number];
 export type OrderStatus = (typeof ORDER_STATUSES)[number];

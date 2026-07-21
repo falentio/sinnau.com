@@ -21,8 +21,9 @@ const link = new RPCLink({
 // oxlint-disable-next-line import/no-mutable-exports
 export let client: RouterClient<Router> = browser
   ? createORPCClient(link)
-  : new Proxy({} as unknown as RouterClient<Router>, {
-      get(target, p) {
+  : // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    new Proxy({} as RouterClient<Router>, {
+      get(_target, p) {
         throw new TypeError(
           `Attempted to access the client on the server side. This is not allowed. Property: ${String(p)}`
         );

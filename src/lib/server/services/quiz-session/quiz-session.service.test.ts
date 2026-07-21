@@ -4,7 +4,6 @@ import { ORPCError } from "@orpc/server";
 import { describe, it } from "vitest";
 
 import type { StudySet } from "../../infras/db/schema/study-set.ts";
-import type { QuizRepository } from "../quiz/quiz.repository.ts";
 import {
   createMockRepository as createMockQuizRepository,
   createQuizFixture,
