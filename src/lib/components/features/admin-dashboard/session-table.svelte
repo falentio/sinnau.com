@@ -1,20 +1,12 @@
 <script lang="ts">
   import * as Table from "$lib/components/ui/table/index.js";
   import type { FlashcardSession } from "$lib/schemas/flashcard-session";
+  import { formatDateTime } from "$lib/utils/date";
 
   let { sessions }: { sessions: FlashcardSession[] } = $props();
 
   const truncate = (id: string) =>
     id.length > 16 ? `${id.slice(0, 16)}\u2026` : id;
-
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
 </script>
 
 <Table.Root>
@@ -40,10 +32,10 @@
           {session.studySetId}
         </Table.Cell>
         <Table.Cell class="text-nowrap">
-          {formatDate(session.createdAt)}
+          {formatDateTime(session.createdAt)}
         </Table.Cell>
         <Table.Cell class="text-nowrap">
-          {formatDate(session.updatedAt)}
+          {formatDateTime(session.updatedAt)}
         </Table.Cell>
       </Table.Row>
     {/each}

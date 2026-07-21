@@ -3,6 +3,7 @@
   import * as Table from "$lib/components/ui/table/index.js";
   import type { AdminGrant } from "$lib/schemas/plan";
   import { PLAN_NAME } from "$lib/schemas/plan.constant";
+  import { formatDate } from "$lib/utils/date";
 
   let { grants }: { grants: AdminGrant[] } = $props();
 
@@ -19,13 +20,6 @@
       }
     }
   };
-
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
 </script>
 
 <Table.Root>

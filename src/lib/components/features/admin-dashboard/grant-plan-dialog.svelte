@@ -19,7 +19,7 @@
   } = $props();
 
   let userId = $state("");
-  let planKey = $state<"LITE" | "PLUS" | "PREMIUM">("LITE");
+  let planKey = $state<(typeof PLAN_KEYS)[number]>("LITE");
   let durationMonths = $state(1);
   const DURATION_OPTIONS = [1, 2, 3, 6, 9, 12] as const;
   let note = $state("");
@@ -91,7 +91,7 @@
           type="single"
           value={planKey}
           onValueChange={(value) => {
-            planKey = value as "LITE" | "PLUS" | "PREMIUM";
+            planKey = value as (typeof PLAN_KEYS)[number];
           }}
         >
           <Select.Trigger class="w-full" id="grant-plan-key">
@@ -128,6 +128,7 @@
           placeholder="Reason for this grant..."
           bind:value={note}
           rows={3}
+          maxlength={500}
           disabled={submitting}
         />
       </div>

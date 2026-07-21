@@ -1,19 +1,8 @@
 import { createServerClient } from "$lib/orpc.server";
 import { PLAN_KEYS } from "$lib/schemas/plan.constant";
-import { error } from "@sveltejs/kit";
+import { parsePage } from "$lib/utils/pagination";
 
 import type { PageServerLoad } from "./$types";
-
-const parsePage = (raw: string | null): number => {
-  if (raw === null || raw === "") {
-    return 1;
-  }
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    error(400, { message: "Invalid page" });
-  }
-  return parsed;
-};
 
 export const load: PageServerLoad = async ({ depends, url }) => {
   depends("plan:grants");

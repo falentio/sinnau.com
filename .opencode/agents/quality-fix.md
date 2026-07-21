@@ -1,7 +1,7 @@
 ---
 description: Runs format, lint, and type-check in sequence and fixes all violations on the provided glob patterns. Provide Unix glob patterns as the first part of the task description (one per line). Use after working with any files to ensure they meet project quality standards.
 mode: subagent
-model: opencode/deepseek-v4-flash-free
+model: opencode-go/deepseek-v4-flash
 color: "#8B5CF6"
 ---
 
