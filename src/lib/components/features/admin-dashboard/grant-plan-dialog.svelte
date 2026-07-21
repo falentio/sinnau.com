@@ -1,5 +1,6 @@
 <script lang="ts">
   import { invalidate } from "$app/navigation";
+  import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -19,7 +20,8 @@
 
   let userId = $state("");
   let planKey = $state<"LITE" | "PLUS" | "PREMIUM">("LITE");
-  let durationMonths = $state<string | number>(1);
+  let durationMonths = $state(1);
+  const DURATION_OPTIONS = [1, 2, 3, 6, 9, 12] as const;
   let note = $state("");
   let submitting = $state(false);
 
@@ -28,20 +30,10 @@
       toast.error("User ID is required", { position: "top-right" });
       return;
     }
-    const duration =
-      typeof durationMonths === "string"
-        ? Number.parseInt(durationMonths, 10)
-        : durationMonths;
-    if (Number.isNaN(duration) || duration < 1 || duration > 24) {
-      toast.error("Duration must be between 1 and 24 months", {
-        position: "top-right",
-      });
-      return;
-    }
     submitting = true;
     try {
       await client.plan.admin.grantPlan({
-        durationMonths: duration,
+        durationMonths,
         note: note.trim() || undefined,
         planKey,
         userId: userId.trim(),
@@ -115,15 +107,19 @@
         </Select.Root>
       </div>
       <div class="flex flex-col gap-2">
-        <Label for="grant-duration">Duration (months)</Label>
-        <Input
-          id="grant-duration"
-          type="number"
-          min={1}
-          max={24}
-          bind:value={durationMonths}
-          disabled={submitting}
-        />
+        <Label>Duration</Label>
+        <ButtonGroup.Root>
+          {#each DURATION_OPTIONS as option}
+            <Button
+              variant={durationMonths === option ? "default" : "outline"}
+              size="sm"
+              onclick={() => (durationMonths = option)}
+              disabled={submitting}
+            >
+              {option}
+            </Button>
+          {/each}
+        </ButtonGroup.Root>
       </div>
       <div class="flex flex-col gap-2">
         <Label for="grant-note">Note (optional)</Label>
