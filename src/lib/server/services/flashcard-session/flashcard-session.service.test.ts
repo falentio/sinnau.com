@@ -112,7 +112,7 @@ const setupService = () => {
   // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new FlashcardSessionService(
     // oxlint-disable-next-line no-unsafe-type-assertion
-    repo as unknown as FlashcardSessionRepository,
+    repo,
     // oxlint-disable-next-line no-unsafe-type-assertion
     guard as unknown as FlashcardSessionGuard
   );

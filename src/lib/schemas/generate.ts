@@ -18,6 +18,13 @@ import {
   trimmedTitleSchema,
 } from "./study-set.ts";
 
+// A blank title is a valid "no title provided" signal; the server infers one.
+// `v.literal("")` lets an empty string pass validation instead of failing
+// the study-set min-length rule, while a non-empty string must still be valid.
+const generateTitleSchema = v.optional(
+  v.union([v.literal(""), trimmedTitleSchema])
+);
+
 // ─── Shared sub-schemas ────────────────────────────────────────────────
 
 const generateIdSchema = createPrefixedIdSchema(GENERATE_ID_PREFIX);
@@ -137,7 +144,7 @@ export const createGenerateInputSchema = v.object({
     )
   ),
   pdf: v.pipe(v.instance(File), v.maxSize(GENERATE_PDF_MAX_SIZE_BYTES)),
-  title: trimmedTitleSchema,
+  title: generateTitleSchema,
   visibility: v.optional(v.picklist(STUDY_SET_VISIBILITIES)),
 });
 
@@ -159,9 +166,9 @@ export const deleteOldChunksOutputSchema = v.object({
 // ─── GetLanguageStyles ────────────────────────────────────────────────
 
 export const languageStyleItemSchema = v.object({
-  value: v.string(),
-  label: v.string(),
   isDefault: v.boolean(),
+  label: v.string(),
+  value: v.string(),
 });
 
 export const getLanguageStylesOutputSchema = v.array(languageStyleItemSchema);

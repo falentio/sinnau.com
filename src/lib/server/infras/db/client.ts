@@ -1,7 +1,7 @@
 import { totalmem } from "node:os";
 import { hrtime } from "node:process";
 
-import { dev } from "$app/env";
+import { getLogger } from "@logtape/logtape";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -9,22 +9,26 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { env } from "../env.ts";
 import * as schema from "./schema/index.ts";
 
+const logger = getLogger(["sinnau.com", "db", "client"]);
+
 const MMAP_CAP = 512 * 1024 * 1024;
+
+const SLOW_QUERY_MESSAGE = "Slow query detected";
+const SLOW_QUERY_TRESHOLD_MS = 10;
 
 const proxyDatabase = (sqlite: Database.Database): Database.Database => {
   const exec = sqlite.exec.bind(sqlite);
-  const REPORT_SLOW_QUERIES_MS = 5;
   sqlite.exec = (sql) => {
     const start = hrtime.bigint();
     try {
-      console.log("Executing SQL:", sql);
       return exec(sql);
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-      if (durationMs > REPORT_SLOW_QUERIES_MS) {
-        console.log(`Execution completed in ${durationMs.toFixed(2)} ms`, {
+      if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+        logger.warn(SLOW_QUERY_MESSAGE, () => ({
+          durationMs,
           sql,
-        });
+        }));
       }
     }
   };
@@ -38,8 +42,10 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         return fn(...args);
       } finally {
         const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-        if (durationMs > REPORT_SLOW_QUERIES_MS) {
-          console.log(`Transaction completed in ${durationMs.toFixed(2)} ms`);
+        if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+          logger.warn("Slow transaction", () => ({
+            durationMs,
+          }));
         }
       }
     };
@@ -60,13 +66,11 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         } finally {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
-          if (durationMs > REPORT_SLOW_QUERIES_MS) {
-            console.log(
-              `Prepared statement run in ${durationMs.toFixed(2)} ms`,
-              {
-                sql,
-              }
-            );
+          if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+            logger.warn(SLOW_QUERY_MESSAGE, () => ({
+              durationMs,
+              sql,
+            }));
           }
         }
       };
@@ -79,13 +83,11 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
         } finally {
           const durationMs =
             Number(hrtime.bigint() - preparedStart) / 1_000_000;
-          if (durationMs > REPORT_SLOW_QUERIES_MS) {
-            console.log(
-              `Prepared statement raw in ${durationMs.toFixed(2)} ms`,
-              {
-                sql,
-              }
-            );
+          if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+            logger.warn(SLOW_QUERY_MESSAGE, () => ({
+              durationMs,
+              sql,
+            }));
           }
         }
       };
@@ -93,10 +95,11 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
       return prepared;
     } finally {
       const durationMs = Number(hrtime.bigint() - start) / 1_000_000;
-      if (durationMs > REPORT_SLOW_QUERIES_MS) {
-        console.log(`Prepared statement in ${durationMs.toFixed(2)} ms`, {
+      if (durationMs > SLOW_QUERY_TRESHOLD_MS) {
+        logger.warn(SLOW_QUERY_MESSAGE, () => ({
+          durationMs,
           sql,
-        });
+        }));
       }
     }
   }) as PrepareFn;
@@ -105,6 +108,9 @@ const proxyDatabase = (sqlite: Database.Database): Database.Database => {
 };
 
 export const createDb = (options: { fileName: string }) => {
+  if (process.env.VITEST) {
+    options.fileName = ":memory:";
+  }
   const { fileName } = options;
   let sqlite = new Database(fileName);
   sqlite = proxyDatabase(sqlite);

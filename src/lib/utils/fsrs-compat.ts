@@ -3,13 +3,17 @@ import { State } from "ts-fsrs";
 
 export const tsfsStateFromDb = (state: FlashcardSessionState): State => {
   switch (state) {
-    case "New":
+    case "New": {
       return State.New;
-    case "Learning":
+    }
+    case "Learning": {
       return State.Learning;
-    case "Review":
+    }
+    case "Review": {
       return State.Review;
-    case "Relearning":
+    }
+    case "Relearning": {
       return State.Relearning;
+    }
   }
 };

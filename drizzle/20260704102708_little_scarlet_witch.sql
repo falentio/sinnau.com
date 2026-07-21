@@ -1,0 +1,2 @@
+CREATE INDEX `ai_usage_log_ownerId_createdAt_idx` ON `ai_usage_log` (`owner_id`,`created_at`);--> statement-breakpoint
+CREATE UNIQUE INDEX `ai_usage_log_ownerId_featureKey_referenceId_unique` ON `ai_usage_log` (`owner_id`,`feature_key`,`reference_id`);

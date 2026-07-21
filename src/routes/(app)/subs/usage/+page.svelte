@@ -1,115 +1,174 @@
 <script lang="ts">
+  import StudySetPagination from "$lib/components/features/app/study-set-pagination.svelte";
+  import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
+  import AiLimitCard from "$lib/components/features/subs/ai-limit-card.svelte";
+  import OrderRow from "$lib/components/features/subs/order-row.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
-  import CardContent from "$lib/components/ui/card/card-content.svelte";
-  import CardDescription from "$lib/components/ui/card/card-description.svelte";
-  import CardFooter from "$lib/components/ui/card/card-footer.svelte";
-  import CardHeader from "$lib/components/ui/card/card-header.svelte";
-  import CardTitle from "$lib/components/ui/card/card-title.svelte";
-  import Card from "$lib/components/ui/card/card.svelte";
-  import Progress from "$lib/components/ui/progress/progress.svelte";
-  import Separator from "$lib/components/ui/separator/separator.svelte";
+  import {
+    PLAN_MONTHLY_PRICE,
+    PLAN_NAME,
+    PLAN_NAME_FALLBACK,
+  } from "$lib/schemas/plan.constant";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
 
-  const relativeTimeFormatter = new Intl.RelativeTimeFormat("id-ID", {
-    numeric: "auto",
-    style: "long",
+  import type { PageData } from "./$types";
+
+  type PlanKey = "LITE" | "PLUS" | "PREMIUM";
+  const planName: Record<PlanKey, string> = PLAN_NAME;
+  const planPrice: Record<PlanKey, number> = PLAN_MONTHLY_PRICE;
+
+  let { data }: { data: PageData } = $props();
+
+  const orders = $derived(
+    data.orders.map((o) => ({
+      ...o,
+      planName: planName[o.planKey] ?? PLAN_NAME_FALLBACK,
+    }))
+  );
+
+  const orderCountLabel = $derived.by(() => {
+    const { total } = data.pagination;
+    if (total === 0) {
+      return null;
+    }
+    const visible = data.orders.length;
+    if (visible < total) {
+      return `Menampilkan ${visible} dari ${total} pesanan`;
+    }
+    return `${total} pesanan`;
   });
-
-  const remainingPercentage = (remaining: number, limit: number) => {
-    if (limit <= 0) {
-      return 0;
-    }
-    return Math.max(0, Math.min(100, Math.round((remaining / limit) * 100)));
-  };
-
-  const formatTimeUntilReset = (resetAt: Date | string) => {
-    const remainingMs = new Date(resetAt).getTime() - Date.now();
-    const minute = 60 * 1000;
-    const hour = 60 * minute;
-    const day = 24 * hour;
-    const remaining = Math.max(remainingMs, 0);
-
-    if (remaining >= day) {
-      return relativeTimeFormatter.format(Math.ceil(remaining / day), "day");
-    }
-    if (remaining >= hour) {
-      return relativeTimeFormatter.format(Math.ceil(remaining / hour), "hour");
-    }
-    if (remaining >= minute) {
-      return relativeTimeFormatter.format(
-        Math.ceil(remaining / minute),
-        "minute"
-      );
-    }
-
-    return relativeTimeFormatter.format(0, "second");
-  };
-
-  const limitStatus = {
-    daily: {
-      limit: 10,
-      remaining: 7,
-      resetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    },
-    planKey: "FREE" as const,
-    weekly: {
-      limit: 70,
-      remaining: 50,
-      resetAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    },
-  };
-
-  const usageLimits = [
-    { key: "daily", label: "Harian", ...limitStatus.daily },
-    { key: "weekly", label: "Mingguan", ...limitStatus.weekly },
-  ];
 </script>
 
-<div class="my-3">
-  <h1 class="text-lg font-medium">Penggunaan subskripsi</h1>
-</div>
+<svelte:head>
+  <title>Paket aktif · Sinnau</title>
+</svelte:head>
 
-<Card>
-  <CardHeader>
-    <CardTitle>{limitStatus.planKey}</CardTitle>
-    <CardDescription>
-      {#if limitStatus.planKey === "FREE"}
-        Upgrade untuk mendapatkan kuota pembuatan konten yang lebih besar.
+<div class="mx-auto w-full max-w-3xl px-6 pt-10 md:pt-14">
+  <header class="flex flex-col gap-2 pb-10 md:pb-12">
+    <span
+      class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+    >
+      Paket aktif
+    </span>
+    <h1
+      class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
+    >
+      {#if data.activePlan}
+        {planName[data.activePlan.planKey]}
       {:else}
-        Pantau sisa kuota pembuatan konten dari paket aktif Anda.
+        Aktifkan akses AI-mu
       {/if}
-    </CardDescription>
-  </CardHeader>
-  <CardContent class="space-y-4">
-    {#each usageLimits as usage, index (usage.key)}
-      {@const remainingQuotaPercentage = remainingPercentage(
-        usage.remaining,
-        usage.limit
-      )}
-      {#if index > 0}
-        <Separator />
+    </h1>
+    <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+      {#if data.activePlan}
+        Kuota AI kamu saat ini. Reset tiap awal bulan sesuai tanggal aktivasi
+        paket.
+      {:else}
+        Aktifkan akses AI untuk mulai generate soal dan flashcard.
       {/if}
+    </p>
+  </header>
 
-      <div class="space-y-2">
-        <div class="flex items-center justify-between gap-4">
-          <p class="text-sm font-medium">{usage.label}</p>
-          <p class="text-right text-sm text-muted-foreground">
-            <span class="font-medium text-card-foreground"
-              >{remainingQuotaPercentage}%</span
-            >
-            • reset {formatTimeUntilReset(usage.resetAt)}
-          </p>
+  {#if data.activePlan}
+    <section class="flex flex-col gap-4 pb-12">
+      <div
+        class="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/50 px-4 py-3"
+      >
+        <div
+          class="flex size-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/20 dark:text-amber-300"
+        >
+          <HugeiconsIcon icon={CrownIcon} class="size-4" strokeWidth={1.75} />
         </div>
-        <Progress
-          value={remainingQuotaPercentage}
-          max={100}
-          aria-label={`${usage.label} ${remainingQuotaPercentage}% tersisa`}
-        />
+        <div class="flex flex-1 flex-col">
+          <span class="text-sm font-medium text-foreground">
+            {planName[data.activePlan.planKey]}
+          </span>
+          <span class="text-xs text-muted-foreground">
+            Paket diperpanjang — akses berlanjut
+          </span>
+        </div>
+        <Button href="/subs/plans" variant="default" size="sm">
+          Perpanjang
+        </Button>
       </div>
-    {/each}
-  </CardContent>
-  {#if limitStatus.planKey === "FREE"}
-    <CardFooter class="justify-end">
-      <Button href="/subs/pricing">Upgrade Paket</Button>
-    </CardFooter>
+
+      <AiLimitCard
+        plan={data.activePlan.planKey}
+        daily={data.activePlan.daily}
+        weekly={data.activePlan.weekly}
+        monthlyPrice={planPrice[data.activePlan.planKey]}
+      />
+    </section>
+  {:else}
+    <section class="pb-12">
+      <a
+        href="/subs/plans"
+        class="group/cta flex items-center gap-3 rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.08] via-card to-card px-4 py-4 ring-1 ring-amber-500/10 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-amber-500/40 active:scale-[0.99] md:py-5"
+      >
+        <div
+          class="flex size-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/20 dark:text-amber-300"
+        >
+          <HugeiconsIcon icon={CrownIcon} class="size-4" strokeWidth={1.75} />
+        </div>
+        <div class="flex flex-1 flex-col">
+          <span class="text-sm font-medium text-foreground">
+            Aktifkan akses AI-mu
+          </span>
+          <span class="text-xs text-muted-foreground">
+            Bayar sekali, aktif sampai durasi habis.
+          </span>
+        </div>
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          class="size-4 text-muted-foreground transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/cta:translate-x-0.5"
+        />
+      </a>
+    </section>
   {/if}
-</Card>
+
+  <section class="flex flex-col gap-4 border-t border-border/60 pt-10 pb-16">
+    <header class="flex flex-col gap-1">
+      <span
+        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+      >
+        Pesanan sebelumnya
+      </span>
+      <h2
+        class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-3xl"
+      >
+        Pesanan
+      </h2>
+      <p class="text-sm text-muted-foreground">
+        Pesanan yang sudah selesai — aktif, kedaluwarsa, atau dibatalkan.
+      </p>
+      {#if orderCountLabel}
+        <p
+          class="text-xs font-medium tracking-tight text-muted-foreground/80 tabular-nums"
+        >
+          {orderCountLabel}
+        </p>
+      {/if}
+    </header>
+
+    {#if data.pagination.total === 0}
+      <div
+        class="rounded-2xl border border-dashed border-border/60 bg-card/50 px-6 py-10 text-center text-sm text-muted-foreground"
+      >
+        Belum ada pesanan.
+      </div>
+    {:else}
+      <div
+        class="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_0_0_rgba(0,0,0,0.04)] ring-1 ring-foreground/[0.04]"
+      >
+        {#each orders as order (order.id)}
+          <OrderRow {order} />
+        {/each}
+      </div>
+      {#if data.pagination.totalPages > 1}
+        <div class="mt-2">
+          <StudySetPagination pagination={data.pagination} />
+        </div>
+      {/if}
+    {/if}
+  </section>
+</div>

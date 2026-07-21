@@ -1,54 +1,89 @@
 <script lang="ts">
   import { browser } from "$app/env";
+  import { onNavigate } from "$app/navigation";
   import { navigating } from "$app/state";
-  import { onMount, untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
 
-  const isNavigating = $derived(navigating.to !== null);
-  let progress = $state(0);
-
-  $effect(() => {
-    if (!isNavigating || !browser) {
+  const progressIds = $state([] as string[]);
+  const progresses = new Map<
+    string,
+    ReturnType<typeof createIncrementedNumber>
+  >();
+  const intervals = [] as ReturnType<typeof setInterval>[];
+  const createIncrementedNumber = () => {
+    let n = $state(0);
+    let done = $state(false);
+    let visible = $state(true);
+    const p = $derived(n / (n + 50));
+    const interval = setInterval(() => {
       untrack(() => {
-        progress = 0;
+        if (p > 90) {
+          n += 0.001;
+          return;
+        }
+        if (p > 80) {
+          n += 0.01;
+          return;
+        }
+        if (p > 70) {
+          n += 0.1;
+          return;
+        }
+        n += 0.9;
       });
+    }, 15);
+    intervals.push(interval);
+
+    return {
+      done: () => {
+        done = true;
+        setTimeout(() => {
+          visible = false;
+        }, 300);
+        clearInterval(interval);
+      },
+      getValue: () => {
+        if (done) {
+          return 100;
+        }
+        return p;
+      },
+      getVisible: () => visible,
+    };
+  };
+
+  onDestroy(() => {
+    for (const interval of intervals) {
+      clearInterval(interval);
+    }
+  });
+
+  onNavigate((nav) => {
+    if (!browser) {
       return;
     }
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-
-    const updateProgress = (initial: boolean) => {
-      untrack(() => {
-        if (!isNavigating || !browser) {
-          progress = 100;
-          return;
-        }
-        if (initial) {
-          progress = 1;
-        }
-        if (progress >= 100) {
-          progress = 1;
-          return;
-        }
-        const SPEED = 0.03;
-        progress = Math.max(1, progress);
-        progress += SPEED * 15 + (75 - progress) * SPEED;
-        timeout = setTimeout(updateProgress, 50, false);
-      });
-    };
-
-    updateProgress(true);
-
+    if (nav.to === null) {
+      return;
+    }
+    const id = Math.random().toString(36);
+    progresses.set(id, createIncrementedNumber());
+    progressIds.push(id);
+    console.log("start progress", id, $state.snapshot(progressIds));
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      progresses.get(id)?.done();
     };
   });
 </script>
 
 <div class="w-full h-0 relative">
-  <div
-    data-navigating={isNavigating ? "true" : "false"}
-    class="absolute top-0 left-0 h-1 z-100 bg-primary data-[navigating='true']:opacity-100 opacity-0 transition-all duration-300 ease-in-out"
-    style="width: {progress}%"
-  ></div>
+  {#each progressIds as id (id)}
+    {@const progress = progresses.get(id)}
+    {#if progress?.getVisible()}
+      <div
+        class="absolute top-0 left-0 h-0.5 z-100 bg-primary transition-all duration-300 ease-in-out"
+        style="width: {progress?.getValue()}%"
+      ></div>
+    {/if}
+  {/each}
 </div>

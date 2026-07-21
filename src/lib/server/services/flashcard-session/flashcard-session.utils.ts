@@ -114,7 +114,9 @@ const zeroFillDueIn7Days = () => {
 const forecastWithCounts = (counts: number[]) => {
   const base = zeroFillDueIn7Days();
   counts.forEach((c, i) => {
-    if (base[i]) base[i].count = c;
+    if (base[i]) {
+      base[i].count = c;
+    }
   });
   return base;
 };
@@ -135,6 +137,19 @@ const hubStubs = {
     recentReviews: [],
     session: makeSession(studySetId),
     totalFlashcards: 0,
+  }),
+  mixed: (studySetId: string): HubStub => ({
+    pendingCount: 3,
+    queue: {
+      dueIn7Days: forecastWithCounts([1, 0, 2, 0, 0, 3, 0]),
+      dueToday: [makeQueueItem(1, "due-today", null)],
+      new: [makeQueueItem(2, "new", null)],
+      newLimitReached: true,
+      overdue: [makeQueueItem(3, "overdue", null)],
+    },
+    recentReviews: [makeReview(1, "Good")],
+    session: makeSession(studySetId),
+    totalFlashcards: 12,
   }),
   ready: (studySetId: string): HubStub => {
     const state = {
@@ -169,18 +184,18 @@ const hubStubs = {
         overdue: [
           makeQueueItem(3, "overdue", {
             ...state,
-            flashcardId: padId(FLASHCARD_ID_PREFIX, 3),
             due: new Date(Date.now() - 2 * 24 * 60 * 60_000),
+            flashcardId: padId(FLASHCARD_ID_PREFIX, 3),
           }),
           makeQueueItem(4, "overdue", {
             ...state,
-            flashcardId: padId(FLASHCARD_ID_PREFIX, 4),
             due: new Date(Date.now() - 3 * 24 * 60 * 60_000),
+            flashcardId: padId(FLASHCARD_ID_PREFIX, 4),
           }),
           makeQueueItem(5, "overdue", {
             ...state,
-            flashcardId: padId(FLASHCARD_ID_PREFIX, 5),
             due: new Date(Date.now() - 5 * 24 * 60 * 60_000),
+            flashcardId: padId(FLASHCARD_ID_PREFIX, 5),
           }),
         ],
       },
@@ -194,19 +209,6 @@ const hubStubs = {
       totalFlashcards: 42,
     };
   },
-  mixed: (studySetId: string): HubStub => ({
-    pendingCount: 3,
-    queue: {
-      dueIn7Days: forecastWithCounts([1, 0, 2, 0, 0, 3, 0]),
-      dueToday: [makeQueueItem(1, "due-today", null)],
-      new: [makeQueueItem(2, "new", null)],
-      newLimitReached: true,
-      overdue: [makeQueueItem(3, "overdue", null)],
-    },
-    recentReviews: [makeReview(1, "Good")],
-    session: makeSession(studySetId),
-    totalFlashcards: 12,
-  }),
 } as const;
 
 const reviewStubs = {
@@ -266,8 +268,12 @@ export const getHubStub = (
   filter: string | null,
   studySetId: string
 ): HubStub | null => {
-  if (filter === null) return null;
-  if (!isHubStubFilter(filter)) return null;
+  if (filter === null) {
+    return null;
+  }
+  if (!isHubStubFilter(filter)) {
+    return null;
+  }
   return hubStubs[filter](studySetId);
 };
 
@@ -275,8 +281,12 @@ export const getReviewStub = (
   filter: string | null,
   studySetId: string
 ): ReviewStub | null => {
-  if (filter === null) return null;
-  if (!isReviewStubFilter(filter)) return null;
+  if (filter === null) {
+    return null;
+  }
+  if (!isReviewStubFilter(filter)) {
+    return null;
+  }
   return reviewStubs[filter](studySetId);
 };
 
@@ -284,8 +294,12 @@ export const getResultsStub = (
   filter: string | null,
   studySetId: string
 ): ResultsStub | null => {
-  if (filter === null) return null;
-  if (!isResultsStubFilter(filter)) return null;
+  if (filter === null) {
+    return null;
+  }
+  if (!isResultsStubFilter(filter)) {
+    return null;
+  }
   return resultsStubs[filter](studySetId);
 };
 

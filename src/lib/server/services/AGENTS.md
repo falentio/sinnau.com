@@ -205,7 +205,7 @@ export class <Domain>Guard {
 
 Rules:
 
-- All `require*` methods take `string | null | undefined` and throw `UNAUTHORIZED` when falsy. They return the narrowed `string` so the service can use it without a re-check.
+- All `require*` methods take `string | null | undefined` and throw `UNAUTHORIZED` when falsy (or `FORBIDDEN` when the check is role-specific, e.g. `requireAdmin`). They return the narrowed `string` so the service can use it without a re-check.
 - `assert*OrForbidden` and `assert*OrNotFound` return the fetched row. The service reuses it instead of refetching.
 - Visibility checks return `NOT_FOUND` (not `FORBIDDEN`) when the caller is not allowed to see the row — prevents leaking existence.
 - `canView(set, userId)` is exposed as a plain boolean for places (typically the repository) that need to filter without throwing.
@@ -409,8 +409,8 @@ Rules:
 
 ## Errors
 
-- `UNAUTHORIZED` — missing auth (raised by the guard's `require*`).
-- `FORBIDDEN` — authed but not the owner of the resource (raised by `assertOwnerOrForbidden`).
+- `UNAUTHORIZED` — missing auth (raised by the guard's `require*` for identity checks).
+- `FORBIDDEN` — authed but not authorized for the role/resource (raised by `require*` for role checks, or by `assertOwnerOrForbidden`).
 - `NOT_FOUND` — row missing or not visible (raised by `assertVisible*OrNotFound`, or by the service when a repo mutation returns `null`/`false`).
 - Domain-specific codes (`<DOMAIN>_SLUG_CONFLICT`, etc.) — declared in each command's `ERRORS` map and raised by the service when a known business invariant fails.
 

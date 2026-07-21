@@ -1,5 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
+import { dev } from "$app/env";
+
 // oxlint-disable-next-line typescript/no-namespace
 export declare namespace WideEventStorage {
   export type WideEventData = Record<string, unknown>;
@@ -58,8 +60,26 @@ export const pushToNestedObject = (
   }
 };
 
+const toSortedObject = (
+  obj: Record<string, unknown>
+): Record<string, unknown> => {
+  const sortedKeys = Object.keys(obj).toSorted();
+  const sortedObj: Record<string, unknown> = {};
+  for (const key of sortedKeys) {
+    const value = obj[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      sortedObj[key] = toSortedObject(value as Record<string, unknown>);
+      continue;
+    }
+
+    sortedObj[key] = value;
+  }
+  return sortedObj;
+};
+
 export class WideEventStorage {
-  private storage = new AsyncLocalStorage<WideEventStorage.WideEventData>();
+  private readonly storage =
+    new AsyncLocalStorage<WideEventStorage.WideEventData>();
 
   // oxlint-disable-next-line promise/prefer-await-to-callbacks
   run<T>(data: WideEventStorage.WideEventData, callback: () => T): T {
@@ -85,7 +105,12 @@ export class WideEventStorage {
   }
 
   get() {
-    return this.storage.getStore() ?? {};
+    const value = this.storage.getStore() ?? {};
+    if (!dev) {
+      return value;
+    }
+
+    return toSortedObject(value);
   }
 }
 

@@ -14,9 +14,9 @@
 
   const ratingAccent: Record<FlashcardSessionRating, string> = {
     Again: "bg-[--color-destructive]/10 text-[--color-destructive]",
-    Hard: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    Good: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     Easy: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+    Good: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    Hard: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   };
 </script>
 

@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import { env } from "$lib/server/infras/env";
 import { LiteparseClient } from "@falentio/liteparse-client";
 
 export const liteparseClient = new LiteparseClient({

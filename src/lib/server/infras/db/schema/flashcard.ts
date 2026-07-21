@@ -18,10 +18,10 @@ export const flashcard = sqliteTable(
     front: text("front").notNull(),
     hint: text("hint"),
     id: text("id").primaryKey(),
+    importance: integer("importance").notNull().default(0),
     isAiGenerated: integer("is_ai_generated", { mode: "boolean" })
       .notNull()
       .default(false),
-    importance: integer("importance").notNull().default(0),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

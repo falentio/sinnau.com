@@ -10,22 +10,22 @@
 
   const useCases = [
     {
-      body: "Unggah PDF catatan kuliah setiap minggu. AI membangun kartu untuk tiap topik. FSRS menjadwalkan ulangan harian berdasarkan konsep yang mulai Anda lupa.",
+      body: "Unggah PDF tiap minggu, dapat kartu belajar untuk setiap topik. Jadwal ulangan otomatis — gak perlu pusing mikir 'yang mana yang harus diulang?'",
       icon: IdeaIcon,
-      role: "Mahasiswa semester awal",
-      title: "Membangun kebiasaan belajar harian.",
+      role: "Mahasiswa tahun pertama",
+      title: "Bangun kebiasaan belajar dari minggu pertama.",
     },
     {
-      body: "Unggah PDF bab dan slide per sistem. AI bikin kartu berlabel sesuai topik. Kuis adaptif fokus ke konsep yang sering muncul di ujian blok.",
+      body: "Unggah PDF bab per sistem. AI membuat kartu berlabel sesuai topik. Kuis fokus ke konsep yang sering muncul di ujian blok.",
       icon: Book03Icon,
-      role: "Mahasiswa kedokteran",
-      title: "Mempersiapkan ujian blok.",
+      role: "Koas &amp; pre-klinik",
+      title: "Hadapi ujian blok tanpa panik.",
     },
     {
-      body: "Unggah paper rujukan, draft bab, atau catatan bacaan. Sistem mengekstrak konsep utama dan menjadwalkannya untuk review jangka panjang.",
+      body: "Unggah paper rujukan, draft bab, atau catatan bacaan. Sistem mengekstrak konsep utama dan menjadwalkannya pas sebelum Anda lupa.",
       icon: QuillWrite01Icon,
-      role: "Peneliti pascasarjana",
-      title: "Menjaga literatur tetap segar.",
+      role: "S2/S3 &amp; asisten riset",
+      title: "Ingat isi paper yang Anda baca bulan lalu.",
     },
   ] as const;
 </script>
@@ -38,13 +38,13 @@
     <h2
       class="font-display text-[32px] leading-[1.04] tracking-[-0.03em] sm:text-[42px] text-balance"
     >
-      Tiga cara mahasiswa<br />pakai sinnau.
+      Kamu yang mana?<br />Tiga cara mahasiswa taklukkan ujian dengan sinnau.
     </h2>
     <p
       class="mt-4 max-w-[42ch] text-[14px] leading-relaxed text-[var(--landing-muted)] text-pretty"
     >
-      Alur belajar yang berbeda, sistem yang sama. Pilih yang paling cocok
-      dengan cara Anda kuliah.
+      Satu akun, tiga pendekatan. Pilih alur yang sesuai targetmu — entah IPK
+      cumlaude atau publikasi internasional.
     </p>
   </div>
 
@@ -76,5 +76,14 @@
         </div>
       </article>
     {/each}
+  </div>
+
+  <div class="mt-12 text-center">
+    <a
+      href="/login/"
+      class="inline-flex items-center gap-1.5 text-[14px] font-medium text-[var(--landing-accent)] hover:underline"
+    >
+      Sudah tahu cara belajarmu? Mulai gratis — siap pakai dalam 2 menit. &rarr;
+    </a>
   </div>
 </section>

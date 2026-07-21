@@ -1,10 +1,14 @@
 import { router } from "$lib/server/api";
+import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import { SimpleCsrfProtectionHandlerPlugin } from "@orpc/server/plugins";
 
 import type { RequestHandler } from "./$types";
 
 const handle: RequestHandler = async ({ request, locals }) => {
-  const handler = new RPCHandler(router);
+  const handler = new RPCHandler(router, {
+    plugins: [new SimpleCsrfProtectionHandlerPlugin()],
+  });
   const { response } = await handler.handle(request, {
     context: {
       headers: request.headers,

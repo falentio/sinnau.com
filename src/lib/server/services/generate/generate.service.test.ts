@@ -1,7 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
 
-import type { Generate } from "../../infras/db/schema/generate.ts";
 import type { GenerateGuard } from "./generate.guard.ts";
 import type { ChunkSummary } from "./generate.repository.ts";
 import { GenerateService } from "./generate.service.ts";
@@ -12,6 +11,18 @@ import {
   createMockPipeline,
   createMockRepository,
 } from "./generate.testing";
+
+vi.mock(import("$lib/server/infras/generate/infer-name"), () => ({
+  inferStudyNameAndDescription:
+    vi.fn<() => Promise<{ description: string; name: string }>>(),
+}));
+
+const getInferMock = async () => {
+  const mod = await import("$lib/server/infras/generate/infer-name");
+  const mock = vi.mocked(mod.inferStudyNameAndDescription);
+  mock.mockReset();
+  return mock;
+};
 
 const throwUnauthorized = (): never => {
   throw new ORPCError("UNAUTHORIZED", {
@@ -32,7 +43,7 @@ const setupService = () => {
         ...row,
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as Generate)
+      })
   );
   repo.updateGenerateStatus.mockResolvedValue(null);
   repo.findGenerateById.mockResolvedValue(null);
@@ -209,8 +220,198 @@ describe.concurrent(GenerateService, () => {
           isInputTruncated: true,
         })
       );
+
+      await vi.waitFor(() => {
+        expect(pipeline.runLLM).toHaveBeenCalledWith(
+          expect.objectContaining({
+            pdfText: longText.slice(0, 500_000),
+          })
+        );
+      });
+    });
+
+    it("passes the full (untruncated) text to the pipeline when under the limit", async ({
+      expect,
+    }) => {
+      const { pipeline, service } = setupService();
+      const shortText = "a".repeat(100);
+      pipeline.parseLiteparse.mockResolvedValue({ text: shortText });
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        { description: "desc", pdf, title: "Set" },
+        "user-1"
+      );
+
+      await vi.waitFor(() => {
+        expect(pipeline.runLLM).toHaveBeenCalledWith(
+          expect.objectContaining({
+            pdfText: shortText,
+          })
+        );
+      });
     });
   });
+
+  describe(
+    "study set name inference (title omitted)",
+    { concurrent: false },
+    () => {
+      it("does not call inference when title is provided", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        const pdf = new File(["fake"], "test.pdf");
+
+        await service.createGenerate(
+          {
+            description: "desc",
+            pdf,
+            title: "My Study Set",
+            visibility: "PUBLIC",
+          },
+          "user-1"
+        );
+
+        expect(inferMock).not.toHaveBeenCalled();
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          {
+            description: "desc",
+            files: ["test.pdf"],
+            title: "My Study Set",
+            visibility: "PUBLIC",
+          },
+          "user-1"
+        );
+      });
+
+      it("infers name and description and uses them when title is omitted", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        inferMock.mockResolvedValueOnce({
+          description: "Core ideas of photosynthesis for high-school students.",
+          name: "Photosynthesis Basics",
+        });
+        const pdf = new File(["fake"], "bio.pdf");
+
+        await service.createGenerate({ pdf }, "user-1");
+
+        expect(inferMock).toHaveBeenCalledExactlyOnceWith({
+          filename: "bio.pdf",
+          text: "parsed text",
+        });
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          {
+            description:
+              "Core ideas of photosynthesis for high-school students.",
+            files: ["bio.pdf"],
+            title: "Photosynthesis Basics",
+            visibility: undefined,
+          },
+          "user-1"
+        );
+      });
+
+      it("keeps the user-provided description when title is omitted", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        inferMock.mockResolvedValueOnce({
+          description: "should not be used",
+          name: "Cell Biology",
+        });
+        const pdf = new File(["fake"], "cell.pdf");
+
+        await service.createGenerate(
+          { description: "my own desc", pdf },
+          "user-1"
+        );
+
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          expect.objectContaining({
+            description: "my own desc",
+            title: "Cell Biology",
+          }),
+          "user-1"
+        );
+      });
+
+      it("falls back to the sanitized filename when inference throws", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        inferMock.mockRejectedValueOnce(new Error("boom"));
+        const pdf = new File(["fake"], "Chapter 3 - Biology Notes.pdf");
+
+        await service.createGenerate({ pdf }, "user-1");
+
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Biology Notes" }),
+          "user-1"
+        );
+      });
+
+      it("falls back to the sanitized filename when inferred name is too short", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        inferMock.mockResolvedValueOnce({
+          description: "desc",
+          name: "abc",
+        });
+        const pdf = new File(["fake"], "Chapter 1 - Mitosis.pdf");
+
+        await service.createGenerate({ pdf }, "user-1");
+
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Mitosis" }),
+          "user-1"
+        );
+      });
+
+      it("falls back to 'Untitled Study Set' when the filename is also invalid", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        inferMock.mockRejectedValueOnce(new Error("boom"));
+        const pdf = new File(["fake"], "a.pdf");
+
+        await service.createGenerate({ pdf }, "user-1");
+
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Untitled Study Set" }),
+          "user-1"
+        );
+      });
+
+      it("treats an empty string title as omitted and infers", async ({
+        expect,
+      }) => {
+        const { service, studySetService } = setupService();
+        const inferMock = await getInferMock();
+        inferMock.mockResolvedValueOnce({
+          description: "Inferred description",
+          name: "Inferred Title",
+        });
+        const pdf = new File(["fake"], "bio.pdf");
+
+        await service.createGenerate({ pdf, title: "" }, "user-1");
+
+        expect(inferMock).toHaveBeenCalled();
+        expect(studySetService.createStudySet).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Inferred Title" }),
+          "user-1"
+        );
+      });
+    }
+  );
 
   describe("checkGenerateContent", () => {
     it("throws NOT_FOUND when generate row does not exist", async ({

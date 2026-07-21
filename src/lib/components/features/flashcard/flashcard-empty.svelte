@@ -40,8 +40,8 @@
     </EmptyTitle>
     <EmptyDescription>
       {isChapterFiltered
-        ? "Chapter ini belum memiliki flashcard. Buat satu untuk mulai menghafal."
-        : "Kamu belum memiliki flashcard untuk modul belajar ini. Buat flashcard pertamamu untuk mulai menghafal."}
+        ? "Chapter ini belum memiliki flashcard. Buat flashcard untuk mulai menghafal."
+        : "Kamu belum memiliki flashcard untuk modul belajar ini. Buat flashcard untuk mulai menghafal."}
     </EmptyDescription>
   </EmptyHeader>
   <EmptyContent>

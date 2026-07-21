@@ -1,10 +1,14 @@
+import { getLogger } from "@logtape/logtape";
+
+const logger = getLogger(["sinnau.com", "background", "util"]);
+
 const pending = new Set<Promise<unknown>>();
 let sizeWarned = false;
-const SIZE_WARN_THRESHOLD = 1_000;
+const SIZE_WARN_THRESHOLD = 1000;
 
 export const waitUntil = (promise: Promise<unknown>): void => {
-  const tracked = promise.catch((reason) => {
-    console.error("Background job failed:", reason);
+  const tracked = promise.catch((error: unknown) => {
+    logger.error("Background job failed: {error}", { error });
   });
   pending.add(tracked);
   tracked.finally(() => {
@@ -12,15 +16,16 @@ export const waitUntil = (promise: Promise<unknown>): void => {
   });
   if (!sizeWarned && pending.size > SIZE_WARN_THRESHOLD) {
     sizeWarned = true;
-    console.warn(
-      `background-jobs: pending set exceeded ${SIZE_WARN_THRESHOLD} — ensure waitForAll() is called during shutdown`
+    logger.warn(
+      "background-jobs: pending set exceeded {threshold} — ensure waitForAll() is called during shutdown",
+      { threshold: SIZE_WARN_THRESHOLD }
     );
   }
 };
 
 export const waitForAll = async (): Promise<void> => {
   sizeWarned = false;
-  const batch = Array.from(pending);
+  const batch = [...pending];
   pending.clear();
   if (batch.length === 0) {
     return;

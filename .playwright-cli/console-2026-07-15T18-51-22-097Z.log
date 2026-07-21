@@ -1,0 +1,10 @@
+[     198ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496:0
+[     199ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/sign-up/:0
+[     199ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://stagging.sinnau.com/sign-up/:0
+[   46911ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/rpc/studySet/list:0
+[   70787ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/api/auth/admin/list-users:0
+[   77564ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://stagging.sinnau.com/rpc/plan/admin/grantPlan:0
+[   85871ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://stagging.sinnau.com/api/auth/admin/list-users:0
+[   89414ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://stagging.sinnau.com/api/auth/api-key/create:0
+[  123433ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/api-key/delete:0
+[  125177ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://stagging.sinnau.com/api/auth/api-key/get?id=someOtherUserId:0

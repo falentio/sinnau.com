@@ -20,7 +20,7 @@
 </script>
 
 <div
-  class="sticky bottom-0 z-50 hidden justify-center pb-5 pt-3 group-has-data-[showbottombar=true]/app:flex"
+  class="sticky bottom-0 z-50 hidden justify-center pb-5 pt-3 group-has-data-[showbottombar=true]/app:flex md:!hidden"
 >
   <nav
     class="flex max-w-[calc(100%-2rem)] *:flex-1 items-center gap-1 overflow-x-auto rounded-full border border-border/50 bg-popover/90 p-1.5 text-popover-foreground shadow-[0_8px_32px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl"
@@ -65,7 +65,7 @@
     </Button>
 
     <Button
-      href="/subs/usage/"
+      href="/subs/plans/"
       variant={isPremiumActive ? "secondary" : "ghost"}
       class="flex h-auto min-w-[3.5rem] flex-col gap-0.5 rounded-full px-3 py-2 text-[10px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.96]"
       aria-current={isPremiumActive ? "page" : undefined}

@@ -8,10 +8,12 @@ export type ParseLiteparseFn = (input: {
 }) => Promise<{ text: string }>;
 
 export type RunLLMFn = (input: {
+  isInputTruncated?: boolean;
   pdfText: string;
   languageStyle: string;
   extractionType: string;
   storage: GenerationStorage;
+  generateId: string;
 }) => Promise<{ totalChunkCount: number; successCount: number }>;
 
 export type FinalizeTransactionFn = (input: {

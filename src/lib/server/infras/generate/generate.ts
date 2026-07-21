@@ -1,11 +1,25 @@
 import { chunkContent } from "$lib/server/infras/generate/chunk";
 import { valibotSchema } from "@ai-sdk/valibot";
+import { getLogger } from "@logtape/logtape";
 import { generateText, stepCountIs, tool } from "ai";
 import type { LanguageModel, LanguageModelUsage, ModelMessage } from "ai";
 import * as v from "valibot";
 
 import { composeSystemPrompt } from "./language-style";
 import type { LanguageStyleId } from "./language-style";
+
+const logger = getLogger(["sinnau.com", "generate", "infra"]);
+
+const modelMeta = (
+  model: LanguageModel
+): { modelId: string; provider: string } => {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- LanguageModel is branded; read meta defensively
+  const m = model as Record<string, unknown>;
+  return {
+    modelId: typeof m.modelId === "string" ? m.modelId : "unknown",
+    provider: typeof m.provider === "string" ? m.provider : "unknown",
+  };
+};
 
 export const ChapterSchema = v.object({
   slug: v.pipe(
@@ -109,8 +123,7 @@ const groupChunk = (chunks: string[], groupSize: number): GroupedChunk[][] => {
 const siblingChunkMessage = (
   heading: string,
   intro: string,
-  content: Contents,
-  allChapterSlugs: string[] = []
+  content: Contents
 ) => {
   const message = [] as string[];
   // oxlint-disable-next-line unicorn/no-immediate-mutation -- improve readability by separating message construction into multiple lines
@@ -150,6 +163,16 @@ const siblingChunkMessage = (
   if (content.flashcard.length === 0) {
     message.push("No flashcards generated yet.");
   }
+  return {
+    content: message.join("\n"),
+    role: "user",
+  } as const;
+};
+
+export const allChaptersMessage = (allChapterSlugs: string[]) => {
+  const message = [] as string[];
+  // oxlint-disable-next-line unicorn/no-immediate-mutation
+  message.push("# All Chapters");
 
   message.push("");
   message.push("# All Chapters");
@@ -164,32 +187,25 @@ const siblingChunkMessage = (
   if (allChapterSlugs.length === 0) {
     message.push("No chapters generated yet.");
   }
+
   return {
     content: message.join("\n"),
     role: "user",
   } as const;
 };
 
-export const previousContentMessage = (
-  content: Contents,
-  allChapterSlugs: string[] = []
-) =>
+export const previousContentMessage = (content: Contents) =>
   siblingChunkMessage(
     "Previous content",
     "This is the content that previous chunk has generated. Do not add same content again if it only rephrase.",
-    content,
-    allChapterSlugs
+    content
   );
 
-export const nextContentMessage = (
-  content: Contents,
-  allChapterSlugs: string[] = []
-) =>
+export const nextContentMessage = (content: Contents) =>
   siblingChunkMessage(
     "Next chunk content",
     "This is the content that the next chunk has generated. Do not add same content again if it only rephrase.",
-    content,
-    allChapterSlugs
+    content
   );
 
 const currentChunkMessage = (currentChunk: string) =>
@@ -321,6 +337,7 @@ export interface GenerationStorage {
 }
 
 export interface GenerateDeps {
+  readonly generateId: string;
   readonly languageModel: LanguageModel;
   readonly storage: GenerationStorage;
   readonly maxSteps: number;
@@ -329,9 +346,11 @@ export interface GenerateDeps {
 
 export interface GenerateOptions {
   content: string;
+  generateId: string;
   chunkSize?: number;
   groupSize?: number;
   extractionType?: ExtractionType;
+  isInputTruncated?: boolean;
   languageModel: LanguageModel;
   storage: GenerationStorage;
   languageStyle?: LanguageStyleId;
@@ -386,15 +405,18 @@ export const buildSiblingMessages = (
   index: number,
   chunks: readonly SuccessRecord[]
 ): ModelMessage[] => {
-  const all = collectChapterSlugs(chunks);
   const messages: ModelMessage[] = [];
+  const all = collectChapterSlugs(chunks);
+  if (all.length > 0) {
+    messages.push(allChaptersMessage(all));
+  }
   const prev = chunks.find((c) => c.index === index - 1);
   if (prev) {
-    messages.push(previousContentMessage(prev.content, all));
+    messages.push(previousContentMessage(prev.content));
   }
   const next = chunks.find((c) => c.index === index + 1);
   if (next) {
-    messages.push(nextContentMessage(next.content, all));
+    messages.push(nextContentMessage(next.content));
   }
   return messages;
 };
@@ -457,6 +479,16 @@ export const summarizeResults = (
     stepCount += chunk.stepCount;
   }
 
+  content.chapter = content.chapter.filter((chapter) => {
+    const hasFlashcard = content.flashcard.some(
+      (flashcard) => flashcard.chapterSlug === chapter.slug
+    );
+    const hasQuiz = content.quiz.some(
+      (quiz) => quiz.chapterSlug === chapter.slug
+    );
+    return hasFlashcard || hasQuiz;
+  });
+
   return { content, stepCount, tokenUsage };
 };
 
@@ -473,6 +505,12 @@ export const processChunk = async (opts: {
   chunk: GroupedChunk;
   deps: GenerateDeps;
 }): Promise<ChunkRecord> => {
+  const { generateId } = opts.deps;
+  const chunkStart = performance.now();
+  logger.info("Processing chunk", () => ({
+    generateId,
+    index: opts.chunk.index,
+  }));
   try {
     const records = await opts.deps.storage.loadChunkResults();
     const successes = records.filter(
@@ -491,13 +529,36 @@ export const processChunk = async (opts: {
       temperature: 0.2,
       tools: createTool(sink),
     });
-    return buildSuccessRecord({
+    const record = buildSuccessRecord({
       content: sink,
       index: opts.chunk.index,
       stepCount: result.steps.length,
       usage: result.totalUsage,
     });
+    logger.info("Chunk processed", () => ({
+      durationMs: Math.round(performance.now() - chunkStart),
+      generateId,
+      index: record.index,
+      stepCount: record.stepCount,
+      tokens: record.tokenUsage,
+    }));
+    return record;
   } catch (error) {
+    const err =
+      error instanceof Error
+        ? { message: error.message, name: error.name, stack: error.stack }
+        : { message: String(error), name: "Error", stack: undefined };
+    logger.info("Chunk failed", () => ({
+      durationMs: Math.round(performance.now() - chunkStart),
+      error: { message: err.message, name: err.name },
+      generateId,
+      index: opts.chunk.index,
+    }));
+    logger.debug("Chunk failed (stack)", () => ({
+      generateId,
+      index: opts.chunk.index,
+      stack: err.stack,
+    }));
     return toFailureRecord(opts.chunk.index, error);
   }
 };
@@ -511,12 +572,20 @@ export const processChunkGroup = async (opts: {
     const records = await opts.deps.storage.loadChunkResults();
     const isProcessed = records.find((r) => r.index === chunk.index);
     if (isProcessed) {
+      logger.debug("Skipping already-processed chunk", () => ({
+        generateId: opts.deps.generateId,
+        index: chunk.index,
+      }));
       continue;
     }
     const successes = records.filter(
       (r): r is SuccessRecord => r.kind === "success"
     );
     if (sumInputTokens(successes) >= opts.maxTokens) {
+      logger.debug("Token limit reached, stopping group", () => ({
+        generateId: opts.deps.generateId,
+        maxTokens: opts.maxTokens,
+      }));
       break;
     }
     const record = await processChunk({ chunk, deps: opts.deps });
@@ -524,15 +593,21 @@ export const processChunkGroup = async (opts: {
   }
 };
 
+const getDefaultChunkSize = (contentLength: number): number => {
+  const n = Math.floor(contentLength / 10_000);
+  return 11_000 + n * 188;
+};
+
 export const generate = async (
   opts: GenerateOptions
 ): Promise<GenerateResult> => {
-  const chunkSize = opts.chunkSize ?? 13_000;
+  const chunkSize = opts.chunkSize ?? getDefaultChunkSize(opts.content.length);
   const groupSize = opts.groupSize ?? 3;
   const maxSteps = getStep(opts.extractionType ?? "normal");
   const maxTokens = getMaxTokens(maxSteps);
 
   const deps: GenerateDeps = {
+    generateId: opts.generateId,
     languageModel: opts.languageModel,
     maxSteps,
     storage: opts.storage,
@@ -547,6 +622,23 @@ export const generate = async (
   if (groups.length === 0) {
     throw new Error("No content to generate");
   }
+
+  logger.info("Generation run started", () => ({
+    chunkSize,
+    contentLength: opts.content.length,
+    extractionType: opts.extractionType ?? "normal",
+    generateId: opts.generateId,
+    groupSize,
+    isInputTruncated: opts.isInputTruncated ?? false,
+    languageStyle: opts.languageStyle ?? "student-friendly",
+    maxSteps,
+    maxTokens,
+    modelId: modelMeta(opts.languageModel).modelId,
+    provider: modelMeta(opts.languageModel).provider,
+    totalChunks,
+  }));
+
+  const runStart = performance.now();
 
   const [firstGroup, ...restGroups] = groups;
   if (firstGroup) {
@@ -571,10 +663,42 @@ export const generate = async (
     (r): r is FailureRecord => r.kind === "failure"
   );
 
+  const isTokenLimitReached = sumInputTokens(successes) >= maxTokens;
+  const durationMs = Math.round(performance.now() - runStart);
+
+  const inputSide = summary.tokenUsage.input + summary.tokenUsage.cacheRead;
+  const cacheHitRatio =
+    inputSide > 0
+      ? Math.round((100 * summary.tokenUsage.cacheRead) / inputSide)
+      : 0;
+
+  logger.info("Generation run finished", () => ({
+    cacheHitRatio,
+    contentLength: opts.content.length,
+    durationMs,
+    failedChunks: failedChunks.map((f) => f.index),
+    flashcardCount: summary.content.flashcard.length,
+    generateId: opts.generateId,
+    isTokenLimitReached,
+    processedChunks: records.length,
+    quizCount: summary.content.quiz.length,
+    stepCount: summary.stepCount,
+    tokens: summary.tokenUsage,
+    totalChunks,
+  }));
+
+  if (isTokenLimitReached) {
+    logger.warn("Generation token limit reached", () => ({
+      generateId: opts.generateId,
+      maxTokens,
+      totalChunks,
+    }));
+  }
+
   return {
     ...summary,
     failedChunks,
-    isTokenLimitReached: sumInputTokens(successes) >= maxTokens,
+    isTokenLimitReached,
     processedChunks: records.length,
     totalChunks,
   };

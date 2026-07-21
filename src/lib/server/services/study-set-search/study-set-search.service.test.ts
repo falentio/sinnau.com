@@ -20,7 +20,7 @@ const setupService = () => {
   const service = new StudySetSearchService(
     repo,
     // oxlint-disable-next-line no-unsafe-type-assertion
-    guard as unknown as StudySetSearchGuard
+    guard
   );
   return { guard, repo, service };
 };
@@ -63,7 +63,6 @@ describe.concurrent(StudySetSearchService, () => {
       {
         description: null,
         id: "sts_1",
-        ownerId: "usr_1",
         slug: "bio-101",
         title: "Biology 101",
       },
@@ -76,7 +75,7 @@ describe.concurrent(StudySetSearchService, () => {
     const service = new StudySetSearchService(
       repo,
       // oxlint-disable-next-line no-unsafe-type-assertion
-      guard as unknown as StudySetSearchGuard
+      guard
     );
 
     const result = await service.search({ query: "biology" }, "user-1");

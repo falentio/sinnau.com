@@ -22,7 +22,9 @@ export const formatRelativeTime = (
   nowMs: number = Date.now()
 ): string => {
   const diff = nowMs - timestampMs;
-  if (diff < MINUTE_MS) return "Baru saja";
+  if (diff < MINUTE_MS) {
+    return "Baru saja";
+  }
   if (diff < HOUR_MS) {
     const minutes = Math.floor(diff / MINUTE_MS);
     return `${minutes} menit lalu`;
@@ -31,7 +33,9 @@ export const formatRelativeTime = (
     const hours = Math.floor(diff / HOUR_MS);
     return `${hours} jam lalu`;
   }
-  if (diff < 2 * DAY_MS) return "Kemarin";
+  if (diff < 2 * DAY_MS) {
+    return "Kemarin";
+  }
 
   const date = new Date(timestampMs);
   const now = new Date(nowMs);
@@ -54,14 +58,18 @@ export const ratingLabel = (
   rating: "Again" | "Hard" | "Good" | "Easy"
 ): "Lupa" | "Sulit" | "Cukup" | "Mudah" => {
   switch (rating) {
-    case "Again":
+    case "Again": {
       return "Lupa";
-    case "Hard":
+    }
+    case "Hard": {
       return "Sulit";
-    case "Good":
+    }
+    case "Good": {
       return "Cukup";
-    case "Easy":
+    }
+    case "Easy": {
       return "Mudah";
+    }
   }
 };
 
@@ -69,14 +77,18 @@ export const stateLabel = (
   state: "New" | "Learning" | "Review" | "Relearning"
 ): "Baru" | "Belajar" | "Review" | "Ulang" => {
   switch (state) {
-    case "New":
+    case "New": {
       return "Baru";
-    case "Learning":
+    }
+    case "Learning": {
       return "Belajar";
-    case "Review":
+    }
+    case "Review": {
       return "Review";
-    case "Relearning":
+    }
+    case "Relearning": {
       return "Ulang";
+    }
   }
 };
 
@@ -90,9 +102,13 @@ export const formatInterval = (ms: number): string => {
     return `${hours} jam`;
   }
   const days = Math.round(ms / DAY_MS);
-  if (days < 30) return `${days} hari`;
+  if (days < 30) {
+    return `${days} hari`;
+  }
   const months = Math.round(days / 30);
-  if (months < 12) return `${months} bulan`;
+  if (months < 12) {
+    return `${months} bulan`;
+  }
   const years = (days / 365).toFixed(1);
   return `${years} tahun`;
 };

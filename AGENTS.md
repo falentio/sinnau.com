@@ -68,6 +68,10 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 always run `pnpm run format`, `pnpm run lint:agent`, and `pnpm run check` before finalize your tasks
 
+## Fixes
+
+Use quality fix subagent to fix lint, format, and typecheck issue
+
 ---
 
 ## Testing
@@ -163,5 +167,21 @@ git branch -D feat/implement-foo   # only if the branch should be deleted
 ```
 
 `git worktree prune` cleans up stale admin records if a worktree directory is deleted by hand.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in the repo's GitHub Issues (via `gh` CLI); external PRs are NOT a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ---

@@ -14,24 +14,24 @@
     bar: string;
   }[] = [
     {
-      rating: "Again",
       accent: "text-[--color-destructive]",
       bar: "bg-[--color-destructive]",
+      rating: "Again",
     },
     {
-      rating: "Hard",
       accent: "text-amber-700 dark:text-amber-400",
       bar: "bg-amber-500",
+      rating: "Hard",
     },
     {
-      rating: "Good",
       accent: "text-emerald-700 dark:text-emerald-400",
       bar: "bg-emerald-500",
+      rating: "Good",
     },
     {
-      rating: "Easy",
       accent: "text-sky-700 dark:text-sky-400",
       bar: "bg-sky-500",
+      rating: "Easy",
     },
   ];
 </script>

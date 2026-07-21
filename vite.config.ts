@@ -16,9 +16,17 @@ const getReporters = (): Reporters => {
 };
 
 export default defineConfig({
+  build: {
+    sourcemap: true,
+  },
   plugins: [tailwindcss(), sveltekit()],
   server: {
-    allowedHosts: ["*.localhost", "localhost", "*.falentio"],
+    allowedHosts: [
+      "*.localhost",
+      "localhost",
+      "*.falentio",
+      "*.trycloudflare.com",
+    ],
     port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5173,
     watch: {
       ignored: ["**/node_modules/**", "**/dist/**", "./.worktrees/**"],
@@ -59,5 +67,6 @@ export default defineConfig({
       },
     ],
     reporters: getReporters(),
+    setupFiles: ["./vitest.setup.ts"],
   },
 });

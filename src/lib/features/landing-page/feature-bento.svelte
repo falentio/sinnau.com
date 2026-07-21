@@ -10,31 +10,31 @@
 
   const features = [
     {
-      body: "Unggah PDF, slide, atau handout. AI membangun modul lengkap dengan flashcard untuk tiap konsep dan kuis untuk tiap bab. Tidak perlu mengetik manual.",
+      body: "Yang dulu perlu berjam-jam mengetik, sekarang selesai dalam &lt;2 menit. Unggah PDF, AI langsung menyusun flashcard dan kuis untuk tiap bab.",
       icon: FileUploadIcon,
       id: "pdf",
       span: "lg:col-span-7 lg:row-span-2",
       stat: "< 2 mnt",
       statLabel: "per bab",
-      title: "Modul belajar dari PDF Anda.",
+      title: "PDF jadi flashcard &amp; kuis siap pakai.",
     },
     {
-      body: "FSRS adalah algoritma open-source yang dipakai Anki dan ribuan alat spaced-repetition. Untuk setiap kartu, ia memprediksi kapan Anda mulai lupa dan menjadwalkan ulangan tepat sebelum itu terjadi.",
+      body: "Sistem melacak setiap kartu yang pernah Anda jawab. Ia tahu mana yang mulai pudar dan menjadwalkan ulangan tepat sebelum Anda lupa.",
       icon: Cards01Icon,
       id: "fsrs",
       span: "lg:col-span-5",
-      stat: "FSRS v4",
-      statLabel: "open-source",
+      stat: "Terjadwal",
+      statLabel: "otomatis per kartu",
       title: "Ulangan di momen Anda mulai lupa.",
     },
     {
-      body: "Kuis adaptif mengambil pertanyaan dari konsep yang sering Anda salah. Setiap kartu yang terlewat muncul lagi sampai Anda menguasainya.",
+      body: "Setiap kartu yang terlewat muncul lagi sampai benar-benar Anda kuasai. Kuis fokus ke konsep yang masih Anda lemah di setiap sesi.",
       icon: Quiz01Icon,
       id: "quiz",
       span: "lg:col-span-5",
-      stat: "Adaptif",
+      stat: "Fokus",
       statLabel: "setiap sesi",
-      title: "Kuis yang menutup celah Anda.",
+      title: "Kuis yang fokus di jawaban salah Anda.",
     },
   ] as const;
 </script>
@@ -47,13 +47,12 @@
     <h2
       class="font-display text-[32px] leading-[1.04] tracking-[-0.03em] sm:text-[42px] text-balance"
     >
-      Tiga kemampuan.<br />Satu sistem belajar.
+      Dari PDF ke hafal.<br />Satu alat.
     </h2>
     <p
       class="mt-4 max-w-[42ch] text-[14px] leading-relaxed text-[var(--landing-muted)] text-pretty"
     >
-      Semua yang Anda butuhkan dari PDF sampai hafal. Tanpa berpindah-pindah
-      alat.
+      Dari PDF sampai hafal. Tanpa berpindah alat.
     </p>
   </div>
 

@@ -1,0 +1,316 @@
+- generic [ref=e3]:
+    - banner [ref=e4]:
+        - generic [ref=e5]:
+            - generic [ref=e6]:
+                - link "2sinnau, beranda" [ref=e7] [cursor=pointer]:
+                    - /url: /
+                    - generic [ref=e9]: 2s
+                    - generic [ref=e11]: 2sinnau
+                - navigation "Main navigation" [ref=e12]:
+                    - link "Fitur" [ref=e13] [cursor=pointer]:
+                        - /url: /#features
+                    - link "Cara kerja" [ref=e14] [cursor=pointer]:
+                        - /url: /#how-it-works
+                    - link "Retensi" [ref=e15] [cursor=pointer]:
+                        - /url: /#retention
+                    - link "FAQ" [ref=e16] [cursor=pointer]:
+                        - /url: /#faq
+            - generic [ref=e17]:
+                - link "Masuk" [ref=e18] [cursor=pointer]:
+                    - /url: /login/
+                - link "Mulai gratis" [ref=e19] [cursor=pointer]:
+                    - /url: /login/
+                    - text: Mulai gratis
+                    - img
+    - main [ref=e20]:
+        - generic [ref=e23]:
+            - generic [ref=e24]:
+                - generic [ref=e25]: Sistem belajar bertenaga AI
+                - heading "Unggah PDF. Ingat lebih lama, belajar lebih sedikit." [level=1] [ref=e27]:
+                    - text: Unggah PDF.
+                    - text: Ingat lebih lama, belajar lebih sedikit.
+                - paragraph [ref=e28]: Unggah catatan kuliah, slide, atau bab buku teks. AI membangun kartu dan kuis dari halamannya. FSRS menjadwalkan ulangan tepat sebelum Anda lupa.
+                - generic [ref=e29]:
+                    - link "Mulai gratis" [ref=e30] [cursor=pointer]:
+                        - /url: /login/
+                        - text: Mulai gratis
+                        - img
+                    - link "Lihat cara kerjanya" [ref=e31] [cursor=pointer]:
+                        - /url: /#how-it-works
+                - paragraph [ref=e32]: Tanpa kartu kredit · 3 modul pertama gratis
+            - generic [ref=e34]:
+                - generic [ref=e39]: module.pdf — sinnau
+                - generic [ref=e40]:
+                    - generic [ref=e41]:
+                        - img [ref=e43]
+                        - generic [ref=e46]:
+                            - generic [ref=e47]: Cognitive Psychology — Chapter 4.pdf
+                            - generic [ref=e48]: 2.4 MB · Memproses…
+                        - generic [ref=e49]: Sedang membuat
+                    - generic [ref=e51]:
+                        - generic [ref=e52]:
+                            - generic [ref=e53]: "1"
+                            - generic [ref=e54]:
+                                - paragraph [ref=e55]: Apa itu spacing effect?
+                                - paragraph [ref=e56]: Klik untuk lihat jawaban
+                        - generic [ref=e57]:
+                            - generic [ref=e58]: "2"
+                            - generic [ref=e59]:
+                                - paragraph [ref=e60]: Jelaskan kapasitas memori kerja.
+                                - paragraph [ref=e61]: Klik untuk lihat jawaban
+                        - generic [ref=e62]:
+                            - generic [ref=e63]: "3"
+                            - generic [ref=e64]:
+                                - paragraph [ref=e65]: Apa itu encoding specificity?
+                                - paragraph [ref=e66]: Klik untuk lihat jawaban
+                    - generic [ref=e67]:
+                        - generic [ref=e68]: Ulangan berikutnya
+                        - generic [ref=e69]: Besok · 09:00
+                        - generic [ref=e70]: FSRS v4
+        - generic [ref=e71]:
+            - generic [ref=e72]:
+                - heading "Tiga kemampuan. Satu sistem belajar." [level=2] [ref=e73]:
+                    - text: Tiga kemampuan.
+                    - text: Satu sistem belajar.
+                - paragraph [ref=e74]: Semua yang Anda butuhkan dari PDF sampai hafal. Tanpa berpindah-pindah alat.
+            - generic [ref=e75]:
+                - article [ref=e76]:
+                    - generic [ref=e77]:
+                        - generic [ref=e78]:
+                            - img [ref=e80]
+                            - generic [ref=e83]:
+                                - generic [ref=e84]: < 2 mnt
+                                - generic [ref=e85]: per bab
+                        - generic [ref=e86]:
+                            - heading "Modul belajar dari PDF Anda." [level=3] [ref=e87]
+                            - paragraph [ref=e88]: Unggah PDF, slide, atau handout. AI membangun modul lengkap dengan flashcard untuk tiap konsep dan kuis untuk tiap bab. Tidak perlu mengetik manual.
+                - article [ref=e111]:
+                    - generic [ref=e112]:
+                        - generic [ref=e113]:
+                            - img [ref=e115]
+                            - generic [ref=e119]:
+                                - generic [ref=e120]: FSRS v4
+                                - generic [ref=e121]: open-source
+                        - generic [ref=e122]:
+                            - heading "Ulangan di momen Anda mulai lupa." [level=3] [ref=e123]
+                            - paragraph [ref=e124]: FSRS adalah algoritma open-source yang dipakai Anki dan ribuan alat spaced-repetition. Untuk setiap kartu, ia memprediksi kapan Anda mulai lupa dan menjadwalkan ulangan tepat sebelum itu terjadi.
+                    - generic [ref=e134]:
+                        - generic [ref=e135]: Sen
+                        - generic [ref=e136]: Sel
+                        - generic [ref=e137]: Rab
+                        - generic [ref=e138]: Kam
+                        - generic [ref=e139]: Jum
+                        - generic [ref=e140]: Sab
+                        - generic [ref=e141]: Min
+                - article [ref=e142]:
+                    - generic [ref=e143]:
+                        - generic [ref=e144]:
+                            - img [ref=e146]
+                            - generic [ref=e149]:
+                                - generic [ref=e150]: Adaptif
+                                - generic [ref=e151]: setiap sesi
+                        - generic [ref=e152]:
+                            - heading "Kuis yang menutup celah Anda." [level=3] [ref=e153]
+                            - paragraph [ref=e154]: Kuis adaptif mengambil pertanyaan dari konsep yang sering Anda salah. Setiap kartu yang terlewat muncul lagi sampai Anda menguasainya.
+                    - generic [ref=e155]:
+                        - generic [ref=e156]:
+                            - generic [ref=e157]: ✓
+                            - generic [ref=e158]: Spacing effect meningkatkan retensi jangka panjang dengan mendistribusikan sesi belajar dari waktu ke waktu.
+                        - generic [ref=e159]:
+                            - generic [ref=e160]: ✗
+                            - generic [ref=e161]: Sistem kebut semalam (SKS) adalah cara paling efisien untuk menyandikan informasi ke memori jangka panjang.
+                        - generic [ref=e162]:
+                            - generic [ref=e163]: ✓
+                            - generic [ref=e164]: Retrieval practice memperkuat jejak ingatan lebih efektif daripada membaca ulang.
+        - generic [ref=e165]:
+            - generic [ref=e166]:
+                - heading "Dari PDF sampai paham, dalam tiga langkah." [level=2] [ref=e167]:
+                    - text: Dari PDF sampai paham,
+                    - text: dalam tiga langkah.
+                - paragraph [ref=e168]: Tanpa membuat kartu manual. Tanpa menebak apa yang harus dipelajari selanjutnya. Sistem yang menentukannya.
+            - generic [ref=e169]:
+                - article [ref=e170]:
+                    - generic [ref=e171]:
+                        - img [ref=e173]
+                        - generic [ref=e176]: "01"
+                    - generic [ref=e177]:
+                        - heading "Unggah materi Anda." [level=3] [ref=e178]
+                        - paragraph [ref=e179]: Unggah PDF catatan kuliah, bab buku teks, atau slide. Sistem membaca dan mengekstrak konsep-konsep utamanya.
+                - article [ref=e180]:
+                    - generic [ref=e181]:
+                        - img [ref=e183]
+                        - generic [ref=e188]: "02"
+                    - generic [ref=e189]:
+                        - heading "AI membangun modul." [level=3] [ref=e190]
+                        - paragraph [ref=e191]: AI membangun flashcard dan soal kuis dari konten. Tinjau, edit, atau tambah kartu Anda sendiri sebelum mulai.
+                - article [ref=e192]:
+                    - generic [ref=e193]:
+                        - img [ref=e195]
+                        - generic [ref=e199]: "03"
+                    - generic [ref=e200]:
+                        - heading "Belajar dengan presisi." [level=3] [ref=e201]
+                        - paragraph [ref=e202]: FSRS menjadwalkan kartu di momen yang tepat. Kuis adaptif fokus ke konsep yang masih Anda lemah. Sesi makin singkat seiring Anda makin hafal.
+        - generic [ref=e205]:
+            - generic [ref=e206]:
+                - generic [ref=e207]:
+                    - img [ref=e208]
+                    - generic [ref=e211]: FSRS v4
+                - heading "Algoritma yang tahu kapan Anda lupa." [level=2] [ref=e212]:
+                    - text: Algoritma yang
+                    - text: tahu kapan Anda lupa.
+                - paragraph [ref=e213]: FSRS (Free Spaced Repetition Scheduler) memodelkan memori Anda untuk setiap kartu. Ia memprediksi momen saat suatu konsep mulai memudar dan menjadwalkan ulangan Anda tepat sebelum itu terjadi.
+                - generic [ref=e214]:
+                    - generic [ref=e215]:
+                        - generic [ref=e216]: Prediktif
+                        - generic [ref=e217]: Per kartu
+                        - generic [ref=e218]: Prediksi kapan lupa, bukan tebak
+                    - generic [ref=e219]:
+                        - generic [ref=e220]: Adaptif
+                        - generic [ref=e221]: Per jawaban
+                        - generic [ref=e222]: Jadwal bergeser tiap kali Anda menjawab
+                    - generic [ref=e223]:
+                        - generic [ref=e224]: 10-15 mnt
+                        - generic [ref=e225]: Per hari
+                        - generic [ref=e226]: Cukup untuk sesi harian
+                    - generic [ref=e227]:
+                        - generic [ref=e228]: Bertahan
+                        - generic [ref=e229]: Bukan cramming
+                        - generic [ref=e230]: Dirancang untuk retensi jangka panjang
+                - paragraph [ref=e231]: Berdasarkan algoritma FSRS v4 open-source. Digunakan oleh ribuan alat spaced-repetition di seluruh dunia.
+            - generic [ref=e232]:
+                - generic [ref=e233]: Kurva retensi memori
+                - img [ref=e235]:
+                    - generic [ref=e236]: "0"
+                    - generic [ref=e237]: Time
+                    - generic [ref=e238]: 30d
+                    - generic [ref=e239]: 100%
+                    - generic [ref=e240]: 50%
+                - generic [ref=e246]:
+                    - generic [ref=e247]:
+                        - generic [ref=e248]: Ulangan 1
+                        - generic [ref=e249]: Hari 1
+                    - generic [ref=e250]:
+                        - generic [ref=e251]: Ulangan 2
+                        - generic [ref=e252]: Hari 4
+                    - generic [ref=e253]:
+                        - generic [ref=e254]: Ulangan 3
+                        - generic [ref=e255]: Hari 10
+        - generic [ref=e256]:
+            - generic [ref=e257]:
+                - heading "Tiga cara mahasiswa pakai sinnau." [level=2] [ref=e258]:
+                    - text: Tiga cara mahasiswa
+                    - text: pakai sinnau.
+                - paragraph [ref=e259]: Alur belajar yang berbeda, sistem yang sama. Pilih yang paling cocok dengan cara Anda kuliah.
+            - generic [ref=e260]:
+                - article [ref=e261]:
+                    - paragraph [ref=e262]: Unggah PDF catatan kuliah setiap minggu. AI membangun kartu untuk tiap topik. FSRS menjadwalkan ulangan harian berdasarkan konsep yang mulai Anda lupa.
+                    - generic [ref=e263]:
+                        - img [ref=e265]
+                        - generic [ref=e269]:
+                            - generic [ref=e270]: Membangun kebiasaan belajar harian.
+                            - generic [ref=e271]: Mahasiswa semester awal
+                - article [ref=e272]:
+                    - paragraph [ref=e273]: Unggah PDF bab dan slide per sistem. AI bikin kartu berlabel sesuai topik. Kuis adaptif fokus ke konsep yang sering muncul di ujian blok.
+                    - generic [ref=e274]:
+                        - img [ref=e276]
+                        - generic [ref=e279]:
+                            - generic [ref=e280]: Mempersiapkan ujian blok.
+                            - generic [ref=e281]: Mahasiswa kedokteran
+                - article [ref=e282]:
+                    - paragraph [ref=e283]: Unggah paper rujukan, draft bab, atau catatan bacaan. Sistem mengekstrak konsep utama dan menjadwalkannya untuk review jangka panjang.
+                    - generic [ref=e284]:
+                        - img [ref=e286]
+                        - generic [ref=e289]:
+                            - generic [ref=e290]: Menjaga literatur tetap segar.
+                            - generic [ref=e291]: Peneliti pascasarjana
+        - generic [ref=e292]:
+            - heading "Pertanyaan yang sering diajukan." [level=2] [ref=e294]
+            - generic [ref=e296]:
+                - heading "Bagaimana cara mulai pakai sinnau?" [level=3] [ref=e298]:
+                    - button "Bagaimana cara mulai pakai sinnau?" [ref=e299]:
+                        - text: Bagaimana cara mulai pakai sinnau?
+                        - img
+                - heading "Materi apa saja yang bisa diunggah?" [level=3] [ref=e301]:
+                    - button "Materi apa saja yang bisa diunggah?" [ref=e302]:
+                        - text: Materi apa saja yang bisa diunggah?
+                        - img
+                - heading "Berapa lama satu modul selesai dibuat?" [level=3] [ref=e304]:
+                    - button "Berapa lama satu modul selesai dibuat?" [ref=e305]:
+                        - text: Berapa lama satu modul selesai dibuat?
+                        - img
+                - heading "Apa itu FSRS dan kenapa itu penting?" [level=3] [ref=e307]:
+                    - button "Apa itu FSRS dan kenapa itu penting?" [ref=e308]:
+                        - text: Apa itu FSRS dan kenapa itu penting?
+                        - img
+                - heading "Apa bedanya sinnau dengan Quizlet atau Anki?" [level=3] [ref=e310]:
+                    - button "Apa bedanya sinnau dengan Quizlet atau Anki?" [ref=e311]:
+                        - text: Apa bedanya sinnau dengan Quizlet atau Anki?
+                        - img
+                - heading "Apakah sinnau gratis?" [level=3] [ref=e313]:
+                    - button "Apakah sinnau gratis?" [ref=e314]:
+                        - text: Apakah sinnau gratis?
+                        - img
+                - heading "Bisa share modul ke teman?" [level=3] [ref=e316]:
+                    - button "Bisa share modul ke teman?" [ref=e317]:
+                        - text: Bisa share modul ke teman?
+                        - img
+                - heading "Bisa edit atau tambah kartu sendiri?" [level=3] [ref=e319]:
+                    - button "Bisa edit atau tambah kartu sendiri?" [ref=e320]:
+                        - text: Bisa edit atau tambah kartu sendiri?
+                        - img
+        - generic [ref=e324]:
+            - heading "Modul pertama Anda siap dalam hitungan menit." [level=2] [ref=e325]:
+                - text: Modul pertama Anda siap
+                - text: dalam hitungan menit.
+            - paragraph [ref=e326]: Unggah PDF pertama Anda dan dapatkan modul lengkap dengan flashcard dan kuis. Tanpa pengaturan, tanpa kartu manual.
+            - link "Mulai gratis" [ref=e328] [cursor=pointer]:
+                - /url: /login/
+                - text: Mulai gratis
+                - img
+            - paragraph [ref=e329]: Tanpa kartu kredit · 3 modul pertama gratis · Batalkan kapan saja
+    - contentinfo [ref=e330]:
+        - generic [ref=e331]:
+            - generic [ref=e332]:
+                - generic [ref=e333]:
+                    - link "2sinnau, beranda" [ref=e334] [cursor=pointer]:
+                        - /url: /
+                        - generic [ref=e336]: 2s
+                        - generic [ref=e338]: 2sinnau
+                    - paragraph [ref=e339]: Unggah PDF, dapatkan sistem belajar lengkap. Flashcard, kuis, dan penjadwalan ulangan adaptif — semua dari satu alat.
+                    - paragraph [ref=e340]: Made in Indonesia
+                - generic [ref=e341]:
+                    - generic [ref=e342]: Produk
+                    - list [ref=e343]:
+                        - listitem [ref=e344]:
+                            - link "Fitur" [ref=e345] [cursor=pointer]:
+                                - /url: /#features
+                        - listitem [ref=e346]:
+                            - link "Cara kerja" [ref=e347] [cursor=pointer]:
+                                - /url: /#how-it-works
+                        - listitem [ref=e348]:
+                            - link "Retensi" [ref=e349] [cursor=pointer]:
+                                - /url: /#retention
+                        - listitem [ref=e350]:
+                            - link "Buat modul" [ref=e351] [cursor=pointer]:
+                                - /url: /study/new/
+                - generic [ref=e352]:
+                    - generic [ref=e353]: Sumber daya
+                    - list [ref=e354]:
+                        - listitem [ref=e355]:
+                            - link "FAQ" [ref=e356] [cursor=pointer]:
+                                - /url: /#faq
+                        - listitem [ref=e357]:
+                            - link "Cerita pengguna" [ref=e358] [cursor=pointer]:
+                                - /url: /#stories
+                - generic [ref=e359]:
+                    - generic [ref=e360]: Akun
+                    - list [ref=e361]:
+                        - listitem [ref=e362]:
+                            - link "Masuk" [ref=e363] [cursor=pointer]:
+                                - /url: /login/
+                        - listitem [ref=e364]:
+                            - link "Daftar" [ref=e365] [cursor=pointer]:
+                                - /url: /sign-up/
+            - generic [ref=e366]:
+                - paragraph [ref=e367]: © 2026 sinnau. Hak cipta dilindungi.
+                - paragraph [ref=e368]: v0.1 · Belajar yang melekat.

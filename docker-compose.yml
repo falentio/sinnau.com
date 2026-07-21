@@ -1,0 +1,31 @@
+services:
+  sinnau:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sinnau
+    ports:
+      - "11085:11085"
+    env_file:
+      - .env
+    environment:
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:11085}
+      - DB_FILE_NAME=/app/data/data.db
+    volumes:
+      - sinnau_data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:11085/').then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  sinnau_data:

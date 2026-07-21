@@ -11,6 +11,7 @@ export default defineConfig({
     "drizzle/*",
     "src/lib/server/infras/db/schema/auth-schema.ts",
   ],
+  jsPlugins: [{ name: "@logtape", specifier: "@logtape/lint/eslint" }],
   overrides: [
     {
       files: ["*.svelte"],
@@ -18,5 +19,17 @@ export default defineConfig({
         "prefer-const": "off",
       },
     },
+    {
+      files: ["*.ts", "*.js"],
+      rules: {
+        "eslint/require-await": "off",
+      },
+    },
   ],
+  rules: {
+    "@logtape/no-message-interpolation": "error",
+    "@logtape/no-unawaited-log": "error",
+    "@logtape/prefer-lazy-evaluation": "warn",
+    "@logtape/require-meta-sink": "warn",
+  },
 });

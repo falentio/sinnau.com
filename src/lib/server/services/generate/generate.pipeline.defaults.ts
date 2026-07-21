@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { defaultModel } from "$lib/server/infras/ai";
+import { getDefaultModel } from "$lib/server/infras/ai";
 import { chunkContent } from "$lib/server/infras/generate/chunk";
 import type {
   GenerationStorage,
@@ -25,10 +25,12 @@ export const createParseLiteparseDefault =
   };
 
 type RunLLMImpl = (input: {
+  isInputTruncated?: boolean;
   pdfText: string;
   languageStyle: string;
   extractionType: string;
   storage: GenerationStorage;
+  generateId: string;
 }) => Promise<{ totalChunkCount: number; successCount: number }>;
 
 export const createRunLLMDefault =
@@ -38,7 +40,9 @@ export const createRunLLMDefault =
       content: input.pdfText,
       extractionType:
         input.extractionType === "exhaustive" ? "exhaustive" : "normal",
-      languageModel: defaultModel,
+      generateId: input.generateId,
+      isInputTruncated: input.isInputTruncated,
+      languageModel: getDefaultModel(),
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       languageStyle: input.languageStyle as LanguageStyleId | undefined,
       storage: input.storage,

@@ -38,8 +38,8 @@
     </EmptyTitle>
     <EmptyDescription>
       {isChapterFiltered
-        ? "Chapter ini belum memiliki quiz. Buat satu untuk mulai berlatih."
-        : "Kamu belum memiliki quiz untuk modul belajar ini. Buat quiz pertamamu untuk mulai berlatih."}
+        ? "Chapter ini belum memiliki quiz. Buat quiz untuk mulai berlatih."
+        : "Kamu belum memiliki quiz untuk modul belajar ini. Buat quiz untuk mulai berlatih."}
     </EmptyDescription>
   </EmptyHeader>
   <EmptyContent>

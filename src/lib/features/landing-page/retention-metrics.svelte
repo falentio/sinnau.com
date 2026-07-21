@@ -16,7 +16,7 @@
           class="inline-flex items-center gap-1.5 rounded-md border bg-[var(--landing-surface-subtle)] px-2 py-0.5 font-mono text-[10px] text-[var(--landing-muted)]"
         >
           <HugeiconsIcon icon={PieChartIcon} class="size-3" />
-          <span>FSRS v4</span>
+          <span>Tanpa Tebakan</span>
         </div>
 
         <h2
@@ -28,13 +28,13 @@
         <p
           class="mt-5 max-w-[40ch] text-[14px] leading-relaxed text-[var(--landing-muted)] text-pretty"
         >
-          FSRS (Free Spaced Repetition Scheduler) memodelkan memori Anda untuk
-          setiap kartu. Ia memprediksi momen saat suatu konsep mulai memudar dan
-          menjadwalkan ulangan Anda tepat sebelum itu terjadi.
+          Setiap kartu punya jadwal belajarnya sendiri. FSRS melacak seberapa
+          cepat Anda melupakan suatu konsep lalu menjadwalkan ulangan tepat
+          sebelum itu terjadi.
         </p>
 
         <div class="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
-          {#each [{ label: "Per kartu", value: "Prediktif", desc: "Prediksi kapan lupa, bukan tebak" }, { label: "Per jawaban", value: "Adaptif", desc: "Jadwal bergeser tiap kali Anda menjawab" }, { label: "Per hari", value: "10-15 mnt", desc: "Cukup untuk sesi harian" }, { label: "Bukan cramming", value: "Bertahan", desc: "Dirancang untuk retensi jangka panjang" }] as m, i (m.label)}
+          {#each [{ label: "Per kartu", value: "Tepat sasaran", desc: "Prediksi kapan lupa, bukan tebakan" }, { label: "Per jawaban", value: "Langsung menyesuaikan", desc: "Jadwal bergeser tiap kali Anda menjawab" }, { label: "Per hari", value: "10-15 mnt", desc: "Cukup untuk sesi harian" }, { label: "Tahan lama", value: "Bertahan", desc: "Dirancang untuk retensi jangka panjang" }] as m, i (m.label)}
             <div
               class="rounded-[14px] border bg-[var(--landing-surface-subtle)] p-4"
               use:reveal={{ delay: i * 80 }}
@@ -57,8 +57,8 @@
         </div>
 
         <p class="mt-6 text-[12px] text-[var(--landing-muted)]">
-          Berdasarkan algoritma FSRS v4 open-source. Digunakan oleh ribuan alat
-          spaced-repetition di seluruh dunia.
+          Algoritma yang sama digunakan oleh jutaan pelajar di seluruh dunia —
+          dari mahasiswa kedokteran hingga pembelajar bahasa.
         </p>
       </div>
 
@@ -67,7 +67,7 @@
         use:reveal={{ delay: 200 }}
       >
         <div class="font-eyebrow text-[10px] text-[var(--landing-muted)] mb-6">
-          Kurva retensi memori
+          Visualisasi ingatan Anda
         </div>
 
         <div class="relative" style="height:260px">
@@ -165,7 +165,10 @@
           </svg>
         </div>
 
-        <div class="mt-6 grid grid-cols-3 gap-3">
+        <p class="mb-3 text-[11px] text-[var(--landing-muted)]">
+          Jarak antar-ulangan membesar otomatis seiring Anda makin hafal.
+        </p>
+        <div class="grid grid-cols-3 gap-3">
           {#each [{ label: "Ulangan 1", day: "Hari 1" }, { label: "Ulangan 2", day: "Hari 4" }, { label: "Ulangan 3", day: "Hari 10" }] as r, i (r.label)}
             <div
               class="rounded-[10px] border bg-[var(--landing-surface-subtle)] p-2.5 text-center"

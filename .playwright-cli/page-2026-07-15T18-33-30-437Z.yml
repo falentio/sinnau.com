@@ -1,0 +1,102 @@
+- generic [ref=e2]:
+    - generic [ref=e41]:
+        - generic [ref=e44]:
+            - link "Sinnau" [ref=e46] [cursor=pointer]:
+                - /url: /home
+                - img [ref=e48]
+                - text: Sinnau
+            - list [ref=e56]:
+                - listitem [ref=e57]:
+                    - link "Beranda" [ref=e58] [cursor=pointer]:
+                        - /url: /home
+                        - img [ref=e59]
+                        - generic [ref=e62]: Beranda
+                - listitem [ref=e63]:
+                    - link "Cari" [ref=e64] [cursor=pointer]:
+                        - /url: /discover
+                        - img [ref=e65]
+                        - generic [ref=e69]: Cari
+                - listitem [ref=e70]:
+                    - button "Modul" [ref=e71]:
+                        - img [ref=e72]
+                        - generic [ref=e75]: Modul
+                - listitem [ref=e76]:
+                    - link "Subskripsi" [ref=e77] [cursor=pointer]:
+                        - /url: /subs/plans
+                        - img [ref=e78]
+                        - generic [ref=e81]: Subskripsi
+            - list [ref=e83]:
+                - listitem [ref=e84]:
+                    - button "U Placeholder user@example.com" [ref=e85]:
+                        - generic [ref=e87]: U
+                        - generic [ref=e88]:
+                            - generic [ref=e89]: Placeholder
+                            - generic [ref=e90]: user@example.com
+            - button "Toggle Sidebar" [ref=e91]
+        - main [ref=e92]:
+            - main [ref=e96]:
+                - generic [ref=e98]:
+                    - generic [ref=e99]:
+                        - img [ref=e101]
+                        - generic [ref=e102]:
+                            - text: Selamat belajar!
+                            - heading "User A Session" [level=2] [ref=e103]
+                        - button [ref=e105]:
+                            - img
+                    - group [ref=e106]:
+                        - textbox "Cari di modul pembelajaran..." [ref=e107]
+                        - group [ref=e108]:
+                            - img [ref=e109]
+                    - generic [ref=e116]:
+                        - link "Buat dengan AI" [ref=e117] [cursor=pointer]:
+                            - /url: /study/generate
+                            - img
+                            - text: Buat dengan AI
+                        - link "Buat manual" [ref=e118] [cursor=pointer]:
+                            - /url: /study/new
+                            - img
+                            - text: Buat manual
+                - generic [ref=e119]:
+                    - generic [ref=e123]:
+                        - link "Terbaru" [ref=e124] [cursor=pointer]:
+                            - /url: .?filter=latest
+                        - link "Baru dibuka" [ref=e125] [cursor=pointer]:
+                            - /url: .?filter=newly-opened
+                        - button [ref=e128]:
+                            - img
+                    - generic [ref=e129]:
+                        - generic [ref=e130]:
+                            - generic [ref=e131]:
+                                - img
+                            - generic [ref=e132]: Belum ada modul belajar
+                            - generic [ref=e133]: Kamu belum memiliki modul belajar, kami memiliki fitur generate menggunakan AI yang bisa membantumu.
+                        - generic [ref=e135]:
+                            - link "Buat manual" [ref=e136] [cursor=pointer]:
+                                - /url: /study/new
+                                - img
+                                - text: Buat manual
+                            - link "Buat dengan AI" [ref=e137] [cursor=pointer]:
+                                - /url: /study/generate
+                                - img
+                                - text: Buat dengan AI
+                - navigation "Navigasi utama" [ref=e140]:
+                    - link "Beranda" [ref=e141] [cursor=pointer]:
+                        - /url: /home/
+                        - img
+                        - text: Beranda
+                    - link "Jelajahi" [ref=e142] [cursor=pointer]:
+                        - /url: /discover/
+                        - img
+                        - text: Jelajahi
+                    - button "AI Studio" [ref=e143]:
+                        - img
+                        - text: Generate
+                    - button "Perpustakaan" [ref=e144]:
+                        - img
+                        - text: Pustaka
+                    - link "Premium" [ref=e145] [cursor=pointer]:
+                        - /url: /subs/plans/
+                        - img
+                        - text: Premium
+        - region "Notifications alt+T"
+    - generic [ref=e40]: untitled page

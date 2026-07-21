@@ -33,8 +33,8 @@ export const load: PageServerLoad = async ({ depends, params, url }) => {
     }),
     client.flashcardSession.queue.get({ studySetId: params.studySetId }),
     client.flashcardSession.review.list({
-      studySetId: params.studySetId,
       limit: 5,
+      studySetId: params.studySetId,
     }),
   ]);
 
@@ -59,8 +59,10 @@ export const actions: Actions = {
       });
       redirect(303, `/session/${params.studySetId}/flashcard/${session.id}/`);
       return { success: true as const };
-    } catch (err) {
-      if (isRedirect(err)) throw err;
+    } catch (error) {
+      if (isRedirect(error)) {
+        throw error;
+      }
       return fail(500, { message: "Gagal memulai sesi review" });
     }
   },

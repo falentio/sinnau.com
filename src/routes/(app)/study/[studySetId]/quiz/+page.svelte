@@ -42,26 +42,30 @@
 
   const chapterMap = $derived(new Map(chapters.map((c) => [c.id, c.title])));
 
-  const sortFn = (sort: string | null) => {
-    return (a: (typeof quizzes)[0], b: (typeof quizzes)[0]): number => {
+  const sortFn =
+    (sort: string | null) =>
+    (a: (typeof quizzes)[0], b: (typeof quizzes)[0]): number => {
       switch (sort) {
-        case "oldest":
+        case "oldest": {
           return (
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
-        case "alphabetical":
+        }
+        case "alphabetical": {
           return a.questionText.localeCompare(b.questionText, "id");
-        case "reverse-alphabetical":
+        }
+        case "reverse-alphabetical": {
           return b.questionText.localeCompare(a.questionText, "id");
-        default:
+        }
+        default: {
           return (
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
+        }
       }
     };
-  };
 
-  const sortedQuizzes = $derived([...quizzes].sort(sortFn(currentSort)));
+  const sortedQuizzes = $derived([...quizzes].toSorted(sortFn(currentSort)));
 
   const filteredQuizzes = $derived(
     chapterParam

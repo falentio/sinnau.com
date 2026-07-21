@@ -35,21 +35,21 @@ export const load: PageServerLoad = async ({
 
   if (dev) {
     if (sort === "empty") {
-      return { sort, flashcards: [] };
+      return { flashcards: [], sort };
     }
     if (sort === "500") {
       await client.unimplemented();
     }
     if (sort === "paginated") {
       return {
-        sort,
         flashcards: getFlashcardStubs(50, params.studySetId, user.id),
+        sort,
       };
     }
     if (sort === "unpaginated") {
       return {
-        sort,
         flashcards: getFlashcardStubs(9, params.studySetId, user.id),
+        sort,
       };
     }
   }
@@ -57,5 +57,5 @@ export const load: PageServerLoad = async ({
   const flashcards = await client.flashcard.list({
     studySetId: params.studySetId,
   });
-  return { sort, flashcards };
+  return { flashcards, sort };
 };

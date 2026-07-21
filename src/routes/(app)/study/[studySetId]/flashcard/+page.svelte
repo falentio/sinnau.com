@@ -38,28 +38,35 @@
     importance: number;
   } | null>(null);
 
-  const sortFn = (sort: string | null) => {
-    return (a: (typeof flashcards)[0], b: (typeof flashcards)[0]): number => {
+  const sortFn =
+    (sort: string | null) =>
+    (a: (typeof flashcards)[0], b: (typeof flashcards)[0]): number => {
       switch (sort) {
-        case "oldest":
+        case "oldest": {
           return (
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
-        case "alphabetical":
+        }
+        case "alphabetical": {
           return a.front.localeCompare(b.front, "id");
-        case "reverse-alphabetical":
+        }
+        case "reverse-alphabetical": {
           return b.front.localeCompare(a.front, "id");
-        case "most-important":
+        }
+        case "most-important": {
           return b.importance - a.importance;
-        default:
+        }
+        default: {
           return (
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
+        }
       }
     };
-  };
 
-  const sortedFlashcards = $derived([...flashcards].sort(sortFn(currentSort)));
+  const sortedFlashcards = $derived(
+    [...flashcards].toSorted(sortFn(currentSort))
+  );
 
   const filteredFlashcards = $derived(
     chapterParam

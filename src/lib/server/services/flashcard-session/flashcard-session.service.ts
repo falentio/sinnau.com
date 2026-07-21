@@ -20,6 +20,7 @@ import {
   FLASHCARD_SESSION_TTL_MS,
 } from "$lib/schemas/flashcard-session.constant";
 import type { FlashcardSessionRating } from "$lib/schemas/flashcard-session.constant";
+import { getLogger } from "@logtape/logtape";
 import { Rating, State, createEmptyCard, fsrs } from "ts-fsrs";
 import type { Card, CardInput, DateInput, Grade } from "ts-fsrs";
 
@@ -29,6 +30,8 @@ import type {
   FlashcardSessionReview,
 } from "../../infras/db/schema/flashcard-session.ts";
 import type { FlashcardSessionGuard } from "./flashcard-session.guard.ts";
+
+const logger = getLogger(["sinnau.com", "flashcard-session", "service"]);
 import type {
   FlashcardSessionRepository,
   QueueFlashcardWithState,
@@ -254,7 +257,7 @@ export class FlashcardSessionService {
     try {
       await this.repo.updateSessionTouch(session.id, ownerId);
     } catch (error) {
-      console.error("updateSessionTouch failed", {
+      logger.error("updateSessionTouch failed", {
         error,
         sessionId: session.id,
         userId: ownerId,

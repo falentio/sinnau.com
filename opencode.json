@@ -4,6 +4,17 @@
     "Svelte": {
       "type": "remote",
       "url": "https://mcp.svelte.dev/mcp"
+    },
+    "Axiom": {
+      "type": "remote",
+      "url": "https://mcp.axiom.co/mcp"
+    },
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "headers": {
+        "x-api-key": "{env:EXA_API_KEY}"
+      }
     }
   }
 }

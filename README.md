@@ -1,42 +1,46 @@
-# sv
+# Sinnau
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+## OAuth Setup (GitHub & Google)
 
-## Creating a project
+Sinnau supports optional GitHub and Google sign-in. Each provider is **conditional**: it is only wired up when **both** its client ID and client secret are present in the environment. If a provider's credentials are missing, its login/sign-up buttons are hidden and email/password remains the only method. No code or migration changes are needed to toggle a provider on or off — just set or unset its env vars and restart.
 
-If you're seeing this, you've probably already done this step. Congrats!
+### 1. Environment variables
 
-```sh
-# create a new project
-npx sv create my-app
+Add the following to your `.env` (copy from `.env.example`). Leave them empty to disable a provider.
+
+```
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 ```
 
-To recreate this project with the same configuration:
+Both values for a given provider must be set for it to activate.
 
-```sh
-# recreate this project
-pnpm dlx sv@0.15.3 create --template minimal --types ts --add eslint prettier vitest="usages:unit" tailwindcss="plugins:typography,forms" sveltekit-adapter="adapter:node" --install pnpm .
-```
+### 2. Create the OAuth app
 
-## Developing
+#### Google
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. Open [Google Cloud Console → APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Create an **OAuth 2.0 Client ID** (type: Web application).
+3. Under **Authorized redirect URIs**, add:
+   - `https://<your-domain>/api/auth/callback/google`
+   - For local dev: `http://localhost:5173/api/auth/callback/google`
+4. Copy the **Client ID** and **Client secret** into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
 
-```sh
-npm run dev
+#### GitHub
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+1. Open [GitHub → Settings → Developer settings → OAuth Apps → New OAuth App](https://github.com/settings/developers).
+2. Set **Authorization callback URL** to:
+   - `https://<your-domain>/api/auth/callback/github`
+   - For local dev: `http://localhost:5173/api/auth/callback/github`
+3. Copy the **Client ID** and generate a **Client secret**, then set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`.
 
-## Building
+### 3. Restart and verify
 
-To create a production version of your app:
+Restart the app. On the login and sign-up pages, a "Lanjut dengan Google / GitHub" button appears only for providers whose credentials are configured.
 
-```sh
-npm run build
-```
+### Behavior notes
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- New users can sign up via OAuth; if the provider's verified email matches an existing account, the identities are auto-linked.
+- The admin role assignment (`AUTH_ADMIN_EMAILS` / `AUTH_ADMIN_EMAIL_DOMAINS`) applies to OAuth-created accounts as well.

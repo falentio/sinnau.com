@@ -24,8 +24,8 @@
     </EmptyMedia>
     <EmptyTitle>Belum ada flashcard</EmptyTitle>
     <EmptyDescription>
-      Study set ini belum memiliki flashcard. Buat satu untuk mulai menghafal
-      dengan jadwal berulang.
+      Study set ini belum memiliki flashcard. Buat flashcard untuk mulai
+      menghafal dengan jadwal berulang.
     </EmptyDescription>
   </EmptyHeader>
   <EmptyContent>

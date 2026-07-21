@@ -8,7 +8,11 @@
       v.email("Email tidak valid."),
       v.maxLength(255, "Email maksimal 255 karakter.")
     ),
-    password: v.pipe(v.string(), v.minLength(1, "Kata sandi wajib diisi.")),
+    password: v.pipe(
+      v.string(),
+      v.trim(),
+      v.minLength(1, "Kata sandi wajib diisi.")
+    ),
   });
 
   type LoginForm = v.InferOutput<typeof formSchema>;
@@ -17,11 +21,14 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import OAuthButtons from "$lib/components/oauth-buttons.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient } from "$lib/hooks/auth.svelte";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
+
+  let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
 
   let serverError = $state("");
   let pending = $state(false);
@@ -79,9 +86,11 @@
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
   <div class="flex flex-col gap-2 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight">Masuk</h1>
+    <h1 class="text-2xl font-semibold tracking-tight">
+      Selamat datang kembali
+    </h1>
     <p class="text-sm text-muted-foreground">
-      Masukkan email untuk masuk ke akun Anda
+      Lanjutkan dari mana kamu tinggalkan.
     </p>
   </div>
 
@@ -125,8 +134,10 @@
   </Form.Field>
 
   <Form.Button class="w-full" disabled={$submitting || pending}>
-    {$submitting || pending ? "Memproses..." : "Masuk"}
+    {$submitting || pending ? "Masuk..." : "Lanjutkan belajar"}
   </Form.Button>
+
+  <OAuthButtons {providers} />
 
   <div class="text-center text-sm">
     Belum punya akun?

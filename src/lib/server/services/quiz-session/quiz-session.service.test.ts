@@ -100,7 +100,7 @@ const setupService = () => {
     // oxlint-disable-next-line no-unsafe-type-assertion
     guard as unknown as QuizSessionGuard,
     // oxlint-disable-next-line no-unsafe-type-assertion
-    quizRepo as unknown as QuizRepository
+    quizRepo
   );
   return { guard, quizRepo, repo, service };
 };

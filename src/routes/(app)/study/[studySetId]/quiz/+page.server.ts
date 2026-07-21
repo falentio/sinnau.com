@@ -27,19 +27,19 @@ export const load: PageServerLoad = async ({ url, params, locals }) => {
 
   if (dev) {
     if (sort === "empty") {
-      return { sort, quizzes: [] };
+      return { quizzes: [], sort };
     }
     if (sort === "500") {
       await client.unimplemented();
     }
     if (sort === "paginated") {
-      return { sort, quizzes: getQuizStubs(50, params.studySetId, user.id) };
+      return { quizzes: getQuizStubs(50, params.studySetId, user.id), sort };
     }
     if (sort === "unpaginated") {
-      return { sort, quizzes: getQuizStubs(9, params.studySetId, user.id) };
+      return { quizzes: getQuizStubs(9, params.studySetId, user.id), sort };
     }
   }
 
   const quizzes = await client.quiz.list({ studySetId: params.studySetId });
-  return { sort, quizzes };
+  return { quizzes, sort };
 };

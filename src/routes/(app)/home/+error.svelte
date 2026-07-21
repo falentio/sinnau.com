@@ -5,12 +5,11 @@
   const errorMap: Record<string, { title: string; message: string }> = {
     INTERNAL_SERVER_ERROR: {
       message:
-        "Server mengalami masalah yang tak terduga. Coba beberapa saat lagi.",
-      title: "Masalah Internal Server",
+        "Maaf, terjadi kesalahan di sisi kami. Tim kami sudah mendapat notifikasi. Coba lagi beberapa saat.",
+      title: "Ada yang tidak beres",
     },
     "filter unknown": {
-      message:
-        "Filter yang dipilih tidak dikenali. Silakan pilih filter yang tersedia.",
+      message: "Filter ini tidak tersedia. Coba pilih filter lain.",
       title: "Filter tidak valid",
     },
     "invalid query": {

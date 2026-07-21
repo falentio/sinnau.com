@@ -54,7 +54,6 @@
       description:
         "Modul pembelajaran komprehensif mencakup teori dasar, latihan soal, dan rangkuman materi untuk persiapan ujian.",
       id: `sts_stub_${String(i + 1).padStart(2, "0")}`,
-      ownerId: "usr_stub_owner",
       slug: `stub-modul-${i + 1}`,
       title: `Modul Belajar ${i + 1}: ${STUB_TITLES[i]}`,
     })
@@ -92,7 +91,7 @@
           results = [];
           hasSearched = true;
         } else if (stubMode === "error") {
-          error = "Gagal mencari. Coba lagi.";
+          error = "Maaf, pencarian gagal. Coba lagi dalam beberapa saat.";
         } else if (stubMode === "results5") {
           results = STUB_DATA.slice(0, 5);
           hasSearched = true;
@@ -111,7 +110,7 @@
         results = data;
         hasSearched = true;
       } catch {
-        error = "Gagal mencari. Coba lagi.";
+        error = "Maaf, pencarian gagal. Coba lagi dalam beberapa saat.";
       } finally {
         isLoading = false;
       }
@@ -148,9 +147,9 @@
 <div class="bg-card text-card-foreground">
   <div class="mx-auto flex w-full max-w-2xl flex-col px-6 pt-6">
     <div class="mb-2 flex flex-col gap-1">
-      <h1 class="text-2xl font-semibold tracking-tight">Discover</h1>
+      <h1 class="text-2xl font-semibold tracking-tight">Jelajahi</h1>
       <p class="text-sm text-muted-foreground">
-        Temukan modul belajar publik dari pengguna lain
+        Temukan modul belajar buatan komunitas — dari sesama mahasiswa.
       </p>
     </div>
   </div>
@@ -262,7 +261,8 @@
         <HugeiconsIcon icon={Search02Icon} class="size-5" />
       </div>
       <p class="text-sm text-muted-foreground">
-        Ketik minimal 3 karakter untuk mulai mencari
+        Ketik kata kunci untuk mulai mencari — coba 'fisika', 'sejarah', atau
+        topik favoritmu.
       </p>
     </div>
   {/if}

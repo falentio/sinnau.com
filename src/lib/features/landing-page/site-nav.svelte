@@ -13,8 +13,8 @@
   const links = [
     { href: "/#features", label: "Fitur" },
     { href: "/#how-it-works", label: "Cara kerja" },
-    { href: "/#retention", label: "Retensi" },
-    { href: "/#faq", label: "FAQ" },
+    { href: "/#retention", label: "Ingat terus" },
+    { href: "/#faq", label: "Tanya jawab" },
   ];
 </script>
 
@@ -44,11 +44,11 @@
     <div class="flex items-center gap-2">
       {#if user}
         <Button href="/home/" variant="ghost" size="sm">Dasbor</Button>
-        <Button href="/study/new/" size="sm">Buat modul</Button>
+        <Button href="/study/new/" size="sm">Belajar sekarang</Button>
       {:else}
         <Button href="/login/" variant="ghost" size="sm">Masuk</Button>
-        <Button href="/login/" size="sm">
-          Mulai gratis
+        <Button href="/sign-up/" size="sm">
+          Coba gratis
           <HugeiconsIcon icon={ArrowRight01Icon} data-icon="inline-end" />
         </Button>
       {/if}

@@ -13,9 +13,9 @@
   <Dialog open>
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Pilih Username</DialogTitle>
+        <DialogTitle>Pilih Nama Pengguna</DialogTitle>
         <DialogDescription
-          >Silakan pilih username untuk akun Anda.</DialogDescription
+          >Pilih nama pengguna yang akan teman-teman lihat.</DialogDescription
         >
       </DialogHeader>
       <UsernameForm />

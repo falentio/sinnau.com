@@ -21,6 +21,7 @@
       ),
       password: v.pipe(
         v.string(),
+        v.trim(),
         v.minLength(8, "Kata sandi minimal 8 karakter."),
         v.maxLength(128, "Kata sandi maksimal 128 karakter.")
       ),
@@ -41,11 +42,14 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import OAuthButtons from "$lib/components/oauth-buttons.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient } from "$lib/hooks/auth.svelte";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
+
+  let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
 
   let serverError = $state("");
   let pending = $state(false);
@@ -60,16 +64,21 @@
   const signUp = async (data: SignUpForm) => {
     pending = true;
     try {
-      const { error } = await authClient.signUp.email({
+      const body = {
+        confirmPassword: data.confirmPassword,
         email: data.email,
         name: data.name,
         password: data.password,
-      });
+      };
+      const { error } = await authClient.signUp.email(
+        body as Parameters<typeof authClient.signUp.email>[0]
+      );
       if (error) {
         serverError = getErrorMessage(error);
         return;
       }
-      await goto(resolve("/(app)/home"));
+      serverError = "Akun berhasil dibuat. Silakan masuk.";
+      setTimeout(() => goto(resolve("/(auth)/login")), 1500);
     } catch (error) {
       serverError = getErrorMessage(error as { message?: string });
     } finally {
@@ -106,8 +115,8 @@
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
   <div class="flex flex-col gap-2 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight">Daftar</h1>
-    <p class="text-sm text-muted-foreground">Buat akun untuk mulai belajar</p>
+    <h1 class="text-2xl font-semibold tracking-tight">Mulai belajar</h1>
+    <p class="text-sm text-muted-foreground">Mulai belajar dalam 30 detik.</p>
   </div>
 
   {#if serverError}
@@ -180,8 +189,14 @@
   </Form.Field>
 
   <Form.Button class="w-full" disabled={$submitting || pending}>
-    {$submitting || pending ? "Membuat..." : "Daftar"}
+    {$submitting || pending ? "Mendaftarkan..." : "Mulai belajar gratis"}
   </Form.Button>
+
+  <p class="text-center text-[11px] text-muted-foreground">
+    Gratis selamanya. Tidak ada spam. Hapus kapan saja.
+  </p>
+
+  <OAuthButtons {providers} />
 
   <div class="text-center text-sm">
     Sudah punya akun?

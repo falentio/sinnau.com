@@ -20,7 +20,7 @@
     <HugeiconsIcon icon={Tick02Icon} class="size-6" />
   </span>
   <div class="flex flex-col gap-1">
-    <p class="text-lg font-medium text-foreground">Sudah tertinggal</p>
+    <p class="text-lg font-medium text-foreground">Semua selesai</p>
     <p class="max-w-sm text-sm text-muted-foreground">
       Tidak ada kartu yang perlu di-review sekarang. Kembali lagi nanti atau
       tambah flashcard baru.

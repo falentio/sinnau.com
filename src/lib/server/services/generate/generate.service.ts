@@ -5,6 +5,11 @@ import {
   GENERATE_ID_PREFIX,
   GENERATE_INPUT_MAX_CHARS,
 } from "$lib/schemas/generate.constant";
+import {
+  STUDY_SET_TITLE_MAX_LENGTH,
+  STUDY_SET_TITLE_MIN_LENGTH,
+} from "$lib/schemas/study-set.constant";
+import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 
 import type {
@@ -19,6 +24,7 @@ import type {
   GenerationStorage,
   SuccessRecord,
 } from "../../infras/generate/generate";
+import { inferStudyNameAndDescription } from "../../infras/generate/infer-name";
 import type { LanguageStyleId } from "../../infras/generate/language-style";
 import { waitUntil } from "../../utils/background-jobs.ts";
 import { generateId } from "../../utils/nanoid.ts";
@@ -29,7 +35,34 @@ import type { GenerateRepository } from "./generate.repository.ts";
 export type { CreateGenerateInput, CreateGenerateOutput };
 export type { Generate };
 
+const logger = getLogger(["sinnau.com", "generate", "service"]);
+
 const MAX_RETRIES = 3;
+
+const UNTITLED_STUDY_SET = "Untitled Study Set";
+
+const sanitizeFilenameToTitle = (filename: string): string => {
+  const withoutExtension = filename.replace(/\.[^./\\]+$/u, "");
+  const withoutChapterPrefix = withoutExtension.replace(
+    /^(chapter|bab)\s*\d+\s*[-:]?\s*/iu,
+    ""
+  );
+  return withoutChapterPrefix
+    .replaceAll(/[_-]+/gu, " ")
+    .replaceAll(/\s+/gu, " ")
+    .trim();
+};
+
+const isValidTitle = (title: string | undefined): title is string => {
+  if (title === undefined || title === null || title === "") {
+    return false;
+  }
+  const trimmed = title.trim();
+  return (
+    trimmed.length >= STUDY_SET_TITLE_MIN_LENGTH &&
+    title.length <= STUDY_SET_TITLE_MAX_LENGTH
+  );
+};
 
 interface StudySetServiceClient {
   createStudySet(
@@ -107,6 +140,7 @@ export class GenerateService {
     }
 
     let pdfText: string;
+    const parseStart = performance.now();
     try {
       const result = await this.pipeline.parseLiteparse({ pdf: input.pdf });
       pdfText = result.text;
@@ -115,12 +149,30 @@ export class GenerateService {
         message: "Failed to parse the PDF file",
       });
     }
+    logger.info("Generation parse finished", () => ({
+      durationMs: Math.round(performance.now() - parseStart),
+      inputLength: pdfText.length,
+    }));
+    logger.debug("Generation parse result", () => ({
+      description: input.description,
+      filename: input.pdf.name,
+      textLength: pdfText.length,
+      title: input.title,
+      visibility: input.visibility,
+    }));
+
+    const { description, title } = await GenerateService.resolveStudySetName({
+      description: input.description,
+      filename: input.pdf.name,
+      text: pdfText,
+      title: input.title,
+    });
 
     const studySet = await this.studySetService.createStudySet(
       {
-        description: input.description,
+        description,
         files: [input.pdf.name],
-        title: input.title,
+        title,
         visibility: input.visibility,
       },
       owner
@@ -147,14 +199,25 @@ export class GenerateService {
       isInputTruncated: truncated,
     });
 
+    logger.info("Generation input prepared", () => ({
+      generateId: generateRow.id,
+      inputLength: inputText.length,
+      isInputTruncated: truncated,
+    }));
+
     this.activeOwners.add(owner);
+    logger.info("Generation concurrency", () => ({
+      activeGenerations: this.activeOwners.size,
+      generateId: generateRow.id,
+    }));
 
     const pipelinePromise = this.runPipeline({
       extractionType: input.extractionType ?? "normal",
       generateId: generateRow.id,
+      isInputTruncated: truncated,
       languageStyle: input.languageStyle ?? "student-friendly",
       ownerId: owner,
-      pdfText,
+      pdfText: inputText,
       studySetId: studySet.id,
     });
 
@@ -169,6 +232,70 @@ export class GenerateService {
       generateId: generateRow.id,
       studySetId: studySet.id,
     };
+  }
+
+  private static async resolveStudySetName(input: {
+    description: string | undefined;
+    filename: string;
+    text: string;
+    title: string | undefined;
+  }): Promise<{ description: string | undefined; title: string }> {
+    const { description: inputDescription, filename, text, title } = input;
+    const hasTitle = title !== undefined && title.trim() !== "";
+    if (hasTitle) {
+      return { description: inputDescription, title };
+    }
+
+    let resolvedTitle: string | undefined;
+    let description =
+      inputDescription !== undefined && inputDescription.trim() !== ""
+        ? inputDescription
+        : undefined;
+
+    try {
+      const { description: inferredDescription, name } =
+        await inferStudyNameAndDescription({
+          filename,
+          text,
+        });
+      if (isValidTitle(name)) {
+        resolvedTitle = name.trim();
+      }
+      if (description === undefined && inferredDescription) {
+        description = inferredDescription;
+      }
+    } catch (error) {
+      const extractError = () => {
+        if (error instanceof Error) {
+          return {
+            message: error.message,
+            name: error.name,
+          };
+        }
+        return {
+          message: "Unknown error",
+          name: "UnknownError",
+        };
+      };
+      logger.warn("Failed to infer study set name and description", () => ({
+        error: extractError(),
+      }));
+    }
+
+    if (!isValidTitle(resolvedTitle)) {
+      const fromFilename = sanitizeFilenameToTitle(filename);
+      resolvedTitle = isValidTitle(fromFilename)
+        ? fromFilename
+        : UNTITLED_STUDY_SET;
+    }
+
+    logger.debug("Final study set name and description", () => ({
+      description,
+      filename,
+      resolvedTitle,
+    }));
+
+    return { description, title: resolvedTitle };
   }
 
   async checkGenerateContent(
@@ -241,6 +368,7 @@ export class GenerateService {
   private async runPipeline(params: {
     extractionType: string;
     generateId: string;
+    isInputTruncated?: boolean;
     languageStyle: string;
     ownerId: string;
     pdfText: string;
@@ -275,9 +403,22 @@ export class GenerateService {
     let successCount = 0;
     let successfulChunks: SuccessRecord[] = [];
 
+    const loadSuccessfulChunks = async (): Promise<SuccessRecord[]> => {
+      const rows = await this.repo.loadChunkResults(gId);
+      return (
+        rows
+          .filter((r) => r.kind === "success")
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          .map((r) => JSON.parse(r.payload) as SuccessRecord)
+      );
+    };
+
+    const generationStart = performance.now();
     try {
       const result = await this.pipeline.runLLM({
         extractionType,
+        generateId: gId,
+        isInputTruncated: params.isInputTruncated,
         languageStyle,
         pdfText,
         storage,
@@ -286,26 +427,35 @@ export class GenerateService {
       totalChunkCount = tc;
       successCount = sc;
 
-      const rows = await this.repo.loadChunkResults(gId);
-      successfulChunks = rows
-        .filter((r) => r.kind === "success")
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        .map((r) => JSON.parse(r.payload) as SuccessRecord);
+      logger.info("Generation LLM phase finished", () => ({
+        durationMs: Math.round(performance.now() - generationStart),
+        generateId: gId,
+        successCount,
+        totalChunkCount,
+      }));
+
+      successfulChunks = await loadSuccessfulChunks();
     } catch (error) {
-      console.error("Error occurred while running LLM:", error);
-      const rows = await this.repo.loadChunkResults(gId);
-      successfulChunks = rows
-        .filter((r) => r.kind === "success")
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        .map((r) => JSON.parse(r.payload) as SuccessRecord);
+      logger.error("Error occurred while running LLM: {error}", () => ({
+        durationMs: Math.round(performance.now() - generationStart),
+        error,
+        generateId: gId,
+        successCount: successfulChunks.length,
+      }));
+      successfulChunks = await loadSuccessfulChunks();
       successCount = successfulChunks.length;
     }
 
     if (successCount === 0) {
+      logger.error("Generation failed: no successful chunks", () => ({
+        generateId: gId,
+        totalChunkCount,
+      }));
       await this.retryStatusUpdate(gId, "FAILED", Date.now());
       return;
     }
 
+    const finalizeStart = performance.now();
     try {
       await this.pipeline.finalizeTransaction({
         generateId: gId,
@@ -313,12 +463,24 @@ export class GenerateService {
         studySetId,
         successfulChunks,
       });
+      logger.info("Generation finalized", () => ({
+        durationMs: Math.round(performance.now() - finalizeStart),
+        generateId: gId,
+        successCount,
+      }));
     } catch {
+      logger.error("Generation finalize failed", () => ({ generateId: gId }));
       return;
     }
 
     const status =
       successCount === totalChunkCount ? "COMPLETED" : "PARTIAL_COMPLETED";
+    logger.info("Generation status updated", () => ({
+      generateId: gId,
+      status,
+      successCount,
+      totalChunkCount,
+    }));
     await this.retryStatusUpdate(gId, status, Date.now());
   }
 
