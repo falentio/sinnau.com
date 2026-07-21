@@ -8,6 +8,7 @@ export * from "./flashcard-session.ts";
 export * from "./quiz.ts";
 export * from "./quiz-session.ts";
 export * from "./study-set-content.ts";
+export * from "./affiliate.ts";
 export * from "./ai-limit.ts";
 export * from "./generate.ts";
 export * from "./plan.ts";

@@ -7,6 +7,7 @@ import { createAuthMiddleware } from "better-auth/api";
 
 import { db } from "../db/client.ts";
 import { env } from "../env.ts";
+import { resolveAffiliateReferrer } from "./affiliate-hooks.ts";
 
 const getBaseUrl = (): BetterAuthOptions["baseURL"] => {
   if (dev) {
@@ -59,7 +60,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user) => {
+        before: async (user, ctx) => {
           const email = user.email.toLowerCase();
           const isAdmin =
             env.AUTH_ADMIN_EMAILS.includes(email) ||
@@ -69,6 +70,7 @@ export const auth = betterAuth({
           return {
             data: {
               ...user,
+              ...(await resolveAffiliateReferrer(ctx)),
               emailVerified: true,
               role: isAdmin ? "admin" : "user",
             },

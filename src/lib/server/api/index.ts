@@ -1,3 +1,4 @@
+import { affiliateRouter } from "$lib/server/services/affiliate/affiliate.router";
 import { aiLimitRouter } from "$lib/server/services/ai-limit/ai-limit.router";
 import { chapterRouter } from "$lib/server/services/chapter/chapter.router";
 import { flashcardSessionRouter } from "$lib/server/services/flashcard-session/flashcard-session.router";
@@ -19,6 +20,7 @@ import {
 export { publicProcedure, authorizedProcedure, adminProcedure, requireAuth };
 
 export const router = {
+  affiliate: affiliateRouter,
   aiLimit: aiLimitRouter,
   chapter: chapterRouter,
   flashcard: flashcardRouter,

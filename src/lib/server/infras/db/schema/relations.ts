@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm";
 
+import {
+  affiliateCommission,
+  affiliatePayout,
+  affiliateProfile,
+  affiliateRelationship,
+  affiliateSubscriptionEvent,
+} from "./affiliate.ts";
 import { user } from "./auth-schema.ts";
 import { chapter } from "./chapter.ts";
 import {
@@ -239,6 +246,81 @@ export const generateChunkResultRelations = relations(
     generate: one(generate, {
       fields: [generateChunkResult.generateId],
       references: [generate.id],
+    }),
+  })
+);
+
+export const affiliateProfileRelations = relations(
+  affiliateProfile,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [affiliateProfile.userId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const affiliateCommissionRelations = relations(
+  affiliateCommission,
+  ({ one }) => ({
+    affiliateUser: one(user, {
+      fields: [affiliateCommission.affiliateUserId],
+      references: [user.id],
+    }),
+    payout: one(affiliatePayout, {
+      fields: [affiliateCommission.payoutId],
+      references: [affiliatePayout.id],
+    }),
+    purchaserUser: one(user, {
+      fields: [affiliateCommission.purchaserUserId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const affiliatePayoutRelations = relations(
+  affiliatePayout,
+  ({ one }) => ({
+    affiliateUser: one(user, {
+      fields: [affiliatePayout.affiliateUserId],
+      references: [user.id],
+    }),
+    processedByAdmin: one(user, {
+      fields: [affiliatePayout.processedByAdminId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const affiliateRelationshipRelations = relations(
+  affiliateRelationship,
+  ({ many, one }) => ({
+    referredUser: one(user, {
+      fields: [affiliateRelationship.referredUserId],
+      references: [user.id],
+    }),
+    referrerUser: one(user, {
+      fields: [affiliateRelationship.referrerUserId],
+      references: [user.id],
+    }),
+    subscriptionEvents: many(affiliateSubscriptionEvent),
+  })
+);
+
+export const affiliateSubscriptionEventRelations = relations(
+  affiliateSubscriptionEvent,
+  ({ one }) => ({
+    referredUser: one(user, {
+      fields: [affiliateSubscriptionEvent.referredUserId],
+      references: [user.id],
+    }),
+    referrerUser: one(user, {
+      fields: [affiliateSubscriptionEvent.referrerUserId],
+      references: [user.id],
+    }),
+    relationship: one(affiliateRelationship, {
+      fields: [affiliateSubscriptionEvent.relationshipId],
+      references: [affiliateRelationship.id],
     }),
   })
 );
