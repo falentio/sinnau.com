@@ -68,8 +68,13 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
+const adminRoutes: ((routeId: string) => boolean)[] = [
+  (routeId) => routeId.includes("/(dash)/"),
+];
+
 const guardedRoutes: ((routeId: string) => boolean)[] = [
   (routeId) => routeId.includes("/(app)/"),
+  ...adminRoutes,
 ];
 
 const authGuardHandle: Handle = async ({ event, resolve }) => {
@@ -329,11 +334,23 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
   return await resolve(event);
 };
 
+const adminGuardHandle: Handle = async ({ event, resolve }) => {
+  const routeId = event.route.id ?? "";
+  const isAdminRoute = adminRoutes.some((guard) => guard(routeId));
+
+  if (isAdminRoute && event.locals.user?.role !== "admin") {
+    redirect(302, "/home");
+  }
+
+  return await resolve(event);
+};
+
 export const handle = sequence(
   securityHeadersHandle,
   wideEventStorageHandle,
   watermarkHeaderHandle,
   betterAuthHandle,
   authGuardHandle,
+  adminGuardHandle,
   rateLimiterHandle
 );
