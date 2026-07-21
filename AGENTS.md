@@ -60,17 +60,14 @@ After completing the code, ask the user if they want a playground link. Only cal
 
 ## Script
 
-- use `rtk pnpm run check` typecheck all files with output format optimized for agents
-- use `rtk pnpm run lint:agent` to run linter
-- use `rtk pnpm run format` to format
 - use `pnpm run test:unit` for testing without coverage
 - use `pnpm run test:coverage` if you need test with coverage
 
-always run `pnpm run format`, `pnpm run lint:agent`, and `pnpm run check` before finalize your tasks
+always use `quality-fix` subagent to fix format, lint, and type-check issues — never run them yourself. Provide the files/directories you changed as Unix glob patterns.
 
 ## Fixes
 
-Use quality fix subagent to fix lint, format, and typecheck issue
+MUST use `quality-fix` subagent after working with any files. Do NOT run format, lint, or type-check directly — delegate to the subagent with the glob patterns of files you changed.
 
 ---
 
@@ -183,5 +180,12 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 ### Domain docs
 
 Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+---
+
+## Post-Commit
+
+After commit, you must using "code-review" skills, baseline are COMMIT^..COMMIT
+this is mandatory, non negotible
 
 ---
