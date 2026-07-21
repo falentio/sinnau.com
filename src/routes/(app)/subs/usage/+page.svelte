@@ -3,6 +3,7 @@
   import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
   import AiLimitCard from "$lib/components/features/subs/ai-limit-card.svelte";
   import OrderRow from "$lib/components/features/subs/order-row.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import {
     PLAN_MONTHLY_PRICE,
@@ -39,9 +40,11 @@
   });
 </script>
 
-<svelte:head>
-  <title>Paket aktif · Sinnau</title>
-</svelte:head>
+<SeoHead
+  title="Paket Aktif · sinnau"
+  description="Cek paket aktif dan kuota AI-mu di Sinnau. Pantau sisa penggunaan AI untuk generate soal dan flashcard, serta lihat riwayat pesanan."
+  robots="noindex"
+/>
 
 <div class="mx-auto w-full max-w-3xl px-6 pt-10 md:pt-14">
   <header class="flex flex-col gap-2 pb-10 md:pb-12">

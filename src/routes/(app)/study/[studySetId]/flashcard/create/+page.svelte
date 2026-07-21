@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { ArrowLeft01Icon } from "$lib/components/features/icons";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -93,9 +94,11 @@
   const hintCount = $derived(($formData.hint ?? "").length);
 </script>
 
-<svelte:head>
-  <title>Buat Flashcard</title>
-</svelte:head>
+<SeoHead
+  title="Buat Flashcard · sinnau"
+  description="Buat kartu flash baru untuk memperkuat hafalan materi belajarmu. Tulis pertanyaan dan jawaban, atur pengulangan pintar, dan kuasai setiap topik."
+  robots="noindex"
+/>
 
 <form
   class="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-5 px-6 py-6 rounded-4xl bg-card text-card-foreground shadow-xs"

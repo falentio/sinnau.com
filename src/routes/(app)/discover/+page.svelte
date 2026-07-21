@@ -8,6 +8,7 @@
     Cancel01Icon,
     Search02Icon,
   } from "$lib/components/features/icons";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import EmptyDescription from "$lib/components/ui/empty/empty-description.svelte";
   import EmptyHeader from "$lib/components/ui/empty/empty-header.svelte";
@@ -143,6 +144,12 @@
     goto(url, { noScroll: true, replaceState: true });
   };
 </script>
+
+<SeoHead
+  title="Jelajahi Modul Belajar Komunitas · sinnau"
+  description="Temukan modul belajar dari berbagai mata kuliah, dibuat oleh sesama mahasiswa Indonesia. Cari, pelajari, dan kuasai materi kampus dengan sistem AI spaced repetition."
+  robots="noindex"
+/>
 
 <div class="bg-card text-card-foreground">
   <div class="mx-auto flex w-full max-w-2xl flex-col px-6 pt-6">

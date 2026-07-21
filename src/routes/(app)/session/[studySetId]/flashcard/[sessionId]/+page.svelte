@@ -143,10 +143,6 @@
   };
 </script>
 
-<svelte:head>
-  <title>Review flashcard</title>
-</svelte:head>
-
 {#if total === 0}
   <ReviewEmpty {studySetId} />
 {:else if isComplete}

@@ -4,6 +4,7 @@
   import StudySetEmpty from "$lib/components/features/app/study-set-empty.svelte";
   import StudySetItem from "$lib/components/features/app/study-set-item.svelte";
   import StudySetPagination from "$lib/components/features/app/study-set-pagination.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import { onMount } from "svelte";
 
   let { data } = $props();
@@ -23,6 +24,12 @@
     }
   });
 </script>
+
+<SeoHead
+  title="Modul Belajarku · sinnau"
+  description="Kelola semua modul belajar, flashcard, dan kuis yang telah kamu buat dari PDF kuliah. Gunakan sistem pengulangan spaced repetition (FSRS) berbasis AI untuk belajar lebih efektif."
+  robots="noindex"
+/>
 
 <div id="study-set-display" class="mx-auto flex w-full max-w-2xl flex-col px-6">
   <FilterBar {currentFilter} />

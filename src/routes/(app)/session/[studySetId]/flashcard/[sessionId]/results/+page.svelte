@@ -2,6 +2,7 @@
   import RatingDistributionRow from "$lib/components/features/flashcard-session/rating-distribution-row.svelte";
   import ResultsHero from "$lib/components/features/flashcard-session/results-hero.svelte";
   import ReviewTimelineRow from "$lib/components/features/flashcard-session/review-timeline-row.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import type { FlashcardSessionRating } from "$lib/schemas/flashcard-session.constant";
 
@@ -25,9 +26,11 @@
   );
 </script>
 
-<svelte:head>
-  <title>Hasil review flashcard</title>
-</svelte:head>
+<SeoHead
+  title="Hasil Review Flashcard · sinnau"
+  description="Lihat hasil review flashcard kamu — jumlah kartu benar dan salah, skor akhir, serta ringkasan performa untuk sesi belajar ini."
+  robots="noindex"
+/>
 
 <div class="flex flex-col gap-8">
   <ResultsHero {reviews} sessionCreatedAt={data.session.createdAt} />

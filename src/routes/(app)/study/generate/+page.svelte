@@ -8,6 +8,7 @@
     Delete02Icon,
     FileUploadIcon,
   } from "$lib/components/features/icons";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -127,9 +128,11 @@
   };
 </script>
 
-<svelte:head>
-  <title>Buat Modul dengan AI</title>
-</svelte:head>
+<SeoHead
+  title="Buat Modul dengan AI · sinnau"
+  description="Ubah PDF kuliahmu jadi ribuan flashcards & soal kuis siap belajar. Upload materi, AI kami buat modul interaktif dalam hitungan detik."
+  robots="noindex"
+/>
 
 <div class="mx-auto w-full max-w-2xl px-3">
   <Button variant="ghost" href="/home">

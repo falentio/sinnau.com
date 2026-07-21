@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import ActivePlanBanner from "$lib/components/features/subs/active-plan-banner.svelte";
   import PlanCard from "$lib/components/features/subs/plan-card.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import Faq from "$lib/features/landing-page/faq.svelte";
   import { client } from "$lib/orpc";
@@ -74,9 +75,11 @@
   };
 </script>
 
-<svelte:head>
-  <title>Paket · Sinnau</title>
-</svelte:head>
+<SeoHead
+  title="Paket · sinnau"
+  description="Bandingkan paket Sinnau — LITE, PLUS, PREMIUM. Pilih durasi 1, 6, atau 12 bulan. Bayar sekali, akses sampai habis, tanpa tagihan berulang."
+  robots="noindex"
+/>
 
 <div class="mx-auto w-full max-w-4xl px-6 pt-10 md:pt-14">
   <header class="flex flex-col gap-2 pb-8 md:pb-10">

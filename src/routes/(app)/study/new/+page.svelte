@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { ArrowLeft01Icon } from "$lib/components/features/icons";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -91,9 +92,11 @@
   const descriptionCount = $derived(($formData.description ?? "").length);
 </script>
 
-<svelte:head>
-  <title>Buat Modul Belajar</title>
-</svelte:head>
+<SeoHead
+  title="Buat Modul Belajar · sinnau"
+  description="Buat modul belajar baru secara manual di sinnau. Atur judul, deskripsi, dan visibilitas modul flashcard-mu untuk belajar efektif dengan AI spaced repetition."
+  robots="noindex"
+/>
 
 <div class="mx-auto w-full max-w-2xl px-3">
   <Button variant="ghost" href="/home">

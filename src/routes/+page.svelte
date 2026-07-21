@@ -1,6 +1,7 @@
 <script lang="ts">
   import "$lib/features/landing-page/landing.css";
   import { page } from "$app/stores";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import CtaBanner from "$lib/features/landing-page/cta-banner.svelte";
   import Faq from "$lib/features/landing-page/faq.svelte";
   import FeatureBento from "$lib/features/landing-page/feature-bento.svelte";
@@ -12,16 +13,11 @@
   import Testimonials from "$lib/features/landing-page/testimonials.svelte";
 </script>
 
-<svelte:head>
-  <title>sinnau &middot; Belajar yang melekat</title>
-  <meta
-    name="description"
-    content="Ubah PDF jadi modul belajar dengan flashcard dan kuis AI. FSRS menjadwalkan ulangan di momen yang tepat. Ingat lebih lama, belajar lebih sedikit."
-  />
-  <meta property="og:title" content="sinnau" />
-  <meta property="og:description" content="Belajar yang melekat." />
-  <meta name="theme-color" content="#FBFBFA" />
-</svelte:head>
+<SeoHead
+  title="sinnau · Belajar yang melekat"
+  description="Ubah PDF jadi modul belajar dengan flashcard dan kuis AI. FSRS menjadwalkan ulangan di momen yang tepat. Ingat lebih lama, belajar lebih sedikit."
+  og={{ description: "Belajar yang melekat." }}
+/>
 
 <div class="landing-v3 relative min-h-[100dvh]">
   <div class="grain"></div>

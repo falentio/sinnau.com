@@ -2,6 +2,7 @@
   import { goto, invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
@@ -190,9 +191,11 @@
   };
 </script>
 
-<svelte:head>
-  <title>Edit Quiz</title>
-</svelte:head>
+<SeoHead
+  title="Edit Quiz · sinnau"
+  description="Edit pertanyaan kuis, sesuaikan opsi jawaban, dan perbaiki kartu flashcard-mu. Kelola quiz set dengan cepat dan tepat di sinnau."
+  robots="noindex"
+/>
 
 <form
   method="POST"

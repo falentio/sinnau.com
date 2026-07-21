@@ -1,6 +1,7 @@
 <script lang="ts">
   import StudySetActionBar from "$lib/components/features/study-set/study-set-action-bar.svelte";
   import StudySetHeader from "$lib/components/features/study-set/study-set-header.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import type { Snippet } from "svelte";
 
   import type { LayoutData } from "./$types";
@@ -12,6 +13,12 @@
 
   const { children, data } = $props() as Props;
 </script>
+
+<SeoHead
+  title="{data.studySet.title} · sinnau"
+  description="Pelajari {data.studySet
+    .title} dengan flashcard dan quiz interaktif. Gunakan AI spaced repetition (FSRS) untuk ingat lebih lama di sinnau."
+/>
 
 <StudySetHeader studySet={data.studySet} chapters={data.chapters} />
 

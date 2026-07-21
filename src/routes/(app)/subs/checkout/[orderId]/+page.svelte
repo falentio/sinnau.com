@@ -14,6 +14,7 @@
   import ExpiryCountdown from "$lib/components/features/subs/expiry-countdown.svelte";
   import QrisDisplay from "$lib/components/features/subs/qris-display.svelte";
   import StatusBanner from "$lib/components/features/subs/status-banner.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { client } from "$lib/orpc";
   import type { GetOrder } from "$lib/schemas/plan";
@@ -116,9 +117,11 @@
   });
 </script>
 
-<svelte:head>
-  <title>Selesaikan pembayaran · Sinnau</title>
-</svelte:head>
+<SeoHead
+  title="Selesaikan Pembayaran · sinnau"
+  description="Scan QRIS untuk menyelesaikan pembayaran langganan Sinnau. Pembayaran diverifikasi otomatis setelah transfer."
+  robots="noindex"
+/>
 
 <div class="mx-auto w-full max-w-5xl px-6 pt-8 md:pt-10">
   <div class="mb-6 md:mb-8">

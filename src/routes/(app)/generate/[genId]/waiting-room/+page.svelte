@@ -5,6 +5,7 @@
   import ProgressRing from "$lib/components/features/waiting-room/progress-ring.svelte";
   import { createItemRevealer } from "$lib/components/features/waiting-room/waiting-room.revealer.svelte";
   import { FEED_ITEM_LIMIT } from "$lib/components/features/waiting-room/waiting-room.utils";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { client } from "$lib/orpc";
   import { HugeiconsIcon } from "@hugeicons/svelte";
@@ -111,6 +112,12 @@
     };
   });
 </script>
+
+<SeoHead
+  title="Menunggu Modul Dibuat · sinnau"
+  description="Progres pembuatan modul flashcard dari PDF Anda. Halaman ini menunggu AI menyelesaikan modul dan akan diperbarui otomatis begitu siap."
+  robots="noindex"
+/>
 
 <div class="max-w-2xl w-full flex justify-start mx-auto">
   <Button href="/home" variant="ghost"

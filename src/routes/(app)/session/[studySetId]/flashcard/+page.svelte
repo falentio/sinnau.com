@@ -16,10 +16,6 @@
   const hasRecent = $derived(data.recentReviews.length > 0);
 </script>
 
-<svelte:head>
-  <title>Review flashcard</title>
-</svelte:head>
-
 <div class="flex flex-col gap-8">
   {#if !hasFlashcards}
     <HubEmpty {studySetId} />

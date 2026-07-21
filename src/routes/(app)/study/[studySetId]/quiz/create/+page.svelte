@@ -6,6 +6,7 @@
   } from "$lib/components/features/quiz/create-quiz-form";
   import MultipleChoiceFields from "$lib/components/features/quiz/multiple-choice-fields.svelte";
   import MultipleSelectFields from "$lib/components/features/quiz/multiple-select-fields.svelte";
+  import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
@@ -39,9 +40,11 @@
   };
 </script>
 
-<svelte:head>
-  <title>Buat Quiz</title>
-</svelte:head>
+<SeoHead
+  title="Buat Quiz · sinnau"
+  description="Buat soal quiz sendiri untuk study set-mu. Pilih tipe multiple choice atau multi-select, atur opsi jawaban, dan tentukan kunci jawaban. Latihan makin efektif dengan quiz buatanmu."
+  robots="noindex"
+/>
 
 <form
   method="POST"
