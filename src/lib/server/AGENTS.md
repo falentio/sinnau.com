@@ -106,3 +106,27 @@ Rules:
 - For methods that already use a sentinel `Error` to signal a non-DB outcome (e.g. `deleteQuizzes`, `deleteFlashcards`, `linkChapter`), the sentinel check stays above the `ORPCError` re-throw; only unrecognised errors become `INTERNAL_SERVER_ERROR`.
 - The catch message is always the literal `'Internal server error'` — driver details must not leak to clients. Real error context belongs in server-side logs (out of scope for the repository).
 - The `INTERNAL_SERVER_ERROR` catch branch is **not** required to be covered by tests. It is a defensive wrapper for unexpected driver/SQL exceptions and is exercised in production only. Do not add tests that mock the DB to throw a generic error just to assert the wrapper — keep test coverage focused on the happy path and on the documented `null` / `false` / empty outcomes.
+
+---
+
+## Background jobs
+
+If a promise does not need to be awaited, or cannot be awaited, it **must** be passed to `waitUntil()` from `$lib/server/utils/background-jobs.ts`.
+
+Fire-and-forget (unhandled rejections will crash the process):
+
+```ts
+// BAD: promise is dangling — rejections are unhandled
+const task = doSomethingAsync();
+```
+
+Use `waitUntil`:
+
+```ts
+import { waitUntil } from "$lib/server/utils/background-jobs";
+
+const task = doSomethingAsync();
+waitUntil(task);
+```
+
+`waitUntil` tracks the promise, logs unhandled rejections, and cleans up on completion. Call `waitForAll()` during shutdown to drain remaining work.

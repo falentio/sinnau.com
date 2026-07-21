@@ -6,7 +6,6 @@ import {
 } from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
-import type { MockedFunction } from "vitest";
 
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
@@ -42,14 +41,8 @@ const makeWebhookBody = (
   ...overrides,
 });
 
-interface MidtransMock {
-  client: MidtransClient;
-  createQris: MockedFunction<MidtransClient["createQris"]>;
-}
-
-const createMockMidtrans = (): MidtransMock => {
-  const mock = vi.fn<MidtransClient["createQris"]>();
-  mock.mockResolvedValue({
+const createMockMidtrans = () => {
+  const createQris = vi.fn<() => Promise<object>>().mockResolvedValue({
     acquirer: "gopay",
     actions: [{ method: "GET", name: "generate-qr-code", url: "https://qr" }],
     currency: "IDR",
@@ -66,23 +59,17 @@ const createMockMidtrans = (): MidtransMock => {
     transaction_status: "pending",
     transaction_time: "2024-01-01 00:00:00",
   });
-  return {
-    client: { createQris: mock } as unknown as MidtransClient,
-    createQris: mock,
-  };
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock to impl cast in tests
+  return { createQris } as unknown as MidtransClient;
 };
 
-const setupService = (midtransMock = createMockMidtrans()) => {
+const setupService = (midtrans = createMockMidtrans()) => {
   const repo = createMockRepository();
   const guard = createMockGuard();
-  guard.requireOwner.mockImplementation((id) => {
-    if (id === null || id === undefined) {
-      throw new ORPCError("UNAUTHORIZED", {
-        message: "Authentication is required",
-      });
-    }
-    return id;
-  });
+  guard.requireOwner.mockImplementation(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/non-nullable-type-assertion-style -- mock requires narrowing from string|null|undefined to string
+    (id) => id as string
+  );
   guard.assertOrderVisibleByIdOrNotFound.mockImplementation(
     async (id, _userId) => {
       const order = await repo.findOrderById(id);
@@ -99,25 +86,16 @@ const setupService = (midtransMock = createMockMidtrans()) => {
     }
     return id;
   });
+  // oxlint-disable-next-line eslint/arrow-body-style -- block body needed for disable-next-line comment
   guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
-    if (id === "missing-user") {
-      throw new ORPCError("NOT_FOUND", { message: "User not found" });
-    }
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock return: AuthUser from Drizzle $inferSelect may contain any
     return {
-      affiliatedBy: null,
-      banExpires: null,
-      banReason: null,
-      banned: null,
-      createdAt: new Date(),
+      banned: false,
       email: `${id}@e.com`,
       emailVerified: true,
       id,
-      image: null,
-      lastLoginMethod: null,
       name: "User",
-      role: null,
-      updatedAt: new Date(),
-    };
+    } as never;
   });
 
   repo.findActiveUserPlan.mockResolvedValue(null);
@@ -150,16 +128,11 @@ const setupService = (midtransMock = createMockMidtrans()) => {
 
   const service = new PlanService(
     repo,
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock to impl cast in tests
     guard as unknown as PlanGuard,
-    midtransMock.client
+    midtrans
   );
-  return {
-    createQrisMock: midtransMock.createQris,
-    guard,
-    midtrans: midtransMock.client,
-    repo,
-    service,
-  };
+  return { guard, midtrans, repo, service };
 };
 
 describe.concurrent("PlanService unit tests", () => {
@@ -196,7 +169,7 @@ describe.concurrent("PlanService unit tests", () => {
     it("creates a pending order and payment, then returns QRIS instructions", async ({
       expect,
     }) => {
-      const { createQrisMock, repo, service } = setupService();
+      const { midtrans, repo, service } = setupService();
       const result = await service.checkout(
         { durationMonths: 1, planKey: "LITE" },
         "user-1"
@@ -225,7 +198,8 @@ describe.concurrent("PlanService unit tests", () => {
         status: "PENDING",
       });
 
-      expect(createQrisMock).toHaveBeenCalledWith({
+      // oxlint-disable-next-line typescript/unbound-method -- midtrans.createQris is a vi.fn() mock, not an unbound method reference
+      expect(midtrans.createQris).toHaveBeenCalledWith({
         custom_expiry: {
           expiry_duration: 15,
           unit: "minute",
@@ -254,9 +228,12 @@ describe.concurrent("PlanService unit tests", () => {
     it("throws PAYMENT_GATEWAY_ERROR when Midtrans fails", async ({
       expect,
     }) => {
-      const midtransMock = createMockMidtrans();
-      midtransMock.createQris.mockRejectedValue(new Error("network down"));
-      const { service } = setupService(midtransMock);
+      const midtrans = createMockMidtrans();
+      // oxlint-disable-next-line typescript/unbound-method -- midtrans.createQris is a vi.fn() mock
+      vi.mocked(midtrans.createQris).mockRejectedValue(
+        new Error("network down")
+      );
+      const { service } = setupService(midtrans);
       const err = await captureError(
         service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1")
       );
@@ -313,11 +290,13 @@ describe.concurrent("PlanService unit tests", () => {
       const lite = plans.find((p) => p.key === "LITE");
       const premium = plans.find((p) => p.key === "PREMIUM");
       expect(lite?.monthlyPrice).toBe(30_000);
+      // oxlint-disable typescript/no-unsafe-assignment -- expect.any(String) returns AsymmetricMatcher<any> which is safe in test assertions
       expect(lite?.durations).toEqual([
         { discountLabel: expect.any(String), grossAmount: 30_000, months: 1 },
         { discountLabel: expect.any(String), grossAmount: 150_000, months: 6 },
         { discountLabel: expect.any(String), grossAmount: 270_000, months: 12 },
       ]);
+      // oxlint-enable typescript/no-unsafe-assignment
       expect(premium?.durations.find((d) => d.months === 12)?.grossAmount).toBe(
         900_000
       );
@@ -495,6 +474,58 @@ describe.concurrent("PlanService unit tests", () => {
       expect(repo.upsertUserPlan).toHaveBeenCalledWith(
         expect.objectContaining({ planKey: "PLUS", userId: order.userId })
       );
+    });
+
+    it("emits 'order:paid' with correct payload on settlement", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({
+        grossAmount: 100_000,
+        id: "ord_test",
+        status: "PENDING",
+        userId: "buyer-1",
+      });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({ orderId: "ord_test" })
+      );
+
+      const emitted: unknown[] = [];
+      service.events.on("order:paid", (payload) => {
+        emitted.push(payload);
+      });
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_id: "txn-99" })
+      );
+
+      expect(emitted).toHaveLength(1);
+      expect(emitted[0]).toEqual({
+        grossAmount: 100_000,
+        transactionId: "txn-99",
+        userId: "buyer-1",
+      });
+    });
+
+    it("does not emit 'order:paid' on non-PAID transitions", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PENDING" })
+      );
+
+      const emitted: unknown[] = [];
+      service.events.on("order:paid", (payload) => {
+        emitted.push(payload);
+      });
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "expire" })
+      );
+
+      expect(emitted).toHaveLength(0);
     });
 
     it("revokes the plan on a reversal (refund) of a paid order", async ({
@@ -687,8 +718,8 @@ describe.concurrent("PlanService unit tests", () => {
         planKey: "LITE",
         userId: "user-1",
       };
-      const noAdmin: string | null | undefined = undefined;
-      const err = await captureError(service.grantPlan(input, noAdmin));
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- explicitly testing the undefined adminId case
+      const err = await captureError(service.grantPlan(input, undefined));
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
@@ -714,25 +745,16 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const { guard, repo, service } = setupService();
+      // oxlint-disable-next-line eslint/arrow-body-style -- block body needed for disable-next-line comment
       guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
-        if (id === "missing-user") {
-          throw new ORPCError("NOT_FOUND", { message: "User not found" });
-        }
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock return: AuthUser from Drizzle $inferSelect may contain any
         return {
-          affiliatedBy: null,
-          banExpires: null,
-          banReason: null,
-          banned: null,
-          createdAt: new Date(),
+          banned: false,
           email: `${id}@e.com`,
           emailVerified: true,
           id,
-          image: null,
-          lastLoginMethod: null,
           name: "User",
-          role: null,
-          updatedAt: new Date(),
-        };
+        } as never;
       });
 
       const input: GrantPlanInput = {

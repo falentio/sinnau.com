@@ -11,3 +11,5 @@ export const AFFILIATE_COOKIE_NAME = "affiliate_ref";
 export const AFFILIATE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 export const AFFILIATE_SLUG_MAX_RETRIES = 5;
+
+export const AFFILIATE_COMMISSION_RATE = 0.35;
