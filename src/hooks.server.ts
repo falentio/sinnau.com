@@ -51,8 +51,8 @@ const betterAuthHandle: Handle = async ({ event, resolve }) => {
 
   if (response.status === 429) {
     const retryAfter = response.headers.get("X-Retry-After") ?? "";
-    return new Response(
-      JSON.stringify({ message: "Too many requests. Please try again later." }),
+    return Response.json(
+      { message: "Too many requests. Please try again later." },
       {
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ const getWellKnownHeaders = (request: Request) => {
   const headers: Record<string, string> = {};
   for (const header of wellKnownHeaders) {
     const value = request.headers.get(header);
-    if (value) {
+    if (value !== null && value !== "") {
       headers[header] = value;
     }
   }
@@ -298,7 +298,7 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
     );
   }
 
-  if (!userId) {
+  if (userId === undefined) {
     return await resolve(event);
   }
 
@@ -313,8 +313,8 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
   });
   if (!userResult.allowed) {
     const retryAfter = Math.ceil(userResult.reset / 1000);
-    return new Response(
-      JSON.stringify({ message: "Too many requests from this user." }),
+    return Response.json(
+      { message: "Too many requests from this user." },
       {
         headers: {
           "Content-Type": "application/json",
