@@ -1,14 +1,33 @@
 <script lang="ts">
+  import { client } from "$lib/orpc";
+
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
+  let claiming = $state(false);
+  let claimError = $state("");
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("id-ID", {
-      style: "currency",
       currency: "IDR",
       minimumFractionDigits: 0,
+      style: "currency",
     }).format(value);
+
+  const handleClaim = async () => {
+    claiming = true;
+    claimError = "";
+    try {
+      await client.affiliate.claim({});
+      window.location.reload();
+    } catch (error) {
+      claimError =
+        error instanceof Error ? error.message : "Failed to claim profile";
+    } finally {
+      claiming = false;
+    }
+  };
 </script>
 
 <div class="mx-auto max-w-2xl space-y-8 p-6">
@@ -55,13 +74,15 @@
         earning!
       </p>
       <button
-        class="rounded bg-primary px-4 py-2 text-primary-foreground"
-        onclick={() => {
-          // Will be wired to claim action in a separate step
-        }}
+        class="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
+        onclick={handleClaim}
+        disabled={claiming}
       >
-        Claim Affiliate Profile
+        {claiming ? "Claiming..." : "Claim Affiliate Profile"}
       </button>
+      {#if claimError}
+        <p class="mt-2 text-sm text-destructive">{claimError}</p>
+      {/if}
     </section>
   {/if}
 </div>
