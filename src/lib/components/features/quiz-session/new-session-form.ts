@@ -69,13 +69,14 @@ export const newSessionForm = () => {
     }
   );
 
+  // Real submit function that we capture before overriding
   const realSubmit = superFormResult.submit;
-  superFormResult.submit = async () => {
+  superFormResult.submit = () => {
     superFormResult.form.update((form) => ({
       ...form,
       chapterId: form.chapterId === "" ? undefined : form.chapterId,
     }));
-    await realSubmit();
+    realSubmit();
   };
 
   return { form: superFormResult };

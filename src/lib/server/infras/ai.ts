@@ -2,10 +2,9 @@ import { building } from "$app/env";
 import { env } from "$lib/server/infras/env";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-const getClient = () => {
-  if (process.env.VITEST || building) {
-    // oxlint-disable-next-line typescript/no-explicit-any
-    return undefined as never;
+const getClient = (): ReturnType<typeof createOpenAICompatible> => {
+  if (process.env.VITEST !== undefined || building) {
+    throw new Error("AI client cannot be created during test/build");
   }
   if (env.AI_COMPATIBILITY === "openai") {
     return createOpenAICompatible({

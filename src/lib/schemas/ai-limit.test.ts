@@ -5,7 +5,6 @@ import {
   AI_LIMIT_DEFAULT_DAILY_LIMIT,
   AI_LIMIT_DEFAULT_PLAN_KEY,
   AI_LIMIT_DEFAULT_WEEKLY_LIMIT,
-  AI_LIMIT_ID_PREFIX,
   AI_LIMIT_MAX_PER_REQUEST,
 } from "./ai-limit.constant.ts";
 import {

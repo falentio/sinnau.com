@@ -54,6 +54,7 @@ describe.concurrent(AiLimitGuard, () => {
     it("throws UNAUTHORIZED when ownerId is undefined", ({ expect }) => {
       const { guard } = setupGuard();
       const err = syncCaptureError(() => {
+        // oxlint-disable-next-line unicorn/no-useless-undefined
         guard.requireOwner(undefined);
       });
       expect(err).toBeInstanceOf(ORPCError);

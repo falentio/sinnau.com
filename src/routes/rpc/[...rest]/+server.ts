@@ -1,5 +1,4 @@
 import { router } from "$lib/server/api";
-import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { SimpleCsrfProtectionHandlerPlugin } from "@orpc/server/plugins";
 

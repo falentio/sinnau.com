@@ -5,6 +5,7 @@ import { user } from "./auth-schema.ts";
 import { chapter } from "./chapter.ts";
 import { studySet } from "./study-set.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export const QUIZ_TYPES = ["MULTIPLE_CHOICE", "MULTIPLE_SELECT"] as const;
 export type QuizType = (typeof QUIZ_TYPES)[number];
 

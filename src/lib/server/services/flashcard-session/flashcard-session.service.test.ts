@@ -2,9 +2,9 @@ import { FLASHCARD_SESSION_NEW_CARDS_PER_DAY_DEFAULT } from "$lib/schemas/flashc
 import { ORPCError } from "@orpc/server";
 import { describe, it } from "vitest";
 
+import type { Flashcard } from "../../infras/db/schema/flashcard.ts";
 import type { StudySet } from "../../infras/db/schema/study-set.ts";
 import type { FlashcardSessionGuard } from "./flashcard-session.guard.ts";
-import type { FlashcardSessionRepository } from "./flashcard-session.repository.ts";
 import { FlashcardSessionService } from "./flashcard-session.service.ts";
 import {
   captureError,
@@ -100,14 +100,18 @@ const setupService = () => {
     })
   );
   guard.assertFlashcardBelongsToStudySetOrNotFound.mockResolvedValue({
+    back: "back",
+    chapterId: null,
     createdAt: new Date(),
     front: "front",
     hint: null,
     id: "flc_1",
     importance: 0,
+    isAiGenerated: false,
     ownerId: SAMPLE_USER_ID,
     studySetId: SAMPLE_STUDY_SET_ID,
-  } as never);
+    updatedAt: new Date(),
+  } satisfies Flashcard);
 
   // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new FlashcardSessionService(

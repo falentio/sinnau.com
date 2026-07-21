@@ -27,7 +27,8 @@ const makeWebhook = (
   transaction_time: "2024-01-01 00:00:00",
 });
 
-const createStubMidtrans = () =>
+const createStubMidtrans = (): MidtransClient =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   ({ createQris: vi.fn<() => void>() }) as unknown as MidtransClient;
 
 describe.concurrent("PlanService lifecycle (integration)", () => {

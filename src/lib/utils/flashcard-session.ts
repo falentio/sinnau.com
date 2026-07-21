@@ -70,6 +70,10 @@ export const ratingLabel = (
     case "Easy": {
       return "Mudah";
     }
+    default: {
+      const _exhaustive: never = rating;
+      return _exhaustive;
+    }
   }
 };
 
@@ -88,6 +92,10 @@ export const stateLabel = (
     }
     case "Relearning": {
       return "Ulang";
+    }
+    default: {
+      const _exhaustive: never = state;
+      return _exhaustive;
     }
   }
 };

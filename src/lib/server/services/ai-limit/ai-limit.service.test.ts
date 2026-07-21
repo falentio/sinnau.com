@@ -46,13 +46,18 @@ const setupService = (plan: AiLimitPlan = defaultPlan) => {
 
   // eslint-disable-next-line promise-function-async
   const lookupPlan = () => Promise.resolve(plan);
-  // eslint-disable-next-line no-unsafe-type-assertion
+  // oxlint-disable-next-line no-unsafe-type-assertion
   const service = new AiLimitService(
     repo,
+    // oxlint-disable-next-line no-unsafe-type-assertion
     guard as unknown as AiLimitGuard,
     lookupPlan
   );
   return { guard, repo, service };
+};
+
+const lookupPlanUnavailable = async (): Promise<AiLimitPlan> => {
+  throw new Error("Plan service unavailable");
 };
 
 const throwUnauthorized = (): never => {
@@ -150,18 +155,17 @@ describe.concurrent(AiLimitService, () => {
       repo.sumUsageInWindow.mockResolvedValue(0);
       repo.markRefunded.mockResolvedValue(true);
 
-      const lookupPlan = async () => {
-        throw new Error("Plan service unavailable");
-      };
-      // eslint-disable-next-line no-unsafe-type-assertion
+      // oxlint-disable-next-line no-unsafe-type-assertion
       const service = new AiLimitService(
         repo,
+        // oxlint-disable-next-line no-unsafe-type-assertion
         guard as unknown as AiLimitGuard,
-        lookupPlan
+        lookupPlanUnavailable
       );
 
       const err = await captureError(service.getUsage("owner-1"));
       expect(err).toBeInstanceOf(Error);
+      // oxlint-disable-next-line no-unsafe-type-assertion
       expect((err as { message: string }).message).toBe(
         "Plan service unavailable"
       );

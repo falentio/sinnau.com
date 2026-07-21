@@ -4,7 +4,7 @@ import {
   getHubStub,
   isHubStubFilter,
 } from "$lib/server/services/flashcard-session/flashcard-session.utils";
-import { error, fail, redirect } from "@sveltejs/kit";
+import { error as svelteError, fail, redirect } from "@sveltejs/kit";
 
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -17,11 +17,11 @@ export const load: PageServerLoad = async ({ depends, params, url }) => {
   const stubFilter = url.searchParams.get("filter");
   if (dev && stubFilter !== null) {
     if (!isHubStubFilter(stubFilter)) {
-      error(400, { message: "Unknown dev stub filter" });
+      svelteError(400, { message: "Unknown dev stub filter" });
     }
     const stub = getHubStub(stubFilter, params.studySetId);
     if (stub === null) {
-      error(400, { message: "Unknown dev stub filter" });
+      svelteError(400, { message: "Unknown dev stub filter" });
     }
     return stub;
   }

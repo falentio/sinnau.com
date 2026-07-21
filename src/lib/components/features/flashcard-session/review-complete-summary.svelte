@@ -14,15 +14,18 @@
   let { ratings, resultsHref, hubHref, studySetId }: Props = $props();
 
   const total = $derived(ratings.length);
-  const distribution = $derived(
-    ratings.reduce<Record<FlashcardSessionRating, number>>(
-      (acc, r) => {
-        acc[r] = (acc[r] ?? 0) + 1;
-        return acc;
-      },
-      { Again: 0, Easy: 0, Good: 0, Hard: 0 }
-    )
-  );
+  const distribution = $derived.by(() => {
+    const dist: Record<FlashcardSessionRating, number> = {
+      Again: 0,
+      Easy: 0,
+      Good: 0,
+      Hard: 0,
+    };
+    for (const r of ratings) {
+      dist[r] = (dist[r] ?? 0) + 1;
+    }
+    return dist;
+  });
   const summaryLine = $derived(
     total === 0
       ? "Tidak ada kartu yang di-review."

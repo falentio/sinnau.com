@@ -27,7 +27,10 @@ export default defineConfig({
       "*.falentio",
       "*.trycloudflare.com",
     ],
-    port: process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 5173,
+    port:
+      process.env.PORT === undefined
+        ? 5173
+        : Number.parseInt(process.env.PORT, 10),
     watch: {
       ignored: ["**/node_modules/**", "**/dist/**", "./.worktrees/**"],
     },

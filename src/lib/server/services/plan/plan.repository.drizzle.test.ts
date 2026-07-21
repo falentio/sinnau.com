@@ -483,6 +483,7 @@ describe.concurrent("PlanDrizzleRepository", () => {
         orderId: "ord_1",
         userId: env.ownerId,
       });
+      // oxlint-disable-next-line typescript/no-unsafe-member-access
       env.db.delete(user).where(eq(user.id, env.ownerId)).run();
       expect(env.db.select().from(order).all()).toHaveLength(0);
       expect(env.db.select().from(payment).all()).toHaveLength(0);

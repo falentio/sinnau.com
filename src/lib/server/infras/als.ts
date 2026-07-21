@@ -7,24 +7,23 @@ export declare namespace WideEventStorage {
   export type WideEventData = Record<string, unknown>;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 export const deepMerge = (
   target: Record<string, unknown>,
   source: Record<string, unknown>
 ): Record<string, unknown> => {
   for (const key of Object.keys(source)) {
     const value = source[key];
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      if (
-        !target[key] ||
-        typeof target[key] !== "object" ||
-        Array.isArray(target[key])
-      ) {
+    if (isRecord(value)) {
+      if (!isRecord(target[key])) {
         target[key] = {};
       }
-      deepMerge(
-        target[key] as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
+      const merged = target[key];
+      if (isRecord(merged)) {
+        deepMerge(merged, value);
+      }
     } else {
       target[key] = value;
     }
@@ -40,7 +39,7 @@ export const pushToNestedObject = (
   let current = target;
   for (let i = 0; i < keys.length; i += 1) {
     const key = keys[i];
-    if (!key) {
+    if (key === null || key === undefined || key === "") {
       throw new Error("Key cannot be empty");
     }
     if (i === keys.length - 1) {
@@ -52,10 +51,13 @@ export const pushToNestedObject = (
       }
       current[key].push(value);
     } else {
-      if (!current[key] || typeof current[key] !== "object") {
+      if (!isRecord(current[key])) {
         current[key] = {};
       }
-      current = current[key] as Record<string, unknown>;
+      const next = current[key];
+      if (isRecord(next)) {
+        current = next;
+      }
     }
   }
 };
@@ -67,8 +69,8 @@ const toSortedObject = (
   const sortedObj: Record<string, unknown> = {};
   for (const key of sortedKeys) {
     const value = obj[key];
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      sortedObj[key] = toSortedObject(value as Record<string, unknown>);
+    if (isRecord(value)) {
+      sortedObj[key] = toSortedObject(value);
       continue;
     }
 

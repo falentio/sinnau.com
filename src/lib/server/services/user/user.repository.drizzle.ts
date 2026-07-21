@@ -17,11 +17,13 @@ export class UserDrizzleRepository implements UserRepository {
     return new UserDrizzleRepository(db);
   }
 
+  // oxlint-disable-next-line typescript/no-redundant-type-constituents -- AuthUser resolves to any in oxlint
   async findUserById(id: string): Promise<AuthUser | null> {
     try {
       const [row] = await this.dbInstance
         .select()
         .from(user)
+        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Drizzle column references have complex types not resolvable by oxlint
         .where(eq(user.id, id))
         .limit(1);
       return row ?? null;

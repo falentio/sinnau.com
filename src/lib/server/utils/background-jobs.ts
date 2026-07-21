@@ -6,14 +6,20 @@ const pending = new Set<Promise<unknown>>();
 let sizeWarned = false;
 const SIZE_WARN_THRESHOLD = 1000;
 
-export const waitUntil = (promise: Promise<unknown>): void => {
-  const tracked = promise.catch((error: unknown) => {
+const trackJob = async (promise: Promise<unknown>): Promise<void> => {
+  pending.add(promise);
+  try {
+    await promise;
+  } catch (error: unknown) {
     logger.error("Background job failed: {error}", { error });
-  });
-  pending.add(tracked);
-  tracked.finally(() => {
-    pending.delete(tracked);
-  });
+  } finally {
+    pending.delete(promise);
+  }
+};
+
+export const waitUntil = (promise: Promise<unknown>): void => {
+  // eslint-disable-next-line typescript/no-floating-promises
+  void trackJob(promise);
   if (!sizeWarned && pending.size > SIZE_WARN_THRESHOLD) {
     sizeWarned = true;
     logger.warn(

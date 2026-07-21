@@ -256,6 +256,7 @@ export class PlanTestEnv implements AsyncDisposable {
 
   // oxlint-disable-next-line class-methods-use-this
   createGuard(): PlanGuard {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     return createMockGuard() as unknown as PlanGuard;
   }
 

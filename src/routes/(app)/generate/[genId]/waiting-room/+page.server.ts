@@ -6,7 +6,7 @@ import type { PageServerLoad } from "./$types";
 
 const logger = getLogger(["sinnau.com", "generate", "page"]);
 
-export const load: PageServerLoad = async ({ locals, params }) => {
+export const load: PageServerLoad = async ({ locals: _locals, params }) => {
   const client = createServerClient();
 
   let initialCheck;
@@ -14,7 +14,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     initialCheck = await client.generate.check({ id: params.genId });
   } catch (error) {
     if (
-      error &&
+      error !== null &&
+      error !== undefined &&
       typeof error === "object" &&
       "code" in error &&
       error.code === "NOT_FOUND"

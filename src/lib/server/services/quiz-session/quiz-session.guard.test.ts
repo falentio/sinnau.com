@@ -1,7 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import { describe, it } from "vitest";
 
-import { ChapterGuard } from "../chapter/chapter.guard.ts";
 import {
   createMockRepository as createMockChapterRepo,
   createChapterFixture,
@@ -51,6 +50,7 @@ describe.concurrent(QuizSessionGuard, () => {
 
     it("throws UNAUTHORIZED when userId is undefined", ({ expect }) => {
       const { guard } = setupGuard();
+      // oxlint-disable-next-line unicorn/no-useless-undefined
       expect(() => guard.requireUser(undefined)).toThrow(ORPCError);
     });
   });

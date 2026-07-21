@@ -15,5 +15,9 @@ export const tsfsStateFromDb = (state: FlashcardSessionState): State => {
     case "Relearning": {
       return State.Relearning;
     }
+    default: {
+      const _exhaustive: never = state;
+      return _exhaustive;
+    }
   }
 };

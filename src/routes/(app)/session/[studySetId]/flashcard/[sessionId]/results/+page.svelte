@@ -15,15 +15,18 @@
   const studySetId = $derived(data.session.studySetId);
   const hubHref = $derived(`/session/${studySetId}/flashcard/`);
 
-  const distribution = $derived(
-    reviews.reduce<Record<FlashcardSessionRating, number>>(
-      (acc, r) => {
-        acc[r.rating] = (acc[r.rating] ?? 0) + 1;
-        return acc;
-      },
-      { Again: 0, Easy: 0, Good: 0, Hard: 0 }
-    )
-  );
+  const distribution = $derived.by(() => {
+    const dist: Record<FlashcardSessionRating, number> = {
+      Again: 0,
+      Easy: 0,
+      Good: 0,
+      Hard: 0,
+    };
+    for (const r of reviews) {
+      dist[r.rating] = (dist[r.rating] ?? 0) + 1;
+    }
+    return dist;
+  });
 </script>
 
 <SeoHead

@@ -12,6 +12,7 @@ import { chapter } from "./chapter.ts";
 import { quiz } from "./quiz.ts";
 import { studySet } from "./study-set.ts";
 
+/* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Drizzle column reference */
 export const QUIZ_SESSION_STATUSES = ["ACTIVE", "COMPLETED"] as const;
 export type QuizSessionStatus = (typeof QUIZ_SESSION_STATUSES)[number];
 

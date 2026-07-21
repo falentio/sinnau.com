@@ -144,7 +144,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       });
 
       const after = Date.now();
-      expect(result.id).toMatch(/^fse_/);
+      expect(result.id).toMatch(/^fse_/u);
       expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(before);
       expect(result.createdAt.getTime()).toBeLessThanOrEqual(after);
     });
@@ -868,6 +868,7 @@ describe("FlashcardSessionDrizzleRepository", () => {
       const ss = env.seedStudySet({ ownerId: env.ownerId });
       env.seedSession({ studySetId: ss.id, userId: env.ownerId });
 
+      // oxlint-disable-next-line typescript/no-unsafe-member-access
       env.db.delete(user).where(eq(user.id, env.ownerId)).run();
 
       const sessions = await env.repo.listSessionsForUser(env.ownerId, 1, 20);

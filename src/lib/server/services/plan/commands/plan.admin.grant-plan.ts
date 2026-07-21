@@ -1,5 +1,4 @@
 import { grantPlanInputSchema, grantPlanOutputSchema } from "$lib/schemas/plan";
-import type { GrantPlanOutput } from "$lib/schemas/plan";
 import { adminProcedure } from "$lib/server/api/base";
 
 import { planService } from "../index";

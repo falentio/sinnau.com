@@ -54,6 +54,7 @@ export const config = {
       if (ctx.path !== "/sign-up/email") {
         return;
       }
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ctx.body is any from BetterAuth types not resolvable by oxlint
       const body = (ctx.body ?? {}) as {
         confirmPassword?: unknown;
         password?: unknown;
