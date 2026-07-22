@@ -10,7 +10,7 @@
 
   const useCases = [
     {
-      body: "Unggah PDF tiap minggu, dapat kartu belajar untuk setiap topik. Jadwal ulangan otomatis — gak perlu pusing mikir 'yang mana yang harus diulang?'",
+      body: "Unggah PDF tiap minggu, dapat kartu belajar untuk setiap topik. Jadwal ulangan otomatis, gak perlu pusing mikir 'yang mana yang harus diulang?'",
       icon: IdeaIcon,
       role: "Mahasiswa tahun pertama",
       title: "Bangun kebiasaan belajar dari minggu pertama.",
@@ -18,13 +18,13 @@
     {
       body: "Unggah PDF bab per sistem. AI membuat kartu berlabel sesuai topik. Kuis fokus ke konsep yang sering muncul di ujian blok.",
       icon: Book03Icon,
-      role: "Koas &amp; pre-klinik",
+      role: "Koas & pre-klinik",
       title: "Hadapi ujian blok tanpa panik.",
     },
     {
       body: "Unggah paper rujukan, draft bab, atau catatan bacaan. Sistem mengekstrak konsep utama dan menjadwalkannya pas sebelum Anda lupa.",
       icon: QuillWrite01Icon,
-      role: "S2/S3 &amp; asisten riset",
+      role: "S2/S3 & asisten riset",
       title: "Ingat isi paper yang Anda baca bulan lalu.",
     },
   ] as const;
@@ -43,7 +43,7 @@
     <p
       class="mt-4 max-w-[42ch] text-[14px] leading-relaxed text-[var(--landing-muted)] text-pretty"
     >
-      Satu akun, tiga pendekatan. Pilih alur yang sesuai targetmu — entah IPK
+      Satu akun, tiga pendekatan. Pilih alur yang sesuai targetmu, entah IPK
       cumlaude atau publikasi internasional.
     </p>
   </div>

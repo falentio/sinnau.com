@@ -10,13 +10,13 @@
 
   const features = [
     {
-      body: "Yang dulu perlu berjam-jam mengetik, sekarang selesai dalam &lt;2 menit. Unggah PDF, AI langsung menyusun flashcard dan kuis untuk tiap bab.",
+      body: "Yang dulu perlu berjam-jam mengetik, sekarang selesai dalam <2 menit. Unggah PDF, AI langsung menyusun flashcard dan kuis untuk tiap bab.",
       icon: FileUploadIcon,
       id: "pdf",
       span: "lg:col-span-7 lg:row-span-2",
       stat: "< 2 mnt",
       statLabel: "per bab",
-      title: "PDF jadi flashcard &amp; kuis siap pakai.",
+      title: "PDF jadi flashcard & kuis siap pakai.",
     },
     {
       body: "Sistem melacak setiap kartu yang pernah Anda jawab. Ia tahu mana yang mulai pudar dan menjadwalkan ulangan tepat sebelum Anda lupa.",
