@@ -345,7 +345,46 @@ const adminGuardHandle: Handle = async ({ event, resolve }) => {
   return await resolve(event);
 };
 
+const posthogProxyHandle: Handle = async ({ event, resolve }) => {
+  const { pathname } = event.url;
+  if (!pathname.startsWith("/ph")) {
+    return await resolve(event);
+  }
+
+  const useAssetHost =
+    pathname.startsWith("/ph/static/") || pathname.startsWith("/ph/array/");
+  const hostname = useAssetHost
+    ? "eu-assets.i.posthog.com"
+    : "eu.i.posthog.com";
+
+  const url = new URL(event.request.url);
+  url.protocol = "https:";
+  url.hostname = hostname;
+  url.port = "443";
+  url.pathname = pathname.replace(/^\/ph/u, "");
+
+  const headers = new Headers(event.request.headers);
+  headers.set("host", hostname);
+  // disable upstream compression so responses pass through unmodified
+  headers.set("accept-encoding", "");
+
+  const clientIp =
+    event.request.headers.get("x-forwarded-for") ?? event.getClientAddress();
+  if (clientIp) {
+    headers.set("x-forwarded-for", clientIp);
+  }
+
+  return await fetch(url.toString(), {
+    body: event.request.body,
+    // @ts-expect-error duplex is required for streaming request bodies
+    duplex: "half",
+    headers,
+    method: event.request.method,
+  });
+};
+
 export const handle = sequence(
+  posthogProxyHandle,
   securityHeadersHandle,
   wideEventStorageHandle,
   watermarkHeaderHandle,

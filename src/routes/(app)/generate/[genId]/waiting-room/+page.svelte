@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import Feed from "$lib/components/features/waiting-room/feed.svelte";
   import ProgressRing from "$lib/components/features/waiting-room/progress-ring.svelte";
@@ -79,8 +80,21 @@
       ({ isInputTruncated } = result);
 
       if (result.status === "COMPLETED") {
+        track(AnalyticsEvent.GENERATION_COMPLETED, {
+          generate_id: data.generateId,
+          status: result.status,
+          study_set_id: data.studySetId,
+        });
         await goto(`/study/${data.studySetId}`);
         return;
+      }
+
+      if (result.status === "FAILED" || result.status === "PARTIAL_COMPLETED") {
+        track(AnalyticsEvent.GENERATION_FAILED, {
+          generate_id: data.generateId,
+          status: result.status,
+          study_set_id: data.studySetId,
+        });
       }
 
       revealer.enqueue(result.chunks, { since });

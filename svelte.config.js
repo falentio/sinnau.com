@@ -26,6 +26,9 @@ const config = {
       },
       mode: "auto",
     },
+    paths: {
+      relative: false,
+    },
   },
 };
 

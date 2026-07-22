@@ -2,6 +2,7 @@
   import { dev } from "$app/environment";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import StudySetItem from "$lib/components/features/app/study-set-item.svelte";
   import {
     ArrowLeft01Icon,
@@ -110,6 +111,10 @@
         });
         results = data;
         hasSearched = true;
+        track(AnalyticsEvent.DISCOVER_SEARCHED, {
+          query_length: value.trim().length,
+          results_count: data.length,
+        });
       } catch {
         error = "Maaf, pencarian gagal. Coba lagi dalam beberapa saat.";
       } finally {

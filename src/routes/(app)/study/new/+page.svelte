@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
@@ -27,6 +28,11 @@
   const submitStudySet = async (data: CreateStudySetInput) => {
     try {
       const studySet = await client.studySet.create(data);
+      track(AnalyticsEvent.STUDY_SET_CREATED, {
+        method: "manual",
+        study_set_id: studySet.id,
+        visibility: data.visibility,
+      });
       toast.success("Modul belajar berhasil dibuat.", {
         position: "top-right",
       });

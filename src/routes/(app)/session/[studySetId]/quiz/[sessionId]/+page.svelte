@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { AnalyticsEvent, track } from "$lib/analytics/events";
   import CompleteSessionDialog from "$lib/components/features/quiz-session/complete-session-dialog.svelte";
   import ProgressPills from "$lib/components/features/quiz-session/progress-pills.svelte";
   import QuestionCard from "$lib/components/features/quiz-session/question-card.svelte";
@@ -135,6 +136,14 @@
     isCompleting = true;
     try {
       await client.quizSession.complete({ sessionId: data.session.id });
+      track(AnalyticsEvent.QUIZ_SESSION_COMPLETED, {
+        question_count: data.questions.length,
+        session_id: data.session.id,
+        study_set_id: data.session.studySetId,
+        unanswered_count: data.questions.filter(
+          (q) => (localAnswers[q.id]?.length ?? 0) === 0
+        ).length,
+      });
       await goto(
         `/session/${data.session.studySetId}/quiz/${data.session.id}/results/`
       );
