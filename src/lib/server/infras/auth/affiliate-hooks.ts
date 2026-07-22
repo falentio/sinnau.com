@@ -1,8 +1,5 @@
 import { AFFILIATE_COOKIE_NAME } from "$lib/schemas/affiliate.constant";
-import { eq } from "drizzle-orm";
-
-import { db } from "../db/client.ts";
-import { user as userTable } from "../db/schema/auth-schema.ts";
+import { userRepo } from "$lib/server/services/user/index";
 
 export const resolveAffiliateReferrer = async (
   ctx: {
@@ -18,14 +15,7 @@ export const resolveAffiliateReferrer = async (
     return {};
   }
 
-  /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle types not resolvable by oxlint */
-  const [row] = await db
-    .select({ id: userTable.id })
-    .from(userTable)
-    .where(eq(userTable.id, referrerId))
-    .limit(1);
-  /* oxlint-enable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment */
-
+  const row = await userRepo.findUserById(referrerId);
   if (!row) {
     return {};
   }
