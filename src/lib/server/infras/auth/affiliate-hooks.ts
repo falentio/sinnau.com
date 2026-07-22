@@ -4,10 +4,16 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client.ts";
 import { user as userTable } from "../db/schema/auth-schema.ts";
 
-export const resolveAffiliateReferrer = async (ctx: {
-  getCookie: (name: string) => string | undefined;
-}): Promise<{ affiliatedBy: string } | Record<string, never>> => {
-  const referrerId = ctx.getCookie(AFFILIATE_COOKIE_NAME);
+export const resolveAffiliateReferrer = async (
+  ctx: {
+    getCookie: (name: string) => string | undefined | null;
+  } | null
+): Promise<{ affiliatedBy: string } | Record<string, never>> => {
+  if (ctx === null) {
+    return {};
+  }
+
+  const referrerId = ctx.getCookie(AFFILIATE_COOKIE_NAME) ?? undefined;
   if (referrerId === undefined) {
     return {};
   }

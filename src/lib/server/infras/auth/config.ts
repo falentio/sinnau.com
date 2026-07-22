@@ -1,4 +1,3 @@
-import { apiKey } from "@better-auth/api-key";
 import { dash } from "@better-auth/infra";
 import { betterAuth } from "better-auth";
 import type { BetterAuthOptions } from "better-auth";
@@ -76,7 +75,6 @@ export const config = {
   },
   plugins: [
     admin(),
-    apiKey({ enableSessionForAPIKeys: true }),
     lastLoginMethod({
       storeInDatabase: true,
     }),
@@ -100,6 +98,14 @@ export const config = {
   secret: "dasdsa",
   session: {
     freshAge: 60 * 5,
+  },
+  user: {
+    additionalFields: {
+      affiliatedBy: {
+        required: false,
+        type: "string",
+      },
+    },
   },
 } satisfies BetterAuthOptions;
 

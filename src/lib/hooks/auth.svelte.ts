@@ -1,6 +1,5 @@
 import { browser } from "$app/environment";
 import { env } from "$env/dynamic/public";
-import { apiKeyClient } from "@better-auth/api-key/client";
 import { dashClient } from "@better-auth/infra/client";
 import { adminClient, lastLoginMethodClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
@@ -22,12 +21,7 @@ export const authClient = createAuthClient({
       }
     },
   },
-  plugins: [
-    adminClient(),
-    apiKeyClient(),
-    lastLoginMethodClient(),
-    dashClient(),
-  ],
+  plugins: [adminClient(), lastLoginMethodClient(), dashClient()],
 });
 
 type _Session = (typeof authClient.$Infer)["Session"];
