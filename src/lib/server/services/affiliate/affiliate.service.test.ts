@@ -5,6 +5,7 @@ import type { AffiliateGuard } from "./affiliate.guard";
 import { AffiliateService } from "./affiliate.service";
 import {
   captureError,
+  createAffiliateProfileFixture,
   createMockGuard,
   createMockRepository,
 } from "./affiliate.testing";
@@ -143,6 +144,25 @@ describe.concurrent("affiliate service", () => {
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AFFILIATE_SLUG_CONFLICT" });
+    });
+  });
+
+  describe.concurrent("hasProfile", () => {
+    it("returns true when the user has a profile", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(
+        createAffiliateProfileFixture()
+      );
+
+      await expect(service.hasProfile("user-1")).resolves.toBe(true);
+      expect(repo.findProfileByUserId).toHaveBeenCalledWith("user-1");
+    });
+
+    it("returns false when the user has no profile", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(null);
+
+      await expect(service.hasProfile("user-1")).resolves.toBe(false);
     });
   });
 

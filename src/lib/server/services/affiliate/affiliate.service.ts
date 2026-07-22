@@ -49,6 +49,11 @@ export class AffiliateService {
     return profile;
   }
 
+  async hasProfile(userId: string): Promise<boolean> {
+    const profile = await this.repo.findProfileByUserId(userId);
+    return profile !== null;
+  }
+
   async claim(userId: string | null | undefined): Promise<AffiliateProfile> {
     const owner = this.guard.requireUser(userId);
 

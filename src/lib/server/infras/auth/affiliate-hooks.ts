@@ -1,8 +1,5 @@
 import { AFFILIATE_COOKIE_NAME } from "$lib/schemas/affiliate.constant";
-import { AffiliateDrizzleRepository } from "$lib/server/services/affiliate/affiliate.repository.drizzle";
-import { userRepo } from "$lib/server/services/user/index";
-
-const affiliateRepo = new AffiliateDrizzleRepository();
+import { affiliateService } from "$lib/server/services/affiliate/index";
 
 export const resolveAffiliateReferrer = async (
   ctx: {
@@ -23,13 +20,8 @@ export const resolveAffiliateReferrer = async (
     return {};
   }
 
-  const row = await userRepo.findUserById(referrerId);
-  if (!row) {
-    return {};
-  }
-
-  const profile = await affiliateRepo.findProfileByUserId(referrerId);
-  if (!profile) {
+  const hasProfile = await affiliateService.hasProfile(referrerId);
+  if (!hasProfile) {
     return {};
   }
 
