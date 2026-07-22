@@ -13,17 +13,28 @@ Your task description will begin with a list of Unix glob patterns (one per line
 
 ## Workflow
 
-### 1. Format (oxfmt)
+### 1. Auto-fix (format + lint)
 
-Run `pnpm run format -- <resolved-files>` (pass the resolved concrete file paths) to auto-format only the specified files in place, then run on the same paths again to verify.
+Run automated fixers first on the resolved files to handle everything they can without manual intervention:
 
-### 2. Lint (oxlint)
+```bash
+pnpm run format -- <resolved-files>
+rtk pnpm run lint:fix -- <resolved-files>
+```
 
-Run `rtk pnpm run lint:agent` to get agent-optimized linter output. Filter results to only resolved file paths. For each violation within scope, read the affected file and make the minimal targeted edit. Re-run after fixes until clean.
+Re-run both until they produce no changes.
 
-### 3. Type-check (svelte-check)
+### 2. Check remaining issues
 
-Run `rtk pnpm run check` to get agent-optimized type-check output. Filter results to only resolved file paths. For each error within scope, read the affected file and make the minimal targeted edit. Re-run after fixes until clean.
+Run `rtk pnpm run check` to get agent-optimized type-check output. Filter results to only resolved file paths. For each error within scope, read the affected file and make the minimal targeted edit.
+
+### 3. Verify
+
+Re-run `rtk pnpm run check` until clean.
+
+### 4. Report ignore directives
+
+Search the resolved files for any `oxlint-ignore` comments (e.g. `// oxlint-ignore`, `/* oxlint-ignore */`). List each one with its file path, line number, ignored rule, and the reason it was left ignored rather than fixed.
 
 ## Guidelines
 
@@ -33,4 +44,4 @@ Run `rtk pnpm run check` to get agent-optimized type-check output. Filter result
 - If you encounter something you don't understand, report it rather than guessing.
 - Do NOT run any other commands.
 - Do NOT fix issues outside the resolved file list.
-- Report final status: number of format/lint/type issues fixed, and any that remain with reasons.
+- Report final status: number of format/lint/type issues fixed, any that remain with reasons, and a list of `oxlint-ignore` directives with file paths, ignored rules, and reasoning.
