@@ -35,8 +35,7 @@
     if (!data.summary.profile) {
       return;
     }
-    const url = new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com")
-      .href;
+    const url = new URL(`/r/${data.summary.profile.slug}`, data.origin).href;
     await navigator.clipboard.writeText(url);
     copied = true;
     track(AnalyticsEvent.AFFILIATE_LINK_COPIED, {
@@ -56,8 +55,7 @@
       <h2 class="text-lg font-semibold">Your Referral Link</h2>
       <div class="flex items-center gap-2">
         <p class="break-all rounded bg-muted p-2 font-mono text-sm">
-          {new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com")
-            .href}
+          {new URL(`/r/${data.summary.profile.slug}`, data.origin).href}
         </p>
         <button
           class="shrink-0 rounded bg-primary px-3 py-2 text-sm text-primary-foreground"

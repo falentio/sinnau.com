@@ -2,8 +2,8 @@ import { createServerClient } from "$lib/orpc.server";
 
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
   const client = createServerClient();
   const summary = await client.affiliate.getDashboardSummary({});
-  return { summary };
+  return { origin: url.origin, summary };
 };
