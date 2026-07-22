@@ -33,6 +33,10 @@
       q: "Materi apa saja yang bisa diunggah?",
     },
     {
+      a: "Batas generate pada setiap plan adalah estimasi, dengan mempertimbangkan setiap dokumen memiliki 1-2 BAB.",
+      q: "Bagaimana batas generate dihitung?",
+    },
+    {
       a: "Bisa. Set modul ke publik, lalu teman bisa akses lewat tautan langsung atau temukan di halaman jelajah. Modul privat hanya untuk Anda.",
       q: "Bisa share modul ke teman?",
     },

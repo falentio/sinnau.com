@@ -6,6 +6,7 @@
   import {
     PLAN_DAILY_DIVISOR,
     PLAN_NAME_FALLBACK,
+    PLAN_UNIT_DISPLAY_DIVISOR,
     PLAN_WEEKLY_DIVISOR,
   } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
@@ -21,7 +22,7 @@
         "Sesi flashcard dengan FSRS",
         "Analisis kelemahan per bab",
       ],
-      monthly: 60,
+      monthly: 180_000,
       name: "Lite",
     },
     PLUS: {
@@ -30,7 +31,7 @@
         "2× batas kuota per bulan",
         "Riwayat lebih panjang",
       ],
-      monthly: 120,
+      monthly: 360_000,
       name: "Plus",
     },
     PREMIUM: {
@@ -40,7 +41,7 @@
         "Priority saat jam sibuk",
         "Akses fitur beta lebih dulu",
       ],
-      monthly: 360,
+      monthly: 1_080_000,
       name: "Premium",
     },
   };
@@ -87,7 +88,7 @@
       <h3
         class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground"
       >
-        {monthly} generate
+        {monthly / PLAN_UNIT_DISPLAY_DIVISOR} generate
       </h3>
       <p class="text-sm text-muted-foreground">
         Total {formatIdr(monthlyPrice)} per bulan · paket {meta.name}
@@ -100,7 +101,7 @@
       <span
         class="font-heading text-base font-semibold tabular-nums text-foreground/70"
       >
-        {monthly}
+        {monthly / PLAN_UNIT_DISPLAY_DIVISOR}
       </span>
     </div>
   </header>
@@ -121,7 +122,7 @@
       </div>
       <Progress value={dailyPct} max={100} class="h-1.5 bg-foreground/[0.06]" />
       <p class="text-[11px] text-muted-foreground">
-        Sampai {dailyRule} generate per hari
+        Sampai {dailyRule / PLAN_UNIT_DISPLAY_DIVISOR} generate per hari
       </p>
     </div>
 
@@ -146,7 +147,7 @@
         class="h-1.5 bg-foreground/[0.06]"
       />
       <p class="text-[11px] text-muted-foreground">
-        Sampai {weeklyRule} generate per minggu
+        Sampai {weeklyRule / PLAN_UNIT_DISPLAY_DIVISOR} generate per minggu
       </p>
     </div>
   </div>
