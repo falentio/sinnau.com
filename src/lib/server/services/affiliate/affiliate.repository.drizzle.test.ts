@@ -258,6 +258,38 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(summary.totalEarned).toBe(0);
       expect(summary.conversionCount).toBe(0);
     });
+
+    it("excludes VOID commissions from totals", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "ref-slug", "Referrer");
+
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-valid",
+      });
+      const voided = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 50_000,
+        purchaseAmount: 200_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-voided",
+      });
+      env.db
+        .update(affiliateCommission)
+        .set({ status: "VOID" })
+        .where(eq(affiliateCommission.id, voided?.id ?? ""))
+        .run();
+
+      const summary = await env.repo.getDashboardSummary(referrer);
+
+      expect(summary.totalEarned).toBe(30_000);
+      expect(summary.conversionCount).toBe(1);
+    });
   });
 
   describe.concurrent("listPendingPayouts", () => {

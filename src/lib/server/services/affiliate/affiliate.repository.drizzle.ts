@@ -38,6 +38,14 @@ import type {
   MissingCommissionRow,
 } from "./affiliate.repository.ts";
 
+const isUniqueConstraintError = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code } = error as { code?: unknown };
+  return code === "SQLITE_CONSTRAINT_UNIQUE";
+};
+
 export class AffiliateDrizzleRepository implements AffiliateRepository {
   private readonly dbInstance: DB;
 
@@ -64,7 +72,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       if (error instanceof ORPCError) {
         throw error;
       }
-      return null;
+      if (isUniqueConstraintError(error)) {
+        return null;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
     }
   }
 
@@ -127,7 +140,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       if (error instanceof ORPCError) {
         throw error;
       }
-      return null;
+      if (isUniqueConstraintError(error)) {
+        return null;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
     }
   }
 
@@ -161,7 +179,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           totalEarned: sum(affiliateCommission.commissionAmount),
         })
         .from(affiliateCommission)
-        .where(eq(affiliateCommission.affiliateUserId, userId));
+        .where(
+          and(
+            eq(affiliateCommission.affiliateUserId, userId),
+            ne(affiliateCommission.status, "VOID")
+          )
+        );
 
       const [paid] = await this.dbInstance
         .select({
@@ -201,15 +224,14 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     try {
       const offset = (page - 1) * limit;
 
-      const countRows = await this.dbInstance
+      const [countRow] = await this.dbInstance
         .select({
-          affiliateUserId: affiliateCommission.affiliateUserId,
+          total: sql<number>`count(distinct ${affiliateCommission.affiliateUserId})`,
         })
         .from(affiliateCommission)
-        .where(eq(affiliateCommission.status, "PENDING"))
-        .groupBy(affiliateCommission.affiliateUserId);
+        .where(eq(affiliateCommission.status, "PENDING"));
 
-      const totalAffiliates = countRows.length;
+      const totalAffiliates = countRow?.total ?? 0;
       const totalPages = Math.max(1, Math.ceil(totalAffiliates / limit));
 
       const rows = await this.dbInstance

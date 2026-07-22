@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invalidateAll } from "$app/navigation";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
   import { client } from "$lib/orpc";
 
@@ -22,7 +23,7 @@
     claimError = "";
     try {
       await client.affiliate.claim({});
-      window.location.reload();
+      await invalidateAll();
     } catch (error) {
       claimError =
         error instanceof Error ? error.message : "Failed to claim profile";

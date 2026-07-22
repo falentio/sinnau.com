@@ -20,7 +20,9 @@ export const resolveAffiliateReferrer = async (
     return {};
   }
 
-  const hasProfile = await affiliateService.hasProfile(referrerId);
+  const hasProfile = await affiliateService
+    .hasProfile(referrerId)
+    .catch(() => false);
   if (!hasProfile) {
     return {};
   }

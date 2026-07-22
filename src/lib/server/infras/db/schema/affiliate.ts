@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth-schema.ts";
 
@@ -40,27 +46,36 @@ export const affiliatePayout = sqliteTable("affiliate_payout", {
   reference: text("reference"),
 });
 
-export const affiliateCommission = sqliteTable("affiliate_commission", {
-  affiliateUserId: text("affiliate_user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  commissionAmount: real("commission_amount").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-    .notNull(),
-  id: text("id").primaryKey(),
-  payoutId: text("payout_id").references(() => affiliatePayout.id, {
-    onDelete: "set null",
-  }),
-  purchaseAmount: real("purchase_amount").notNull(),
-  purchaserUserId: text("purchaser_user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  status: text("status", { enum: ["PENDING", "PAID", "VOID"] })
-    .notNull()
-    .default("PENDING"),
-  transactionId: text("transaction_id").notNull().unique(),
-});
+export const affiliateCommission = sqliteTable(
+  "affiliate_commission",
+  {
+    affiliateUserId: text("affiliate_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    commissionAmount: real("commission_amount").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    id: text("id").primaryKey(),
+    payoutId: text("payout_id").references(() => affiliatePayout.id, {
+      onDelete: "set null",
+    }),
+    purchaseAmount: real("purchase_amount").notNull(),
+    purchaserUserId: text("purchaser_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status", { enum: ["PENDING", "PAID", "VOID"] })
+      .notNull()
+      .default("PENDING"),
+    transactionId: text("transaction_id").notNull().unique(),
+  },
+  (table) => [
+    index("affiliate_commission_user_status_idx").on(
+      table.affiliateUserId,
+      table.status
+    ),
+  ]
+);
 
 export const affiliateSubscriptionEvent = sqliteTable(
   "affiliate_subscription_event",

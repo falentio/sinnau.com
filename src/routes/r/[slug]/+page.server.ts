@@ -21,8 +21,11 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
   }
 
   cookies.set(AFFILIATE_COOKIE_NAME, resolved.userId, {
+    httpOnly: true,
     maxAge: AFFILIATE_COOKIE_MAX_AGE_SECONDS,
     path: "/",
+    sameSite: "lax",
+    secure: true,
   });
 
   redirect(302, "/");
