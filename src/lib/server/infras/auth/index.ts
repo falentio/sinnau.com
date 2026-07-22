@@ -62,11 +62,7 @@ export const auth = betterAuth({
       create: {
         before: async (user, ctx) => {
           const email = user.email.toLowerCase();
-          const isAdmin =
-            env.AUTH_ADMIN_EMAILS.includes(email) ||
-            env.AUTH_ADMIN_EMAIL_DOMAINS.some((domain) =>
-              email.endsWith(`@${domain}`)
-            );
+          const isAdmin = env.AUTH_ADMIN_EMAILS.includes(email);
           return {
             data: {
               ...user,

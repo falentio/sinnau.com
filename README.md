@@ -43,4 +43,4 @@ Restart the app. On the login and sign-up pages, a "Lanjut dengan Google / GitHu
 ### Behavior notes
 
 - New users can sign up via OAuth; if the provider's verified email matches an existing account, the identities are auto-linked.
-- The admin role assignment (`AUTH_ADMIN_EMAILS` / `AUTH_ADMIN_EMAIL_DOMAINS`) applies to OAuth-created accounts as well.
+- The admin role assignment (`AUTH_ADMIN_EMAILS`) applies to OAuth-created accounts as well.

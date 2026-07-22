@@ -62,14 +62,7 @@ export const env = {
         .filter(Boolean) ?? []
     );
   },
-  get AUTH_ADMIN_EMAIL_DOMAINS() {
-    return (
-      read("AUTH_ADMIN_EMAIL_DOMAINS")
-        ?.split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean) ?? []
-    );
-  },
+
   get AXIOM_DATASET() {
     return read("AXIOM_DATASET");
   },
