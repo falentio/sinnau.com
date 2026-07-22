@@ -56,7 +56,7 @@ export const affiliateCommission = sqliteTable("affiliate_commission", {
   purchaserUserId: text("purchaser_user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  status: text("status", { enum: ["PENDING", "PAID"] })
+  status: text("status", { enum: ["PENDING", "PAID", "VOID"] })
     .notNull()
     .default("PENDING"),
   transactionId: text("transaction_id").notNull().unique(),

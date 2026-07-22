@@ -179,6 +179,45 @@ export const setAffiliateReferrerOutputSchema = v.object({
 });
 
 // --------------------
+// Reconciliation (admin)
+// --------------------
+
+export const reconcileAffiliateCommissionsInputSchema = v.object({
+  affiliateUserId: v.optional(v.string()),
+});
+
+export const backfillAffiliateCommissionsInputSchema = v.object({
+  affiliateUserId: v.optional(v.string()),
+});
+
+export const missingCommissionSchema = v.object({
+  affiliateUserId: v.string(),
+  expectedCommissionAmount: v.number(),
+  purchaseAmount: v.number(),
+  purchaserUserId: v.string(),
+  transactionId: v.string(),
+});
+
+export const invalidCommissionSchema = v.object({
+  affiliateUserId: v.string(),
+  commissionAmount: v.number(),
+  commissionId: v.string(),
+  orderStatus: v.string(),
+  purchaserUserId: v.string(),
+  transactionId: v.string(),
+});
+
+export const reconcileAffiliateCommissionsOutputSchema = v.object({
+  invalid: v.array(invalidCommissionSchema),
+  missing: v.array(missingCommissionSchema),
+});
+
+export const backfillAffiliateCommissionsOutputSchema = v.object({
+  created: v.number(),
+  voided: v.number(),
+});
+
+// --------------------
 // Inferred types
 // --------------------
 
@@ -236,4 +275,24 @@ export type SetAffiliateReferrerOutput = v.InferOutput<
 
 export type GetMyAffiliateProfileInput = v.InferOutput<
   typeof getMyAffiliateProfileInputSchema
+>;
+
+export type MissingCommission = v.InferOutput<typeof missingCommissionSchema>;
+
+export type InvalidCommission = v.InferOutput<typeof invalidCommissionSchema>;
+
+export type ReconcileAffiliateCommissionsInput = v.InferOutput<
+  typeof reconcileAffiliateCommissionsInputSchema
+>;
+
+export type ReconcileAffiliateCommissionsOutput = v.InferOutput<
+  typeof reconcileAffiliateCommissionsOutputSchema
+>;
+
+export type BackfillAffiliateCommissionsInput = v.InferOutput<
+  typeof backfillAffiliateCommissionsInputSchema
+>;
+
+export type BackfillAffiliateCommissionsOutput = v.InferOutput<
+  typeof backfillAffiliateCommissionsOutputSchema
 >;

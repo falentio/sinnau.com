@@ -62,7 +62,7 @@ interface AffiliateCommission {
   purchaseAmount: number; // total purchase (real)
   commissionAmount: number; // earned commission (real)
   transactionId: string; // unique, external idempotency key
-  status: "PENDING" | "PAID"; // default "PENDING"
+  status: "PENDING" | "PAID" | "VOID"; // default "PENDING"
   payoutId: string | null; // FK → affiliatePayout.id
   createdAt: Date; // ms timestamp
 }
@@ -122,18 +122,18 @@ interface PendingPayoutsList {
 
 ## Field Rules
 
-| Field                                 | Rule                                                                                                                                               |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                                  | Server-generated via `generateId(prefix)`. Never client-provided. Prefixes: `aff_`, `afc_`, `afp_`, `afs_`. Validated by `createPrefixedIdSchema`. |
-| `slug`                                | Lowercase alphanumeric + hyphens only. Regex: `/^[a-z0-9-]+$/u`. Min 1, max 255 characters. Unique at DB level.                                    |
-| `points`                              | Real number, default 0. Updated by `updateProfileBalance` with optimistic locking.                                                                 |
-| `version`                             | Integer, default 1. Incremented on every `updateProfileBalance` call via SQL `version + 1`.                                                        |
-| `commissionAmount` / `purchaseAmount` | Number, must be >= 0 (`moneySchema`).                                                                                                              |
-| `amount` (payout)                     | Set to full `pendingBalance` at payout time; never client-specified.                                                                               |
-| `transactionId`                       | Required, unique at DB level. Idempotency key for conversions.                                                                                     |
-| `status`                              | Picklist: `"PENDING"` or `"PAID"`. Defaults to `"PENDING"`.                                                                                        |
-| `nameSnapshot`                        | Snapshot of `user.name` at profile claim time. Never updated.                                                                                      |
-| `createdAt` / `updatedAt`             | Unix timestamps in milliseconds, server-defaulted.                                                                                                 |
+| Field                                 | Rule                                                                                                                                                                                                |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                  | Server-generated via `generateId(prefix)`. Never client-provided. Prefixes: `aff_`, `afc_`, `afp_`, `afs_`. Validated by `createPrefixedIdSchema`.                                                  |
+| `slug`                                | Lowercase alphanumeric + hyphens only. Regex: `/^[a-z0-9-]+$/u`. Min 1, max 255 characters. Unique at DB level.                                                                                     |
+| `points`                              | Real number, default 0. Updated by `updateProfileBalance` with optimistic locking.                                                                                                                  |
+| `version`                             | Integer, default 1. Incremented on every `updateProfileBalance` call via SQL `version + 1`.                                                                                                         |
+| `commissionAmount` / `purchaseAmount` | Number, must be >= 0 (`moneySchema`).                                                                                                                                                               |
+| `amount` (payout)                     | Set to full `pendingBalance` at payout time; never client-specified.                                                                                                                                |
+| `transactionId`                       | Required, unique at DB level. Idempotency key for conversions.                                                                                                                                      |
+| `status`                              | Picklist: `"PENDING"`, `"PAID"`, or `"VOID"`. Defaults to `"PENDING"`. `"VOID"` marks a commission invalidated after the fact (e.g. refunded order); voided commissions are excluded from balances. |
+| `nameSnapshot`                        | Snapshot of `user.name` at profile claim time. Never updated.                                                                                                                                       |
+| `createdAt` / `updatedAt`             | Unix timestamps in milliseconds, server-defaulted.                                                                                                                                                  |
 
 ## Slug Rules
 
@@ -161,18 +161,31 @@ interface PendingPayoutsList {
 - The caller (service layer) is responsible for retrying the read-update cycle on `null` return.
 - Currently `updateProfileBalance` exists on the repository interface but is not wired to a service command.
 
+## Commission Reconciliation
+
+Commissions can drift from reality: an order may be paid without a commission being recorded (lost commission), or a commission may stay `PENDING` after its order is refunded/cancelled (invalid commission). Reconciliation detects and repairs this drift.
+
+- **Detection is read-only** (`reconcileCommissions`); **repair is explicit** (`backfillCommissions`). Nothing auto-heals, and there is no background worker — an admin runs both.
+- **Missing commission**: a `PAID` `plan_order` whose purchaser has a non-self referrer (`user.affiliatedBy`) but no commission keyed to the order's `payment.gatewayTransactionId`. The expected commission is `round(purchaseAmount * AFFILIATE_COMMISSION_RATE)`.
+- **Invalid commission**: a `PENDING` commission whose matched order is no longer `PAID`. Repair marks it `VOID`.
+- **Deliberate non-cases**: a commission with no matching order is left alone (admins can record conversions manually via `recordConversion`); an amount mismatch is not a discrepancy.
+- **Payout guard**: `recordPayout` refuses to run while any discrepancy exists, forcing the admin to backfill first. This prevents paying out an incorrect balance.
+- Both operations accept an optional `affiliateUserId`; when omitted they run across all affiliates.
+
 ## Authorization
 
-| Method                | Guard          | Procedure             | Error Code                  |
-| --------------------- | -------------- | --------------------- | --------------------------- |
-| `claim`               | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
-| `getMyProfile`        | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND` |
-| `getDashboardSummary` | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
-| `resolveSlug`         | none           | `publicProcedure`     | —                           |
-| `recordConversion`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `recordPayout`        | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `setReferrer`         | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `listPendingPayouts`  | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| Method                 | Guard          | Procedure             | Error Code                  |
+| ---------------------- | -------------- | --------------------- | --------------------------- |
+| `claim`                | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
+| `getMyProfile`         | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND` |
+| `getDashboardSummary`  | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
+| `resolveSlug`          | none           | `publicProcedure`     | —                           |
+| `recordConversion`     | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `recordPayout`         | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `reconcileCommissions` | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `backfillCommissions`  | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `setReferrer`          | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `listPendingPayouts`   | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
 
 - `requireUser`: throws `UNAUTHORIZED` if `userId` is `null`, `undefined`, or `""`.
 - `requireAdmin`: throws `UNAUTHORIZED` if not authenticated; throws `FORBIDDEN` if user role is not `"admin"`.
@@ -213,10 +226,9 @@ recordPayout({ affiliateUserId, method?, note?, reference? }) → AffiliatePayou
 ```
 
 - Admin-only.
-- Fetches dashboard summary for the affiliate.
-- Amount is always the full `pendingBalance` — never client-specified.
-- Inserts payout row, then marks all pending commissions for that user as `"PAID"` with the payout's ID.
-- Errors: `UNAUTHORIZED`, `FORBIDDEN`, `AFFILIATE_NO_PENDING_BALANCE` (balance ≤ 0), `INTERNAL_SERVER_ERROR` (insert returned null).
+- **Reconciliation guard:** runs reconciliation first; if any discrepancy exists (missing or invalid commissions), throws `AFFILIATE_RECONCILE_BEFORE_PAYOUT`. The admin must `backfillCommissions` before paying out.
+- Payout is **atomic**: a single transaction (`createPayoutForAffiliate`) sums the affiliate's `PENDING` commissions, inserts one payout for that sum, and marks exactly those commissions `"PAID"` with the payout's ID. Amount is the summed pending balance — never client-specified. Concurrent payouts cannot double-spend because the sum and the mark happen in one transaction.
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`, `AFFILIATE_RECONCILE_BEFORE_PAYOUT` (discrepancy present), `AFFILIATE_NO_PENDING_BALANCE` (no pending commissions), `INTERNAL_SERVER_ERROR` (insert returned null).
 
 ### setReferrer
 
@@ -230,6 +242,18 @@ setReferrer({ referredUserId, referrerUserId }) → { userId, affiliatedBy }
 - Validates the referrer exists when `referrerUserId` is non-null.
 - Prevents self-referral.
 - Errors: `AFFILIATE_SELF_REFERRAL`, `NOT_FOUND` (referrer or referred user not found).
+
+### backfillCommissions
+
+```
+backfillCommissions({ affiliateUserId? }) → { created: number, voided: number }
+```
+
+- Admin-only.
+- Applies reconciliation fixes: inserts a commission for every missing one (`commissionAmount = round(purchaseAmount * AFFILIATE_COMMISSION_RATE)`, `status: "PENDING"`) and marks every invalid commission `"VOID"`.
+- `affiliateUserId` is optional; when omitted, backfills across all affiliates.
+- Idempotent: re-running creates/voids nothing once discrepancies are cleared.
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`.
 
 ## Queries
 
@@ -277,6 +301,19 @@ listPendingPayouts({ page?, limit? }) → PendingPayoutsList
 - Pagination includes `total` based on distinct affiliates with pending commissions.
 - Errors: `UNAUTHORIZED`, `FORBIDDEN`.
 
+### reconcileCommissions
+
+```
+reconcileCommissions({ affiliateUserId? }) → { invalid: InvalidCommission[], missing: MissingCommission[] }
+```
+
+- Admin-only. Read-only report — makes no changes.
+- `affiliateUserId` is optional; when omitted, reconciles across all affiliates.
+- `missing`: PAID orders belonging to a user with a non-self referrer (`user.affiliatedBy`) that have no matching commission (matched on `payment.gatewayTransactionId == commission.transactionId`). Each entry carries the `expectedCommissionAmount`.
+- `invalid`: `PENDING` commissions whose matched order is no longer `PAID` (e.g. refunded or cancelled). Each entry carries the current `orderStatus`.
+- Amount mismatches are NOT discrepancies. Commissions with no matching order are NOT reported (protects admin `recordConversion`).
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`.
+
 ## Persistence
 
 ### Table: `affiliate_profile`
@@ -306,17 +343,17 @@ listPendingPayouts({ page?, limit? }) → PendingPayoutsList
 
 ### Table: `affiliate_commission`
 
-| Column              | Type         | Constraints                                             |
-| ------------------- | ------------ | ------------------------------------------------------- |
-| `id`                | text         | PK                                                      |
-| `affiliate_user_id` | text         | NOT NULL, FK → user.id ON DELETE CASCADE                |
-| `purchaser_user_id` | text         | NOT NULL, FK → user.id ON DELETE CASCADE                |
-| `purchase_amount`   | real         | NOT NULL                                                |
-| `commission_amount` | real         | NOT NULL                                                |
-| `transaction_id`    | text         | NOT NULL, UNIQUE                                        |
-| `status`            | text         | NOT NULL, DEFAULT 'PENDING', CHECK('PENDING' \| 'PAID') |
-| `payout_id`         | text         | NULLABLE, FK → affiliate_payout.id ON DELETE SET NULL   |
-| `created_at`        | integer (ms) | NOT NULL, DEFAULT now                                   |
+| Column              | Type         | Constraints                                                       |
+| ------------------- | ------------ | ----------------------------------------------------------------- |
+| `id`                | text         | PK                                                                |
+| `affiliate_user_id` | text         | NOT NULL, FK → user.id ON DELETE CASCADE                          |
+| `purchaser_user_id` | text         | NOT NULL, FK → user.id ON DELETE CASCADE                          |
+| `purchase_amount`   | real         | NOT NULL                                                          |
+| `commission_amount` | real         | NOT NULL                                                          |
+| `transaction_id`    | text         | NOT NULL, UNIQUE                                                  |
+| `status`            | text         | NOT NULL, DEFAULT 'PENDING', CHECK('PENDING' \| 'PAID' \| 'VOID') |
+| `payout_id`         | text         | NULLABLE, FK → affiliate_payout.id ON DELETE SET NULL             |
+| `created_at`        | integer (ms) | NOT NULL, DEFAULT now                                             |
 
 ### Table: `affiliate_payout`
 
@@ -340,58 +377,65 @@ listPendingPayouts({ page?, limit? }) → PendingPayoutsList
 
 Valibot schemas in `src/lib/schemas/affiliate.ts`:
 
-| Schema                                 | Description                                                            |
-| -------------------------------------- | ---------------------------------------------------------------------- |
-| `commissionStatusSchema`               | Picklist of `["PENDING", "PAID"]`                                      |
-| `affiliateProfileIdSchema`             | Prefixed ID: `aff_{2 lowercase}{16 alphanumeric}`                      |
-| `affiliateCommissionIdSchema`          | Prefixed ID: `afc_{2 lowercase}{16 alphanumeric}`                      |
-| `affiliatePayoutIdSchema`              | Prefixed ID: `afp_{2 lowercase}{16 alphanumeric}`                      |
-| `affiliateSubscriptionEventIdSchema`   | Prefixed ID: `afs_{2 lowercase}{16 alphanumeric}`                      |
-| `slugSchema`                           | `string`, min 1, max 255, regex `/^[a-z0-9-]+$/u`                      |
-| `moneySchema`                          | `number`, min 0                                                        |
-| `recordAffiliateConversionInputSchema` | `{ commissionAmount, purchaseAmount, purchaserUserId, transactionId }` |
-| `recordAffiliatePayoutInputSchema`     | `{ affiliateUserId, method?, note?, reference? }`                      |
-| `setAffiliateReferrerInputSchema`      | `{ referredUserId, referrerUserId (nullable) }`                        |
-| `setAffiliateReferrerOutputSchema`     | `{ userId, affiliatedBy (nullable) }`                                  |
-| `claimAffiliateProfileInputSchema`     | `{}` (no input)                                                        |
-| `resolveAffiliateSlugInputSchema`      | `{ slug }`                                                             |
-| `getAffiliateDashboardInputSchema`     | `{}` (no input)                                                        |
-| `listPendingPayoutsInputSchema`        | `{ page?, limit? }` with integer constraints                           |
+| Schema                                      | Description                                                                                        |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `commissionStatusSchema`                    | Picklist of `["PENDING", "PAID"]`                                                                  |
+| `affiliateProfileIdSchema`                  | Prefixed ID: `aff_{2 lowercase}{16 alphanumeric}`                                                  |
+| `affiliateCommissionIdSchema`               | Prefixed ID: `afc_{2 lowercase}{16 alphanumeric}`                                                  |
+| `affiliatePayoutIdSchema`                   | Prefixed ID: `afp_{2 lowercase}{16 alphanumeric}`                                                  |
+| `affiliateSubscriptionEventIdSchema`        | Prefixed ID: `afs_{2 lowercase}{16 alphanumeric}`                                                  |
+| `slugSchema`                                | `string`, min 1, max 255, regex `/^[a-z0-9-]+$/u`                                                  |
+| `moneySchema`                               | `number`, min 0                                                                                    |
+| `recordAffiliateConversionInputSchema`      | `{ commissionAmount, purchaseAmount, purchaserUserId, transactionId }`                             |
+| `recordAffiliatePayoutInputSchema`          | `{ affiliateUserId, method?, note?, reference? }`                                                  |
+| `setAffiliateReferrerInputSchema`           | `{ referredUserId, referrerUserId (nullable) }`                                                    |
+| `setAffiliateReferrerOutputSchema`          | `{ userId, affiliatedBy (nullable) }`                                                              |
+| `claimAffiliateProfileInputSchema`          | `{}` (no input)                                                                                    |
+| `resolveAffiliateSlugInputSchema`           | `{ slug }`                                                                                         |
+| `getAffiliateDashboardInputSchema`          | `{}` (no input)                                                                                    |
+| `listPendingPayoutsInputSchema`             | `{ page?, limit? }` with integer constraints                                                       |
+| `reconcileAffiliateCommissionsInputSchema`  | `{ affiliateUserId? }`                                                                             |
+| `reconcileAffiliateCommissionsOutputSchema` | `{ invalid: InvalidCommission[], missing: MissingCommission[] }`                                   |
+| `backfillAffiliateCommissionsInputSchema`   | `{ affiliateUserId? }`                                                                             |
+| `backfillAffiliateCommissionsOutputSchema`  | `{ created: number, voided: number }`                                                              |
+| `missingCommissionSchema`                   | `{ affiliateUserId, expectedCommissionAmount, purchaseAmount, purchaserUserId, transactionId }`    |
+| `invalidCommissionSchema`                   | `{ affiliateUserId, commissionAmount, commissionId, orderStatus, purchaserUserId, transactionId }` |
 
 Constants in `src/lib/schemas/affiliate.constant.ts`:
 
-| Constant                                 | Value                 |
-| ---------------------------------------- | --------------------- |
-| `AFFILIATE_ID_PREFIX`                    | `"aff"`               |
-| `AFFILIATE_COMMISSION_ID_PREFIX`         | `"afc"`               |
-| `AFFILIATE_PAYOUT_ID_PREFIX`             | `"afp"`               |
-| `AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX` | `"afs"`               |
-| `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID"]` |
-| `AFFILIATE_COOKIE_NAME`                  | `"affiliate_ref"`     |
-| `AFFILIATE_COOKIE_MAX_AGE_SECONDS`       | `2592000` (30 days)   |
-| `AFFILIATE_SLUG_MAX_RETRIES`             | `5`                   |
+| Constant                                 | Value                         |
+| ---------------------------------------- | ----------------------------- |
+| `AFFILIATE_ID_PREFIX`                    | `"aff"`                       |
+| `AFFILIATE_COMMISSION_ID_PREFIX`         | `"afc"`                       |
+| `AFFILIATE_PAYOUT_ID_PREFIX`             | `"afp"`                       |
+| `AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX` | `"afs"`                       |
+| `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]` |
+| `AFFILIATE_COOKIE_NAME`                  | `"affiliate_ref"`             |
+| `AFFILIATE_COOKIE_MAX_AGE_SECONDS`       | `2592000` (30 days)           |
+| `AFFILIATE_SLUG_MAX_RETRIES`             | `5`                           |
 
 ## Errors
 
-| Code                           | Source                     | Message                                                                                                      |
-| ------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `UNAUTHORIZED`                 | Guard `requireUser`        | `"Authentication is required"`                                                                               |
-| `FORBIDDEN`                    | Guard `requireAdmin`       | `"Admin access required"`                                                                                    |
-| `NOT_FOUND`                    | Service                    | `"Affiliate profile not found"` / `"User not found"` / `"Affiliate link not found"` / `"Referrer not found"` |
-| `AFFILIATE_SLUG_CONFLICT`      | Service                    | `"Failed to generate a unique slug after maximum retries"`                                                   |
-| `AFFILIATE_SELF_REFERRAL`      | Service                    | `"Cannot refer yourself"`                                                                                    |
-| `AFFILIATE_NO_PENDING_BALANCE` | Service                    | `"No pending balance to payout"`                                                                             |
-| `INTERNAL_SERVER_ERROR`        | Repository (catch wrapper) | `"Internal server error"`                                                                                    |
+| Code                                | Source                     | Message                                                                                                      |
+| ----------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `UNAUTHORIZED`                      | Guard `requireUser`        | `"Authentication is required"`                                                                               |
+| `FORBIDDEN`                         | Guard `requireAdmin`       | `"Admin access required"`                                                                                    |
+| `NOT_FOUND`                         | Service                    | `"Affiliate profile not found"` / `"User not found"` / `"Affiliate link not found"` / `"Referrer not found"` |
+| `AFFILIATE_SLUG_CONFLICT`           | Service                    | `"Failed to generate a unique slug after maximum retries"`                                                   |
+| `AFFILIATE_SELF_REFERRAL`           | Service                    | `"Cannot refer yourself"`                                                                                    |
+| `AFFILIATE_NO_PENDING_BALANCE`      | Service                    | `"No pending balance to payout"`                                                                             |
+| `AFFILIATE_RECONCILE_BEFORE_PAYOUT` | Service                    | `"Reconcile commissions before paying out this affiliate"`                                                   |
+| `INTERNAL_SERVER_ERROR`             | Repository (catch wrapper) | `"Internal server error"`                                                                                    |
 
 ## Testing
 
 Three test files, mirroring the service's three layers:
 
-- **`affiliate.service.test.ts`** — Unit tests against `new AffiliateService(mockRepo, mockGuard)`. Covers every branch and error path for: `claim` (idempotent get-or-create, slug generation, slug conflict, user-not-found), `resolveSlug` (found, not found, sanitization), `recordConversion` (found affiliate, no affiliate, self-referral, duplicate transaction, insert failure), `recordPayout` (full payout flow, note forwarding, zero balance, unauthorized, insert failure), `setReferrer` (set referrer, clear referrer, self-referral, referrer-not-found, user-not-found, unauthorized), `getDashboardSummary` (found, unauthorized), `listPendingPayouts` (admin flow, custom pagination, unauthorized).
+- **`affiliate.service.test.ts`** — Unit tests against `new AffiliateService(mockRepo, mockGuard)`. Covers every branch and error path for: `claim` (idempotent get-or-create, slug generation, slug conflict, user-not-found), `resolveSlug` (found, not found, sanitization), `recordConversion` (found affiliate, no affiliate, self-referral, duplicate transaction, insert failure), `recordPayout` (atomic payout, reconciliation guard blocks on discrepancy, no pending balance, note forwarding, unauthorized), `reconcileCommissions` (reports missing + invalid, admin-only), `backfillCommissions` (maps missing→inserts and invalid→voids, admin-only), `setReferrer` (set referrer, clear referrer, self-referral, referrer-not-found, user-not-found, unauthorized), `getDashboardSummary` (found, unauthorized), `listPendingPayouts` (admin flow, custom pagination, unauthorized).
 
 - **`affiliate.guard.test.ts`** — Unit tests against `new AffiliateGuard(mockRepo, mockUserRepo)`. Tests: `requireUser` (valid, null, undefined, empty string), `requireAdmin` (admin role, non-admin role, user not found, null userId).
 
-- **`affiliate.repository.drizzle.test.ts`** — Integration tests against an in-memory SQLite DB via `AffiliateTestEnv`. Tests: `insertProfile` (persistence, duplicate userId returns null, duplicate slug returns null), `findProfileByUserId`, `findProfileBySlug`, `insertConversion` (persistence, duplicate transactionId returns null), `findConversionByTransactionId`, `getDashboardSummary` (earnings breakdown, zero values, null profile), `listPendingPayouts` (grouped results, unknown slug fallback, excluded paid affiliates, pagination), `insertPayout` (persistence), `markCommissionsAsPaid` (marks pending, returns 0 for none, leaves paid untouched), `findAffiliatedByUserId`, `findUserById`, `updateUserAffiliatedBy` (set, clear, missing user), and schema constraints (foreign key rejection, cascade on user deletion).
+- **`affiliate.repository.drizzle.test.ts`** — Integration tests against an in-memory SQLite DB via `AffiliateTestEnv`. Tests: `insertProfile` (persistence, duplicate userId returns null, duplicate slug returns null), `findProfileByUserId`, `findProfileBySlug`, `insertConversion` (persistence, duplicate transactionId returns null), `findConversionByTransactionId`, `getDashboardSummary` (earnings breakdown, zero values, null profile), `listPendingPayouts` (grouped results, unknown slug fallback, excluded paid affiliates, pagination), `insertPayout` (persistence), `markCommissionsAsPaid` (marks pending, returns 0 for none, leaves paid untouched), `createPayoutForAffiliate` (atomic sum+insert+mark, returns null on no pending), `findMissingCommissions` (paid orders without a commission, skips self-referral), `findInvalidCommissions` (pending commissions whose order is no longer paid), `backfillCommissions` (inserts missing + voids invalid, idempotent), `findAffiliatedByUserId`, `findUserById`, `updateUserAffiliatedBy` (set, clear, missing user), and schema constraints (foreign key rejection, cascade on user deletion).
 
 ### Repository methods not yet wired to a service command
 

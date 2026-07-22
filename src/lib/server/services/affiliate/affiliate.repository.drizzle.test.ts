@@ -557,6 +557,653 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
+  describe.concurrent("createPayoutForAffiliate", () => {
+    it("creates a payout for the full pending balance and marks those commissions PAID", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-cp-1",
+      });
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 50_000,
+        purchaseAmount: 200_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-cp-2",
+      });
+      const before = Date.now();
+
+      const payout = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: "bank_transfer",
+        note: "Monthly",
+        processedByAdminId: admin,
+        reference: "REF-1",
+      });
+
+      expect(payout).not.toBeNull();
+      expect(payout?.affiliateUserId).toBe(referrer);
+      expect(payout?.amount).toBe(80_000);
+      expect(payout?.method).toBe("bank_transfer");
+      expect(payout?.reference).toBe("REF-1");
+      expect(payout?.note).toBe("Monthly");
+      expect(payout?.processedByAdminId).toBe(admin);
+      expect(payout?.createdAt.getTime()).toBeGreaterThanOrEqual(before);
+
+      const commissions = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.affiliateUserId, referrer))
+        .all();
+      expect(commissions).toHaveLength(2);
+      for (const c of commissions) {
+        expect(c.status).toBe("PAID");
+        expect(c.payoutId).toBe(payout?.id);
+      }
+    });
+
+    it("returns null when the affiliate has no pending commissions", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+
+      const payout = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: null,
+        note: null,
+        processedByAdminId: admin,
+        reference: null,
+      });
+
+      expect(payout).toBeNull();
+
+      const payouts = env.db
+        .select()
+        .from(affiliatePayout)
+        .where(eq(affiliatePayout.affiliateUserId, referrer))
+        .all();
+      expect(payouts).toHaveLength(0);
+    });
+
+    it("pays only pending commissions, leaving already-PAID ones untouched", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-already",
+      });
+      // First payout marks txn-already as PAID.
+      await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: null,
+        note: null,
+        processedByAdminId: admin,
+        reference: null,
+      });
+      // A new pending commission arrives.
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 20_000,
+        purchaseAmount: 80_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-new",
+      });
+
+      const payout2 = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: null,
+        note: null,
+        processedByAdminId: admin,
+        reference: null,
+      });
+
+      expect(payout2?.amount).toBe(20_000);
+
+      const [already] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.transactionId, "txn-already"))
+        .all();
+      expect(already?.status).toBe("PAID");
+      expect(already?.payoutId).not.toBe(payout2?.id);
+
+      const [fresh] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.transactionId, "txn-new"))
+        .all();
+      expect(fresh?.status).toBe("PAID");
+      expect(fresh?.payoutId).toBe(payout2?.id);
+    });
+  });
+
+  describe.concurrent("findMissingCommissions", () => {
+    it("flags a PAID order whose referred purchaser has no commission", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-miss-1",
+        orderId,
+        userId: purchaser,
+      });
+
+      const missing = await env.repo.findMissingCommissions();
+
+      expect(missing).toEqual([
+        {
+          affiliateUserId: referrer,
+          expectedCommissionAmount: 35_000,
+          purchaseAmount: 100_000,
+          purchaserUserId: purchaser,
+          transactionId: "txn-miss-1",
+        },
+      ]);
+    });
+
+    it("excludes orders that already have a matching commission", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-has",
+        orderId,
+        userId: purchaser,
+      });
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-has",
+      });
+
+      const missing = await env.repo.findMissingCommissions();
+
+      expect(missing).toEqual([]);
+    });
+
+    it("excludes purchasers with no referrer", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const purchaser = env.seedUser({ name: "NoRef" });
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-noref",
+        orderId,
+        userId: purchaser,
+      });
+
+      const missing = await env.repo.findMissingCommissions();
+
+      expect(missing).toEqual([]);
+    });
+
+    it("excludes self-referrals", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const purchaser = env.seedUser({ name: "Self" });
+      env.db
+        .update(user)
+        .set({ affiliatedBy: purchaser })
+        .where(eq(user.id, purchaser))
+        .run();
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-self",
+        orderId,
+        userId: purchaser,
+      });
+
+      const missing = await env.repo.findMissingCommissions();
+
+      expect(missing).toEqual([]);
+    });
+
+    it("excludes orders that are not PAID", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "CANCELLED",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-cancel",
+        orderId,
+        userId: purchaser,
+      });
+
+      const missing = await env.repo.findMissingCommissions();
+
+      expect(missing).toEqual([]);
+    });
+
+    it("scopes to a single affiliate when provided", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrerA = env.seedReferrer();
+      const referrerB = env.seedUser({ name: "Referrer B" });
+      const buyerA = env.seedUser({ affiliatedBy: referrerA, name: "Buyer A" });
+      const buyerB = env.seedUser({ affiliatedBy: referrerB, name: "Buyer B" });
+      const orderA = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: buyerA,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-a",
+        orderId: orderA,
+        userId: buyerA,
+      });
+      const orderB = env.seedOrder({
+        grossAmount: 200_000,
+        status: "PAID",
+        userId: buyerB,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-b",
+        orderId: orderB,
+        userId: buyerB,
+      });
+
+      const missing = await env.repo.findMissingCommissions(referrerA);
+
+      expect(missing).toHaveLength(1);
+      expect(missing[0]?.affiliateUserId).toBe(referrerA);
+      expect(missing[0]?.transactionId).toBe("txn-a");
+    });
+  });
+
+  describe.concurrent("findInvalidCommissions", () => {
+    it("flags a PENDING commission whose order is no longer PAID", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "CANCELLED",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-inv-1",
+        orderId,
+        userId: purchaser,
+      });
+      const commission = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-inv-1",
+      });
+
+      const invalid = await env.repo.findInvalidCommissions();
+
+      expect(invalid).toEqual([
+        {
+          affiliateUserId: referrer,
+          commissionAmount: 35_000,
+          commissionId: commission?.id,
+          orderStatus: "CANCELLED",
+          purchaserUserId: purchaser,
+          transactionId: "txn-inv-1",
+        },
+      ]);
+    });
+
+    it("excludes commissions whose order is still PAID", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-paid",
+        orderId,
+        userId: purchaser,
+      });
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-paid",
+      });
+
+      const invalid = await env.repo.findInvalidCommissions();
+
+      expect(invalid).toEqual([]);
+    });
+
+    it("excludes commissions with no matching order (admin-recorded)", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-orphan-admin",
+      });
+
+      const invalid = await env.repo.findInvalidCommissions();
+
+      expect(invalid).toEqual([]);
+    });
+
+    it("excludes commissions that are already VOID", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "CANCELLED",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-void",
+        orderId,
+        userId: purchaser,
+      });
+      const commission = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-void",
+      });
+      env.db
+        .update(affiliateCommission)
+        .set({ status: "VOID" })
+        .where(eq(affiliateCommission.id, commission?.id ?? ""))
+        .run();
+
+      const invalid = await env.repo.findInvalidCommissions();
+
+      expect(invalid).toEqual([]);
+    });
+
+    it("scopes to a single affiliate when provided", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrerA = env.seedReferrer();
+      const referrerB = env.seedUser({ name: "Referrer B" });
+      const buyerA = env.seedUser({ affiliatedBy: referrerA, name: "Buyer A" });
+      const buyerB = env.seedUser({ affiliatedBy: referrerB, name: "Buyer B" });
+      await env.repo.insertProfile(referrerA, "slug-a", "A");
+      await env.repo.insertProfile(referrerB, "slug-b", "B");
+      const orderA = env.seedOrder({
+        grossAmount: 100_000,
+        status: "CANCELLED",
+        userId: buyerA,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-inva",
+        orderId: orderA,
+        userId: buyerA,
+      });
+      await env.repo.insertConversion({
+        affiliateUserId: referrerA,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: buyerA,
+        transactionId: "txn-inva",
+      });
+      const orderB = env.seedOrder({
+        grossAmount: 200_000,
+        status: "CANCELLED",
+        userId: buyerB,
+      });
+      env.seedPayment({
+        gatewayTransactionId: "txn-invb",
+        orderId: orderB,
+        userId: buyerB,
+      });
+      await env.repo.insertConversion({
+        affiliateUserId: referrerB,
+        commissionAmount: 70_000,
+        purchaseAmount: 200_000,
+        purchaserUserId: buyerB,
+        transactionId: "txn-invb",
+      });
+
+      const invalid = await env.repo.findInvalidCommissions(referrerA);
+
+      expect(invalid).toHaveLength(1);
+      expect(invalid[0]?.affiliateUserId).toBe(referrerA);
+      expect(invalid[0]?.transactionId).toBe("txn-inva");
+    });
+  });
+
+  describe.concurrent("backfillCommissions", () => {
+    it("creates the provided commissions and reports the created count", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug", "R");
+
+      const result = await env.repo.backfillCommissions(
+        [
+          {
+            affiliateUserId: referrer,
+            commissionAmount: 35_000,
+            purchaseAmount: 100_000,
+            purchaserUserId: purchaser,
+            transactionId: "txn-bf-1",
+          },
+          {
+            affiliateUserId: referrer,
+            commissionAmount: 70_000,
+            purchaseAmount: 200_000,
+            purchaserUserId: purchaser,
+            transactionId: "txn-bf-2",
+          },
+        ],
+        []
+      );
+
+      expect(result).toEqual({ created: 2, voided: 0 });
+
+      const commissions = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.affiliateUserId, referrer))
+        .all();
+      expect(commissions).toHaveLength(2);
+      for (const c of commissions) {
+        expect(c.status).toBe("PENDING");
+      }
+    });
+
+    it("voids the provided PENDING commissions and reports the voided count", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug", "R");
+      const c1 = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-void-1",
+      });
+      const c2 = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 70_000,
+        purchaseAmount: 200_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-void-2",
+      });
+
+      const result = await env.repo.backfillCommissions(
+        [],
+        [c1?.id ?? "", c2?.id ?? ""]
+      );
+
+      expect(result).toEqual({ created: 0, voided: 2 });
+
+      const commissions = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.affiliateUserId, referrer))
+        .all();
+      for (const c of commissions) {
+        expect(c.status).toBe("VOID");
+      }
+    });
+
+    it("is idempotent: skips commissions whose transactionId already exists", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-dup",
+      });
+
+      const result = await env.repo.backfillCommissions(
+        [
+          {
+            affiliateUserId: referrer,
+            commissionAmount: 35_000,
+            purchaseAmount: 100_000,
+            purchaserUserId: purchaser,
+            transactionId: "txn-dup",
+          },
+        ],
+        []
+      );
+
+      expect(result).toEqual({ created: 0, voided: 0 });
+
+      const commissions = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.transactionId, "txn-dup"))
+        .all();
+      expect(commissions).toHaveLength(1);
+    });
+
+    it("only voids PENDING commissions, leaving PAID ones untouched", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug", "R");
+      const pending = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 35_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-still-pending",
+      });
+      const paid = await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 70_000,
+        purchaseAmount: 200_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-already-paid",
+      });
+      env.db
+        .update(affiliateCommission)
+        .set({ status: "PAID" })
+        .where(eq(affiliateCommission.id, paid?.id ?? ""))
+        .run();
+
+      const result = await env.repo.backfillCommissions(
+        [],
+        [pending?.id ?? "", paid?.id ?? ""]
+      );
+
+      expect(result).toEqual({ created: 0, voided: 1 });
+
+      const [voided] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.id, pending?.id ?? ""))
+        .all();
+      expect(voided?.status).toBe("VOID");
+      const [untouched] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.id, paid?.id ?? ""))
+        .all();
+      expect(untouched?.status).toBe("PAID");
+    });
+
+    it("returns zeros for empty inputs", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.backfillCommissions([], []);
+
+      expect(result).toEqual({ created: 0, voided: 0 });
+    });
+  });
+
   describe.concurrent("findAffiliatedByUserId", () => {
     it("returns affiliatedBy when set", async ({ expect }) => {
       await using env = new AffiliateTestEnv();

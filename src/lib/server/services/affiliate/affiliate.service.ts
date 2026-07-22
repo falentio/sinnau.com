@@ -2,8 +2,12 @@ import type {
   AffiliateDashboardSummary,
   AffiliatePayout,
   AffiliateProfile,
+  BackfillAffiliateCommissionsInput,
+  BackfillAffiliateCommissionsOutput,
   ListPendingPayoutsInput,
   PendingPayoutsList,
+  ReconcileAffiliateCommissionsInput,
+  ReconcileAffiliateCommissionsOutput,
   RecordAffiliateConversionInput,
   RecordAffiliateConversionOutput,
   RecordAffiliatePayoutInput,
@@ -153,18 +157,18 @@ export class AffiliateService {
   ): Promise<AffiliatePayout> {
     const admin = await this.guard.requireAdmin(adminUserId);
 
-    const raw = await this.repo.getDashboardSummary(input.affiliateUserId);
-    const pendingBalance = raw.totalEarned - raw.totalPaid;
-
-    if (pendingBalance <= 0) {
-      throw new ORPCError("AFFILIATE_NO_PENDING_BALANCE", {
-        message: "No pending balance to payout",
+    const [missing, invalid] = await Promise.all([
+      this.repo.findMissingCommissions(input.affiliateUserId),
+      this.repo.findInvalidCommissions(input.affiliateUserId),
+    ]);
+    if (missing.length > 0 || invalid.length > 0) {
+      throw new ORPCError("AFFILIATE_RECONCILE_BEFORE_PAYOUT", {
+        message: "Reconcile commissions before paying out this affiliate",
       });
     }
 
-    const payout = await this.repo.insertPayout({
+    const payout = await this.repo.createPayoutForAffiliate({
       affiliateUserId: input.affiliateUserId,
-      amount: pendingBalance,
       method: input.method ?? null,
       note: input.note ?? null,
       processedByAdminId: admin,
@@ -172,12 +176,10 @@ export class AffiliateService {
     });
 
     if (!payout) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
+      throw new ORPCError("AFFILIATE_NO_PENDING_BALANCE", {
+        message: "No pending balance to payout",
       });
     }
-
-    await this.repo.markCommissionsAsPaid(input.affiliateUserId, payout.id);
 
     return payout;
   }
@@ -263,5 +265,37 @@ export class AffiliateService {
       purchaserUserId: input.purchaserUserId,
       transactionId: input.transactionId,
     });
+  }
+
+  async reconcileCommissions(
+    input: ReconcileAffiliateCommissionsInput,
+    adminUserId: string | null | undefined
+  ): Promise<ReconcileAffiliateCommissionsOutput> {
+    await this.guard.requireAdmin(adminUserId);
+    const [missing, invalid] = await Promise.all([
+      this.repo.findMissingCommissions(input.affiliateUserId),
+      this.repo.findInvalidCommissions(input.affiliateUserId),
+    ]);
+    return { invalid, missing };
+  }
+
+  async backfillCommissions(
+    input: BackfillAffiliateCommissionsInput,
+    adminUserId: string | null | undefined
+  ): Promise<BackfillAffiliateCommissionsOutput> {
+    await this.guard.requireAdmin(adminUserId);
+    const [missing, invalid] = await Promise.all([
+      this.repo.findMissingCommissions(input.affiliateUserId),
+      this.repo.findInvalidCommissions(input.affiliateUserId),
+    ]);
+    const inserts = missing.map((m) => ({
+      affiliateUserId: m.affiliateUserId,
+      commissionAmount: m.expectedCommissionAmount,
+      purchaseAmount: m.purchaseAmount,
+      purchaserUserId: m.purchaserUserId,
+      transactionId: m.transactionId,
+    }));
+    const voidCommissionIds = invalid.map((i) => i.commissionId);
+    return await this.repo.backfillCommissions(inserts, voidCommissionIds);
   }
 }

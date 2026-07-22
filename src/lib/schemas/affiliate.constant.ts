@@ -3,7 +3,11 @@ export const AFFILIATE_COMMISSION_ID_PREFIX = "afc";
 export const AFFILIATE_PAYOUT_ID_PREFIX = "afp";
 export const AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX = "afs";
 
-export const AFFILIATE_COMMISSION_STATUSES = ["PENDING", "PAID"] as const;
+export const AFFILIATE_COMMISSION_STATUSES = [
+  "PENDING",
+  "PAID",
+  "VOID",
+] as const;
 
 export const AFFILIATE_COOKIE_NAME = "affiliate_ref";
 // 30 days

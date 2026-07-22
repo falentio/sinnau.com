@@ -1,4 +1,12 @@
 import { user } from "$lib/server/infras/db/schema/auth-schema";
+import { order, payment } from "$lib/server/infras/db/schema/plan";
+import type {
+  OrderStatus,
+  PaymentGateway,
+  PaymentStatus,
+  PlanDuration,
+  PlanKey,
+} from "$lib/server/infras/db/schema/plan";
 import { getTestingDb } from "$lib/server/infras/db/testing";
 import { vi } from "vitest";
 import type { MockedFunction } from "vitest";
@@ -16,10 +24,17 @@ export type MockedAffiliateRepository = {
 };
 
 export const createMockRepository = (): MockedAffiliateRepository => ({
+  backfillCommissions: vi.fn<AffiliateRepository["backfillCommissions"]>(),
+  createPayoutForAffiliate:
+    vi.fn<AffiliateRepository["createPayoutForAffiliate"]>(),
   findAffiliatedByUserId:
     vi.fn<AffiliateRepository["findAffiliatedByUserId"]>(),
   findConversionByTransactionId:
     vi.fn<AffiliateRepository["findConversionByTransactionId"]>(),
+  findInvalidCommissions:
+    vi.fn<AffiliateRepository["findInvalidCommissions"]>(),
+  findMissingCommissions:
+    vi.fn<AffiliateRepository["findMissingCommissions"]>(),
   findProfileBySlug: vi.fn<AffiliateRepository["findProfileBySlug"]>(),
   findProfileByUserId: vi.fn<AffiliateRepository["findProfileByUserId"]>(),
   findUserById: vi.fn<AffiliateRepository["findUserById"]>(),
@@ -90,12 +105,18 @@ export class AffiliateTestEnv implements AsyncDisposable {
   }
 
   seedUser(
-    options: { id?: string; email?: string; name?: string } = {}
+    options: {
+      id?: string;
+      email?: string;
+      name?: string;
+      affiliatedBy?: string | null;
+    } = {}
   ): string {
     const id = options.id ?? crypto.randomUUID();
     this.db
       .insert(user)
       .values({
+        affiliatedBy: options.affiliatedBy ?? null,
         email: options.email ?? `${id}@test.local`,
         emailVerified: true,
         id,
@@ -111,6 +132,58 @@ export class AffiliateTestEnv implements AsyncDisposable {
 
   seedPurchaser(): string {
     return this.seedUser({ name: "Purchaser" });
+  }
+
+  seedOrder(options: {
+    id?: string;
+    userId: string;
+    grossAmount?: number;
+    status?: OrderStatus;
+    planKey?: PlanKey;
+    sku?: string;
+    durationMonths?: PlanDuration;
+  }): string {
+    const id = options.id ?? `ord_${crypto.randomUUID()}`;
+    this.db
+      .insert(order)
+      .values({
+        durationMonths: options.durationMonths ?? 1,
+        grossAmount: options.grossAmount ?? 100_000,
+        id,
+        planKey: options.planKey ?? "PLUS",
+        sku: options.sku ?? "sku-test",
+        status: options.status ?? "PAID",
+        userId: options.userId,
+      })
+      .run();
+    return id;
+  }
+
+  seedPayment(options: {
+    id?: string;
+    orderId: string;
+    userId: string;
+    gatewayTransactionId?: string | null;
+    amount?: number;
+    status?: PaymentStatus;
+    gateway?: PaymentGateway;
+    gatewayOrderId?: string;
+  }): string {
+    const id = options.id ?? `pay_${crypto.randomUUID()}`;
+    this.db
+      .insert(payment)
+      .values({
+        amount: options.amount ?? 100_000,
+        gateway: options.gateway ?? "midtrans",
+        gatewayOrderId: options.gatewayOrderId ?? `go_${id}`,
+        gatewayTransactionId: options.gatewayTransactionId ?? null,
+        id,
+        orderId: options.orderId,
+        status: options.status ?? "SUCCESS",
+        userId: options.userId,
+      })
+      .run();
+    return id;
   }
 
   // oxlint-disable-next-line require-await

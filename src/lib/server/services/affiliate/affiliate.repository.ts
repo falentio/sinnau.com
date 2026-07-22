@@ -1,4 +1,9 @@
-import type { PendingPayout, PendingPayoutsList } from "$lib/schemas/affiliate";
+import type {
+  InvalidCommission,
+  MissingCommission,
+  PendingPayout,
+  PendingPayoutsList,
+} from "$lib/schemas/affiliate";
 
 import type {
   AffiliateCommission,
@@ -10,6 +15,8 @@ export type {
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
+  InvalidCommission,
+  MissingCommission,
   PendingPayout,
   PendingPayoutsList,
 };
@@ -36,6 +43,19 @@ export interface AffiliateDashboardRawSummary {
   totalEarned: number;
   totalPaid: number;
   conversionCount: number;
+}
+
+export interface CreatePayoutForAffiliateInput {
+  affiliateUserId: string;
+  method: string | null;
+  reference: string | null;
+  note: string | null;
+  processedByAdminId: string;
+}
+
+export interface BackfillResult {
+  created: number;
+  voided: number;
 }
 
 export interface AffiliateRepository {
@@ -69,6 +89,23 @@ export interface AffiliateRepository {
     affiliateUserId: string,
     payoutId: string
   ): Promise<number>;
+
+  createPayoutForAffiliate(
+    input: CreatePayoutForAffiliateInput
+  ): Promise<AffiliatePayout | null>;
+
+  findMissingCommissions(
+    affiliateUserId?: string
+  ): Promise<MissingCommission[]>;
+
+  findInvalidCommissions(
+    affiliateUserId?: string
+  ): Promise<InvalidCommission[]>;
+
+  backfillCommissions(
+    inserts: InsertAffiliateConversionInput[],
+    voidCommissionIds: string[]
+  ): Promise<BackfillResult>;
 
   findAffiliatedByUserId(userId: string): Promise<string | null>;
 

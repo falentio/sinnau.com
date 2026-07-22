@@ -331,84 +331,123 @@ describe.concurrent("affiliate service", () => {
       reference: "REF-001",
     };
 
-    it("records full payout and marks commissions as paid", async ({
+    const payout = {
+      affiliateUserId: "user-1",
+      amount: 50_000,
+      createdAt: new Date(),
+      id: "afp_abc",
+      method: "bank_transfer",
+      note: null,
+      processedByAdminId: "admin-1",
+      reference: "REF-001",
+    };
+
+    it("creates an atomic payout when the books are clean", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      const payout = {
-        affiliateUserId: "user-1",
-        amount: 50_000,
-        createdAt: new Date(),
-        id: "afp_abc",
-        method: "bank_transfer",
-        note: null,
-        processedByAdminId: "admin-1",
-        reference: "REF-001",
-      };
-
-      repo.getDashboardSummary.mockResolvedValue({
-        conversionCount: 5,
-        profile: {
-          createdAt: new Date(),
-          id: "aff_abc",
-          nameSnapshot: "Test",
-          points: 0,
-          slug: "test",
-          updatedAt: new Date(),
-          userId: "user-1",
-          version: 1,
-        },
-        totalEarned: 50_000,
-        totalPaid: 0,
-      });
-      repo.insertPayout.mockResolvedValue(payout);
-      repo.markCommissionsAsPaid.mockResolvedValue(5);
+      repo.findMissingCommissions.mockResolvedValue([]);
+      repo.findInvalidCommissions.mockResolvedValue([]);
+      repo.createPayoutForAffiliate.mockResolvedValue(payout);
 
       const result = await service.recordPayout(validInput, "admin-1");
 
       expect(result).toEqual(payout);
-      expect(repo.insertPayout).toHaveBeenCalledWith({
+      expect(repo.findMissingCommissions).toHaveBeenCalledWith("user-1");
+      expect(repo.findInvalidCommissions).toHaveBeenCalledWith("user-1");
+      expect(repo.createPayoutForAffiliate).toHaveBeenCalledWith({
         affiliateUserId: "user-1",
-        amount: 50_000,
         method: "bank_transfer",
         note: null,
         processedByAdminId: "admin-1",
         reference: "REF-001",
       });
-      expect(repo.markCommissionsAsPaid).toHaveBeenCalledWith(
-        "user-1",
-        "afp_abc"
-      );
     });
 
-    it("forwards note parameter to insertPayout", async ({ expect }) => {
+    it("forwards note parameter to createPayoutForAffiliate", async ({
+      expect,
+    }) => {
       const { repo, service } = setupService();
-      repo.getDashboardSummary.mockResolvedValue({
-        conversionCount: 1,
-        profile: null,
-        totalEarned: 50_000,
-        totalPaid: 0,
-      });
-      repo.insertPayout.mockResolvedValue({
-        affiliateUserId: "user-1",
-        amount: 50_000,
-        createdAt: new Date(),
-        id: "afp_note",
-        method: null,
+      repo.findMissingCommissions.mockResolvedValue([]);
+      repo.findInvalidCommissions.mockResolvedValue([]);
+      repo.createPayoutForAffiliate.mockResolvedValue({
+        ...payout,
         note: "First payout",
-        processedByAdminId: "admin-1",
-        reference: null,
       });
-      repo.markCommissionsAsPaid.mockResolvedValue(1);
 
       await service.recordPayout(
         { affiliateUserId: "user-1", note: "First payout" },
         "admin-1"
       );
 
-      expect(repo.insertPayout).toHaveBeenCalledWith(
+      expect(repo.createPayoutForAffiliate).toHaveBeenCalledWith(
         expect.objectContaining({ note: "First payout" })
       );
+    });
+
+    it("throws AFFILIATE_RECONCILE_BEFORE_PAYOUT when missing commissions exist", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findMissingCommissions.mockResolvedValue([
+        {
+          affiliateUserId: "user-1",
+          expectedCommissionAmount: 35_000,
+          purchaseAmount: 100_000,
+          purchaserUserId: "buyer-1",
+          transactionId: "txn-miss",
+        },
+      ]);
+      repo.findInvalidCommissions.mockResolvedValue([]);
+
+      const err = await captureError(
+        service.recordPayout(validInput, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_RECONCILE_BEFORE_PAYOUT" });
+      expect(repo.createPayoutForAffiliate).not.toHaveBeenCalled();
+    });
+
+    it("throws AFFILIATE_RECONCILE_BEFORE_PAYOUT when invalid commissions exist", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findMissingCommissions.mockResolvedValue([]);
+      repo.findInvalidCommissions.mockResolvedValue([
+        {
+          affiliateUserId: "user-1",
+          commissionAmount: 35_000,
+          commissionId: "afc_x",
+          orderStatus: "CANCELLED",
+          purchaserUserId: "buyer-1",
+          transactionId: "txn-inv",
+        },
+      ]);
+
+      const err = await captureError(
+        service.recordPayout(validInput, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_RECONCILE_BEFORE_PAYOUT" });
+      expect(repo.createPayoutForAffiliate).not.toHaveBeenCalled();
+    });
+
+    it("throws AFFILIATE_NO_PENDING_BALANCE when there is nothing to pay", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findMissingCommissions.mockResolvedValue([]);
+      repo.findInvalidCommissions.mockResolvedValue([]);
+      repo.createPayoutForAffiliate.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.recordPayout(validInput, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_NO_PENDING_BALANCE" });
     });
 
     it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
@@ -420,44 +459,135 @@ describe.concurrent("affiliate service", () => {
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
+  });
 
-    it("throws AFFILIATE_NO_PENDING_BALANCE when balance is zero", async ({
+  describe.concurrent("reconcileCommissions", () => {
+    it("returns missing and invalid commissions for admin", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.getDashboardSummary.mockResolvedValue({
-        conversionCount: 0,
-        profile: null,
-        totalEarned: 0,
-        totalPaid: 0,
-      });
+      const missing = [
+        {
+          affiliateUserId: "user-1",
+          expectedCommissionAmount: 35_000,
+          purchaseAmount: 100_000,
+          purchaserUserId: "buyer-1",
+          transactionId: "txn-miss",
+        },
+      ];
+      const invalid = [
+        {
+          affiliateUserId: "user-1",
+          commissionAmount: 35_000,
+          commissionId: "afc_x",
+          orderStatus: "CANCELLED",
+          purchaserUserId: "buyer-1",
+          transactionId: "txn-inv",
+        },
+      ];
+      repo.findMissingCommissions.mockResolvedValue(missing);
+      repo.findInvalidCommissions.mockResolvedValue(invalid);
 
-      const err = await captureError(
-        service.recordPayout(validInput, "admin-1")
-      );
+      const result = await service.reconcileCommissions({}, "admin-1");
 
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "AFFILIATE_NO_PENDING_BALANCE" });
+      expect(result).toEqual({ invalid, missing });
     });
 
-    it("throws INTERNAL_SERVER_ERROR when insertPayout returns null", async ({
+    it("passes the affiliateUserId filter to the repository", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.getDashboardSummary.mockResolvedValue({
-        conversionCount: 1,
-        profile: null,
-        totalEarned: 50_000,
-        totalPaid: 0,
-      });
-      repo.insertPayout.mockResolvedValue(null);
+      repo.findMissingCommissions.mockResolvedValue([]);
+      repo.findInvalidCommissions.mockResolvedValue([]);
 
-      const err = await captureError(
-        service.recordPayout(validInput, "admin-1")
+      await service.reconcileCommissions(
+        { affiliateUserId: "user-9" },
+        "admin-1"
       );
 
+      expect(repo.findMissingCommissions).toHaveBeenCalledWith("user-9");
+      expect(repo.findInvalidCommissions).toHaveBeenCalledWith("user-9");
+    });
+
+    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireAdmin.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.reconcileCommissions({}, null));
+
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+  });
+
+  describe.concurrent("backfillCommissions", () => {
+    it("creates missing commissions at the expected amount and voids invalid ones", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findMissingCommissions.mockResolvedValue([
+        {
+          affiliateUserId: "user-1",
+          expectedCommissionAmount: 35_000,
+          purchaseAmount: 100_000,
+          purchaserUserId: "buyer-1",
+          transactionId: "txn-miss",
+        },
+      ]);
+      repo.findInvalidCommissions.mockResolvedValue([
+        {
+          affiliateUserId: "user-1",
+          commissionAmount: 35_000,
+          commissionId: "afc_x",
+          orderStatus: "CANCELLED",
+          purchaserUserId: "buyer-1",
+          transactionId: "txn-inv",
+        },
+      ]);
+      repo.backfillCommissions.mockResolvedValue({ created: 1, voided: 1 });
+
+      const result = await service.backfillCommissions({}, "admin-1");
+
+      expect(result).toEqual({ created: 1, voided: 1 });
+      expect(repo.backfillCommissions).toHaveBeenCalledWith(
+        [
+          {
+            affiliateUserId: "user-1",
+            commissionAmount: 35_000,
+            purchaseAmount: 100_000,
+            purchaserUserId: "buyer-1",
+            transactionId: "txn-miss",
+          },
+        ],
+        ["afc_x"]
+      );
+    });
+
+    it("passes the affiliateUserId filter to the repository", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findMissingCommissions.mockResolvedValue([]);
+      repo.findInvalidCommissions.mockResolvedValue([]);
+      repo.backfillCommissions.mockResolvedValue({ created: 0, voided: 0 });
+
+      await service.backfillCommissions(
+        { affiliateUserId: "user-9" },
+        "admin-1"
+      );
+
+      expect(repo.findMissingCommissions).toHaveBeenCalledWith("user-9");
+      expect(repo.findInvalidCommissions).toHaveBeenCalledWith("user-9");
+    });
+
+    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireAdmin.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.backfillCommissions({}, null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
   });
 

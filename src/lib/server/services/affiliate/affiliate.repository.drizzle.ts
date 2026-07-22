@@ -1,11 +1,22 @@
 /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle $onUpdate propagates any */
 import {
   AFFILIATE_COMMISSION_ID_PREFIX,
+  AFFILIATE_COMMISSION_RATE,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
 } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
-import { and, count, eq, sql, sum } from "drizzle-orm";
+import {
+  and,
+  count,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+  sql,
+  sum,
+} from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type { DB } from "../../infras/db/client.ts";
@@ -15,12 +26,18 @@ import {
   affiliateProfile,
 } from "../../infras/db/schema/affiliate.ts";
 import { user } from "../../infras/db/schema/auth-schema.ts";
+import { order, payment } from "../../infras/db/schema/plan.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type {
   AffiliateDashboardRawSummary,
+  AffiliatePayout,
   AffiliateRepository,
+  BackfillResult,
+  CreatePayoutForAffiliateInput,
   InsertAffiliateConversionInput,
   InsertAffiliatePayoutInput,
+  InvalidCommission,
+  MissingCommission,
 } from "./affiliate.repository.ts";
 
 export class AffiliateDrizzleRepository implements AffiliateRepository {
@@ -284,6 +301,220 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         );
 
       return result.changes;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async createPayoutForAffiliate(
+    input: CreatePayoutForAffiliateInput
+  ): Promise<AffiliatePayout | null> {
+    try {
+      const payout = this.dbInstance.transaction((tx) => {
+        const [agg] = tx
+          .select({
+            total: sum(affiliateCommission.commissionAmount).mapWith(Number),
+          })
+          .from(affiliateCommission)
+          .where(
+            and(
+              eq(affiliateCommission.affiliateUserId, input.affiliateUserId),
+              eq(affiliateCommission.status, "PENDING")
+            )
+          )
+          .all();
+        const amount = agg?.total ?? 0;
+        if (amount <= 0) {
+          return null;
+        }
+
+        const id = generateId(AFFILIATE_PAYOUT_ID_PREFIX);
+        tx.insert(affiliatePayout)
+          .values({
+            affiliateUserId: input.affiliateUserId,
+            amount,
+            id,
+            method: input.method,
+            note: input.note,
+            processedByAdminId: input.processedByAdminId,
+            reference: input.reference,
+          })
+          .run();
+
+        tx.update(affiliateCommission)
+          .set({ payoutId: id, status: "PAID" })
+          .where(
+            and(
+              eq(affiliateCommission.affiliateUserId, input.affiliateUserId),
+              eq(affiliateCommission.status, "PENDING")
+            )
+          )
+          .run();
+
+        const [created] = tx
+          .select()
+          .from(affiliatePayout)
+          .where(eq(affiliatePayout.id, id))
+          .all();
+        return created ?? null;
+      });
+      return payout ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findMissingCommissions(
+    affiliateUserId?: string
+  ): Promise<MissingCommission[]> {
+    try {
+      const rows = this.dbInstance
+        .select({
+          affiliateUserId: user.affiliatedBy,
+          purchaseAmount: order.grossAmount,
+          purchaserUserId: order.userId,
+          transactionId: payment.gatewayTransactionId,
+        })
+        .from(order)
+        .innerJoin(payment, eq(payment.orderId, order.id))
+        .innerJoin(user, eq(user.id, order.userId))
+        .leftJoin(
+          affiliateCommission,
+          eq(affiliateCommission.transactionId, payment.gatewayTransactionId)
+        )
+        .where(
+          and(
+            eq(order.status, "PAID"),
+            isNotNull(payment.gatewayTransactionId),
+            isNotNull(user.affiliatedBy),
+            ne(user.affiliatedBy, order.userId),
+            isNull(affiliateCommission.id),
+            affiliateUserId === undefined
+              ? undefined
+              : eq(user.affiliatedBy, affiliateUserId)
+          )
+        )
+        .all();
+
+      return rows.map((row) => ({
+        affiliateUserId: row.affiliateUserId ?? "",
+        expectedCommissionAmount: Math.round(
+          row.purchaseAmount * AFFILIATE_COMMISSION_RATE
+        ),
+        purchaseAmount: row.purchaseAmount,
+        purchaserUserId: row.purchaserUserId,
+        transactionId: row.transactionId ?? "",
+      }));
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findInvalidCommissions(
+    affiliateUserId?: string
+  ): Promise<InvalidCommission[]> {
+    try {
+      const rows = this.dbInstance
+        .select({
+          affiliateUserId: affiliateCommission.affiliateUserId,
+          commissionAmount: affiliateCommission.commissionAmount,
+          commissionId: affiliateCommission.id,
+          orderStatus: order.status,
+          purchaserUserId: affiliateCommission.purchaserUserId,
+          transactionId: affiliateCommission.transactionId,
+        })
+        .from(affiliateCommission)
+        .innerJoin(
+          payment,
+          eq(payment.gatewayTransactionId, affiliateCommission.transactionId)
+        )
+        .innerJoin(order, eq(order.id, payment.orderId))
+        .where(
+          and(
+            eq(affiliateCommission.status, "PENDING"),
+            ne(order.status, "PAID"),
+            affiliateUserId === undefined
+              ? undefined
+              : eq(affiliateCommission.affiliateUserId, affiliateUserId)
+          )
+        )
+        .all();
+
+      return rows.map((row) => ({
+        affiliateUserId: row.affiliateUserId,
+        commissionAmount: row.commissionAmount,
+        commissionId: row.commissionId,
+        orderStatus: row.orderStatus,
+        purchaserUserId: row.purchaserUserId,
+        transactionId: row.transactionId,
+      }));
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async backfillCommissions(
+    inserts: InsertAffiliateConversionInput[],
+    voidCommissionIds: string[]
+  ): Promise<BackfillResult> {
+    try {
+      return this.dbInstance.transaction((tx) => {
+        let created = 0;
+        for (const ins of inserts) {
+          const id = generateId(AFFILIATE_COMMISSION_ID_PREFIX);
+          const inserted = tx
+            .insert(affiliateCommission)
+            .values({
+              affiliateUserId: ins.affiliateUserId,
+              commissionAmount: ins.commissionAmount,
+              id,
+              purchaseAmount: ins.purchaseAmount,
+              purchaserUserId: ins.purchaserUserId,
+              status: "PENDING",
+              transactionId: ins.transactionId,
+            })
+            .onConflictDoNothing({ target: affiliateCommission.transactionId })
+            .run();
+          created += inserted.changes;
+        }
+
+        let voided = 0;
+        if (voidCommissionIds.length > 0) {
+          const result = tx
+            .update(affiliateCommission)
+            .set({ status: "VOID" })
+            .where(
+              and(
+                inArray(affiliateCommission.id, voidCommissionIds),
+                eq(affiliateCommission.status, "PENDING")
+              )
+            )
+            .run();
+          voided = result.changes;
+        }
+
+        return { created, voided };
+      });
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
