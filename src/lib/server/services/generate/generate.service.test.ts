@@ -82,8 +82,8 @@ const setupService = () => {
     usage: {},
   });
   aiLimitService.getUsage.mockResolvedValue({
-    daily: { remaining: 10 },
-    weekly: { remaining: 10 },
+    daily: { remaining: 10_000 },
+    weekly: { remaining: 10_000 },
   });
 
   // oxlint-disable typescript/no-unsafe-type-assertion
@@ -165,13 +165,13 @@ describe.concurrent(GenerateService, () => {
       expect(err).toMatchObject({ code: "CONCURRENCY_LIMIT" });
     });
 
-    it("throws AI_LIMIT_EXCEEDED before parsing when daily remaining < 3", async ({
+    it("throws AI_LIMIT_EXCEEDED before parsing when daily remaining < 3000", async ({
       expect,
     }) => {
       const { aiLimitService, pipeline, service } = setupService();
       aiLimitService.getUsage.mockResolvedValue({
-        daily: { remaining: 2 },
-        weekly: { remaining: 10 },
+        daily: { remaining: 2999 },
+        weekly: { remaining: 10_000 },
       });
       const pdf = new File(["fake"], "test.pdf");
 
@@ -186,13 +186,13 @@ describe.concurrent(GenerateService, () => {
       expect(pipeline.parseLiteparse).not.toHaveBeenCalled();
     });
 
-    it("throws AI_LIMIT_EXCEEDED before parsing when weekly remaining < 3", async ({
+    it("throws AI_LIMIT_EXCEEDED before parsing when weekly remaining < 3000", async ({
       expect,
     }) => {
       const { aiLimitService, pipeline, service } = setupService();
       aiLimitService.getUsage.mockResolvedValue({
-        daily: { remaining: 10 },
-        weekly: { remaining: 1 },
+        daily: { remaining: 10_000 },
+        weekly: { remaining: 2999 },
       });
       const pdf = new File(["fake"], "test.pdf");
 
@@ -344,11 +344,16 @@ describe.concurrent(GenerateService, () => {
         "user-1"
       );
 
+      // oxlint-disable typescript/no-unsafe-assignment -- expect.any(String) returns any which is safe in test assertions
       expect(aiLimitService.consume).toHaveBeenCalledExactlyOnceWith(
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- expect.any(String) returns any which is safe in test assertions
-        { amount: 3, featureKey: "generate", referenceId: expect.any(String) },
+        {
+          amount: 3000,
+          featureKey: "generate",
+          referenceId: expect.any(String),
+        },
         "user-1"
       );
+      // oxlint-enable typescript/no-unsafe-assignment
     });
 
     it("throws AI_LIMIT_EXCEEDED when quota is exceeded", async ({
@@ -372,14 +377,14 @@ describe.concurrent(GenerateService, () => {
       expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
     });
 
-    it("consumes minimum of 1 unit for short text", async ({ expect }) => {
+    it("consumes minimum of 1000 units for short text", async ({ expect }) => {
       const { aiLimitService, service } = setupService();
       const pdf = new File(["hello"], "test.pdf");
 
       await service.createGenerate({ pdf, title: "Set" }, "user-1");
 
       expect(aiLimitService.consume).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({ amount: 1 }),
+        expect.objectContaining({ amount: 1000 }),
         "user-1"
       );
     });
