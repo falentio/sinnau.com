@@ -1,6 +1,10 @@
 <script lang="ts">
   import StudySetPagination from "$lib/components/features/app/study-set-pagination.svelte";
-  import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
+  import {
+    ArrowLeft01Icon,
+    ArrowRight01Icon,
+    CrownIcon,
+  } from "$lib/components/features/icons";
   import AiLimitCard from "$lib/components/features/subs/ai-limit-card.svelte";
   import OrderRow from "$lib/components/features/subs/order-row.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
@@ -65,6 +69,19 @@
 />
 
 <div class="mx-auto w-full max-w-3xl px-6 pt-10 md:pt-14">
+  <div class="mb-6 md:mb-8">
+    <a
+      href="/subs/plans"
+      class="group inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-sm text-muted-foreground transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-foreground"
+    >
+      <HugeiconsIcon
+        icon={ArrowLeft01Icon}
+        class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-0.5"
+      />
+      Kembali ke paket
+    </a>
+  </div>
+
   <header class="flex flex-col gap-2 pb-10 md:pb-12">
     <span
       class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"

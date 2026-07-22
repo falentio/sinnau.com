@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
+  import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import ActivePlanBanner from "$lib/components/features/subs/active-plan-banner.svelte";
   import PlanCard from "$lib/components/features/subs/plan-card.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
@@ -12,6 +13,7 @@
     PLAN_DURATION_PAID_MONTHS,
     PLAN_TIER_RANK as tierRank,
   } from "$lib/schemas/plan.constant";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
 
@@ -88,6 +90,19 @@
 />
 
 <div class="mx-auto w-full max-w-4xl px-6 pt-10 md:pt-14">
+  <div class="mb-6 md:mb-8">
+    <a
+      href="/home"
+      class="group inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-sm text-muted-foreground transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-foreground"
+    >
+      <HugeiconsIcon
+        icon={ArrowLeft01Icon}
+        class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-0.5"
+      />
+      Kembali
+    </a>
+  </div>
+
   <header class="flex flex-col gap-2 pb-8 md:pb-10">
     <span
       class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
@@ -126,7 +141,7 @@
   <div
     class="flex flex-col gap-3 border-y border-border/60 py-4 md:flex-row md:items-center md:justify-between"
   >
-    <div class="flex flex-col gap-0.5">
+    <div class="flex flex-col gap-0.5 sticky top-0">
       <span
         class="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
       >
