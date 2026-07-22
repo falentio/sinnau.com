@@ -2,6 +2,7 @@ import {
   CHUNK_CLEANUP_AGE_DAYS,
   CHUNK_POLL_LIMIT,
   GENERATE_AI_CHARS_PER_UNIT,
+  GENERATE_AI_UNIT_SCALE,
   GENERATE_CHUNK_QUERY_CUTOFF_MS,
   GENERATE_ID_PREFIX,
   GENERATE_INPUT_MAX_CHARS,
@@ -156,7 +157,7 @@ export class GenerateService {
     }
 
     const usage = await this.aiLimitService.getUsage(owner);
-    if (usage.daily.remaining < 3 || usage.weekly.remaining < 3) {
+    if (usage.daily.remaining < 3000 || usage.weekly.remaining < 3000) {
       throw new ORPCError("AI_LIMIT_EXCEEDED", {
         message: "AI usage limit reached for this period",
       });
@@ -185,10 +186,9 @@ export class GenerateService {
     }));
 
     const newId = generateId(GENERATE_ID_PREFIX);
-    const amount = Math.max(
-      1,
-      Math.ceil(pdfText.length / GENERATE_AI_CHARS_PER_UNIT)
-    );
+    const amount =
+      Math.ceil(pdfText.length / GENERATE_AI_CHARS_PER_UNIT) *
+      GENERATE_AI_UNIT_SCALE;
 
     const { logId } = await this.aiLimitService.consume(
       { amount, featureKey: "generate", referenceId: newId },

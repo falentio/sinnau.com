@@ -62,8 +62,8 @@ interface AiLimitPlan {
 ## Plan Limits
 
 - Plan lookup is an injected async function `(userId) => Promise<AiLimitPlan>`.
-- Current default returns `{ planKey: "FREE", daily: 5000, weekly: 20000 }`.
-- `AI_LIMIT_DEFAULT_DAILY_LIMIT = 5000`, `AI_LIMIT_DEFAULT_WEEKLY_LIMIT = 20000`, `AI_LIMIT_DEFAULT_PLAN_KEY = "FREE"`, `AI_LIMIT_MAX_PER_REQUEST = 10_000_000`.
+- Current default returns `{ planKey: "FREE", daily: 5_000_000, weekly: 20_000_000 }`.
+- `AI_LIMIT_DEFAULT_DAILY_LIMIT = 5_000_000`, `AI_LIMIT_DEFAULT_WEEKLY_LIMIT = 20_000_000`, `AI_LIMIT_DEFAULT_PLAN_KEY = "FREE"`, `AI_LIMIT_MAX_PER_REQUEST = 10_000_000`.
 - Per-request `amount` is capped at `AI_LIMIT_MAX_PER_REQUEST`.
 - Plan-keyed limit map (PRO/PREMIUM) is not wired yet; deferred to Subscription integration.
 
