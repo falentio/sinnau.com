@@ -7,6 +7,9 @@ import { authorizedProcedure } from "$lib/server/api/base";
 import { generateService } from "../index";
 
 const ERRORS = {
+  AI_LIMIT_EXCEEDED: {
+    message: "AI usage limit reached for this period",
+  },
   CONCURRENCY_LIMIT: {
     message: "A generation is already in progress",
   },

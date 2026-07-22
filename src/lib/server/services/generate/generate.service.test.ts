@@ -7,6 +7,7 @@ import { GenerateService } from "./generate.service.ts";
 import {
   captureError,
   createGenerateFixture,
+  createMockAiLimitService,
   createMockGuard,
   createMockPipeline,
   createMockRepository,
@@ -49,6 +50,7 @@ const setupService = () => {
   repo.findGenerateById.mockResolvedValue(null);
   repo.findChunkSummaries.mockResolvedValue([]);
   repo.findGenerateInputByGenerateId.mockResolvedValue(null);
+  repo.loadChunkResults.mockResolvedValue([]);
   repo.deleteOldChunks.mockResolvedValue(0);
   repo.finalizeStuckAsFailed.mockResolvedValue(0);
 
@@ -74,17 +76,32 @@ const setupService = () => {
       .mockResolvedValue({}),
   };
 
+  const aiLimitService = createMockAiLimitService();
+  aiLimitService.consume.mockResolvedValue({
+    logId: "aiu_test_log",
+    usage: {},
+  });
+
   // oxlint-disable typescript/no-unsafe-type-assertion
   const service = new GenerateService(
     repo,
     guard as unknown as GenerateGuard,
     pipeline,
     studySetService,
-    studySetGuard
+    studySetGuard,
+    aiLimitService
   );
   // oxlint-enable typescript/no-unsafe-type-assertion
 
-  return { guard, pipeline, repo, service, studySetGuard, studySetService };
+  return {
+    aiLimitService,
+    guard,
+    pipeline,
+    repo,
+    service,
+    studySetGuard,
+    studySetService,
+  };
 };
 
 describe.concurrent(GenerateService, () => {
@@ -250,6 +267,98 @@ describe.concurrent(GenerateService, () => {
           })
         );
       });
+    });
+
+    it("consumes AI quota after PDF parse with correct amount and featureKey", async ({
+      expect,
+    }) => {
+      const { aiLimitService, pipeline, service } = setupService();
+      pipeline.parseLiteparse.mockResolvedValue({ text: "a".repeat(150_000) });
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        { description: "desc", pdf, title: "My Study Set" },
+        "user-1"
+      );
+
+      expect(aiLimitService.consume).toHaveBeenCalledExactlyOnceWith(
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- expect.any(String) returns any which is safe in test assertions
+        { amount: 3, featureKey: "generate", referenceId: expect.any(String) },
+        "user-1"
+      );
+    });
+
+    it("throws AI_LIMIT_EXCEEDED when quota is exceeded", async ({
+      expect,
+    }) => {
+      const { aiLimitService, service } = setupService();
+      aiLimitService.consume.mockRejectedValue(
+        new ORPCError("AI_LIMIT_EXCEEDED", {
+          message: "AI usage limit reached for this period",
+        })
+      );
+      const pdf = new File(["fake"], "test.pdf");
+
+      const err = await captureError(
+        service.createGenerate(
+          { description: "desc", pdf, title: "Set" },
+          "user-1"
+        )
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
+    });
+
+    it("consumes minimum of 1 unit for short text", async ({ expect }) => {
+      const { aiLimitService, service } = setupService();
+      const pdf = new File(["hello"], "test.pdf");
+
+      await service.createGenerate({ pdf, title: "Set" }, "user-1");
+
+      expect(aiLimitService.consume).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ amount: 1 }),
+        "user-1"
+      );
+    });
+
+    it("refunds on pipeline total failure (successCount === 0)", async ({
+      expect,
+    }) => {
+      const { aiLimitService, pipeline, service } = setupService();
+      pipeline.runLLM.mockResolvedValue({
+        successCount: 0,
+        totalChunkCount: 3,
+      });
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        { description: "desc", pdf, title: "Set" },
+        "user-1"
+      );
+
+      await vi.waitFor(() => {
+        expect(aiLimitService.refund).toHaveBeenCalledExactlyOnceWith(
+          { logId: "aiu_test_log" },
+          "user-1"
+        );
+      });
+    });
+
+    it("does not refund on pipeline success", async ({ expect }) => {
+      const { aiLimitService, pipeline, service } = setupService();
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        { description: "desc", pdf, title: "Set" },
+        "user-1"
+      );
+
+      await vi.waitFor(() => {
+        expect(pipeline.runLLM).toHaveBeenCalled();
+      });
+
+      // oxlint-disable-next-line typescript/unbound-method
+      expect(aiLimitService.refund).not.toHaveBeenCalled();
     });
   });
 

@@ -1,6 +1,7 @@
 import {
   CHUNK_CLEANUP_AGE_DAYS,
   CHUNK_POLL_LIMIT,
+  GENERATE_AI_COST_PER_CHARS,
   GENERATE_CHUNK_QUERY_CUTOFF_MS,
   GENERATE_ID_PREFIX,
   GENERATE_INPUT_MAX_CHARS,
@@ -83,6 +84,14 @@ interface StudySetGuardClient {
   ): Promise<unknown>;
 }
 
+interface AiLimitServiceClient {
+  consume(
+    input: { amount: number; featureKey: string; referenceId?: string | null },
+    userId: string
+  ): Promise<{ logId: string; usage: unknown }>;
+  refund(input: { logId: string }, userId: string): Promise<unknown>;
+}
+
 export interface LanguageStyleItem {
   value: LanguageStyleId;
   label: string;
@@ -102,18 +111,22 @@ export class GenerateService {
 
   private readonly studySetGuard: StudySetGuardClient;
 
+  private readonly aiLimitService: AiLimitServiceClient;
+
   constructor(
     repo: GenerateRepository,
     guard: GenerateGuard,
     pipeline: GenerationPipeline,
     studySetService: StudySetServiceClient,
-    studySetGuard: StudySetGuardClient
+    studySetGuard: StudySetGuardClient,
+    aiLimitService: AiLimitServiceClient
   ) {
     this.repo = repo;
     this.guard = guard;
     this.pipeline = pipeline;
     this.studySetService = studySetService;
     this.studySetGuard = studySetGuard;
+    this.aiLimitService = aiLimitService;
   }
 
   async findActiveByStudySet(
@@ -161,6 +174,17 @@ export class GenerateService {
       visibility: input.visibility,
     }));
 
+    const newId = generateId(GENERATE_ID_PREFIX);
+    const amount = Math.max(
+      1,
+      Math.ceil(pdfText.length / GENERATE_AI_COST_PER_CHARS)
+    );
+
+    const { logId } = await this.aiLimitService.consume(
+      { amount, featureKey: "generate", referenceId: newId },
+      owner
+    );
+
     const { description, title } = await GenerateService.resolveStudySetName({
       description: input.description,
       filename: input.pdf.name,
@@ -178,7 +202,6 @@ export class GenerateService {
       owner
     );
 
-    const newId = generateId(GENERATE_ID_PREFIX);
     const generateRow = await this.repo.insertGenerate({
       completedAt: null,
       id: newId,
@@ -216,6 +239,7 @@ export class GenerateService {
       generateId: generateRow.id,
       isInputTruncated: truncated,
       languageStyle: input.languageStyle ?? "student-friendly",
+      logId,
       ownerId: owner,
       pdfText: inputText,
       studySetId: studySet.id,
@@ -370,6 +394,7 @@ export class GenerateService {
     generateId: string;
     isInputTruncated?: boolean;
     languageStyle: string;
+    logId: string;
     ownerId: string;
     pdfText: string;
     studySetId: string;
@@ -378,6 +403,7 @@ export class GenerateService {
       extractionType,
       generateId: gId,
       languageStyle,
+      logId,
       ownerId,
       pdfText,
       studySetId,
@@ -451,6 +477,7 @@ export class GenerateService {
         generateId: gId,
         totalChunkCount,
       }));
+      await this.aiLimitService.refund({ logId }, ownerId);
       await this.retryStatusUpdate(gId, "FAILED", Date.now());
       return;
     }

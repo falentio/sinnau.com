@@ -58,6 +58,27 @@ export const createMockPipeline = (): MockedGeneratePipeline => ({
   runLLM: vi.fn<RunLLMFn>(),
 });
 
+export interface MockedAiLimitServiceClient {
+  consume: MockedFunction<
+    (
+      input: {
+        amount: number;
+        featureKey: string;
+        referenceId?: string | null;
+      },
+      userId: string
+    ) => Promise<{ logId: string; usage: unknown }>
+  >;
+  refund: MockedFunction<
+    (input: { logId: string }, userId: string) => Promise<unknown>
+  >;
+}
+
+export const createMockAiLimitService = (): MockedAiLimitServiceClient => ({
+  consume: vi.fn<MockedAiLimitServiceClient["consume"]>(),
+  refund: vi.fn<MockedAiLimitServiceClient["refund"]>(),
+});
+
 export const createGenerateFixture = (
   overrides: Partial<Generate> = {}
 ): Generate => ({

@@ -1,5 +1,6 @@
 import { env } from "$lib/server/infras/env";
 import { liteparseClient } from "$lib/server/infras/liteparse";
+import { aiLimitService } from "$lib/server/services/ai-limit/index";
 import {
   studySetGuard,
   studySetService,
@@ -35,5 +36,6 @@ export const generateService = new GenerateService(
   generateGuard,
   pipeline,
   studySetService,
-  studySetGuard
+  studySetGuard,
+  aiLimitService
 );
