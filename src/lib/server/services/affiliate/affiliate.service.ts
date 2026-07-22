@@ -157,10 +157,7 @@ export class AffiliateService {
   ): Promise<AffiliatePayout> {
     const admin = await this.guard.requireAdmin(adminUserId);
 
-    const [missing, invalid] = await Promise.all([
-      this.repo.findMissingCommissions(input.affiliateUserId),
-      this.repo.findInvalidCommissions(input.affiliateUserId),
-    ]);
+    const { invalid, missing } = await this.reconcile(input.affiliateUserId);
     if (missing.length > 0 || invalid.length > 0) {
       throw new ORPCError("AFFILIATE_RECONCILE_BEFORE_PAYOUT", {
         message: "Reconcile commissions before paying out this affiliate",
@@ -267,16 +264,28 @@ export class AffiliateService {
     });
   }
 
+  private async reconcile(
+    affiliateUserId?: string
+  ): Promise<ReconcileAffiliateCommissionsOutput> {
+    const [missingRows, invalid] = await Promise.all([
+      this.repo.findMissingCommissions(affiliateUserId),
+      this.repo.findInvalidCommissions(affiliateUserId),
+    ]);
+    const missing = missingRows.map((row) => ({
+      ...row,
+      expectedCommissionAmount: Math.round(
+        row.purchaseAmount * AFFILIATE_COMMISSION_RATE
+      ),
+    }));
+    return { invalid, missing };
+  }
+
   async reconcileCommissions(
     input: ReconcileAffiliateCommissionsInput,
     adminUserId: string | null | undefined
   ): Promise<ReconcileAffiliateCommissionsOutput> {
     await this.guard.requireAdmin(adminUserId);
-    const [missing, invalid] = await Promise.all([
-      this.repo.findMissingCommissions(input.affiliateUserId),
-      this.repo.findInvalidCommissions(input.affiliateUserId),
-    ]);
-    return { invalid, missing };
+    return await this.reconcile(input.affiliateUserId);
   }
 
   async backfillCommissions(
@@ -284,18 +293,15 @@ export class AffiliateService {
     adminUserId: string | null | undefined
   ): Promise<BackfillAffiliateCommissionsOutput> {
     await this.guard.requireAdmin(adminUserId);
-    const [missing, invalid] = await Promise.all([
-      this.repo.findMissingCommissions(input.affiliateUserId),
-      this.repo.findInvalidCommissions(input.affiliateUserId),
-    ]);
-    const inserts = missing.map((m) => ({
-      affiliateUserId: m.affiliateUserId,
-      commissionAmount: m.expectedCommissionAmount,
-      purchaseAmount: m.purchaseAmount,
-      purchaserUserId: m.purchaserUserId,
-      transactionId: m.transactionId,
+    const { invalid, missing } = await this.reconcile(input.affiliateUserId);
+    const inserts = missing.map((entry) => ({
+      affiliateUserId: entry.affiliateUserId,
+      commissionAmount: entry.expectedCommissionAmount,
+      purchaseAmount: entry.purchaseAmount,
+      purchaserUserId: entry.purchaserUserId,
+      transactionId: entry.transactionId,
     }));
-    const voidCommissionIds = invalid.map((i) => i.commissionId);
+    const voidCommissionIds = invalid.map((entry) => entry.commissionId);
     return await this.repo.backfillCommissions(inserts, voidCommissionIds);
   }
 }

@@ -1,7 +1,6 @@
 /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle $onUpdate propagates any */
 import {
   AFFILIATE_COMMISSION_ID_PREFIX,
-  AFFILIATE_COMMISSION_RATE,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
 } from "$lib/schemas/affiliate.constant";
@@ -35,9 +34,8 @@ import type {
   BackfillResult,
   CreatePayoutForAffiliateInput,
   InsertAffiliateConversionInput,
-  InsertAffiliatePayoutInput,
   InvalidCommission,
-  MissingCommission,
+  MissingCommissionRow,
 } from "./affiliate.repository.ts";
 
 export class AffiliateDrizzleRepository implements AffiliateRepository {
@@ -259,58 +257,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async insertPayout(input: InsertAffiliatePayoutInput) {
-    try {
-      const id = generateId(AFFILIATE_PAYOUT_ID_PREFIX);
-      const [created] = await this.dbInstance
-        .insert(affiliatePayout)
-        .values({
-          affiliateUserId: input.affiliateUserId,
-          amount: input.amount,
-          id,
-          method: input.method,
-          note: input.note,
-          processedByAdminId: input.processedByAdminId,
-          reference: input.reference,
-        })
-        .returning();
-      if (!created) {
-        return null;
-      }
-      return created;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
-  }
-
-  async markCommissionsAsPaid(affiliateUserId: string, payoutId: string) {
-    try {
-      const result = await this.dbInstance
-        .update(affiliateCommission)
-        .set({ payoutId, status: "PAID" })
-        .where(
-          and(
-            eq(affiliateCommission.affiliateUserId, affiliateUserId),
-            eq(affiliateCommission.status, "PENDING")
-          )
-        );
-
-      return result.changes;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
-  }
-
   async createPayoutForAffiliate(
     input: CreatePayoutForAffiliateInput
   ): Promise<AffiliatePayout | null> {
@@ -376,7 +322,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
   async findMissingCommissions(
     affiliateUserId?: string
-  ): Promise<MissingCommission[]> {
+  ): Promise<MissingCommissionRow[]> {
     try {
       const rows = this.dbInstance
         .select({
@@ -408,9 +354,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
       return rows.map((row) => ({
         affiliateUserId: row.affiliateUserId ?? "",
-        expectedCommissionAmount: Math.round(
-          row.purchaseAmount * AFFILIATE_COMMISSION_RATE
-        ),
         purchaseAmount: row.purchaseAmount,
         purchaserUserId: row.purchaserUserId,
         transactionId: row.transactionId ?? "",
@@ -480,18 +423,18 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     try {
       return this.dbInstance.transaction((tx) => {
         let created = 0;
-        for (const ins of inserts) {
+        for (const entry of inserts) {
           const id = generateId(AFFILIATE_COMMISSION_ID_PREFIX);
           const inserted = tx
             .insert(affiliateCommission)
             .values({
-              affiliateUserId: ins.affiliateUserId,
-              commissionAmount: ins.commissionAmount,
+              affiliateUserId: entry.affiliateUserId,
+              commissionAmount: entry.commissionAmount,
               id,
-              purchaseAmount: ins.purchaseAmount,
-              purchaserUserId: ins.purchaserUserId,
+              purchaseAmount: entry.purchaseAmount,
+              purchaserUserId: entry.purchaserUserId,
               status: "PENDING",
-              transactionId: ins.transactionId,
+              transactionId: entry.transactionId,
             })
             .onConflictDoNothing({ target: affiliateCommission.transactionId })
             .run();

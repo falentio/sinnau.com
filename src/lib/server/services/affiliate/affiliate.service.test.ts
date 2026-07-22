@@ -392,7 +392,6 @@ describe.concurrent("affiliate service", () => {
       repo.findMissingCommissions.mockResolvedValue([
         {
           affiliateUserId: "user-1",
-          expectedCommissionAmount: 35_000,
           purchaseAmount: 100_000,
           purchaserUserId: "buyer-1",
           transactionId: "txn-miss",
@@ -466,10 +465,9 @@ describe.concurrent("affiliate service", () => {
       expect,
     }) => {
       const { repo, service } = setupService();
-      const missing = [
+      const missingRows = [
         {
           affiliateUserId: "user-1",
-          expectedCommissionAmount: 35_000,
           purchaseAmount: 100_000,
           purchaserUserId: "buyer-1",
           transactionId: "txn-miss",
@@ -480,17 +478,28 @@ describe.concurrent("affiliate service", () => {
           affiliateUserId: "user-1",
           commissionAmount: 35_000,
           commissionId: "afc_x",
-          orderStatus: "CANCELLED",
+          orderStatus: "CANCELLED" as const,
           purchaserUserId: "buyer-1",
           transactionId: "txn-inv",
         },
       ];
-      repo.findMissingCommissions.mockResolvedValue(missing);
+      repo.findMissingCommissions.mockResolvedValue(missingRows);
       repo.findInvalidCommissions.mockResolvedValue(invalid);
 
       const result = await service.reconcileCommissions({}, "admin-1");
 
-      expect(result).toEqual({ invalid, missing });
+      expect(result).toEqual({
+        invalid,
+        missing: [
+          {
+            affiliateUserId: "user-1",
+            expectedCommissionAmount: 35_000,
+            purchaseAmount: 100_000,
+            purchaserUserId: "buyer-1",
+            transactionId: "txn-miss",
+          },
+        ],
+      });
     });
 
     it("passes the affiliateUserId filter to the repository", async ({
@@ -528,7 +537,6 @@ describe.concurrent("affiliate service", () => {
       repo.findMissingCommissions.mockResolvedValue([
         {
           affiliateUserId: "user-1",
-          expectedCommissionAmount: 35_000,
           purchaseAmount: 100_000,
           purchaserUserId: "buyer-1",
           transactionId: "txn-miss",

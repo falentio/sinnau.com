@@ -8,6 +8,7 @@ import {
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
 } from "./affiliate.constant.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
+import { ORDER_STATUSES } from "./plan.constant.ts";
 
 export {
   AFFILIATE_ID_PREFIX,
@@ -202,7 +203,7 @@ export const invalidCommissionSchema = v.object({
   affiliateUserId: v.string(),
   commissionAmount: v.number(),
   commissionId: v.string(),
-  orderStatus: v.string(),
+  orderStatus: v.picklist(ORDER_STATUSES),
   purchaserUserId: v.string(),
   transactionId: v.string(),
 });

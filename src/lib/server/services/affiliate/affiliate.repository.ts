@@ -1,6 +1,5 @@
 import type {
   InvalidCommission,
-  MissingCommission,
   PendingPayout,
   PendingPayoutsList,
 } from "$lib/schemas/affiliate";
@@ -16,7 +15,6 @@ export type {
   AffiliatePayout,
   AffiliateProfile,
   InvalidCommission,
-  MissingCommission,
   PendingPayout,
   PendingPayoutsList,
 };
@@ -29,13 +27,11 @@ export interface InsertAffiliateConversionInput {
   transactionId: string;
 }
 
-export interface InsertAffiliatePayoutInput {
+export interface MissingCommissionRow {
   affiliateUserId: string;
-  amount: number;
-  method: string | null;
-  reference: string | null;
-  note: string | null;
-  processedByAdminId: string;
+  purchaseAmount: number;
+  purchaserUserId: string;
+  transactionId: string;
 }
 
 export interface AffiliateDashboardRawSummary {
@@ -81,22 +77,13 @@ export interface AffiliateRepository {
 
   listPendingPayouts(page: number, limit: number): Promise<PendingPayoutsList>;
 
-  insertPayout(
-    input: InsertAffiliatePayoutInput
-  ): Promise<AffiliatePayout | null>;
-
-  markCommissionsAsPaid(
-    affiliateUserId: string,
-    payoutId: string
-  ): Promise<number>;
-
   createPayoutForAffiliate(
     input: CreatePayoutForAffiliateInput
   ): Promise<AffiliatePayout | null>;
 
   findMissingCommissions(
     affiliateUserId?: string
-  ): Promise<MissingCommission[]>;
+  ): Promise<MissingCommissionRow[]>;
 
   findInvalidCommissions(
     affiliateUserId?: string
