@@ -69,6 +69,12 @@ export interface MockedAiLimitServiceClient {
       userId: string
     ) => Promise<{ logId: string; usage: unknown }>
   >;
+  getUsage: MockedFunction<
+    (userId: string | null | undefined) => Promise<{
+      daily: { remaining: number };
+      weekly: { remaining: number };
+    }>
+  >;
   refund: MockedFunction<
     (input: { logId: string }, userId: string) => Promise<unknown>
   >;
@@ -76,6 +82,7 @@ export interface MockedAiLimitServiceClient {
 
 export const createMockAiLimitService = (): MockedAiLimitServiceClient => ({
   consume: vi.fn<MockedAiLimitServiceClient["consume"]>(),
+  getUsage: vi.fn<MockedAiLimitServiceClient["getUsage"]>(),
   refund: vi.fn<MockedAiLimitServiceClient["refund"]>(),
 });
 

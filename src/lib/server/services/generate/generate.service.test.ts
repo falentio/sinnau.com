@@ -81,6 +81,10 @@ const setupService = () => {
     logId: "aiu_test_log",
     usage: {},
   });
+  aiLimitService.getUsage.mockResolvedValue({
+    daily: { remaining: 10 },
+    weekly: { remaining: 10 },
+  });
 
   // oxlint-disable typescript/no-unsafe-type-assertion
   const service = new GenerateService(
@@ -159,6 +163,65 @@ describe.concurrent(GenerateService, () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "CONCURRENCY_LIMIT" });
+    });
+
+    it("throws AI_LIMIT_EXCEEDED before parsing when daily remaining < 3", async ({
+      expect,
+    }) => {
+      const { aiLimitService, pipeline, service } = setupService();
+      aiLimitService.getUsage.mockResolvedValue({
+        daily: { remaining: 2 },
+        weekly: { remaining: 10 },
+      });
+      const pdf = new File(["fake"], "test.pdf");
+
+      const err = await captureError(
+        service.createGenerate(
+          { description: "desc", pdf, title: "Set" },
+          "user-1"
+        )
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
+      expect(pipeline.parseLiteparse).not.toHaveBeenCalled();
+    });
+
+    it("throws AI_LIMIT_EXCEEDED before parsing when weekly remaining < 3", async ({
+      expect,
+    }) => {
+      const { aiLimitService, pipeline, service } = setupService();
+      aiLimitService.getUsage.mockResolvedValue({
+        daily: { remaining: 10 },
+        weekly: { remaining: 1 },
+      });
+      const pdf = new File(["fake"], "test.pdf");
+
+      const err = await captureError(
+        service.createGenerate(
+          { description: "desc", pdf, title: "Set" },
+          "user-1"
+        )
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
+      expect(pipeline.parseLiteparse).not.toHaveBeenCalled();
+    });
+
+    it("calls getUsage before parseLiteparse", async ({ expect }) => {
+      const { aiLimitService, pipeline, service } = setupService();
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        { description: "desc", pdf, title: "Set" },
+        "user-1"
+      );
+
+      const [getUsageOrder] = aiLimitService.getUsage.mock.invocationCallOrder;
+      const [parseOrder] = pipeline.parseLiteparse.mock.invocationCallOrder;
+      if (parseOrder === undefined) {
+        throw new Error("parseLiteparse was not called");
+      }
+      expect(getUsageOrder).toBeLessThan(parseOrder);
     });
 
     it("throws LITEPARSE_FAILED when PDF parsing fails", async ({ expect }) => {

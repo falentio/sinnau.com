@@ -89,6 +89,9 @@ interface AiLimitServiceClient {
     input: { amount: number; featureKey: string; referenceId?: string | null },
     userId: string
   ): Promise<{ logId: string; usage: unknown }>;
+  getUsage(
+    userId: string | null | undefined
+  ): Promise<{ daily: { remaining: number }; weekly: { remaining: number } }>;
   refund(input: { logId: string }, userId: string): Promise<unknown>;
 }
 
@@ -149,6 +152,13 @@ export class GenerateService {
     if (this.activeOwners.has(owner)) {
       throw new ORPCError("CONCURRENCY_LIMIT", {
         message: "A generation is already in progress",
+      });
+    }
+
+    const usage = await this.aiLimitService.getUsage(owner);
+    if (usage.daily.remaining < 3 || usage.weekly.remaining < 3) {
+      throw new ORPCError("AI_LIMIT_EXCEEDED", {
+        message: "AI usage limit reached for this period",
       });
     }
 
