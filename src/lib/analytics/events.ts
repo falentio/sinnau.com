@@ -24,8 +24,5 @@ export const track = (
   event: AnalyticsEventName,
   properties?: Record<string, unknown>
 ) => {
-  if (!posthog.__loaded) {
-    return;
-  }
   posthog.capture(event, properties);
 };

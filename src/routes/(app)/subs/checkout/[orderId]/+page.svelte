@@ -39,6 +39,31 @@
   let hasTrackedPaid = false;
   let hasTrackedExpired = false;
 
+  const trackPaid = () => {
+    if (hasTrackedPaid) {
+      return;
+    }
+    hasTrackedPaid = true;
+    track(AnalyticsEvent.PLAN_CHECKOUT_COMPLETED, {
+      duration_months: order.durationMonths,
+      gross_amount: order.grossAmount,
+      order_id: order.id,
+      plan_key: order.planKey,
+    });
+  };
+
+  const trackExpired = () => {
+    if (hasTrackedExpired) {
+      return;
+    }
+    hasTrackedExpired = true;
+    track(AnalyticsEvent.PLAN_CHECKOUT_EXPIRED, {
+      duration_months: order.durationMonths,
+      order_id: order.id,
+      plan_key: order.planKey,
+    });
+  };
+
   const isTerminal = $derived(
     order.status === "PAID" ||
       order.status === "EXPIRED" ||
@@ -58,15 +83,7 @@
           clearTimeout(autoNavigateTimeout);
           autoNavigateTimeout = null;
         }
-        if (!hasTrackedPaid) {
-          hasTrackedPaid = true;
-          track(AnalyticsEvent.PLAN_CHECKOUT_COMPLETED, {
-            duration_months: order.durationMonths,
-            gross_amount: order.grossAmount,
-            order_id: order.id,
-            plan_key: order.planKey,
-          });
-        }
+        trackPaid();
         await goto("/subs/usage");
       } else if (fresh.status === "PENDING") {
         toast.info("Midtrans masih memproses pembayaran. Tunggu sebentar…");
@@ -97,27 +114,14 @@
       const fresh = await client.plan.getOrder({ orderId: order.id });
       order = fresh;
       if (fresh.status === "PAID" && !autoNavigateTimeout) {
-        if (!hasTrackedPaid) {
-          hasTrackedPaid = true;
-          track(AnalyticsEvent.PLAN_CHECKOUT_COMPLETED, {
-            duration_months: order.durationMonths,
-            gross_amount: order.grossAmount,
-            order_id: order.id,
-            plan_key: order.planKey,
-          });
-        }
+        trackPaid();
         autoNavigateTimeout = setTimeout(() => {
           autoNavigateTimeout = null;
           void goto("/subs/usage");
         }, AUTO_NAVIGATE_MS);
       }
-      if (fresh.status === "EXPIRED" && !hasTrackedExpired) {
-        hasTrackedExpired = true;
-        track(AnalyticsEvent.PLAN_CHECKOUT_EXPIRED, {
-          duration_months: order.durationMonths,
-          order_id: order.id,
-          plan_key: order.planKey,
-        });
+      if (fresh.status === "EXPIRED") {
+        trackExpired();
       }
     } catch {
       isRetrying = true;

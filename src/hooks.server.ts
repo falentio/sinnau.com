@@ -365,6 +365,7 @@ const posthogProxyHandle: Handle = async ({ event, resolve }) => {
 
   const headers = new Headers(event.request.headers);
   headers.set("host", hostname);
+  // disable upstream compression so responses pass through unmodified
   headers.set("accept-encoding", "");
 
   const clientIp =

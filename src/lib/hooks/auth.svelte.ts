@@ -72,7 +72,7 @@ if (browser) {
         identified = true;
         posthog.identify(u.id, {
           email: u.email,
-          is_test_user: u.role === "admin",
+          is_admin: u.role === "admin",
           name: u.name,
         });
       } else if (identified) {
