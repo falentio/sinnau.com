@@ -62,20 +62,6 @@ export const affiliateCommission = sqliteTable("affiliate_commission", {
   transactionId: text("transaction_id").notNull().unique(),
 });
 
-export const affiliateRelationship = sqliteTable("affiliate_relationship", {
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-    .notNull(),
-  id: text("id").primaryKey(),
-  referredUserId: text("referred_user_id")
-    .notNull()
-    .unique()
-    .references(() => user.id, { onDelete: "cascade" }),
-  referrerUserId: text("referrer_user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-});
-
 export const affiliateSubscriptionEvent = sqliteTable(
   "affiliate_subscription_event",
   {
@@ -91,9 +77,6 @@ export const affiliateSubscriptionEvent = sqliteTable(
     referrerUserId: text("referrer_user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    relationshipId: text("relationship_id")
-      .notNull()
-      .references(() => affiliateRelationship.id, { onDelete: "cascade" }),
     sourceType: text("source_type").notNull(),
   }
 );
@@ -101,6 +84,5 @@ export const affiliateSubscriptionEvent = sqliteTable(
 export type AffiliateProfile = typeof affiliateProfile.$inferSelect;
 export type AffiliatePayout = typeof affiliatePayout.$inferSelect;
 export type AffiliateCommission = typeof affiliateCommission.$inferSelect;
-export type AffiliateRelationship = typeof affiliateRelationship.$inferSelect;
 export type AffiliateSubscriptionEvent =
   typeof affiliateSubscriptionEvent.$inferSelect;

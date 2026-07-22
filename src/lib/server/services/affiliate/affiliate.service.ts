@@ -2,13 +2,13 @@ import type {
   AffiliateDashboardSummary,
   AffiliatePayout,
   AffiliateProfile,
-  AffiliateRelationship,
   ListPendingPayoutsInput,
   PendingPayoutsList,
   RecordAffiliateConversionInput,
   RecordAffiliateConversionOutput,
   RecordAffiliatePayoutInput,
-  RecordAffiliateRelationshipInput,
+  SetAffiliateReferrerInput,
+  SetAffiliateReferrerOutput,
 } from "$lib/schemas/affiliate";
 import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
@@ -177,31 +177,36 @@ export class AffiliateService {
     return payout;
   }
 
-  async recordRelationship(
-    input: RecordAffiliateRelationshipInput,
+  async setReferrer(
+    input: SetAffiliateReferrerInput,
     adminUserId: string | null | undefined
-  ): Promise<AffiliateRelationship> {
+  ): Promise<SetAffiliateReferrerOutput> {
     await this.guard.requireAdmin(adminUserId);
 
-    if (input.referrerUserId === input.referredUserId) {
-      throw new ORPCError("AFFILIATE_SELF_REFERRAL", {
-        message: "Cannot refer yourself",
-      });
+    const referrerUserId = input.referrerUserId ?? null;
+
+    if (referrerUserId !== null) {
+      if (referrerUserId === input.referredUserId) {
+        throw new ORPCError("AFFILIATE_SELF_REFERRAL", {
+          message: "Cannot refer yourself",
+        });
+      }
+
+      const referrer = await this.repo.findUserById(referrerUserId);
+      if (!referrer) {
+        throw new ORPCError("NOT_FOUND", { message: "Referrer not found" });
+      }
     }
 
-    const existing = await this.repo.findRelationshipByReferredUserId(
-      input.referredUserId
+    const updated = await this.repo.updateUserAffiliatedBy(
+      input.referredUserId,
+      referrerUserId
     );
-    if (existing) {
-      throw new ORPCError("AFFILIATE_RELATIONSHIP_ALREADY_EXISTS", {
-        message: "User already has a referrer",
-      });
+    if (!updated) {
+      throw new ORPCError("NOT_FOUND", { message: "User not found" });
     }
 
-    return await this.repo.insertRelationship(
-      input.referrerUserId,
-      input.referredUserId
-    );
+    return { affiliatedBy: updated.affiliatedBy, userId: updated.id };
   }
 
   async getDashboardSummary(
@@ -216,23 +221,6 @@ export class AffiliateService {
       totalEarned: raw.totalEarned,
       totalPaid: raw.totalPaid,
     };
-  }
-
-  async getRelationshipForUser(
-    input: { referredUserId: string },
-    adminUserId: string | null | undefined
-  ): Promise<AffiliateRelationship> {
-    await this.guard.requireAdmin(adminUserId);
-
-    const relationship = await this.repo.findRelationshipByReferredUserId(
-      input.referredUserId
-    );
-    if (!relationship) {
-      throw new ORPCError("NOT_FOUND", {
-        message: "Affiliate relationship not found",
-      });
-    }
-    return relationship;
   }
 
   async listPendingPayouts(

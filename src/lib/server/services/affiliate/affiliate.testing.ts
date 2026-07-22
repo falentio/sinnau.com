@@ -22,17 +22,16 @@ export const createMockRepository = (): MockedAffiliateRepository => ({
     vi.fn<AffiliateRepository["findConversionByTransactionId"]>(),
   findProfileBySlug: vi.fn<AffiliateRepository["findProfileBySlug"]>(),
   findProfileByUserId: vi.fn<AffiliateRepository["findProfileByUserId"]>(),
-  findRelationshipByReferredUserId:
-    vi.fn<AffiliateRepository["findRelationshipByReferredUserId"]>(),
   findUserById: vi.fn<AffiliateRepository["findUserById"]>(),
   getDashboardSummary: vi.fn<AffiliateRepository["getDashboardSummary"]>(),
   insertConversion: vi.fn<AffiliateRepository["insertConversion"]>(),
   insertPayout: vi.fn<AffiliateRepository["insertPayout"]>(),
   insertProfile: vi.fn<AffiliateRepository["insertProfile"]>(),
-  insertRelationship: vi.fn<AffiliateRepository["insertRelationship"]>(),
   listPendingPayouts: vi.fn<AffiliateRepository["listPendingPayouts"]>(),
   markCommissionsAsPaid: vi.fn<AffiliateRepository["markCommissionsAsPaid"]>(),
   updateProfileBalance: vi.fn<AffiliateRepository["updateProfileBalance"]>(),
+  updateUserAffiliatedBy:
+    vi.fn<AffiliateRepository["updateUserAffiliatedBy"]>(),
 });
 
 export type MockedUserRepository = {

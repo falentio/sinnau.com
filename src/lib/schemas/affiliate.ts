@@ -5,7 +5,6 @@ import {
   AFFILIATE_COMMISSION_STATUSES,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
-  AFFILIATE_RELATIONSHIP_ID_PREFIX,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
 } from "./affiliate.constant.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
@@ -14,7 +13,6 @@ export {
   AFFILIATE_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
-  AFFILIATE_RELATIONSHIP_ID_PREFIX,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
 };
 
@@ -29,10 +27,6 @@ export const affiliateCommissionIdSchema = createPrefixedIdSchema(
 
 export const affiliatePayoutIdSchema = createPrefixedIdSchema(
   AFFILIATE_PAYOUT_ID_PREFIX
-);
-
-export const affiliateRelationshipIdSchema = createPrefixedIdSchema(
-  AFFILIATE_RELATIONSHIP_ID_PREFIX
 );
 
 export const affiliateSubscriptionEventIdSchema = createPrefixedIdSchema(
@@ -90,16 +84,12 @@ export const listPendingPayoutsInputSchema = v.object({
   page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 });
 
-export const recordAffiliateRelationshipInputSchema = v.object({
+export const setAffiliateReferrerInputSchema = v.object({
   referredUserId: v.string(),
-  referrerUserId: v.string(),
+  referrerUserId: v.nullable(v.string()),
 });
 
 export const getMyAffiliateProfileInputSchema = v.object({});
-
-export const getAffiliateRelationshipForUserInputSchema = v.object({
-  referredUserId: v.string(),
-});
 
 // --------------------
 // Output schemas
@@ -139,13 +129,6 @@ export const affiliatePayoutSchema = v.object({
   reference: v.nullable(v.string()),
 });
 
-export const affiliateRelationshipSchema = v.object({
-  createdAt: v.date(),
-  id: affiliateRelationshipIdSchema,
-  referredUserId: v.string(),
-  referrerUserId: v.string(),
-});
-
 export const affiliateSubscriptionEventSchema = v.object({
   createdAt: v.date(),
   id: affiliateSubscriptionEventIdSchema,
@@ -153,7 +136,6 @@ export const affiliateSubscriptionEventSchema = v.object({
   pointsAwarded: v.number(),
   referredUserId: v.string(),
   referrerUserId: v.string(),
-  relationshipId: v.string(),
   sourceType: v.string(),
 });
 
@@ -189,6 +171,11 @@ export const resolveAffiliateSlugOutputSchema = v.object({
 export const recordAffiliateConversionOutputSchema = v.object({
   commission: v.nullable(affiliateCommissionSchema),
   created: v.boolean(),
+});
+
+export const setAffiliateReferrerOutputSchema = v.object({
+  affiliatedBy: v.nullable(v.string()),
+  userId: v.string(),
 });
 
 // --------------------
@@ -235,22 +222,18 @@ export type RecordAffiliateConversionOutput = v.InferOutput<
   typeof recordAffiliateConversionOutputSchema
 >;
 
-export type AffiliateRelationship = v.InferOutput<
-  typeof affiliateRelationshipSchema
->;
-
 export type AffiliateSubscriptionEvent = v.InferOutput<
   typeof affiliateSubscriptionEventSchema
 >;
 
-export type RecordAffiliateRelationshipInput = v.InferOutput<
-  typeof recordAffiliateRelationshipInputSchema
+export type SetAffiliateReferrerInput = v.InferOutput<
+  typeof setAffiliateReferrerInputSchema
+>;
+
+export type SetAffiliateReferrerOutput = v.InferOutput<
+  typeof setAffiliateReferrerOutputSchema
 >;
 
 export type GetMyAffiliateProfileInput = v.InferOutput<
   typeof getMyAffiliateProfileInputSchema
->;
-
-export type GetAffiliateRelationshipForUserInput = v.InferOutput<
-  typeof getAffiliateRelationshipForUserInputSchema
 >;

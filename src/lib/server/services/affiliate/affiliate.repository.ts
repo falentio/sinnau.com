@@ -4,14 +4,12 @@ import type {
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
-  AffiliateRelationship,
 } from "../../infras/db/schema/affiliate.ts";
 
 export type {
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
-  AffiliateRelationship,
   PendingPayout,
   PendingPayoutsList,
 };
@@ -76,14 +74,10 @@ export interface AffiliateRepository {
 
   findUserById(userId: string): Promise<{ id: string; name: string } | null>;
 
-  insertRelationship(
-    referrerUserId: string,
-    referredUserId: string
-  ): Promise<AffiliateRelationship>;
-
-  findRelationshipByReferredUserId(
-    referredUserId: string
-  ): Promise<AffiliateRelationship | null>;
+  updateUserAffiliatedBy(
+    userId: string,
+    referrerUserId: string | null
+  ): Promise<{ id: string; affiliatedBy: string | null } | null>;
 
   updateProfileBalance(
     profileId: string,

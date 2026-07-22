@@ -3,7 +3,6 @@ import {
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
-  AFFILIATE_RELATIONSHIP_ID_PREFIX,
 } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
 import { and, count, eq, sql, sum } from "drizzle-orm";
@@ -14,7 +13,6 @@ import {
   affiliateCommission,
   affiliatePayout,
   affiliateProfile,
-  affiliateRelationship,
 } from "../../infras/db/schema/affiliate.ts";
 import { user } from "../../infras/db/schema/auth-schema.ts";
 import { generateId } from "../../utils/nanoid.ts";
@@ -346,24 +344,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async findRelationshipByReferredUserId(referredUserId: string) {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(affiliateRelationship)
-        .where(eq(affiliateRelationship.referredUserId, referredUserId))
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
-  }
-
   async findUserById(userId: string) {
     try {
       // oxlint-disable-next-line typescript/no-unsafe-member-access -- Drizzle user table has any in type chain
@@ -383,17 +363,17 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async insertRelationship(referrerUserId: string, referredUserId: string) {
+  async updateUserAffiliatedBy(userId: string, referrerUserId: string | null) {
     try {
-      const id = generateId(AFFILIATE_RELATIONSHIP_ID_PREFIX);
-      const [created] = await this.dbInstance
-        .insert(affiliateRelationship)
-        .values({ id, referredUserId, referrerUserId })
-        .returning();
-      if (!created) {
-        throw new Error("Failed to insert affiliate relationship");
+      const [updated] = await this.dbInstance
+        .update(user)
+        .set({ affiliatedBy: referrerUserId })
+        .where(eq(user.id, userId))
+        .returning({ affiliatedBy: user.affiliatedBy, id: user.id });
+      if (!updated) {
+        return null;
       }
-      return created;
+      return { affiliatedBy: updated.affiliatedBy ?? null, id: updated.id };
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;

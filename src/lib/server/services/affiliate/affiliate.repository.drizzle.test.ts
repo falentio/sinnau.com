@@ -612,6 +612,48 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe.concurrent("updateUserAffiliatedBy", () => {
+    it("sets affiliatedBy and returns the updated user", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ name: "Purchaser" });
+
+      const result = await env.repo.updateUserAffiliatedBy(purchaser, referrer);
+
+      expect(result).toEqual({ affiliatedBy: referrer, id: purchaser });
+      expect(await env.repo.findAffiliatedByUserId(purchaser)).toBe(referrer);
+    });
+
+    it("clears affiliatedBy when referrerUserId is null", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ name: "Purchaser" });
+      env.db
+        .update(user)
+        .set({ affiliatedBy: referrer })
+        .where(eq(user.id, purchaser))
+        .run();
+
+      const result = await env.repo.updateUserAffiliatedBy(purchaser, null);
+
+      expect(result).toEqual({ affiliatedBy: null, id: purchaser });
+      expect(await env.repo.findAffiliatedByUserId(purchaser)).toBeNull();
+    });
+
+    it("returns null when user does not exist", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.updateUserAffiliatedBy(
+        "non-existent",
+        "referrer"
+      );
+
+      expect(result).toBeNull();
+    });
+  });
 });
 
 describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {

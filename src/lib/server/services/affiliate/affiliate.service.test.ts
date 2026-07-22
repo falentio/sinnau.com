@@ -441,25 +441,44 @@ describe.concurrent("affiliate service", () => {
     });
   });
 
-  describe.concurrent("recordRelationship", () => {
-    it("creates relationship between two users", async ({ expect }) => {
+  describe.concurrent("setReferrer", () => {
+    it("sets the referrer for a user", async ({ expect }) => {
       const { repo, service } = setupService();
-      const relationship = {
-        createdAt: new Date(),
-        id: "afr_abc",
-        referredUserId: "user-2",
-        referrerUserId: "user-1",
-      };
-      repo.findRelationshipByReferredUserId.mockResolvedValue(null);
-      repo.insertRelationship.mockResolvedValue(relationship);
+      repo.findUserById.mockResolvedValue({ id: "referrer-1", name: "R" });
+      repo.updateUserAffiliatedBy.mockResolvedValue({
+        affiliatedBy: "referrer-1",
+        id: "user-2",
+      });
 
-      const result = await service.recordRelationship(
-        { referredUserId: "user-2", referrerUserId: "user-1" },
+      const result = await service.setReferrer(
+        { referredUserId: "user-2", referrerUserId: "referrer-1" },
         "admin-1"
       );
 
-      expect(result).toEqual(relationship);
-      expect(repo.insertRelationship).toHaveBeenCalledWith("user-1", "user-2");
+      expect(result).toEqual({ affiliatedBy: "referrer-1", userId: "user-2" });
+      expect(repo.updateUserAffiliatedBy).toHaveBeenCalledWith(
+        "user-2",
+        "referrer-1"
+      );
+    });
+
+    it("clears the referrer when referrerUserId is null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.updateUserAffiliatedBy.mockResolvedValue({
+        affiliatedBy: null,
+        id: "user-2",
+      });
+
+      const result = await service.setReferrer(
+        { referredUserId: "user-2", referrerUserId: null },
+        "admin-1"
+      );
+
+      expect(result).toEqual({ affiliatedBy: null, userId: "user-2" });
+      expect(repo.findUserById).not.toHaveBeenCalled();
+      expect(repo.updateUserAffiliatedBy).toHaveBeenCalledWith("user-2", null);
     });
 
     it("throws AFFILIATE_SELF_REFERRAL on self-referral", async ({
@@ -468,7 +487,7 @@ describe.concurrent("affiliate service", () => {
       const { service } = setupService();
 
       const err = await captureError(
-        service.recordRelationship(
+        service.setReferrer(
           { referredUserId: "user-1", referrerUserId: "user-1" },
           "admin-1"
         )
@@ -478,28 +497,42 @@ describe.concurrent("affiliate service", () => {
       expect(err).toMatchObject({ code: "AFFILIATE_SELF_REFERRAL" });
     });
 
-    it("throws AFFILIATE_RELATIONSHIP_ALREADY_EXISTS when duplicate", async ({
-      expect,
-    }) => {
+    it("throws NOT_FOUND when referrer does not exist", async ({ expect }) => {
       const { repo, service } = setupService();
-      repo.findRelationshipByReferredUserId.mockResolvedValue({
-        createdAt: new Date(),
-        id: "afr_existing",
-        referredUserId: "user-2",
-        referrerUserId: "user-3",
-      });
+      repo.findUserById.mockResolvedValue(null);
 
       const err = await captureError(
-        service.recordRelationship(
-          { referredUserId: "user-2", referrerUserId: "user-1" },
+        service.setReferrer(
+          { referredUserId: "user-2", referrerUserId: "ghost" },
           "admin-1"
         )
       );
 
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({
-        code: "AFFILIATE_RELATIONSHIP_ALREADY_EXISTS",
-      });
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+      expect(repo.updateUserAffiliatedBy).not.toHaveBeenCalled();
+    });
+
+    it("throws NOT_FOUND when referred user does not exist", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findUserById.mockResolvedValue({ id: "referrer-1", name: "R" });
+      repo.updateUserAffiliatedBy.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.setReferrer(
+          { referredUserId: "ghost", referrerUserId: "referrer-1" },
+          "admin-1"
+        )
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+      expect(repo.updateUserAffiliatedBy).toHaveBeenCalledWith(
+        "ghost",
+        "referrer-1"
+      );
     });
 
     it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
@@ -507,8 +540,8 @@ describe.concurrent("affiliate service", () => {
       guard.requireAdmin.mockImplementation(throwUnauthorized);
 
       const err = await captureError(
-        service.recordRelationship(
-          { referredUserId: "user-2", referrerUserId: "user-1" },
+        service.setReferrer(
+          { referredUserId: "user-2", referrerUserId: "referrer-1" },
           null
         )
       );
@@ -557,50 +590,6 @@ describe.concurrent("affiliate service", () => {
       guard.requireUser.mockImplementation(throwUnauthorized);
 
       const err = await captureError(service.getDashboardSummary(null));
-
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
-    });
-  });
-
-  describe.concurrent("getRelationshipForUser", () => {
-    it("returns relationship for referred user", async ({ expect }) => {
-      const { repo, service } = setupService();
-      const relationship = {
-        createdAt: new Date(),
-        id: "afr_abc",
-        referredUserId: "user-2",
-        referrerUserId: "user-1",
-      };
-      repo.findRelationshipByReferredUserId.mockResolvedValue(relationship);
-
-      const result = await service.getRelationshipForUser(
-        { referredUserId: "user-2" },
-        "admin-1"
-      );
-
-      expect(result).toEqual(relationship);
-    });
-
-    it("throws NOT_FOUND when no relationship exists", async ({ expect }) => {
-      const { repo, service } = setupService();
-      repo.findRelationshipByReferredUserId.mockResolvedValue(null);
-
-      const err = await captureError(
-        service.getRelationshipForUser({ referredUserId: "user-2" }, "admin-1")
-      );
-
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "NOT_FOUND" });
-    });
-
-    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
-      const { guard, service } = setupService();
-      guard.requireAdmin.mockImplementation(throwUnauthorized);
-
-      const err = await captureError(
-        service.getRelationshipForUser({ referredUserId: "user-2" }, null)
-      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "UNAUTHORIZED" });
