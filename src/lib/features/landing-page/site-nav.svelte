@@ -44,7 +44,7 @@
     <div class="flex items-center gap-2">
       {#if user}
         <Button href="/home/" variant="ghost" size="sm">Dasbor</Button>
-        <Button href="/study/new/" size="sm">Belajar sekarang</Button>
+        <Button href="/study/generate/" size="sm">Belajar sekarang</Button>
       {:else}
         <Button href="/login/" variant="ghost" size="sm">Masuk</Button>
         <Button href="/sign-up/" size="sm">

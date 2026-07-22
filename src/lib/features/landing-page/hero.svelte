@@ -26,7 +26,7 @@
           <span
             class="inline-block size-1.5 rounded-full bg-[var(--landing-accent)]"
           ></span>
-          Flashcard &amp; kuis dari PDF
+          Flashcard & kuis dari PDF
         </div>
 
         <h1
@@ -47,7 +47,7 @@
 
         <div class="mt-8 flex flex-wrap items-center gap-3">
           <Button href="/login/" size="lg" class="px-5">
-            Buat Kartu Pertamaku Gratis
+            Buat akun gratis
             <HugeiconsIcon icon={ArrowRight01Icon} data-icon="inline-end" />
           </Button>
           <Button href="/#how-it-works" size="lg" variant="ghost" class="px-5">
