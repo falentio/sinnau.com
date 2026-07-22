@@ -16,5 +16,4 @@ const getClient = (): ReturnType<typeof createOpenAICompatible> => {
   throw new Error(`Unsupported AI_COMPATIBILITY: ${env.AI_COMPATIBILITY}`);
 };
 
-export const client = getClient();
-export const getDefaultModel = () => client(env.AI_MODEL);
+export const getDefaultModel = () => getClient()(env.AI_MODEL);

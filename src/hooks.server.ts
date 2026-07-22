@@ -291,6 +291,7 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
           "X-RateLimit-Reset": String(
             Math.ceil((Date.now() + ipResult.reset) / 1000)
           ),
+          "X-RateLimit-Scope": "ip",
         },
         status: 429,
         statusText: "Too Many Requests",
@@ -324,6 +325,7 @@ const rateLimiterHandle: Handle = async ({ event, resolve }) => {
           "X-RateLimit-Reset": String(
             Math.ceil((Date.now() + userResult.reset) / 1000)
           ),
+          "X-RateLimit-Scope": "user",
         },
         status: 429,
         statusText: "Too Many Requests",
