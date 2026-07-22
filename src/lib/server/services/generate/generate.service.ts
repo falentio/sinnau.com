@@ -1,7 +1,7 @@
 import {
   CHUNK_CLEANUP_AGE_DAYS,
   CHUNK_POLL_LIMIT,
-  GENERATE_AI_COST_PER_CHARS,
+  GENERATE_AI_CHARS_PER_UNIT,
   GENERATE_CHUNK_QUERY_CUTOFF_MS,
   GENERATE_ID_PREFIX,
   GENERATE_INPUT_MAX_CHARS,
@@ -177,7 +177,7 @@ export class GenerateService {
     const newId = generateId(GENERATE_ID_PREFIX);
     const amount = Math.max(
       1,
-      Math.ceil(pdfText.length / GENERATE_AI_COST_PER_CHARS)
+      Math.ceil(pdfText.length / GENERATE_AI_CHARS_PER_UNIT)
     );
 
     const { logId } = await this.aiLimitService.consume(
