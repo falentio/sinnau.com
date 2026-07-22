@@ -1,6 +1,11 @@
 import { env } from "$env/dynamic/public";
-import type { HandleClientError } from "@sveltejs/kit";
+import { initPostHog } from "$lib/posthog";
+import type { HandleClientError, ClientInit } from "@sveltejs/kit";
 import posthog from "posthog-js";
+
+export const init: ClientInit = () => {
+  initPostHog();
+};
 
 export const handleError: HandleClientError = ({ error, status }) => {
   if (
