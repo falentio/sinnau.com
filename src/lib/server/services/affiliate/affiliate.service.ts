@@ -18,11 +18,8 @@ import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
 import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 
-import {
-  SlugConflictError,
-  generateSlug,
-  sanitize,
-} from "../../infras/slug.ts";
+import { sanitize } from "../../infras/slug.ts";
+import { nanoid } from "../../utils/nanoid.ts";
 import type { AffiliateGuard } from "./affiliate.guard";
 import type { AffiliateRepository } from "./affiliate.repository";
 
@@ -33,6 +30,8 @@ export interface HandlePaymentSuccessInput {
   purchaseAmount: number;
   transactionId: string;
 }
+
+const AFFILIATE_SLUG_MAX_RETRIES = 5;
 
 export class AffiliateService {
   private readonly repo: AffiliateRepository;
@@ -74,32 +73,31 @@ export class AffiliateService {
       throw new ORPCError("NOT_FOUND", { message: "User not found" });
     }
 
-    const slugExists = async (candidate: string): Promise<boolean> => {
+    let slug: string | null = null;
+    for (let attempt = 0; attempt < AFFILIATE_SLUG_MAX_RETRIES; attempt += 1) {
+      const candidate = nanoid(8).toLowerCase();
+      // oxlint-disable-next-line no-await-in-loop -- slug uniqueness retries are inherently sequential
       const existing = await this.repo.findProfileBySlug(candidate);
-      return existing !== null;
-    };
-
-    try {
-      const slug = await generateSlug(user.name, slugExists);
-      const profile = await this.repo.insertProfile(owner, slug, user.name);
-      if (profile) {
-        return profile;
+      if (!existing) {
+        slug = candidate;
+        break;
       }
+    }
 
+    if (slug === null) {
       throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
         message: "Failed to generate a unique slug after maximum retries",
       });
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      if (error instanceof SlugConflictError) {
-        throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
-          message: error.message,
-        });
-      }
-      throw error;
     }
+
+    const profile = await this.repo.insertProfile(owner, slug, user.name);
+    if (profile) {
+      return profile;
+    }
+
+    throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
+      message: "Failed to generate a unique slug after maximum retries",
+    });
   }
 
   async resolveSlug(slug: string): Promise<{ userId: string }> {

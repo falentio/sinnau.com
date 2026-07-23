@@ -34,9 +34,7 @@ const setupService = () => {
 
 describe.concurrent("affiliate service", () => {
   describe.concurrent("claim", () => {
-    it("creates profile with auto-generated slug from user name", async ({
-      expect,
-    }) => {
+    it("creates profile with random 8-char slug", async ({ expect }) => {
       const { repo, service } = setupService();
       repo.findProfileByUserId.mockResolvedValue(null);
       repo.findProfileBySlug.mockResolvedValue(null);
@@ -49,7 +47,7 @@ describe.concurrent("affiliate service", () => {
         id: "aff_abc123def456",
         nameSnapshot: "Test User",
         points: 0,
-        slug: "test-user-ab12cd34",
+        slug: "ab12cd34",
         updatedAt: new Date(),
         userId: "user-1",
         version: 1,
@@ -57,7 +55,7 @@ describe.concurrent("affiliate service", () => {
 
       const profile = await service.claim("user-1");
 
-      expect(profile.slug).toMatch(/^test-user-[0-9A-Za-z]{8}$/u);
+      expect(profile.slug).toMatch(/^[0-9a-z]{8}$/u);
       expect(profile.userId).toBe("user-1");
       expect(profile.nameSnapshot).toBe("Test User");
     });

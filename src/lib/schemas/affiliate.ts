@@ -80,7 +80,7 @@ export const recordAffiliatePayoutInputSchema = v.object({
   reference: v.optional(boundedTextSchema),
 });
 
-// claimSlug takes no input — slug is auto-generated from user name
+// claimSlug takes no input — slug is a random 8-char nanoid
 export const claimAffiliateProfileInputSchema = v.object({});
 
 // --------------------

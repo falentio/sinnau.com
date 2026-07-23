@@ -137,15 +137,9 @@ interface PendingPayoutsList {
 
 ## Slug Rules
 
-- Generated from `user.name` via `generateSlug` in `src/lib/server/infras/slug.ts`.
-- NFKD normalize + strip diacritics (`\p{M}`) for transliteration.
-- Sanitize: lowercase, replace whitespace with hyphens, remove non-`[a-z0-9-]`, collapse/h trim hyphens.
-- If sanitized base >= 5 characters: `{base}-{entropy}` (e.g. `test-user-ab12cd34`).
-- If sanitized base < 5 characters: `{entropy}` only (full 12-char nanoid entropy).
-- Entropy length: `max(8, min(12, 12 - base.length))`.
-- Entropy source: `tsNanoid` (timestamp-prefixed nanoid).
-- On collision: retry up to 5 times with new entropy each attempt.
-- After exhaustion: throws `SlugConflictError` which is re-thrown as `AFFILIATE_SLUG_CONFLICT`.
+- Generated as a random 8-character nanoid (lowercase alphanumeric) via `nanoid(8).toLowerCase()` from `src/lib/server/utils/nanoid.ts`.
+- On collision: retry up to 5 times with a new nanoid each attempt.
+- After exhaustion: throws `AFFILIATE_SLUG_CONFLICT`.
 - Slug is set at creation time and never updated.
 - Slug uniqueness check is case-sensitive at DB level; slugs are always lowercase.
 
@@ -200,8 +194,8 @@ claim({}) → AffiliateProfile
 
 - Idempotent get-or-create. Returns existing profile if one exists for the current user.
 - Requires authenticated user.
-- Looks up `user.name` from DB to generate the slug.
-- Generates slug via `generateSlug(user.name)`.
+- Looks up `user.name` from DB for the `nameSnapshot` field.
+- Generates slug as a random 8-character nanoid (`nanoid(8).toLowerCase()`).
 - Inserts `AffiliateProfile` with `nameSnapshot` set to `user.name`.
 - Errors: `UNAUTHORIZED`, `NOT_FOUND` (user not found), `AFFILIATE_SLUG_CONFLICT` (slug generation exhausted).
 
