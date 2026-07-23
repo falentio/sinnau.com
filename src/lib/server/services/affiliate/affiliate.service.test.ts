@@ -5,6 +5,7 @@ import type { AffiliateGuard } from "./affiliate.guard";
 import { AffiliateService } from "./affiliate.service";
 import {
   captureError,
+  createAffiliateApplicationFixture,
   createAffiliateProfileFixture,
   createMockGuard,
   createMockRepository,
@@ -33,15 +34,115 @@ const setupService = () => {
 };
 
 describe.concurrent("affiliate service", () => {
-  describe.concurrent("claim", () => {
-    it("creates profile with random 8-char slug", async ({ expect }) => {
+  describe.concurrent("apply", () => {
+    const validInput = {
+      advantage: "I have a large following and can promote your product",
+      instagramHandle: "@testuser",
+    };
+
+    it("creates an application for an authenticated user", async ({
+      expect,
+    }) => {
       const { repo, service } = setupService();
       repo.findProfileByUserId.mockResolvedValue(null);
-      repo.findProfileBySlug.mockResolvedValue(null);
+      repo.findPendingApplicationByUserId.mockResolvedValue(null);
+      const application = createAffiliateApplicationFixture({
+        advantage: validInput.advantage,
+        instagramHandle: "@testuser",
+        userId: "user-1",
+      });
+      repo.insertApplication.mockResolvedValue(application);
+
+      const result = await service.apply(validInput, "user-1");
+
+      expect(result).toEqual(application);
+      expect(repo.insertApplication).toHaveBeenCalledWith({
+        advantage: validInput.advantage,
+        instagramHandle: "@testuser",
+        tiktokHandle: null,
+        userId: "user-1",
+        youtubeHandle: null,
+      });
+    });
+
+    it("throws AFFILIATE_ALREADY_APPROVED when user has a profile", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(
+        createAffiliateProfileFixture()
+      );
+
+      const err = await captureError(service.apply(validInput, "user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_ALREADY_APPROVED" });
+      expect(repo.insertApplication).not.toHaveBeenCalled();
+    });
+
+    it("throws AFFILIATE_APPLICATION_PENDING when a pending application exists", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(null);
+      repo.findPendingApplicationByUserId.mockResolvedValue(
+        createAffiliateApplicationFixture()
+      );
+
+      const err = await captureError(service.apply(validInput, "user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_APPLICATION_PENDING" });
+      expect(repo.insertApplication).not.toHaveBeenCalled();
+    });
+
+    it("throws UNAUTHORIZED when guard rejects", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireUser.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.apply(validInput, null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("throws INTERNAL_SERVER_ERROR when insertApplication returns null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(null);
+      repo.findPendingApplicationByUserId.mockResolvedValue(null);
+      repo.insertApplication.mockResolvedValue(null);
+
+      const err = await captureError(service.apply(validInput, "user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+  });
+
+  describe.concurrent("acceptApplication", () => {
+    it("accepts a pending application and creates a profile", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const application = createAffiliateApplicationFixture({
+        id: "afa_test",
+        status: "PENDING",
+        userId: "user-1",
+      });
+      repo.findApplicationById.mockResolvedValue(application);
+      repo.updateApplicationStatus.mockResolvedValue({
+        ...application,
+        reviewedAt: new Date(),
+        reviewedByAdminId: "admin-1",
+        status: "ACCEPTED",
+      });
       repo.findUserById.mockResolvedValue({
         id: "user-1",
         name: "Test User",
       });
+      repo.findProfileBySlug.mockResolvedValue(null);
       repo.insertProfile.mockResolvedValue({
         createdAt: new Date(),
         id: "aff_abc123def456",
@@ -53,95 +154,298 @@ describe.concurrent("affiliate service", () => {
         version: 1,
       });
 
-      const profile = await service.claim("user-1");
+      const result = await service.acceptApplication(
+        { applicationId: "afa_test" },
+        "admin-1"
+      );
 
-      expect(profile.slug).toMatch(/^[0-9a-z]{8}$/u);
-      expect(profile.userId).toBe("user-1");
-      expect(profile.nameSnapshot).toBe("Test User");
+      expect(result.slug).toMatch(/^[0-9a-z]{8}$/u);
+      expect(result.userId).toBe("user-1");
+      expect(repo.updateApplicationStatus).toHaveBeenCalledWith(
+        "afa_test",
+        "ACCEPTED",
+        "admin-1"
+      );
     });
 
-    it("returns existing profile when one exists", async ({ expect }) => {
+    it("throws NOT_FOUND when application does not exist", async ({
+      expect,
+    }) => {
       const { repo, service } = setupService();
-      const existing = {
-        createdAt: new Date(),
-        id: "aff_existing",
-        nameSnapshot: "Existing",
-        points: 0,
-        slug: "existing",
-        updatedAt: new Date(),
-        userId: "user-1",
-        version: 1,
-      };
-      repo.findProfileByUserId.mockResolvedValue(existing);
+      repo.findApplicationById.mockResolvedValue(null);
 
-      const result = await service.claim("user-1");
-
-      expect(result).toEqual(existing);
-    });
-
-    it("throws NOT_FOUND when user does not exist", async ({ expect }) => {
-      const { repo, service } = setupService();
-      repo.findProfileByUserId.mockResolvedValue(null);
-      repo.findUserById.mockResolvedValue(null);
-
-      const err = await captureError(service.claim("user-1"));
+      const err = await captureError(
+        service.acceptApplication({ applicationId: "afa_ghost" }, "admin-1")
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("throws UNAUTHORIZED when guard rejects", async ({ expect }) => {
-      const { guard, service } = setupService();
-      guard.requireUser.mockImplementation(throwUnauthorized);
+    it("throws AFFILIATE_APPLICATION_NOT_PENDING when already reviewed", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findApplicationById.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "ACCEPTED" })
+      );
 
-      const err = await captureError(service.claim(null));
+      const err = await captureError(
+        service.acceptApplication({ applicationId: "afa_test" }, "admin-1")
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+      expect(err).toMatchObject({
+        code: "AFFILIATE_APPLICATION_NOT_PENDING",
+      });
     });
 
     it("throws AFFILIATE_SLUG_CONFLICT when slug generation fails", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.findProfileByUserId.mockResolvedValue(null);
+      repo.findApplicationById.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "PENDING" })
+      );
+      repo.updateApplicationStatus.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "ACCEPTED" })
+      );
       repo.findUserById.mockResolvedValue({
         id: "user-1",
         name: "Test User",
       });
-      repo.findProfileBySlug.mockResolvedValue({
-        createdAt: new Date(),
-        id: "aff_existing",
-        nameSnapshot: "Other",
-        points: 0,
-        slug: "existing",
-        updatedAt: new Date(),
-        userId: "other",
-        version: 1,
-      });
+      repo.findProfileBySlug.mockResolvedValue(createAffiliateProfileFixture());
 
-      const err = await captureError(service.claim("user-1"));
+      const err = await captureError(
+        service.acceptApplication({ applicationId: "afa_test" }, "admin-1")
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AFFILIATE_SLUG_CONFLICT" });
+    });
+
+    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireAdmin.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(
+        service.acceptApplication({ applicationId: "afa_test" }, null)
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("throws NOT_FOUND when applicant user no longer exists", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findApplicationById.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "PENDING" })
+      );
+      repo.updateApplicationStatus.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "ACCEPTED" })
+      );
+      repo.findUserById.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.acceptApplication({ applicationId: "afa_test" }, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
     });
 
     it("throws AFFILIATE_SLUG_CONFLICT when insertProfile returns null", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.findProfileByUserId.mockResolvedValue(null);
-      repo.findProfileBySlug.mockResolvedValue(null);
+      repo.findApplicationById.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "PENDING" })
+      );
+      repo.updateApplicationStatus.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "ACCEPTED" })
+      );
       repo.findUserById.mockResolvedValue({
         id: "user-1",
         name: "Test User",
       });
+      repo.findProfileBySlug.mockResolvedValue(null);
       repo.insertProfile.mockResolvedValue(null);
 
-      const err = await captureError(service.claim("user-1"));
+      const err = await captureError(
+        service.acceptApplication({ applicationId: "afa_test" }, "admin-1")
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AFFILIATE_SLUG_CONFLICT" });
+    });
+  });
+
+  describe.concurrent("rejectApplication", () => {
+    it("rejects a pending application", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const application = createAffiliateApplicationFixture({
+        id: "afa_test",
+        status: "PENDING",
+      });
+      repo.findApplicationById.mockResolvedValue(application);
+      const rejected = {
+        ...application,
+        reviewedAt: new Date(),
+        reviewedByAdminId: "admin-1",
+        status: "REJECTED" as const,
+      };
+      repo.updateApplicationStatus.mockResolvedValue(rejected);
+
+      const result = await service.rejectApplication(
+        { applicationId: "afa_test" },
+        "admin-1"
+      );
+
+      expect(result).toEqual(rejected);
+      expect(repo.updateApplicationStatus).toHaveBeenCalledWith(
+        "afa_test",
+        "REJECTED",
+        "admin-1"
+      );
+    });
+
+    it("throws NOT_FOUND when application does not exist", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findApplicationById.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.rejectApplication({ applicationId: "afa_ghost" }, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws AFFILIATE_APPLICATION_NOT_PENDING when already reviewed", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findApplicationById.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "REJECTED" })
+      );
+
+      const err = await captureError(
+        service.rejectApplication({ applicationId: "afa_test" }, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({
+        code: "AFFILIATE_APPLICATION_NOT_PENDING",
+      });
+    });
+
+    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireAdmin.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(
+        service.rejectApplication({ applicationId: "afa_test" }, null)
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("throws INTERNAL_SERVER_ERROR when updateApplicationStatus returns null", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findApplicationById.mockResolvedValue(
+        createAffiliateApplicationFixture({ status: "PENDING" })
+      );
+      repo.updateApplicationStatus.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.rejectApplication({ applicationId: "afa_test" }, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+  });
+
+  describe.concurrent("getMyApplication", () => {
+    it("returns the latest application for the user", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const application = createAffiliateApplicationFixture({
+        userId: "user-1",
+      });
+      repo.findLatestApplicationByUserId.mockResolvedValue(application);
+
+      const result = await service.getMyApplication("user-1");
+
+      expect(result).toEqual(application);
+      expect(repo.findLatestApplicationByUserId).toHaveBeenCalledWith("user-1");
+    });
+
+    it("throws NOT_FOUND when user has no application", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findLatestApplicationByUserId.mockResolvedValue(null);
+
+      const err = await captureError(service.getMyApplication("user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws UNAUTHORIZED when userId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireUser.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.getMyApplication(null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+  });
+
+  describe.concurrent("listApplications", () => {
+    it("returns applications list for admin", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const list = {
+        data: [createAffiliateApplicationFixture()],
+        pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },
+      };
+      repo.listApplications.mockResolvedValue(list);
+
+      const result = await service.listApplications({}, "admin-1");
+
+      expect(result).toEqual(list);
+      expect(repo.listApplications).toHaveBeenCalledWith(undefined, 1, 10);
+    });
+
+    it("forwards status filter and pagination to repo", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.listApplications.mockResolvedValue({
+        data: [],
+        pagination: { limit: 5, page: 2, total: 0, totalPages: 1 },
+      });
+
+      await service.listApplications(
+        { limit: 5, page: 2, status: "PENDING" },
+        "admin-1"
+      );
+
+      expect(repo.listApplications).toHaveBeenCalledWith("PENDING", 2, 5);
+    });
+
+    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireAdmin.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.listApplications({}, null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
   });
 

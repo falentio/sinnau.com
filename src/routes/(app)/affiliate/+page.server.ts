@@ -5,5 +5,17 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ url }) => {
   const client = createServerClient();
   const summary = await client.affiliate.getDashboardSummary({});
-  return { origin: url.origin, summary };
+
+  let application: Awaited<
+    ReturnType<typeof client.affiliate.getMyApplication>
+  > | null = null;
+  if (!summary.profile) {
+    try {
+      application = await client.affiliate.getMyApplication({});
+    } catch {
+      application = null;
+    }
+  }
+
+  return { application, origin: url.origin, summary };
 };

@@ -1,9 +1,13 @@
 import type {
+  AffiliateApplication,
   AffiliateDashboardSummary,
   AffiliatePayout,
   AffiliateProfile,
+  ApplyAffiliateInput,
   BackfillAffiliateCommissionsInput,
   BackfillAffiliateCommissionsOutput,
+  ListAffiliateApplicationsInput,
+  ListAffiliateApplicationsOutput,
   ListPendingPayoutsInput,
   PendingPayoutsList,
   ReconcileAffiliateCommissionsInput,
@@ -11,6 +15,7 @@ import type {
   RecordAffiliateConversionInput,
   RecordAffiliateConversionOutput,
   RecordAffiliatePayoutInput,
+  ReviewAffiliateApplicationInput,
   SetAffiliateReferrerInput,
   SetAffiliateReferrerOutput,
 } from "$lib/schemas/affiliate";
@@ -60,15 +65,72 @@ export class AffiliateService {
     return profile !== null;
   }
 
-  async claim(userId: string | null | undefined): Promise<AffiliateProfile> {
+  async apply(
+    input: ApplyAffiliateInput,
+    userId: string | null | undefined
+  ): Promise<AffiliateApplication> {
     const owner = this.guard.requireUser(userId);
 
     const existingProfile = await this.repo.findProfileByUserId(owner);
     if (existingProfile) {
-      return existingProfile;
+      throw new ORPCError("AFFILIATE_ALREADY_APPROVED", {
+        message: "You already have an affiliate profile",
+      });
     }
 
-    const user = await this.repo.findUserById(owner);
+    const pendingApplication =
+      await this.repo.findPendingApplicationByUserId(owner);
+    if (pendingApplication) {
+      throw new ORPCError("AFFILIATE_APPLICATION_PENDING", {
+        message: "You already have a pending application",
+      });
+    }
+
+    const application = await this.repo.insertApplication({
+      advantage: input.advantage,
+      instagramHandle: input.instagramHandle ?? null,
+      tiktokHandle: input.tiktokHandle ?? null,
+      userId: owner,
+      youtubeHandle: input.youtubeHandle ?? null,
+    });
+
+    if (!application) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+
+    return application;
+  }
+
+  async acceptApplication(
+    input: ReviewAffiliateApplicationInput,
+    adminUserId: string | null | undefined
+  ): Promise<AffiliateProfile> {
+    const admin = await this.guard.requireAdmin(adminUserId);
+
+    const application = await this.repo.findApplicationById(
+      input.applicationId
+    );
+    if (!application) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Application not found",
+      });
+    }
+
+    if (application.status !== "PENDING") {
+      throw new ORPCError("AFFILIATE_APPLICATION_NOT_PENDING", {
+        message: "Application is not pending review",
+      });
+    }
+
+    await this.repo.updateApplicationStatus(
+      input.applicationId,
+      "ACCEPTED",
+      admin
+    );
+
+    const user = await this.repo.findUserById(application.userId);
     if (!user) {
       throw new ORPCError("NOT_FOUND", { message: "User not found" });
     }
@@ -90,7 +152,11 @@ export class AffiliateService {
       });
     }
 
-    const profile = await this.repo.insertProfile(owner, slug, user.name);
+    const profile = await this.repo.insertProfile(
+      application.userId,
+      slug,
+      user.name
+    );
     if (profile) {
       return profile;
     }
@@ -98,6 +164,67 @@ export class AffiliateService {
     throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
       message: "Failed to generate a unique slug after maximum retries",
     });
+  }
+
+  async rejectApplication(
+    input: ReviewAffiliateApplicationInput,
+    adminUserId: string | null | undefined
+  ): Promise<AffiliateApplication> {
+    const admin = await this.guard.requireAdmin(adminUserId);
+
+    const application = await this.repo.findApplicationById(
+      input.applicationId
+    );
+    if (!application) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Application not found",
+      });
+    }
+
+    if (application.status !== "PENDING") {
+      throw new ORPCError("AFFILIATE_APPLICATION_NOT_PENDING", {
+        message: "Application is not pending review",
+      });
+    }
+
+    const updated = await this.repo.updateApplicationStatus(
+      input.applicationId,
+      "REJECTED",
+      admin
+    );
+
+    if (!updated) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+
+    return updated;
+  }
+
+  async getMyApplication(
+    userId: string | null | undefined
+  ): Promise<AffiliateApplication> {
+    const owner = this.guard.requireUser(userId);
+    const application = await this.repo.findLatestApplicationByUserId(owner);
+    if (!application) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Affiliate application not found",
+      });
+    }
+    return application;
+  }
+
+  async listApplications(
+    input: ListAffiliateApplicationsInput,
+    adminUserId: string | null | undefined
+  ): Promise<ListAffiliateApplicationsOutput> {
+    await this.guard.requireAdmin(adminUserId);
+    return await this.repo.listApplications(
+      input.status,
+      input.page ?? 1,
+      input.limit ?? 10
+    );
   }
 
   async resolveSlug(slug: string): Promise<{ userId: string }> {

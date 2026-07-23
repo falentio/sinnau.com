@@ -1,4 +1,5 @@
 import {
+  affiliateApplication,
   affiliateCommission,
   affiliatePayout,
   affiliateProfile,
@@ -1227,6 +1228,30 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
 
 describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
   describe.concurrent("foreign keys", () => {
+    it("rejects inserting an application for a non-existent user", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+
+      const insertOrphan = async () =>
+        env.db
+          .insert(affiliateApplication)
+          .values({
+            advantage: "I want to be an affiliate",
+            id: "afa_orphan_user",
+            instagramHandle: null,
+            reviewedAt: null,
+            reviewedByAdminId: null,
+            status: "PENDING",
+            tiktokHandle: null,
+            userId: "does-not-exist",
+            youtubeHandle: null,
+          })
+          .run();
+
+      await expect(insertOrphan()).rejects.toThrow();
+    });
+
     it("rejects inserting a payout for a non-existent user", async ({
       expect,
     }) => {
@@ -1310,6 +1335,16 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       expect(result).toBeNull();
     });
 
+    it("removes applications when the user is deleted", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const id = env.seedApplication({ userId: env.userId });
+
+      env.db.delete(user).where(eq(user.id, env.userId)).run();
+
+      const result = await env.repo.findApplicationById(id);
+      expect(result).toBeNull();
+    });
+
     it("sets payoutId to null on commissions when the payout is deleted", async ({
       expect,
     }) => {
@@ -1354,6 +1389,265 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
         .all();
       expect(after?.payoutId).toBeNull();
       expect(after?.status).toBe("PAID");
+    });
+  });
+
+  describe.concurrent("insertApplication", () => {
+    it("persists the application and returns it", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const before = Date.now();
+
+      const app = await env.repo.insertApplication({
+        advantage: "I have a large following",
+        instagramHandle: "@test",
+        tiktokHandle: null,
+        userId: env.userId,
+        youtubeHandle: null,
+      });
+
+      expect(app).not.toBeNull();
+      expect(app?.userId).toBe(env.userId);
+      expect(app?.advantage).toBe("I have a large following");
+      expect(app?.instagramHandle).toBe("@test");
+      expect(app?.status).toBe("PENDING");
+      expect(app?.createdAt.getTime()).toBeGreaterThanOrEqual(before);
+
+      const rows = env.db
+        .select()
+        .from(affiliateApplication)
+        .where(eq(affiliateApplication.userId, env.userId))
+        .all();
+      expect(rows).toHaveLength(1);
+    });
+
+    it("allows multiple applications per user", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const first = await env.repo.insertApplication({
+        advantage: "First application",
+        instagramHandle: null,
+        tiktokHandle: null,
+        userId: env.userId,
+        youtubeHandle: null,
+      });
+      const second = await env.repo.insertApplication({
+        advantage: "Second application",
+        instagramHandle: null,
+        tiktokHandle: null,
+        userId: env.userId,
+        youtubeHandle: null,
+      });
+
+      expect(first).not.toBeNull();
+      expect(second).not.toBeNull();
+      expect(first?.id).not.toBe(second?.id);
+    });
+  });
+
+  describe.concurrent("findApplicationById", () => {
+    it("returns application when found", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const id = env.seedApplication({ userId: env.userId });
+
+      const app = await env.repo.findApplicationById(id);
+
+      expect(app).not.toBeNull();
+      expect(app?.id).toBe(id);
+      expect(app?.userId).toBe(env.userId);
+    });
+
+    it("returns null when not found", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const app = await env.repo.findApplicationById("afa_nonexistent");
+
+      expect(app).toBeNull();
+    });
+  });
+
+  describe.concurrent("findPendingApplicationByUserId", () => {
+    it("returns the pending application", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const id = env.seedApplication({ status: "PENDING", userId: env.userId });
+
+      const app = await env.repo.findPendingApplicationByUserId(env.userId);
+
+      expect(app).not.toBeNull();
+      expect(app?.id).toBe(id);
+      expect(app?.status).toBe("PENDING");
+    });
+
+    it("returns null when no pending application exists", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedApplication({ status: "ACCEPTED", userId: env.userId });
+
+      const app = await env.repo.findPendingApplicationByUserId(env.userId);
+
+      expect(app).toBeNull();
+    });
+
+    it("returns null when user has no applications", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const app = await env.repo.findPendingApplicationByUserId(env.userId);
+
+      expect(app).toBeNull();
+    });
+  });
+
+  describe.concurrent("findLatestApplicationByUserId", () => {
+    it("returns the most recent application", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedApplication({
+        id: "afa_old",
+        status: "REJECTED",
+        userId: env.userId,
+      });
+      env.seedApplication({
+        id: "afa_new",
+        status: "PENDING",
+        userId: env.userId,
+      });
+
+      const app = await env.repo.findLatestApplicationByUserId(env.userId);
+
+      expect(app).not.toBeNull();
+      expect(app?.id).toBe("afa_new");
+    });
+
+    it("returns null when user has no applications", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const app = await env.repo.findLatestApplicationByUserId(env.userId);
+
+      expect(app).toBeNull();
+    });
+  });
+
+  describe.concurrent("updateApplicationStatus", () => {
+    it("updates status and sets reviewer info", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const admin = env.seedUser({ name: "Admin" });
+      const id = env.seedApplication({ status: "PENDING", userId: env.userId });
+
+      const updated = await env.repo.updateApplicationStatus(
+        id,
+        "ACCEPTED",
+        admin
+      );
+
+      expect(updated).not.toBeNull();
+      expect(updated?.id).toBe(id);
+      expect(updated?.status).toBe("ACCEPTED");
+      expect(updated?.reviewedByAdminId).toBe(admin);
+      expect(updated?.reviewedAt).not.toBeNull();
+    });
+
+    it("returns null for nonexistent application", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const updated = await env.repo.updateApplicationStatus(
+        "afa_ghost",
+        "ACCEPTED",
+        env.userId
+      );
+
+      expect(updated).toBeNull();
+    });
+
+    it("updates status to REJECTED", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const admin = env.seedUser({ name: "Admin" });
+      const id = env.seedApplication({ status: "PENDING", userId: env.userId });
+
+      const updated = await env.repo.updateApplicationStatus(
+        id,
+        "REJECTED",
+        admin
+      );
+
+      expect(updated).not.toBeNull();
+      expect(updated?.id).toBe(id);
+      expect(updated?.status).toBe("REJECTED");
+      expect(updated?.reviewedByAdminId).toBe(admin);
+      expect(updated?.reviewedAt).not.toBeNull();
+    });
+  });
+
+  describe.concurrent("listApplications", () => {
+    it("returns all applications without status filter", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedApplication({ status: "PENDING", userId: env.userId });
+      env.seedApplication({ status: "ACCEPTED", userId: env.otherId });
+
+      const result = await env.repo.listApplications(undefined, 1, 10);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.pagination.total).toBe(2);
+      expect(result.pagination.page).toBe(1);
+      expect(result.pagination.limit).toBe(10);
+      expect(result.pagination.totalPages).toBe(1);
+    });
+
+    it("filters by status", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedApplication({ status: "PENDING", userId: env.userId });
+      env.seedApplication({ status: "ACCEPTED", userId: env.otherId });
+
+      const result = await env.repo.listApplications("PENDING", 1, 10);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]?.status).toBe("PENDING");
+      expect(result.pagination.total).toBe(1);
+    });
+
+    it("paginates results", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedApplication({ status: "PENDING", userId: env.userId });
+      env.seedApplication({ status: "PENDING", userId: env.otherId });
+
+      const page1 = await env.repo.listApplications(undefined, 1, 1);
+      const page2 = await env.repo.listApplications(undefined, 2, 1);
+
+      expect(page1.data).toHaveLength(1);
+      expect(page2.data).toHaveLength(1);
+      expect(page1.data[0]?.id).not.toBe(page2.data[0]?.id);
+      expect(page1.pagination.totalPages).toBe(2);
+    });
+
+    it("returns empty list when no applications match", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.listApplications("REJECTED", 1, 10);
+
+      expect(result.data).toHaveLength(0);
+      expect(result.pagination.total).toBe(0);
+    });
+
+    it("returns results ordered by createdAt descending", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedApplication({
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        id: "afa_older",
+        status: "PENDING",
+        userId: env.userId,
+      });
+      env.seedApplication({
+        createdAt: new Date("2026-01-02T00:00:00Z"),
+        id: "afa_newer",
+        status: "PENDING",
+        userId: env.otherId,
+      });
+
+      const result = await env.repo.listApplications(undefined, 1, 10);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]?.id).toBe("afa_newer");
+      expect(result.data[1]?.id).toBe("afa_older");
     });
   });
 });

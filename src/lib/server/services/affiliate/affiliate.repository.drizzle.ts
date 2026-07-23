@@ -1,5 +1,7 @@
 /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle $onUpdate propagates any */
+import type { AFFILIATE_APPLICATION_STATUSES } from "$lib/schemas/affiliate.constant";
 import {
+  AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
@@ -9,6 +11,7 @@ import {
   and,
   asc,
   count,
+  desc,
   eq,
   inArray,
   isNotNull,
@@ -21,6 +24,7 @@ import {
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type { DB } from "../../infras/db/client.ts";
 import {
+  affiliateApplication,
   affiliateCommission,
   affiliatePayout,
   affiliateProfile,
@@ -34,6 +38,7 @@ import type {
   AffiliateRepository,
   BackfillResult,
   CreatePayoutForAffiliateInput,
+  InsertAffiliateApplicationInput,
   InsertAffiliateConversionInput,
   InvalidCommission,
   MissingCommissionRow,
@@ -56,6 +61,173 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
   static withDatabase(db: DB): AffiliateDrizzleRepository {
     return new AffiliateDrizzleRepository(db);
+  }
+
+  async insertApplication(input: InsertAffiliateApplicationInput) {
+    try {
+      const id = generateId(AFFILIATE_APPLICATION_ID_PREFIX);
+      const [created] = await this.dbInstance
+        .insert(affiliateApplication)
+        .values({
+          advantage: input.advantage,
+          id,
+          instagramHandle: input.instagramHandle,
+          tiktokHandle: input.tiktokHandle,
+          userId: input.userId,
+          youtubeHandle: input.youtubeHandle,
+        })
+        .returning();
+      if (!created) {
+        return null;
+      }
+      return created;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findApplicationById(id: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(eq(affiliateApplication.id, id))
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findPendingApplicationByUserId(userId: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(
+          and(
+            eq(affiliateApplication.userId, userId),
+            eq(affiliateApplication.status, "PENDING")
+          )
+        )
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findLatestApplicationByUserId(userId: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(eq(affiliateApplication.userId, userId))
+        .orderBy(desc(affiliateApplication.createdAt))
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async updateApplicationStatus(
+    id: string,
+    status: "ACCEPTED" | "REJECTED",
+    reviewedByAdminId: string
+  ) {
+    try {
+      const [updated] = await this.dbInstance
+        .update(affiliateApplication)
+        .set({
+          reviewedAt: new Date(),
+          reviewedByAdminId,
+          status,
+        })
+        .where(eq(affiliateApplication.id, id))
+        .returning();
+      return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async listApplications(
+    status: (typeof AFFILIATE_APPLICATION_STATUSES)[number] | undefined,
+    page: number,
+    limit: number
+  ) {
+    try {
+      const offset = (page - 1) * limit;
+
+      const [countRow] = await this.dbInstance
+        .select({
+          total: count(affiliateApplication.id),
+        })
+        .from(affiliateApplication)
+        .where(
+          status === undefined
+            ? undefined
+            : eq(affiliateApplication.status, status)
+        );
+
+      const total = countRow?.total ?? 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+
+      const rows = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(
+          status === undefined
+            ? undefined
+            : eq(affiliateApplication.status, status)
+        )
+        .orderBy(desc(affiliateApplication.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        data: rows,
+        pagination: {
+          limit,
+          page,
+          total,
+          totalPages,
+        },
+      };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
   }
 
   async insertProfile(userId: string, slug: string, nameSnapshot: string) {

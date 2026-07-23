@@ -4,7 +4,8 @@
 
 Affiliate is responsible for:
 
-- Affiliate profile creation (claim), slug generation, and profile queries
+- Affiliate application submission, admin review (accept/reject), and application queries
+- Affiliate profile creation (on acceptance), slug generation, and profile queries
 - Referrer attribution on the user record (`user.affiliatedBy`), set at signup and correctable by admins
 - Subscription event tracking for sign-up rewards (`AffiliateSubscriptionEvent`)
 - Conversion recording and commission accounting (`AffiliateCommission`)
@@ -22,6 +23,24 @@ Affiliate is not responsible for:
 - External payment gateway integration
 
 ## Entities
+
+### AffiliateApplication
+
+```typescript
+interface AffiliateApplication {
+  id: string; // prefixed "afa_" + nanoid
+  userId: string; // FK → user.id
+  instagramHandle: string | null; // optional
+  tiktokHandle: string | null; // optional
+  youtubeHandle: string | null; // optional
+  advantage: string; // mandatory, min 10 chars
+  status: "PENDING" | "ACCEPTED" | "REJECTED"; // default "PENDING"
+  reviewedByAdminId: string | null; // FK → user.id (admin)
+  reviewedAt: Date | null; // ms timestamp
+  createdAt: Date; // ms timestamp
+  updatedAt: Date; // ms timestamp
+}
+```
 
 ### AffiliateProfile
 
@@ -170,7 +189,11 @@ Commissions can drift from reality: an order may be paid without a commission be
 
 | Method                 | Guard          | Procedure             | Error Code                  |
 | ---------------------- | -------------- | --------------------- | --------------------------- |
-| `claim`                | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
+| `apply`                | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
+| `acceptApplication`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `rejectApplication`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| `getMyApplication`     | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND` |
+| `listApplications`     | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
 | `getMyProfile`         | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND` |
 | `getDashboardSummary`  | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
 | `resolveSlug`          | none           | `publicProcedure`     | —                           |
@@ -186,18 +209,43 @@ Commissions can drift from reality: an order may be paid without a commission be
 
 ## Commands
 
-### claim
+### apply
 
 ```
-claim({}) → AffiliateProfile
+apply({ advantage, instagramHandle?, tiktokHandle?, youtubeHandle? }) → AffiliateApplication
 ```
 
-- Idempotent get-or-create. Returns existing profile if one exists for the current user.
 - Requires authenticated user.
-- Looks up `user.name` from DB for the `nameSnapshot` field.
-- Generates slug as a random 8-character nanoid (`nanoid(8).toLowerCase()`).
-- Inserts `AffiliateProfile` with `nameSnapshot` set to `user.name`.
-- Errors: `UNAUTHORIZED`, `NOT_FOUND` (user not found), `AFFILIATE_SLUG_CONFLICT` (slug generation exhausted).
+- Throws `AFFILIATE_ALREADY_APPROVED` if the user already has an affiliate profile.
+- Throws `AFFILIATE_APPLICATION_PENDING` if the user already has a pending application.
+- Inserts an `AffiliateApplication` with `status: "PENDING"`.
+- Users may re-apply after rejection (multiple applications per user allowed, but only one PENDING at a time).
+- Errors: `UNAUTHORIZED`, `AFFILIATE_ALREADY_APPROVED`, `AFFILIATE_APPLICATION_PENDING`.
+
+### acceptApplication
+
+```
+acceptApplication({ applicationId }) → AffiliateProfile
+```
+
+- Admin-only.
+- Looks up the application by ID; throws `NOT_FOUND` if missing.
+- Throws `AFFILIATE_APPLICATION_NOT_PENDING` if the application is not in `PENDING` status.
+- Marks the application `ACCEPTED` with the admin's ID and timestamp.
+- Creates an `AffiliateProfile` with a generated slug (same slug generation logic as the former `claim`).
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `AFFILIATE_APPLICATION_NOT_PENDING`, `AFFILIATE_SLUG_CONFLICT`.
+
+### rejectApplication
+
+```
+rejectApplication({ applicationId }) → AffiliateApplication
+```
+
+- Admin-only.
+- Looks up the application by ID; throws `NOT_FOUND` if missing.
+- Throws `AFFILIATE_APPLICATION_NOT_PENDING` if the application is not in `PENDING` status.
+- Marks the application `REJECTED` with the admin's ID and timestamp.
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `AFFILIATE_APPLICATION_NOT_PENDING`.
 
 ### recordConversion
 
@@ -250,6 +298,27 @@ backfillCommissions({ affiliateUserId? }) → { created: number, voided: number 
 - Errors: `UNAUTHORIZED`, `FORBIDDEN`.
 
 ## Queries
+
+### getMyApplication
+
+```
+getMyApplication({}) → AffiliateApplication
+```
+
+- Returns the calling user's most recent affiliate application (any status).
+- Errors: `UNAUTHORIZED`, `NOT_FOUND` (no application exists).
+
+### listApplications
+
+```
+listApplications({ status?, page?, limit? }) → { data: AffiliateApplication[], pagination }
+```
+
+- Admin-only.
+- Lists applications, optionally filtered by status (`PENDING`, `ACCEPTED`, `REJECTED`).
+- Defaults: `page = 1`, `limit = 10`. `limit` range: 1–100.
+- Ordered by `createdAt` descending.
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`.
 
 ### getMyProfile
 
@@ -310,6 +379,24 @@ reconcileCommissions({ affiliateUserId? }) → { invalid: InvalidCommission[], m
 
 ## Persistence
 
+### Table: `affiliate_application`
+
+| Column                 | Type         | Constraints                                                               |
+| ---------------------- | ------------ | ------------------------------------------------------------------------- |
+| `id`                   | text         | PK                                                                        |
+| `user_id`              | text         | NOT NULL, FK → user.id ON DELETE CASCADE                                  |
+| `instagram_handle`     | text         | NULLABLE                                                                  |
+| `tiktok_handle`        | text         | NULLABLE                                                                  |
+| `youtube_handle`       | text         | NULLABLE                                                                  |
+| `advantage`            | text         | NOT NULL                                                                  |
+| `status`               | text         | NOT NULL, DEFAULT 'PENDING', CHECK('PENDING' \| 'ACCEPTED' \| 'REJECTED') |
+| `reviewed_by_admin_id` | text         | NULLABLE, FK → user.id ON DELETE SET NULL                                 |
+| `reviewed_at`          | integer (ms) | NULLABLE                                                                  |
+| `created_at`           | integer (ms) | NOT NULL, DEFAULT now                                                     |
+| `updated_at`           | integer (ms) | NOT NULL, DEFAULT now, ON UPDATE                                          |
+
+Index: `affiliate_application_user_status_idx` on (`user_id`, `status`).
+
 ### Table: `affiliate_profile`
 
 | Column          | Type         | Constraints                                      |
@@ -364,8 +451,9 @@ reconcileCommissions({ affiliateUserId? }) → { invalid: InvalidCommission[], m
 
 ### Cascade Behavior
 
-- Deleting a user CASCADE-deletes their profile, commissions, subscription events, and payouts.
+- Deleting a user CASCADE-deletes their applications, profile, commissions, subscription events, and payouts.
 - Deleting a payout SET NULLs the `payoutId` on associated commissions (commissions are preserved but orphaned).
+- Deleting an admin SET NULLs the `reviewedByAdminId` on associated applications.
 
 ## Validation
 
@@ -374,17 +462,23 @@ Valibot schemas in `src/lib/schemas/affiliate.ts`:
 | Schema                                      | Description                                                                                        |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `commissionStatusSchema`                    | Picklist of `["PENDING", "PAID"]`                                                                  |
+| `applicationStatusSchema`                   | Picklist of `["PENDING", "ACCEPTED", "REJECTED"]`                                                  |
 | `affiliateProfileIdSchema`                  | Prefixed ID: `aff_{2 lowercase}{16 alphanumeric}`                                                  |
+| `affiliateApplicationIdSchema`              | Prefixed ID: `afa_{2 lowercase}{16 alphanumeric}`                                                  |
 | `affiliateCommissionIdSchema`               | Prefixed ID: `afc_{2 lowercase}{16 alphanumeric}`                                                  |
 | `affiliatePayoutIdSchema`                   | Prefixed ID: `afp_{2 lowercase}{16 alphanumeric}`                                                  |
 | `affiliateSubscriptionEventIdSchema`        | Prefixed ID: `afs_{2 lowercase}{16 alphanumeric}`                                                  |
 | `slugSchema`                                | `string`, min 1, max 255, regex `/^[a-z0-9-]+$/u`                                                  |
 | `moneySchema`                               | `number`, min 0                                                                                    |
+| `applyAffiliateInputSchema`                 | `{ advantage (min 10, max 1000), instagramHandle?, tiktokHandle?, youtubeHandle? }`                |
+| `reviewAffiliateApplicationInputSchema`     | `{ applicationId }`                                                                                |
+| `listAffiliateApplicationsInputSchema`      | `{ status?, page?, limit? }` with integer constraints                                              |
+| `affiliateApplicationSchema`                | Full application entity output schema                                                              |
+| `listAffiliateApplicationsOutputSchema`     | `{ data: AffiliateApplication[], pagination }`                                                     |
 | `recordAffiliateConversionInputSchema`      | `{ commissionAmount, purchaseAmount, purchaserUserId, transactionId }`                             |
 | `recordAffiliatePayoutInputSchema`          | `{ affiliateUserId, method?, note?, reference? }`                                                  |
 | `setAffiliateReferrerInputSchema`           | `{ referredUserId, referrerUserId (nullable) }`                                                    |
 | `setAffiliateReferrerOutputSchema`          | `{ userId, affiliatedBy (nullable) }`                                                              |
-| `claimAffiliateProfileInputSchema`          | `{}` (no input)                                                                                    |
 | `resolveAffiliateSlugInputSchema`           | `{ slug }`                                                                                         |
 | `getAffiliateDashboardInputSchema`          | `{}` (no input)                                                                                    |
 | `listPendingPayoutsInputSchema`             | `{ page?, limit? }` with integer constraints                                                       |
@@ -397,39 +491,47 @@ Valibot schemas in `src/lib/schemas/affiliate.ts`:
 
 Constants in `src/lib/schemas/affiliate.constant.ts`:
 
-| Constant                                 | Value                         |
-| ---------------------------------------- | ----------------------------- |
-| `AFFILIATE_ID_PREFIX`                    | `"aff"`                       |
-| `AFFILIATE_COMMISSION_ID_PREFIX`         | `"afc"`                       |
-| `AFFILIATE_PAYOUT_ID_PREFIX`             | `"afp"`                       |
-| `AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX` | `"afs"`                       |
-| `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]` |
-| `AFFILIATE_COOKIE_NAME`                  | `"affiliate_ref"`             |
-| `AFFILIATE_COOKIE_MAX_AGE_SECONDS`       | `2592000` (30 days)           |
-| `AFFILIATE_SLUG_MAX_RETRIES`             | `5`                           |
+| Constant                                 | Value                                 |
+| ---------------------------------------- | ------------------------------------- |
+| `AFFILIATE_ID_PREFIX`                    | `"aff"`                               |
+| `AFFILIATE_APPLICATION_ID_PREFIX`        | `"afa"`                               |
+| `AFFILIATE_COMMISSION_ID_PREFIX`         | `"afc"`                               |
+| `AFFILIATE_PAYOUT_ID_PREFIX`             | `"afp"`                               |
+| `AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX` | `"afs"`                               |
+| `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]`         |
+| `AFFILIATE_APPLICATION_STATUSES`         | `["PENDING", "ACCEPTED", "REJECTED"]` |
+| `AFFILIATE_ADVANTAGE_MIN_LENGTH`         | `10`                                  |
+| `AFFILIATE_ADVANTAGE_MAX_LENGTH`         | `1000`                                |
+| `AFFILIATE_HANDLE_MAX_LENGTH`            | `255`                                 |
+| `AFFILIATE_COOKIE_NAME`                  | `"affiliate_ref"`                     |
+| `AFFILIATE_COOKIE_MAX_AGE_SECONDS`       | `2592000` (30 days)                   |
+| `AFFILIATE_SLUG_MAX_RETRIES`             | `5`                                   |
 
 ## Errors
 
-| Code                                | Source                     | Message                                                                                                      |
-| ----------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `UNAUTHORIZED`                      | Guard `requireUser`        | `"Authentication is required"`                                                                               |
-| `FORBIDDEN`                         | Guard `requireAdmin`       | `"Admin access required"`                                                                                    |
-| `NOT_FOUND`                         | Service                    | `"Affiliate profile not found"` / `"User not found"` / `"Affiliate link not found"` / `"Referrer not found"` |
-| `AFFILIATE_SLUG_CONFLICT`           | Service                    | `"Failed to generate a unique slug after maximum retries"`                                                   |
-| `AFFILIATE_SELF_REFERRAL`           | Service                    | `"Cannot refer yourself"`                                                                                    |
-| `AFFILIATE_NO_PENDING_BALANCE`      | Service                    | `"No pending balance to payout"`                                                                             |
-| `AFFILIATE_RECONCILE_BEFORE_PAYOUT` | Service                    | `"Reconcile commissions before paying out this affiliate"`                                                   |
-| `INTERNAL_SERVER_ERROR`             | Repository (catch wrapper) | `"Internal server error"`                                                                                    |
+| Code                                | Source                     | Message                                                                                                                                                                        |
+| ----------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `UNAUTHORIZED`                      | Guard `requireUser`        | `"Authentication is required"`                                                                                                                                                 |
+| `FORBIDDEN`                         | Guard `requireAdmin`       | `"Admin access required"`                                                                                                                                                      |
+| `NOT_FOUND`                         | Service                    | `"Affiliate profile not found"` / `"User not found"` / `"Affiliate link not found"` / `"Referrer not found"` / `"Application not found"` / `"Affiliate application not found"` |
+| `AFFILIATE_ALREADY_APPROVED`        | Service                    | `"You already have an affiliate profile"`                                                                                                                                      |
+| `AFFILIATE_APPLICATION_PENDING`     | Service                    | `"You already have a pending application"`                                                                                                                                     |
+| `AFFILIATE_APPLICATION_NOT_PENDING` | Service                    | `"Application is not pending review"`                                                                                                                                          |
+| `AFFILIATE_SLUG_CONFLICT`           | Service                    | `"Failed to generate a unique slug after maximum retries"`                                                                                                                     |
+| `AFFILIATE_SELF_REFERRAL`           | Service                    | `"Cannot refer yourself"`                                                                                                                                                      |
+| `AFFILIATE_NO_PENDING_BALANCE`      | Service                    | `"No pending balance to payout"`                                                                                                                                               |
+| `AFFILIATE_RECONCILE_BEFORE_PAYOUT` | Service                    | `"Reconcile commissions before paying out this affiliate"`                                                                                                                     |
+| `INTERNAL_SERVER_ERROR`             | Repository (catch wrapper) | `"Internal server error"`                                                                                                                                                      |
 
 ## Testing
 
 Three test files, mirroring the service's three layers:
 
-- **`affiliate.service.test.ts`** — Unit tests against `new AffiliateService(mockRepo, mockGuard)`. Covers every branch and error path for: `claim` (idempotent get-or-create, slug generation, slug conflict, user-not-found), `resolveSlug` (found, not found, sanitization), `recordConversion` (found affiliate, no affiliate, self-referral, duplicate transaction, insert failure), `recordPayout` (atomic payout, reconciliation guard blocks on discrepancy, no pending balance, note forwarding, unauthorized), `reconcileCommissions` (reports missing + invalid, admin-only), `backfillCommissions` (maps missing→inserts and invalid→voids, admin-only), `setReferrer` (set referrer, clear referrer, self-referral, referrer-not-found, user-not-found, unauthorized), `getDashboardSummary` (found, unauthorized), `listPendingPayouts` (admin flow, custom pagination, unauthorized).
+- **`affiliate.service.test.ts`** — Unit tests against `new AffiliateService(mockRepo, mockGuard)`. Covers every branch and error path for: `apply` (creates application, already-approved guard, pending-application guard, unauthorized), `acceptApplication` (accepts and creates profile, not-found, not-pending, slug conflict, unauthorized), `rejectApplication` (rejects pending, not-found, not-pending, unauthorized), `getMyApplication` (found, not found, unauthorized), `listApplications` (admin flow, status filter + pagination forwarding, unauthorized), `resolveSlug` (found, not found, sanitization), `recordConversion` (found affiliate, no affiliate, self-referral, duplicate transaction, insert failure), `recordPayout` (atomic payout, reconciliation guard blocks on discrepancy, no pending balance, note forwarding, unauthorized), `reconcileCommissions` (reports missing + invalid, admin-only), `backfillCommissions` (maps missing→inserts and invalid→voids, admin-only), `setReferrer` (set referrer, clear referrer, self-referral, referrer-not-found, user-not-found, unauthorized), `getDashboardSummary` (found, unauthorized), `listPendingPayouts` (admin flow, custom pagination, unauthorized).
 
 - **`affiliate.guard.test.ts`** — Unit tests against `new AffiliateGuard(mockRepo, mockUserRepo)`. Tests: `requireUser` (valid, null, undefined, empty string), `requireAdmin` (admin role, non-admin role, user not found, null userId).
 
-- **`affiliate.repository.drizzle.test.ts`** — Integration tests against an in-memory SQLite DB via `AffiliateTestEnv`. Tests: `insertProfile` (persistence, duplicate userId returns null, duplicate slug returns null), `findProfileByUserId`, `findProfileBySlug`, `insertConversion` (persistence, duplicate transactionId returns null), `findConversionByTransactionId`, `getDashboardSummary` (earnings breakdown, zero values, null profile), `listPendingPayouts` (grouped results, unknown slug fallback, excluded paid affiliates, pagination), `createPayoutForAffiliate` (atomic sum+insert+mark, returns null on no pending), `findMissingCommissions` (paid orders without a commission, skips self-referral), `findInvalidCommissions` (pending commissions whose order is no longer paid), `backfillCommissions` (inserts missing + voids invalid, idempotent), `findAffiliatedByUserId`, `findUserById`, `updateUserAffiliatedBy` (set, clear, missing user), and schema constraints (foreign key rejection, cascade on user deletion).
+- **`affiliate.repository.drizzle.test.ts`** — Integration tests against an in-memory SQLite DB via `AffiliateTestEnv`. Tests: `insertApplication` (persistence, multiple applications per user), `findApplicationById` (found, not found), `findPendingApplicationByUserId` (found, no pending, no applications), `findLatestApplicationByUserId` (returns most recent, no applications), `updateApplicationStatus` (updates status + reviewer info, nonexistent returns null), `listApplications` (all, filtered by status, pagination, empty), `insertProfile` (persistence, duplicate userId returns null, duplicate slug returns null), `findProfileByUserId`, `findProfileBySlug`, `insertConversion` (persistence, duplicate transactionId returns null), `findConversionByTransactionId`, `getDashboardSummary` (earnings breakdown, zero values, null profile), `listPendingPayouts` (grouped results, unknown slug fallback, excluded paid affiliates, pagination), `createPayoutForAffiliate` (atomic sum+insert+mark, returns null on no pending), `findMissingCommissions` (paid orders without a commission, skips self-referral), `findInvalidCommissions` (pending commissions whose order is no longer paid), `backfillCommissions` (inserts missing + voids invalid, idempotent), `findAffiliatedByUserId`, `findUserById`, `updateUserAffiliatedBy` (set, clear, missing user), and schema constraints (foreign key rejection, cascade on user deletion).
 
 ### Repository methods not yet wired to a service command
 

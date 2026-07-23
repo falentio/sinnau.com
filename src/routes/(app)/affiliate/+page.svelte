@@ -1,15 +1,24 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
+  import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
+  import { Label } from "$lib/components/ui/label";
+  import { Textarea } from "$lib/components/ui/textarea";
   import { client } from "$lib/orpc";
 
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
-  let claiming = $state(false);
-  let claimError = $state("");
+  let applying = $state(false);
+  let applyError = $state("");
   let copied = $state(false);
+
+  let instagramHandle = $state("");
+  let tiktokHandle = $state("");
+  let youtubeHandle = $state("");
+  let advantage = $state("");
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("id-ID", {
@@ -18,17 +27,22 @@
       style: "currency",
     }).format(value);
 
-  const handleClaim = async () => {
-    claiming = true;
-    claimError = "";
+  const handleApply = async () => {
+    applying = true;
+    applyError = "";
     try {
-      await client.affiliate.claim({});
+      await client.affiliate.apply({
+        advantage,
+        instagramHandle: instagramHandle || undefined,
+        tiktokHandle: tiktokHandle || undefined,
+        youtubeHandle: youtubeHandle || undefined,
+      });
       await invalidateAll();
     } catch (error) {
-      claimError =
-        error instanceof Error ? error.message : "Failed to claim profile";
+      applyError =
+        error instanceof Error ? error.message : "Failed to submit application";
     } finally {
-      claiming = false;
+      applying = false;
     }
   };
 
@@ -58,12 +72,9 @@
         <p class="break-all rounded bg-muted p-2 font-mono text-sm">
           {new URL(`/r/${data.summary.profile.slug}`, data.origin).href}
         </p>
-        <button
-          class="shrink-0 rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
-          onclick={handleCopy}
-        >
+        <Button class="shrink-0" size="sm" onclick={handleCopy}>
           {copied ? "Tersalin!" : "Salin"}
-        </button>
+        </Button>
       </div>
     </section>
 
@@ -92,23 +103,80 @@
         {formatCurrency(data.summary.totalPaid)}
       </p>
     </section>
+  {:else if data.application?.status === "PENDING"}
+    <section class="rounded-lg border p-4">
+      <h2 class="text-lg font-semibold">Application Pending</h2>
+      <p class="text-muted-foreground">
+        Your affiliate application is under review. We'll notify you once it's
+        approved.
+      </p>
+    </section>
   {:else}
     <section class="rounded-lg border p-4">
-      <h2 class="text-lg font-semibold">Get Started</h2>
-      <p class="mb-4 text-muted-foreground">
-        You haven't claimed your affiliate profile yet. Start sharing and
-        earning!
-      </p>
-      <button
-        class="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-        onclick={handleClaim}
-        disabled={claiming}
-      >
-        {claiming ? "Claiming..." : "Claim Affiliate Profile"}
-      </button>
-      {#if claimError}
-        <p class="mt-2 text-sm text-destructive">{claimError}</p>
+      <h2 class="text-lg font-semibold">Become an Affiliate</h2>
+      {#if data.application?.status === "REJECTED"}
+        <p class="mb-4 text-sm text-destructive">
+          Your previous application was rejected. You can re-apply below.
+        </p>
+      {:else}
+        <p class="mb-4 text-muted-foreground">
+          Apply to become an affiliate and start earning by sharing your
+          referral link.
+        </p>
       {/if}
+      <form
+        class="space-y-4"
+        onsubmit={(e) => {
+          e.preventDefault();
+          void handleApply();
+        }}
+      >
+        <div class="space-y-2">
+          <Label for="advantage">
+            Why would you be a good affiliate? <span class="text-destructive"
+              >*</span
+            >
+          </Label>
+          <Textarea
+            id="advantage"
+            placeholder="Tell us about your audience, reach, and how you'd promote us..."
+            bind:value={advantage}
+            required
+            minlength={10}
+            maxlength={1000}
+          />
+        </div>
+        <div class="space-y-2">
+          <Label for="instagram">Instagram Handle</Label>
+          <Input
+            id="instagram"
+            placeholder="@username"
+            bind:value={instagramHandle}
+          />
+        </div>
+        <div class="space-y-2">
+          <Label for="tiktok">TikTok Handle</Label>
+          <Input
+            id="tiktok"
+            placeholder="@username"
+            bind:value={tiktokHandle}
+          />
+        </div>
+        <div class="space-y-2">
+          <Label for="youtube">YouTube Handle / Link</Label>
+          <Input
+            id="youtube"
+            placeholder="@channel or https://youtube.com/@channel"
+            bind:value={youtubeHandle}
+          />
+        </div>
+        <Button type="submit" disabled={applying}>
+          {applying ? "Submitting..." : "Apply"}
+        </Button>
+        {#if applyError}
+          <p class="text-sm text-destructive">{applyError}</p>
+        {/if}
+      </form>
     </section>
   {/if}
 </div>

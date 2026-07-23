@@ -1,3 +1,4 @@
+import { affiliateApplication } from "$lib/server/infras/db/schema/affiliate";
 import { user } from "$lib/server/infras/db/schema/auth-schema";
 import { order, payment } from "$lib/server/infras/db/schema/plan";
 import type {
@@ -14,6 +15,7 @@ import type { MockedFunction } from "vitest";
 import type { UserRepository } from "../user/user.repository";
 import type { AffiliateGuard } from "./affiliate.guard";
 import type {
+  AffiliateApplication,
   AffiliateProfile,
   AffiliateRepository,
 } from "./affiliate.repository";
@@ -29,19 +31,28 @@ export const createMockRepository = (): MockedAffiliateRepository => ({
     vi.fn<AffiliateRepository["createPayoutForAffiliate"]>(),
   findAffiliatedByUserId:
     vi.fn<AffiliateRepository["findAffiliatedByUserId"]>(),
+  findApplicationById: vi.fn<AffiliateRepository["findApplicationById"]>(),
   findConversionByTransactionId:
     vi.fn<AffiliateRepository["findConversionByTransactionId"]>(),
   findInvalidCommissions:
     vi.fn<AffiliateRepository["findInvalidCommissions"]>(),
+  findLatestApplicationByUserId:
+    vi.fn<AffiliateRepository["findLatestApplicationByUserId"]>(),
   findMissingCommissions:
     vi.fn<AffiliateRepository["findMissingCommissions"]>(),
+  findPendingApplicationByUserId:
+    vi.fn<AffiliateRepository["findPendingApplicationByUserId"]>(),
   findProfileBySlug: vi.fn<AffiliateRepository["findProfileBySlug"]>(),
   findProfileByUserId: vi.fn<AffiliateRepository["findProfileByUserId"]>(),
   findUserById: vi.fn<AffiliateRepository["findUserById"]>(),
   getDashboardSummary: vi.fn<AffiliateRepository["getDashboardSummary"]>(),
+  insertApplication: vi.fn<AffiliateRepository["insertApplication"]>(),
   insertConversion: vi.fn<AffiliateRepository["insertConversion"]>(),
   insertProfile: vi.fn<AffiliateRepository["insertProfile"]>(),
+  listApplications: vi.fn<AffiliateRepository["listApplications"]>(),
   listPendingPayouts: vi.fn<AffiliateRepository["listPendingPayouts"]>(),
+  updateApplicationStatus:
+    vi.fn<AffiliateRepository["updateApplicationStatus"]>(),
   updateProfileBalance: vi.fn<AffiliateRepository["updateProfileBalance"]>(),
   updateUserAffiliatedBy:
     vi.fn<AffiliateRepository["updateUserAffiliatedBy"]>(),
@@ -62,6 +73,23 @@ export type MockedAffiliateGuard = {
 export const createMockGuard = (): MockedAffiliateGuard => ({
   requireAdmin: vi.fn<AffiliateGuard["requireAdmin"]>(),
   requireUser: vi.fn<AffiliateGuard["requireUser"]>(),
+});
+
+export const createAffiliateApplicationFixture = (
+  overrides: Partial<AffiliateApplication> = {}
+): AffiliateApplication => ({
+  advantage: "I have a large following and can promote your product",
+  createdAt: new Date(),
+  id: "afa_abc123def456",
+  instagramHandle: null,
+  reviewedAt: null,
+  reviewedByAdminId: null,
+  status: "PENDING",
+  tiktokHandle: null,
+  updatedAt: new Date(),
+  userId: "user-1",
+  youtubeHandle: null,
+  ...overrides,
 });
 
 export const createAffiliateProfileFixture = (
@@ -119,6 +147,39 @@ export class AffiliateTestEnv implements AsyncDisposable {
         emailVerified: true,
         id,
         name: options.name ?? "Test User",
+      })
+      .run();
+    return id;
+  }
+
+  seedApplication(options: {
+    id?: string;
+    userId: string;
+    advantage?: string;
+    instagramHandle?: string | null;
+    tiktokHandle?: string | null;
+    youtubeHandle?: string | null;
+    status?: "PENDING" | "ACCEPTED" | "REJECTED";
+    reviewedByAdminId?: string | null;
+    reviewedAt?: Date | null;
+    createdAt?: Date;
+  }): string {
+    const id = options.id ?? `afa_${crypto.randomUUID()}`;
+    this.db
+      .insert(affiliateApplication)
+      .values({
+        advantage:
+          options.advantage ??
+          "I have a large following and can promote your product",
+        createdAt: options.createdAt ?? new Date(),
+        id,
+        instagramHandle: options.instagramHandle ?? null,
+        reviewedAt: options.reviewedAt ?? null,
+        reviewedByAdminId: options.reviewedByAdminId ?? null,
+        status: options.status ?? "PENDING",
+        tiktokHandle: options.tiktokHandle ?? null,
+        userId: options.userId,
+        youtubeHandle: options.youtubeHandle ?? null,
       })
       .run();
     return id;

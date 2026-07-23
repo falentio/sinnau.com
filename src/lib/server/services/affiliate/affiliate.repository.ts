@@ -1,16 +1,20 @@
 import type {
   InvalidCommission,
+  ListAffiliateApplicationsOutput,
   PendingPayout,
   PendingPayoutsList,
 } from "$lib/schemas/affiliate";
+import type { AFFILIATE_APPLICATION_STATUSES } from "$lib/schemas/affiliate.constant";
 
 import type {
+  AffiliateApplication,
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
 } from "../../infras/db/schema/affiliate.ts";
 
 export type {
+  AffiliateApplication,
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
@@ -54,7 +58,41 @@ export interface BackfillResult {
   voided: number;
 }
 
+export interface InsertAffiliateApplicationInput {
+  userId: string;
+  instagramHandle: string | null;
+  tiktokHandle: string | null;
+  youtubeHandle: string | null;
+  advantage: string;
+}
+
 export interface AffiliateRepository {
+  insertApplication(
+    input: InsertAffiliateApplicationInput
+  ): Promise<AffiliateApplication | null>;
+
+  findApplicationById(id: string): Promise<AffiliateApplication | null>;
+
+  findPendingApplicationByUserId(
+    userId: string
+  ): Promise<AffiliateApplication | null>;
+
+  findLatestApplicationByUserId(
+    userId: string
+  ): Promise<AffiliateApplication | null>;
+
+  updateApplicationStatus(
+    id: string,
+    status: "ACCEPTED" | "REJECTED",
+    reviewedByAdminId: string
+  ): Promise<AffiliateApplication | null>;
+
+  listApplications(
+    status: (typeof AFFILIATE_APPLICATION_STATUSES)[number] | undefined,
+    page: number,
+    limit: number
+  ): Promise<ListAffiliateApplicationsOutput>;
+
   insertProfile(
     userId: string,
     slug: string,
