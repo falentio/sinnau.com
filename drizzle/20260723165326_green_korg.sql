@@ -1,0 +1,1 @@
+CREATE INDEX `payment_gatewayTransactionId_idx` ON `payment` (`gateway_transaction_id`);

@@ -7,6 +7,7 @@ import {
 import { ORPCError } from "@orpc/server";
 import {
   and,
+  asc,
   count,
   eq,
   inArray,
@@ -250,6 +251,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           eq(affiliateCommission.affiliateUserId, affiliateProfile.userId)
         )
         .groupBy(affiliateCommission.affiliateUserId)
+        .orderBy(asc(affiliateCommission.affiliateUserId))
         .limit(limit)
         .offset(offset);
 

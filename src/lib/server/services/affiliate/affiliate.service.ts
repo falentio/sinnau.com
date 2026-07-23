@@ -15,6 +15,7 @@ import type {
   SetAffiliateReferrerOutput,
 } from "$lib/schemas/affiliate";
 import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
+import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 
 import {
@@ -24,6 +25,8 @@ import {
 } from "../../infras/slug.ts";
 import type { AffiliateGuard } from "./affiliate.guard";
 import type { AffiliateRepository } from "./affiliate.repository";
+
+const logger = getLogger(["sinnau.com", "affiliate", "service"]);
 
 export interface HandlePaymentSuccessInput {
   purchaserUserId: string;
@@ -145,6 +148,18 @@ export class AffiliateService {
       transactionId: input.transactionId,
     });
 
+    if (commission) {
+      logger.info("Commission recorded", {
+        adminUserId: adminUserId ?? "unknown",
+        affiliateUserId,
+        commissionAmount: input.commissionAmount,
+        commissionId: commission.id,
+        purchaseAmount: input.purchaseAmount,
+        purchaserUserId: input.purchaserUserId,
+        transactionId: input.transactionId,
+      });
+    }
+
     return {
       commission,
       created: commission !== null,
@@ -178,6 +193,16 @@ export class AffiliateService {
       });
     }
 
+    logger.info("Payout created", {
+      adminUserId: admin,
+      affiliateUserId: input.affiliateUserId,
+      amount: payout.amount,
+      method: input.method ?? null,
+      note: input.note ?? null,
+      payoutId: payout.id,
+      reference: input.reference ?? null,
+    });
+
     return payout;
   }
 
@@ -209,6 +234,12 @@ export class AffiliateService {
     if (!updated) {
       throw new ORPCError("NOT_FOUND", { message: "User not found" });
     }
+
+    logger.info("Referrer attribution updated", {
+      adminUserId: adminUserId ?? "unknown",
+      referredUserId: input.referredUserId,
+      referrerUserId,
+    });
 
     return { affiliatedBy: updated.affiliatedBy, userId: updated.id };
   }
@@ -253,7 +284,7 @@ export class AffiliateService {
       return;
     }
 
-    await this.repo.insertConversion({
+    const commission = await this.repo.insertConversion({
       affiliateUserId,
       commissionAmount: Math.round(
         input.purchaseAmount * AFFILIATE_COMMISSION_RATE
@@ -262,6 +293,17 @@ export class AffiliateService {
       purchaserUserId: input.purchaserUserId,
       transactionId: input.transactionId,
     });
+
+    if (commission) {
+      logger.info("Commission recorded from payment event", {
+        affiliateUserId,
+        commissionAmount: commission.commissionAmount,
+        commissionId: commission.id,
+        purchaseAmount: input.purchaseAmount,
+        purchaserUserId: input.purchaserUserId,
+        transactionId: input.transactionId,
+      });
+    }
   }
 
   private async reconcile(
@@ -302,6 +344,18 @@ export class AffiliateService {
       transactionId: entry.transactionId,
     }));
     const voidCommissionIds = invalid.map((entry) => entry.commissionId);
-    return await this.repo.backfillCommissions(inserts, voidCommissionIds);
+    const result = await this.repo.backfillCommissions(
+      inserts,
+      voidCommissionIds
+    );
+
+    logger.info("Commissions backfilled", {
+      adminUserId: adminUserId ?? "unknown",
+      affiliateUserId: input.affiliateUserId ?? "all",
+      created: result.created,
+      voided: result.voided,
+    });
+
+    return result;
   }
 }

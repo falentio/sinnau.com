@@ -3,9 +3,11 @@ import * as v from "valibot";
 import {
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_COMMISSION_STATUSES,
+  AFFILIATE_ID_FIELD_MAX_LENGTH,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
+  AFFILIATE_TEXT_FIELD_MAX_LENGTH,
 } from "./affiliate.constant.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
 import { ORDER_STATUSES } from "./plan.constant.ts";
@@ -46,6 +48,19 @@ const slugSchema = v.pipe(
 
 const moneySchema = v.pipe(v.number(), v.minValue(0));
 
+const boundedIdSchema = v.pipe(
+  v.string(),
+  v.trim(),
+  v.minLength(1),
+  v.maxLength(AFFILIATE_ID_FIELD_MAX_LENGTH)
+);
+
+const boundedTextSchema = v.pipe(
+  v.string(),
+  v.trim(),
+  v.maxLength(AFFILIATE_TEXT_FIELD_MAX_LENGTH)
+);
+
 // --------------------
 // Command inputs
 // --------------------
@@ -53,16 +68,16 @@ const moneySchema = v.pipe(v.number(), v.minValue(0));
 export const recordAffiliateConversionInputSchema = v.object({
   commissionAmount: moneySchema,
   purchaseAmount: moneySchema,
-  purchaserUserId: v.string(),
-  transactionId: v.string(),
+  purchaserUserId: boundedIdSchema,
+  transactionId: boundedIdSchema,
 });
 
 // recordPayout does not accept amount — it always pays full pending balance
 export const recordAffiliatePayoutInputSchema = v.object({
-  affiliateUserId: v.string(),
-  method: v.optional(v.string()),
-  note: v.optional(v.string()),
-  reference: v.optional(v.string()),
+  affiliateUserId: boundedIdSchema,
+  method: v.optional(boundedTextSchema),
+  note: v.optional(boundedTextSchema),
+  reference: v.optional(boundedTextSchema),
 });
 
 // claimSlug takes no input — slug is auto-generated from user name
@@ -86,8 +101,8 @@ export const listPendingPayoutsInputSchema = v.object({
 });
 
 export const setAffiliateReferrerInputSchema = v.object({
-  referredUserId: v.string(),
-  referrerUserId: v.nullable(v.string()),
+  referredUserId: boundedIdSchema,
+  referrerUserId: v.nullable(boundedIdSchema),
 });
 
 export const getMyAffiliateProfileInputSchema = v.object({});
@@ -184,11 +199,11 @@ export const setAffiliateReferrerOutputSchema = v.object({
 // --------------------
 
 export const reconcileAffiliateCommissionsInputSchema = v.object({
-  affiliateUserId: v.optional(v.string()),
+  affiliateUserId: v.optional(boundedIdSchema),
 });
 
 export const backfillAffiliateCommissionsInputSchema = v.object({
-  affiliateUserId: v.optional(v.string()),
+  affiliateUserId: v.optional(boundedIdSchema),
 });
 
 export const missingCommissionSchema = v.object({

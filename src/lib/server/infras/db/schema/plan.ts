@@ -110,6 +110,7 @@ export const payment = sqliteTable(
       table.gateway,
       table.gatewayTransactionId
     ),
+    index("payment_gatewayTransactionId_idx").on(table.gatewayTransactionId),
     index("payment_orderId_idx").on(table.orderId),
     index("payment_userId_idx").on(table.userId),
   ]
