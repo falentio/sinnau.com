@@ -13,6 +13,7 @@ const ERRORS = {
   AFFILIATE_SLUG_CONFLICT: {
     message: "Failed to generate a unique slug after maximum retries",
   },
+  FORBIDDEN: { message: "Admin access required" },
   NOT_FOUND: { message: "Application not found" },
 } as const;
 

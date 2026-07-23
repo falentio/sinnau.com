@@ -14,18 +14,20 @@ import { affiliateReconcileCommissions } from "./queries/affiliate.reconcile-com
 import { affiliateResolveSlug } from "./queries/affiliate.resolve-slug";
 
 export const affiliateRouter = {
-  acceptApplication: affiliateAcceptApplication,
+  admin: {
+    acceptApplication: affiliateAcceptApplication,
+    listApplications: affiliateListApplications,
+    rejectApplication: affiliateRejectApplication,
+  },
   apply: affiliateApply,
   backfillCommissions: affiliateBackfillCommissions,
   getDashboardSummary: affiliateGetDashboardSummary,
   getMyApplication: affiliateGetMyApplication,
   getMyProfile: affiliateGetMyProfile,
-  listApplications: affiliateListApplications,
   listPendingPayouts: affiliateListPendingPayouts,
   reconcileCommissions: affiliateReconcileCommissions,
   recordConversion: affiliateRecordConversion,
   recordPayout: affiliateRecordPayout,
-  rejectApplication: affiliateRejectApplication,
   resolveSlug: affiliateResolveSlug,
   setReferrer: affiliateSetReferrer,
 };

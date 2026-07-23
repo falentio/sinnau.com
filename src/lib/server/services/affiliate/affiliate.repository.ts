@@ -69,7 +69,7 @@ export interface InsertAffiliateApplicationInput {
 export interface AffiliateRepository {
   insertApplication(
     input: InsertAffiliateApplicationInput
-  ): Promise<AffiliateApplication | null>;
+  ): Promise<AffiliateApplication>;
 
   findApplicationById(id: string): Promise<AffiliateApplication | null>;
 

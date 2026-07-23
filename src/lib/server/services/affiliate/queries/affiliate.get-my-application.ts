@@ -1,6 +1,6 @@
 import {
   affiliateApplicationSchema,
-  getMyAffiliateProfileInputSchema,
+  getMyAffiliateApplicationInputSchema,
 } from "$lib/schemas/affiliate";
 import { authorizedProcedure } from "$lib/server/api/base";
 
@@ -12,7 +12,7 @@ const ERRORS = {
 
 export const affiliateGetMyApplication = authorizedProcedure
   .errors(ERRORS)
-  .input(getMyAffiliateProfileInputSchema)
+  .input(getMyAffiliateApplicationInputSchema)
   .output(affiliateApplicationSchema)
   .handler(
     async ({ context }) =>

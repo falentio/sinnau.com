@@ -86,21 +86,13 @@ export class AffiliateService {
       });
     }
 
-    const application = await this.repo.insertApplication({
+    return await this.repo.insertApplication({
       advantage: input.advantage,
       instagramHandle: input.instagramHandle ?? null,
       tiktokHandle: input.tiktokHandle ?? null,
       userId: owner,
       youtubeHandle: input.youtubeHandle ?? null,
     });
-
-    if (!application) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
-
-    return application;
   }
 
   async acceptApplication(
@@ -109,25 +101,8 @@ export class AffiliateService {
   ): Promise<AffiliateProfile> {
     const admin = await this.guard.requireAdmin(adminUserId);
 
-    const application = await this.repo.findApplicationById(
+    const application = await this.assertPendingApplication(
       input.applicationId
-    );
-    if (!application) {
-      throw new ORPCError("NOT_FOUND", {
-        message: "Application not found",
-      });
-    }
-
-    if (application.status !== "PENDING") {
-      throw new ORPCError("AFFILIATE_APPLICATION_NOT_PENDING", {
-        message: "Application is not pending review",
-      });
-    }
-
-    await this.repo.updateApplicationStatus(
-      input.applicationId,
-      "ACCEPTED",
-      admin
     );
 
     const user = await this.repo.findUserById(application.userId);
@@ -157,13 +132,19 @@ export class AffiliateService {
       slug,
       user.name
     );
-    if (profile) {
-      return profile;
+    if (!profile) {
+      throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
+        message: "Failed to generate a unique slug after maximum retries",
+      });
     }
 
-    throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
-      message: "Failed to generate a unique slug after maximum retries",
-    });
+    await this.repo.updateApplicationStatus(
+      input.applicationId,
+      "ACCEPTED",
+      admin
+    );
+
+    return profile;
   }
 
   async rejectApplication(
@@ -172,20 +153,7 @@ export class AffiliateService {
   ): Promise<AffiliateApplication> {
     const admin = await this.guard.requireAdmin(adminUserId);
 
-    const application = await this.repo.findApplicationById(
-      input.applicationId
-    );
-    if (!application) {
-      throw new ORPCError("NOT_FOUND", {
-        message: "Application not found",
-      });
-    }
-
-    if (application.status !== "PENDING") {
-      throw new ORPCError("AFFILIATE_APPLICATION_NOT_PENDING", {
-        message: "Application is not pending review",
-      });
-    }
+    await this.assertPendingApplication(input.applicationId);
 
     const updated = await this.repo.updateApplicationStatus(
       input.applicationId,
@@ -429,6 +397,23 @@ export class AffiliateService {
         transactionId: input.transactionId,
       });
     }
+  }
+
+  private async assertPendingApplication(
+    applicationId: string
+  ): Promise<AffiliateApplication> {
+    const application = await this.repo.findApplicationById(applicationId);
+    if (!application) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Application not found",
+      });
+    }
+    if (application.status !== "PENDING") {
+      throw new ORPCError("AFFILIATE_APPLICATION_NOT_PENDING", {
+        message: "Application is not pending review",
+      });
+    }
+    return application;
   }
 
   private async reconcile(

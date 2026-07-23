@@ -6,7 +6,9 @@ import { adminProcedure } from "$lib/server/api/base";
 
 import { affiliateService } from "../index";
 
-const ERRORS = {} as const;
+const ERRORS = {
+  FORBIDDEN: { message: "Admin access required" },
+} as const;
 
 export const affiliateListApplications = adminProcedure
   .errors(ERRORS)

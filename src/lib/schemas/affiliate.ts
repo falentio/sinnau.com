@@ -94,9 +94,6 @@ export const recordAffiliatePayoutInputSchema = v.object({
   reference: v.optional(boundedTextSchema),
 });
 
-// claimSlug takes no input — slug is a random 8-char nanoid
-export const claimAffiliateProfileInputSchema = v.object({});
-
 const handleSchema = v.pipe(
   v.string(),
   v.trim(),
@@ -122,7 +119,7 @@ export const applyAffiliateInputSchema = v.object({
 });
 
 export const reviewAffiliateApplicationInputSchema = v.object({
-  applicationId: boundedIdSchema,
+  applicationId: affiliateApplicationIdSchema,
 });
 
 export const listAffiliateApplicationsInputSchema = v.object({
@@ -156,6 +153,8 @@ export const setAffiliateReferrerInputSchema = v.object({
 });
 
 export const getMyAffiliateProfileInputSchema = v.object({});
+
+export const getMyAffiliateApplicationInputSchema = v.object({});
 
 // --------------------
 // Output schemas

@@ -1,5 +1,4 @@
 /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle $onUpdate propagates any */
-import type { AFFILIATE_APPLICATION_STATUSES } from "$lib/schemas/affiliate.constant";
 import {
   AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
@@ -78,7 +77,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         })
         .returning();
       if (!created) {
-        return null;
+        throw new Error("Failed to insert affiliate application");
       }
       return created;
     } catch (error) {
@@ -178,23 +177,23 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
   }
 
   async listApplications(
-    status: (typeof AFFILIATE_APPLICATION_STATUSES)[number] | undefined,
+    status: string | undefined,
     page: number,
     limit: number
   ) {
     try {
       const offset = (page - 1) * limit;
+      const whereClause =
+        status === undefined
+          ? undefined
+          : eq(affiliateApplication.status, status);
 
       const [countRow] = await this.dbInstance
         .select({
           total: count(affiliateApplication.id),
         })
         .from(affiliateApplication)
-        .where(
-          status === undefined
-            ? undefined
-            : eq(affiliateApplication.status, status)
-        );
+        .where(whereClause);
 
       const total = countRow?.total ?? 0;
       const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -202,11 +201,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       const rows = await this.dbInstance
         .select()
         .from(affiliateApplication)
-        .where(
-          status === undefined
-            ? undefined
-            : eq(affiliateApplication.status, status)
-        )
+        .where(whereClause)
         .orderBy(desc(affiliateApplication.createdAt))
         .limit(limit)
         .offset(offset);

@@ -105,20 +105,6 @@ describe.concurrent("affiliate service", () => {
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "UNAUTHORIZED" });
     });
-
-    it("throws INTERNAL_SERVER_ERROR when insertApplication returns null", async ({
-      expect,
-    }) => {
-      const { repo, service } = setupService();
-      repo.findProfileByUserId.mockResolvedValue(null);
-      repo.findPendingApplicationByUserId.mockResolvedValue(null);
-      repo.insertApplication.mockResolvedValue(null);
-
-      const err = await captureError(service.apply(validInput, "user-1"));
-
-      expect(err).toBeInstanceOf(ORPCError);
-      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
-    });
   });
 
   describe.concurrent("acceptApplication", () => {

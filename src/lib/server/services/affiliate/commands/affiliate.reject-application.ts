@@ -10,6 +10,7 @@ const ERRORS = {
   AFFILIATE_APPLICATION_NOT_PENDING: {
     message: "Application is not pending review",
   },
+  FORBIDDEN: { message: "Admin access required" },
   NOT_FOUND: { message: "Application not found" },
 } as const;
 
