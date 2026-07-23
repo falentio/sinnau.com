@@ -106,5 +106,6 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 
 After commit, you must using "code-review" skills, baseline are COMMIT^..COMMIT
 this is mandatory, non negotible
+Auto apply hard violation.
 
 ---
