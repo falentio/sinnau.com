@@ -661,6 +661,28 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(missing).toEqual([]);
     });
 
+    it("excludes payments with null gatewayTransactionId", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedUser({ affiliatedBy: referrer, name: "Buyer" });
+      const orderId = env.seedOrder({
+        grossAmount: 100_000,
+        status: "PAID",
+        userId: purchaser,
+      });
+      env.seedPayment({
+        gatewayTransactionId: null,
+        orderId,
+        userId: purchaser,
+      });
+
+      const missing = await env.repo.findMissingCommissions();
+
+      expect(missing).toEqual([]);
+    });
+
     it("scopes to a single affiliate when provided", async ({ expect }) => {
       await using env = new AffiliateTestEnv();
       const referrerA = env.seedReferrer();
@@ -1141,6 +1163,66 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe.concurrent("updateProfileBalance", () => {
+    it("updates points and increments version when version matches", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const profile = await env.repo.insertProfile(
+        env.userId,
+        "test-slug",
+        "Test"
+      );
+      expect(profile).not.toBeNull();
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- safe: non-null checked above
+      const p = profile!;
+
+      const updated = await env.repo.updateProfileBalance(p.id, 150, p.version);
+
+      expect(updated).not.toBeNull();
+      expect(updated?.points).toBe(150);
+      expect(updated?.version).toBe(p.version + 1);
+    });
+
+    it("returns null when expectedVersion does not match", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const profile = await env.repo.insertProfile(
+        env.userId,
+        "test-slug",
+        "Test"
+      );
+      expect(profile).not.toBeNull();
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- safe: non-null checked above
+      const p = profile!;
+
+      const result = await env.repo.updateProfileBalance(
+        p.id,
+        150,
+        p.version + 99
+      );
+
+      expect(result).toBeNull();
+
+      const unchanged = await env.repo.findProfileByUserId(env.userId);
+      expect(unchanged?.points).toBe(0);
+      expect(unchanged?.version).toBe(p.version);
+    });
+
+    it("returns null when profile does not exist", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.updateProfileBalance(
+        "aff_nonexistent",
+        100,
+        1
+      );
+
+      expect(result).toBeNull();
+    });
+  });
 });
 
 describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
@@ -1226,6 +1308,52 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       const result =
         await env.repo.findConversionByTransactionId("txn-cascade");
       expect(result).toBeNull();
+    });
+
+    it("sets payoutId to null on commissions when the payout is deleted", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      const admin = env.seedUser({ name: "Admin" });
+      await env.repo.insertProfile(referrer, "slug", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-payout-del",
+      });
+
+      const payout = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: null,
+        note: null,
+        processedByAdminId: admin,
+        reference: null,
+      });
+      expect(payout).not.toBeNull();
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- safe: non-null checked above
+      const p = payout!;
+
+      const [before] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.transactionId, "txn-payout-del"))
+        .all();
+      expect(before?.payoutId).toBe(p?.id);
+      expect(before?.status).toBe("PAID");
+
+      env.db.delete(affiliatePayout).where(eq(affiliatePayout.id, p.id)).run();
+
+      const [after] = env.db
+        .select()
+        .from(affiliateCommission)
+        .where(eq(affiliateCommission.transactionId, "txn-payout-del"))
+        .all();
+      expect(after?.payoutId).toBeNull();
+      expect(after?.status).toBe("PAID");
     });
   });
 });

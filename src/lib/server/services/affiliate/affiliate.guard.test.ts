@@ -40,7 +40,8 @@ describe.concurrent("affiliate guard", () => {
       const { guard } = setupGuard();
 
       const err = await captureError(
-        Promise.resolve().then(() => guard.requireUser(null))
+        // oxlint-disable-next-line unicorn/no-useless-undefined -- explicit undefined vs missing arg for type safety
+        Promise.resolve().then(() => guard.requireUser(undefined))
       );
 
       expect(err).toBeInstanceOf(ORPCError);

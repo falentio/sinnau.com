@@ -147,6 +147,39 @@ describe.concurrent("affiliate service", () => {
     });
   });
 
+  describe.concurrent("getMyProfile", () => {
+    it("returns the profile for the authenticated user", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const profile = createAffiliateProfileFixture();
+      repo.findProfileByUserId.mockResolvedValue(profile);
+
+      const result = await service.getMyProfile("user-1");
+
+      expect(result).toEqual(profile);
+      expect(repo.findProfileByUserId).toHaveBeenCalledWith("user-1");
+    });
+
+    it("throws NOT_FOUND when the user has no profile", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(null);
+
+      const err = await captureError(service.getMyProfile("user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws UNAUTHORIZED when userId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireUser.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.getMyProfile(null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+  });
+
   describe.concurrent("hasProfile", () => {
     it("returns true when the user has a profile", async ({ expect }) => {
       const { repo, service } = setupService();
