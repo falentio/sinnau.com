@@ -80,29 +80,6 @@
       pendingProvider = null;
     }
   };
-
-  const unlinkProvider = async (provider: "google" | "github") => {
-    pendingProvider = provider;
-    try {
-      const { error } = await authClient.unlinkAccount({
-        providerId: provider,
-      });
-      if (error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
-        return;
-      }
-      toast.success("Metode masuk berhasil diputus.", {
-        position: "top-right",
-      });
-      await loadAccounts();
-    } catch (error) {
-      toast.error(getErrorMessage(error as { message?: string }), {
-        position: "top-right",
-      });
-    } finally {
-      pendingProvider = null;
-    }
-  };
 </script>
 
 <SeoHead
@@ -169,14 +146,7 @@
               {providerLabels[provider]}
             </span>
             {#if linkedProviders.has(provider)}
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pendingProvider !== null}
-                onclick={() => unlinkProvider(provider)}
-              >
-                Putuskan
-              </Button>
+              <span class="text-xs text-muted-foreground">Terhubung</span>
             {:else}
               <Button
                 variant="outline"
