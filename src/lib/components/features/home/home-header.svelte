@@ -1,13 +1,14 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import {
+    Agreement01Icon,
     Cancel01Icon,
+    Dollar01Icon,
     InformationCircleIcon,
     InstagramIcon,
     LockIcon,
     Logout01Icon,
     PieChartIcon,
-    ScrollIcon,
     Settings02Icon,
     Search02Icon,
     AiBeautifyIcon,
@@ -21,14 +22,13 @@
   import InputGroupInput from "$lib/components/ui/input-group/input-group-input.svelte";
   import InputGroup from "$lib/components/ui/input-group/input-group.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
+  import { INSTAGRAM_URL } from "$lib/constants";
   import { authClient, getUser } from "$lib/hooks/auth.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   let search = $state("");
 
   const user = getUser;
-
-  const INSTAGRAM_URL = "https://www.instagram.com/sinnau.com";
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -80,9 +80,13 @@
                 <HugeiconsIcon icon={LockIcon} />
                 Kebijakan Privasi
               </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => goto("/fair-usage-policy")}>
-                <HugeiconsIcon icon={ScrollIcon} />
-                Kebijakan Penggunaan Wajar
+              <DropdownMenu.Item onSelect={() => goto("/terms")}>
+                <HugeiconsIcon icon={Agreement01Icon} />
+                Syarat & Ketentuan
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => goto("/refund")}>
+                <HugeiconsIcon icon={Dollar01Icon} />
+                Kebijakan Pengembalian Dana
               </DropdownMenu.Item>
             </DropdownMenu.Group>
             <DropdownMenu.Separator />

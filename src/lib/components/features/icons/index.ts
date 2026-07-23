@@ -1,5 +1,6 @@
 export {
   Add01Icon,
+  Agreement01Icon,
   AiBeautifyIcon,
   AiChat02Icon,
   Alert02Icon,
@@ -28,7 +29,6 @@ export {
   QuillWrite01Icon,
   SadDizzyIcon,
   SadIcon,
-  ScrollIcon,
   Search02Icon,
   Settings02Icon,
   Share01Icon,

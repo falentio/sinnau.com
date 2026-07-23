@@ -25,12 +25,21 @@
       ],
       title: "Akun",
     },
+    {
+      links: [
+        { href: "/privacy", label: "Kebijakan Privasi" },
+        { href: "/terms", label: "Syarat & Ketentuan" },
+        { href: "/refund", label: "Pengembalian Dana" },
+        { href: "/about", label: "Tentang" },
+      ],
+      title: "Legal",
+    },
   ];
 </script>
 
 <footer class="border-t">
   <div class="mx-auto w-full max-w-[1240px] px-5 py-16 sm:px-8 sm:py-20">
-    <div class="grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <div class="grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
       <div>
         <Wordmark />
         <p
