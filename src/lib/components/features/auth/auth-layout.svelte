@@ -1,7 +1,5 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { AiBeautifyIcon } from "$lib/components/features/icons";
-  import { HugeiconsIcon } from "@hugeicons/svelte";
   import type { Snippet } from "svelte";
 
   interface Props {
@@ -24,11 +22,14 @@
   <div class="flex flex-col gap-4 p-6 md:p-10">
     <div class="flex justify-center gap-2 md:justify-start">
       <a href={resolve("/")} class="flex items-center gap-2 font-medium">
-        <div
-          class="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground"
-        >
-          <HugeiconsIcon icon={AiBeautifyIcon} class="size-4" />
-        </div>
+        <img
+          src="/icon.png"
+          alt=""
+          aria-hidden="true"
+          width="24"
+          height="24"
+          class="size-6 rounded-md"
+        />
         Sinnau
       </a>
     </div>
@@ -44,11 +45,14 @@
     <div class="absolute inset-0 {gradientStyle} opacity-70"></div>
     <div class="absolute inset-0 flex items-center justify-center p-12">
       <div class="max-w-md space-y-4 text-center">
-        <div
-          class="mx-auto flex size-16 items-center justify-center rounded-4xl bg-primary text-primary-foreground shadow-lg"
-        >
-          <HugeiconsIcon icon={AiBeautifyIcon} class="size-8" />
-        </div>
+        <img
+          src="/icon.png"
+          alt=""
+          aria-hidden="true"
+          width="64"
+          height="64"
+          class="mx-auto size-16 rounded-4xl shadow-lg"
+        />
         <h2 class="text-3xl font-semibold tracking-tight">{heading}</h2>
         <p class="text-muted-foreground">{description}</p>
       </div>

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
   import {
-    AiBeautifyIcon,
     AiChat02Icon,
     Book03Icon,
     Cards01Icon,
@@ -48,11 +47,14 @@
 <Sidebar.Root variant="inset">
   <Sidebar.Header>
     <a href="/home" class="flex items-center gap-2 px-2 py-1.5 font-medium">
-      <div
-        class="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground"
-      >
-        <HugeiconsIcon icon={AiBeautifyIcon} class="size-4" />
-      </div>
+      <img
+        src="/icon.png"
+        alt=""
+        aria-hidden="true"
+        width="24"
+        height="24"
+        class="size-6 rounded-md"
+      />
       Sinnau
     </a>
   </Sidebar.Header>

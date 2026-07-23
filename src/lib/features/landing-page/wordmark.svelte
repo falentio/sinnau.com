@@ -15,14 +15,13 @@
   ]}
   aria-label="sinnau, beranda"
 >
-  <span
-    class="relative grid size-6 place-items-center rounded-[8px] bg-[var(--landing-fg)] text-[var(--landing-bg)]"
-  >
-    <span class="text-[10px] font-semibold tracking-[0.04em]">2s</span>
-    <span
-      class="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-[var(--landing-accent)] ring-2 ring-[var(--landing-bg)]"
-      aria-hidden="true"
-    ></span>
-  </span>
+  <img
+    src="/icon.png"
+    alt=""
+    aria-hidden="true"
+    width="24"
+    height="24"
+    class="size-6 rounded-[8px]"
+  />
   <span class="text-[var(--landing-fg)]">2sinnau</span>
 </a>

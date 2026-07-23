@@ -5,11 +5,14 @@
 <Sidebar.Root variant="inset">
   <Sidebar.Header>
     <a href="/-11-/" class="flex items-center gap-2 px-2 py-1.5 font-medium">
-      <div
-        class="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground"
-      >
-        <span class="text-xs font-bold">A</span>
-      </div>
+      <img
+        src="/icon.png"
+        alt=""
+        aria-hidden="true"
+        width="24"
+        height="24"
+        class="size-6 rounded-md"
+      />
       Admin
     </a>
   </Sidebar.Header>
