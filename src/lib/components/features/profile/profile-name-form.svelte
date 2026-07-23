@@ -86,9 +86,6 @@
         />
       {/snippet}
     </Form.Control>
-    <Form.Description>
-      Nama ini yang dilihat teman-temanmu. Perubahan disimpan otomatis.
-    </Form.Description>
     <Form.FieldErrors />
   </Form.Field>
 </div>

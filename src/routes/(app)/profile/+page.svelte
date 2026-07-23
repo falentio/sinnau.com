@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    ArrowLeft01Icon,
     GithubIcon,
     GoogleIcon,
     LockPasswordIcon,
@@ -112,49 +111,15 @@
   robots="noindex"
 />
 
-<div class="mx-auto w-full max-w-3xl px-6 pt-10 md:pt-14">
-  <div class="mb-6 md:mb-8">
-    <a
-      href="/home"
-      class="group inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-sm text-muted-foreground transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-foreground"
-    >
-      <HugeiconsIcon
-        icon={ArrowLeft01Icon}
-        class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-0.5"
-      />
-      Kembali ke beranda
-    </a>
-  </div>
+<div class="mx-auto w-full max-w-3xl px-6 py-10 md:py-14">
+  <h1
+    class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-3xl"
+  >
+    Profil
+  </h1>
 
-  <header class="flex flex-col gap-2 pb-10 md:pb-12">
-    <span
-      class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
-    >
-      Akun
-    </span>
-    <h1
-      class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
-    >
-      Profil
-    </h1>
-    <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-      Kelola nama tampilan, metode masuk, dan kata sandi akunmu.
-    </p>
-  </header>
-
-  <section class="flex flex-col gap-4 pb-12">
-    <header class="flex flex-col gap-1">
-      <span
-        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
-      >
-        Informasi akun
-      </span>
-      <h2
-        class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-3xl"
-      >
-        Identitas
-      </h2>
-    </header>
+  <section class="mt-8 flex flex-col gap-4">
+    <h2 class="text-sm font-semibold text-foreground">Identitas</h2>
 
     <div class="flex items-center gap-3">
       <UserAvatar
@@ -175,22 +140,8 @@
     <ProfileNameForm />
   </section>
 
-  <section class="flex flex-col gap-4 border-t border-border/60 py-12">
-    <header class="flex flex-col gap-1">
-      <span
-        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
-      >
-        Metode masuk
-      </span>
-      <h2
-        class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-3xl"
-      >
-        Akun terhubung
-      </h2>
-      <p class="text-sm text-muted-foreground">
-        Beberapa cara masuk bisa terhubung ke satu akun.
-      </p>
-    </header>
+  <section class="mt-8 flex flex-col gap-4 border-t border-border/60 pt-8">
+    <h2 class="text-sm font-semibold text-foreground">Metode masuk</h2>
 
     {#if accounts === null}
       <p class="text-sm text-muted-foreground">Memuat...</p>
@@ -242,22 +193,8 @@
     {/if}
   </section>
 
-  <section class="flex flex-col gap-4 border-t border-border/60 pt-12 pb-16">
-    <header class="flex flex-col gap-1">
-      <span
-        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
-      >
-        Keamanan
-      </span>
-      <h2
-        class="font-heading text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-3xl"
-      >
-        Kata sandi
-      </h2>
-      <p class="text-sm text-muted-foreground">
-        Gunakan minimal 8 karakter agar akunmu tetap aman.
-      </p>
-    </header>
+  <section class="mt-8 flex flex-col gap-4 border-t border-border/60 pt-8">
+    <h2 class="text-sm font-semibold text-foreground">Kata sandi</h2>
 
     {#if hasPassword === null}
       <p class="text-sm text-muted-foreground">Memuat...</p>
