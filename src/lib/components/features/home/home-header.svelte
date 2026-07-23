@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import {
     Cancel01Icon,
+    InformationCircleIcon,
+    InstagramIcon,
+    LockIcon,
+    Logout01Icon,
+    PieChartIcon,
+    ScrollIcon,
     Settings02Icon,
     Search02Icon,
     AiBeautifyIcon,
@@ -8,17 +15,30 @@
   } from "$lib/components/features/icons";
   import UserAvatar from "$lib/components/features/users/user-avatar.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import InputGroupAddon from "$lib/components/ui/input-group/input-group-addon.svelte";
   import InputGroupButton from "$lib/components/ui/input-group/input-group-button.svelte";
   import InputGroupInput from "$lib/components/ui/input-group/input-group-input.svelte";
   import InputGroup from "$lib/components/ui/input-group/input-group.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
-  import { getUser } from "$lib/hooks/auth.svelte";
+  import { authClient, getUser } from "$lib/hooks/auth.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   let search = $state("");
 
   const user = getUser;
+
+  const INSTAGRAM_URL = "https://www.instagram.com/sinnau.com";
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          void goto("/login");
+        },
+      },
+    });
+  };
 </script>
 
 <div class="sticky top-0 z-20 bg-card text-card-foreground shadow-xs">
@@ -37,9 +57,55 @@
       </div>
       <span class="flex-auto"></span>
       <div class="self-center">
-        <Button size="icon" variant="ghost">
-          <HugeiconsIcon icon={Settings02Icon} />
-        </Button>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <Button
+                {...props}
+                size="icon"
+                variant="ghost"
+                aria-label="Menu akun"
+              >
+                <HugeiconsIcon icon={Settings02Icon} />
+              </Button>
+            {/snippet}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="end" class="min-w-56">
+            <DropdownMenu.Group>
+              <DropdownMenu.Item onSelect={() => goto("/about")}>
+                <HugeiconsIcon icon={InformationCircleIcon} />
+                Tentang
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => goto("/privacy")}>
+                <HugeiconsIcon icon={LockIcon} />
+                Kebijakan Privasi
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => goto("/fair-usage-policy")}>
+                <HugeiconsIcon icon={ScrollIcon} />
+                Kebijakan Penggunaan Wajar
+              </DropdownMenu.Item>
+            </DropdownMenu.Group>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Group>
+              <DropdownMenu.Item onSelect={() => goto("/subs/usage")}>
+                <HugeiconsIcon icon={PieChartIcon} />
+                Penggunaan
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() =>
+                  window.open(INSTAGRAM_URL, "_blank", "noopener,noreferrer")}
+              >
+                <HugeiconsIcon icon={InstagramIcon} />
+                Bantuan (Instagram)
+              </DropdownMenu.Item>
+            </DropdownMenu.Group>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item variant="destructive" onSelect={handleSignOut}>
+              <HugeiconsIcon icon={Logout01Icon} />
+              Keluar
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </div>
     </div>
     <InputGroup>
