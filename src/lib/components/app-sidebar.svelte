@@ -205,13 +205,17 @@
     <Sidebar.Menu>
       <Sidebar.MenuItem>
         <Sidebar.MenuButton size="lg">
-          <UserAvatar name={userName} {userId} class="size-8" />
-          <div class="grid flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-medium">{userName}</span>
-            <span class="truncate text-xs text-muted-foreground"
-              >{userEmail}</span
-            >
-          </div>
+          {#snippet child({ props })}
+            <a href="/profile" {...props}>
+              <UserAvatar name={userName} {userId} class="size-8" />
+              <div class="grid flex-1 text-left text-sm leading-tight">
+                <span class="truncate font-medium">{userName}</span>
+                <span class="truncate text-xs text-muted-foreground"
+                  >{userEmail}</span
+                >
+              </div>
+            </a>
+          {/snippet}
         </Sidebar.MenuButton>
       </Sidebar.MenuItem>
       {#if user()?.role === "admin"}

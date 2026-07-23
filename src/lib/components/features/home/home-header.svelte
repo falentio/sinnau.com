@@ -9,6 +9,7 @@
     LockIcon,
     Logout01Icon,
     PieChartIcon,
+    ProfileIcon,
     Settings02Icon,
     Search02Icon,
     AiBeautifyIcon,
@@ -91,6 +92,10 @@
             </DropdownMenu.Group>
             <DropdownMenu.Separator />
             <DropdownMenu.Group>
+              <DropdownMenu.Item onSelect={() => goto("/profile")}>
+                <HugeiconsIcon icon={ProfileIcon} />
+                Profil
+              </DropdownMenu.Item>
               <DropdownMenu.Item onSelect={() => goto("/subs/usage")}>
                 <HugeiconsIcon icon={PieChartIcon} />
                 Penggunaan
