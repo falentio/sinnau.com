@@ -10,14 +10,16 @@
     Quiz01Icon,
     Search02Icon,
   } from "$lib/components/features/icons";
-  import AvatarFallback from "$lib/components/ui/avatar/avatar-fallback.svelte";
-  import AvatarImage from "$lib/components/ui/avatar/avatar-image.svelte";
-  import Avatar from "$lib/components/ui/avatar/avatar.svelte";
+  import UserAvatar from "$lib/components/features/users/user-avatar.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import { getUser } from "$lib/hooks/auth.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   const user = getUser;
+
+  const userName = $derived(user()?.name ?? "");
+  const userEmail = $derived(user()?.email ?? "");
+  const userId = $derived(user()?.id ?? "");
 
   const studySetId = $derived(page.params.studySetId ?? "");
   const isStudySetRoute = $derived(
@@ -203,14 +205,11 @@
     <Sidebar.Menu>
       <Sidebar.MenuItem>
         <Sidebar.MenuButton size="lg">
-          <Avatar class="size-8">
-            <AvatarImage src="" />
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
+          <UserAvatar name={userName} {userId} class="size-8" />
           <div class="grid flex-1 text-left text-sm leading-tight">
-            <span class="truncate font-medium">Placeholder</span>
+            <span class="truncate font-medium">{userName}</span>
             <span class="truncate text-xs text-muted-foreground"
-              >user@example.com</span
+              >{userEmail}</span
             >
           </div>
         </Sidebar.MenuButton>
