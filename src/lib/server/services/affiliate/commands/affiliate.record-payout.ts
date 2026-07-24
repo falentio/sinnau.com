@@ -10,6 +10,9 @@ const ERRORS = {
   AFFILIATE_NO_PENDING_BALANCE: {
     message: "No pending balance to payout",
   },
+  AFFILIATE_RECONCILE_BEFORE_PAYOUT: {
+    message: "Reconcile commissions before paying out this affiliate",
+  },
 } as const;
 
 export const affiliateRecordPayout = adminProcedure

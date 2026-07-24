@@ -1,24 +1,39 @@
 import * as v from "valibot";
 
 import {
+  AFFILIATE_ADVANTAGE_MAX_LENGTH,
+  AFFILIATE_ADVANTAGE_MIN_LENGTH,
+  AFFILIATE_APPLICATION_ID_PREFIX,
+  AFFILIATE_APPLICATION_STATUSES,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_COMMISSION_STATUSES,
+  AFFILIATE_HANDLE_MAX_LENGTH,
+  AFFILIATE_ID_FIELD_MAX_LENGTH,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
-  AFFILIATE_RELATIONSHIP_ID_PREFIX,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
+  AFFILIATE_TEXT_FIELD_MAX_LENGTH,
 } from "./affiliate.constant.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
+import { ORDER_STATUSES } from "./plan.constant.ts";
 
 export {
   AFFILIATE_ID_PREFIX,
+  AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
-  AFFILIATE_RELATIONSHIP_ID_PREFIX,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
 };
 
 export const commissionStatusSchema = v.picklist(AFFILIATE_COMMISSION_STATUSES);
+
+export const applicationStatusSchema = v.picklist(
+  AFFILIATE_APPLICATION_STATUSES
+);
+
+export const affiliateApplicationIdSchema = createPrefixedIdSchema(
+  AFFILIATE_APPLICATION_ID_PREFIX
+);
 
 export const affiliateProfileIdSchema =
   createPrefixedIdSchema(AFFILIATE_ID_PREFIX);
@@ -29,10 +44,6 @@ export const affiliateCommissionIdSchema = createPrefixedIdSchema(
 
 export const affiliatePayoutIdSchema = createPrefixedIdSchema(
   AFFILIATE_PAYOUT_ID_PREFIX
-);
-
-export const affiliateRelationshipIdSchema = createPrefixedIdSchema(
-  AFFILIATE_RELATIONSHIP_ID_PREFIX
 );
 
 export const affiliateSubscriptionEventIdSchema = createPrefixedIdSchema(
@@ -51,6 +62,19 @@ const slugSchema = v.pipe(
 
 const moneySchema = v.pipe(v.number(), v.minValue(0));
 
+const boundedIdSchema = v.pipe(
+  v.string(),
+  v.trim(),
+  v.minLength(1),
+  v.maxLength(AFFILIATE_ID_FIELD_MAX_LENGTH)
+);
+
+const boundedTextSchema = v.pipe(
+  v.string(),
+  v.trim(),
+  v.maxLength(AFFILIATE_TEXT_FIELD_MAX_LENGTH)
+);
+
 // --------------------
 // Command inputs
 // --------------------
@@ -58,20 +82,53 @@ const moneySchema = v.pipe(v.number(), v.minValue(0));
 export const recordAffiliateConversionInputSchema = v.object({
   commissionAmount: moneySchema,
   purchaseAmount: moneySchema,
-  purchaserUserId: v.string(),
-  transactionId: v.string(),
+  purchaserUserId: boundedIdSchema,
+  transactionId: boundedIdSchema,
 });
 
 // recordPayout does not accept amount — it always pays full pending balance
 export const recordAffiliatePayoutInputSchema = v.object({
-  affiliateUserId: v.string(),
-  method: v.optional(v.string()),
-  note: v.optional(v.string()),
-  reference: v.optional(v.string()),
+  affiliateUserId: boundedIdSchema,
+  method: v.optional(boundedTextSchema),
+  note: v.optional(boundedTextSchema),
+  reference: v.optional(boundedTextSchema),
 });
 
-// claimSlug takes no input — slug is auto-generated from user name
-export const claimAffiliateProfileInputSchema = v.object({});
+const handleSchema = v.pipe(
+  v.string(),
+  v.trim(),
+  v.maxLength(AFFILIATE_HANDLE_MAX_LENGTH)
+);
+
+export const applyAffiliateInputSchema = v.object({
+  advantage: v.pipe(
+    v.string(),
+    v.trim(),
+    v.minLength(
+      AFFILIATE_ADVANTAGE_MIN_LENGTH,
+      "Advantage must be at least 10 characters"
+    ),
+    v.maxLength(
+      AFFILIATE_ADVANTAGE_MAX_LENGTH,
+      "Advantage must be at most 1000 characters"
+    )
+  ),
+  instagramHandle: v.optional(handleSchema),
+  tiktokHandle: v.optional(handleSchema),
+  youtubeHandle: v.optional(handleSchema),
+});
+
+export const reviewAffiliateApplicationInputSchema = v.object({
+  applicationId: affiliateApplicationIdSchema,
+});
+
+export const listAffiliateApplicationsInputSchema = v.object({
+  limit: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100))
+  ),
+  page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+  status: v.optional(applicationStatusSchema),
+});
 
 // --------------------
 // Query inputs
@@ -90,16 +147,14 @@ export const listPendingPayoutsInputSchema = v.object({
   page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 });
 
-export const recordAffiliateRelationshipInputSchema = v.object({
-  referredUserId: v.string(),
-  referrerUserId: v.string(),
+export const setAffiliateReferrerInputSchema = v.object({
+  referredUserId: boundedIdSchema,
+  referrerUserId: v.nullable(boundedIdSchema),
 });
 
 export const getMyAffiliateProfileInputSchema = v.object({});
 
-export const getAffiliateRelationshipForUserInputSchema = v.object({
-  referredUserId: v.string(),
-});
+export const getMyAffiliateApplicationInputSchema = v.object({});
 
 // --------------------
 // Output schemas
@@ -139,13 +194,6 @@ export const affiliatePayoutSchema = v.object({
   reference: v.nullable(v.string()),
 });
 
-export const affiliateRelationshipSchema = v.object({
-  createdAt: v.date(),
-  id: affiliateRelationshipIdSchema,
-  referredUserId: v.string(),
-  referrerUserId: v.string(),
-});
-
 export const affiliateSubscriptionEventSchema = v.object({
   createdAt: v.date(),
   id: affiliateSubscriptionEventIdSchema,
@@ -153,8 +201,31 @@ export const affiliateSubscriptionEventSchema = v.object({
   pointsAwarded: v.number(),
   referredUserId: v.string(),
   referrerUserId: v.string(),
-  relationshipId: v.string(),
   sourceType: v.string(),
+});
+
+export const affiliateApplicationSchema = v.object({
+  advantage: v.string(),
+  createdAt: v.date(),
+  id: affiliateApplicationIdSchema,
+  instagramHandle: v.nullable(v.string()),
+  reviewedAt: v.nullable(v.date()),
+  reviewedByAdminId: v.nullable(v.string()),
+  status: applicationStatusSchema,
+  tiktokHandle: v.nullable(v.string()),
+  updatedAt: v.date(),
+  userId: v.string(),
+  youtubeHandle: v.nullable(v.string()),
+});
+
+export const listAffiliateApplicationsOutputSchema = v.object({
+  data: v.array(affiliateApplicationSchema),
+  pagination: v.object({
+    limit: v.number(),
+    page: v.number(),
+    total: v.number(),
+    totalPages: v.number(),
+  }),
 });
 
 export const affiliateDashboardSummarySchema = v.object({
@@ -189,6 +260,50 @@ export const resolveAffiliateSlugOutputSchema = v.object({
 export const recordAffiliateConversionOutputSchema = v.object({
   commission: v.nullable(affiliateCommissionSchema),
   created: v.boolean(),
+});
+
+export const setAffiliateReferrerOutputSchema = v.object({
+  affiliatedBy: v.nullable(v.string()),
+  userId: v.string(),
+});
+
+// --------------------
+// Reconciliation (admin)
+// --------------------
+
+export const reconcileAffiliateCommissionsInputSchema = v.object({
+  affiliateUserId: v.optional(boundedIdSchema),
+});
+
+export const backfillAffiliateCommissionsInputSchema = v.object({
+  affiliateUserId: v.optional(boundedIdSchema),
+});
+
+export const missingCommissionSchema = v.object({
+  affiliateUserId: v.string(),
+  expectedCommissionAmount: v.number(),
+  purchaseAmount: v.number(),
+  purchaserUserId: v.string(),
+  transactionId: v.string(),
+});
+
+export const invalidCommissionSchema = v.object({
+  affiliateUserId: v.string(),
+  commissionAmount: v.number(),
+  commissionId: v.string(),
+  orderStatus: v.picklist(ORDER_STATUSES),
+  purchaserUserId: v.string(),
+  transactionId: v.string(),
+});
+
+export const reconcileAffiliateCommissionsOutputSchema = v.object({
+  invalid: v.array(invalidCommissionSchema),
+  missing: v.array(missingCommissionSchema),
+});
+
+export const backfillAffiliateCommissionsOutputSchema = v.object({
+  created: v.number(),
+  voided: v.number(),
 });
 
 // --------------------
@@ -235,22 +350,58 @@ export type RecordAffiliateConversionOutput = v.InferOutput<
   typeof recordAffiliateConversionOutputSchema
 >;
 
-export type AffiliateRelationship = v.InferOutput<
-  typeof affiliateRelationshipSchema
->;
-
 export type AffiliateSubscriptionEvent = v.InferOutput<
   typeof affiliateSubscriptionEventSchema
 >;
 
-export type RecordAffiliateRelationshipInput = v.InferOutput<
-  typeof recordAffiliateRelationshipInputSchema
+export type SetAffiliateReferrerInput = v.InferOutput<
+  typeof setAffiliateReferrerInputSchema
+>;
+
+export type SetAffiliateReferrerOutput = v.InferOutput<
+  typeof setAffiliateReferrerOutputSchema
 >;
 
 export type GetMyAffiliateProfileInput = v.InferOutput<
   typeof getMyAffiliateProfileInputSchema
 >;
 
-export type GetAffiliateRelationshipForUserInput = v.InferOutput<
-  typeof getAffiliateRelationshipForUserInputSchema
+export type MissingCommission = v.InferOutput<typeof missingCommissionSchema>;
+
+export type InvalidCommission = v.InferOutput<typeof invalidCommissionSchema>;
+
+export type ReconcileAffiliateCommissionsInput = v.InferOutput<
+  typeof reconcileAffiliateCommissionsInputSchema
+>;
+
+export type ReconcileAffiliateCommissionsOutput = v.InferOutput<
+  typeof reconcileAffiliateCommissionsOutputSchema
+>;
+
+export type BackfillAffiliateCommissionsInput = v.InferOutput<
+  typeof backfillAffiliateCommissionsInputSchema
+>;
+
+export type BackfillAffiliateCommissionsOutput = v.InferOutput<
+  typeof backfillAffiliateCommissionsOutputSchema
+>;
+
+export type ApplyAffiliateInput = v.InferOutput<
+  typeof applyAffiliateInputSchema
+>;
+
+export type AffiliateApplication = v.InferOutput<
+  typeof affiliateApplicationSchema
+>;
+
+export type ReviewAffiliateApplicationInput = v.InferOutput<
+  typeof reviewAffiliateApplicationInputSchema
+>;
+
+export type ListAffiliateApplicationsInput = v.InferOutput<
+  typeof listAffiliateApplicationsInputSchema
+>;
+
+export type ListAffiliateApplicationsOutput = v.InferOutput<
+  typeof listAffiliateApplicationsOutputSchema
 >;

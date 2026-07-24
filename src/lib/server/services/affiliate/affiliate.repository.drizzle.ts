@@ -1,29 +1,55 @@
 /* oxlint-disable typescript/no-unsafe-member-access, typescript/no-unsafe-assignment -- Drizzle $onUpdate propagates any */
 import {
+  AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
-  AFFILIATE_RELATIONSHIP_ID_PREFIX,
 } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
-import { and, count, eq, sql, sum } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+  sql,
+  sum,
+} from "drizzle-orm";
 
 import { db as defaultDb } from "../../infras/db/client.ts";
 import type { DB } from "../../infras/db/client.ts";
 import {
+  affiliateApplication,
   affiliateCommission,
   affiliatePayout,
   affiliateProfile,
-  affiliateRelationship,
 } from "../../infras/db/schema/affiliate.ts";
 import { user } from "../../infras/db/schema/auth-schema.ts";
+import { order, payment } from "../../infras/db/schema/plan.ts";
 import { generateId } from "../../utils/nanoid.ts";
 import type {
   AffiliateDashboardRawSummary,
+  AffiliatePayout,
   AffiliateRepository,
+  BackfillResult,
+  CreatePayoutForAffiliateInput,
+  InsertAffiliateApplicationInput,
   InsertAffiliateConversionInput,
-  InsertAffiliatePayoutInput,
+  InvalidCommission,
+  MissingCommissionRow,
 } from "./affiliate.repository.ts";
+
+const isUniqueConstraintError = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code } = error as { code?: unknown };
+  return code === "SQLITE_CONSTRAINT_UNIQUE";
+};
 
 export class AffiliateDrizzleRepository implements AffiliateRepository {
   private readonly dbInstance: DB;
@@ -34,6 +60,169 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
   static withDatabase(db: DB): AffiliateDrizzleRepository {
     return new AffiliateDrizzleRepository(db);
+  }
+
+  async insertApplication(input: InsertAffiliateApplicationInput) {
+    try {
+      const id = generateId(AFFILIATE_APPLICATION_ID_PREFIX);
+      const [created] = await this.dbInstance
+        .insert(affiliateApplication)
+        .values({
+          advantage: input.advantage,
+          id,
+          instagramHandle: input.instagramHandle,
+          tiktokHandle: input.tiktokHandle,
+          userId: input.userId,
+          youtubeHandle: input.youtubeHandle,
+        })
+        .returning();
+      if (!created) {
+        throw new Error("Failed to insert affiliate application");
+      }
+      return created;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findApplicationById(id: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(eq(affiliateApplication.id, id))
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findPendingApplicationByUserId(userId: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(
+          and(
+            eq(affiliateApplication.userId, userId),
+            eq(affiliateApplication.status, "PENDING")
+          )
+        )
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findLatestApplicationByUserId(userId: string) {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(eq(affiliateApplication.userId, userId))
+        .orderBy(desc(affiliateApplication.createdAt))
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async updateApplicationStatus(
+    id: string,
+    status: "ACCEPTED" | "REJECTED",
+    reviewedByAdminId: string
+  ) {
+    try {
+      const [updated] = await this.dbInstance
+        .update(affiliateApplication)
+        .set({
+          reviewedAt: new Date(),
+          reviewedByAdminId,
+          status,
+        })
+        .where(eq(affiliateApplication.id, id))
+        .returning();
+      return updated ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async listApplications(
+    status: string | undefined,
+    page: number,
+    limit: number
+  ) {
+    try {
+      const offset = (page - 1) * limit;
+      const whereClause =
+        status === undefined
+          ? undefined
+          : eq(affiliateApplication.status, status);
+
+      const [countRow] = await this.dbInstance
+        .select({
+          total: count(affiliateApplication.id),
+        })
+        .from(affiliateApplication)
+        .where(whereClause);
+
+      const total = countRow?.total ?? 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+
+      const rows = await this.dbInstance
+        .select()
+        .from(affiliateApplication)
+        .where(whereClause)
+        .orderBy(desc(affiliateApplication.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        data: rows,
+        pagination: {
+          limit,
+          page,
+          total,
+          totalPages,
+        },
+      };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
   }
 
   async insertProfile(userId: string, slug: string, nameSnapshot: string) {
@@ -51,7 +240,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       if (error instanceof ORPCError) {
         throw error;
       }
-      return null;
+      if (isUniqueConstraintError(error)) {
+        return null;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
     }
   }
 
@@ -114,7 +308,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       if (error instanceof ORPCError) {
         throw error;
       }
-      return null;
+      if (isUniqueConstraintError(error)) {
+        return null;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
     }
   }
 
@@ -148,7 +347,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           totalEarned: sum(affiliateCommission.commissionAmount),
         })
         .from(affiliateCommission)
-        .where(eq(affiliateCommission.affiliateUserId, userId));
+        .where(
+          and(
+            eq(affiliateCommission.affiliateUserId, userId),
+            ne(affiliateCommission.status, "VOID")
+          )
+        );
 
       const [paid] = await this.dbInstance
         .select({
@@ -188,15 +392,14 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     try {
       const offset = (page - 1) * limit;
 
-      const countRows = await this.dbInstance
+      const [countRow] = await this.dbInstance
         .select({
-          affiliateUserId: affiliateCommission.affiliateUserId,
+          total: sql<number>`count(distinct ${affiliateCommission.affiliateUserId})`,
         })
         .from(affiliateCommission)
-        .where(eq(affiliateCommission.status, "PENDING"))
-        .groupBy(affiliateCommission.affiliateUserId);
+        .where(eq(affiliateCommission.status, "PENDING"));
 
-      const totalAffiliates = countRows.length;
+      const totalAffiliates = countRow?.total ?? 0;
       const totalPages = Math.max(1, Math.ceil(totalAffiliates / limit));
 
       const rows = await this.dbInstance
@@ -215,6 +418,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           eq(affiliateCommission.affiliateUserId, affiliateProfile.userId)
         )
         .groupBy(affiliateCommission.affiliateUserId)
+        .orderBy(asc(affiliateCommission.affiliateUserId))
         .limit(limit)
         .offset(offset);
 
@@ -244,25 +448,59 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async insertPayout(input: InsertAffiliatePayoutInput) {
+  async createPayoutForAffiliate(
+    input: CreatePayoutForAffiliateInput
+  ): Promise<AffiliatePayout | null> {
     try {
-      const id = generateId(AFFILIATE_PAYOUT_ID_PREFIX);
-      const [created] = await this.dbInstance
-        .insert(affiliatePayout)
-        .values({
-          affiliateUserId: input.affiliateUserId,
-          amount: input.amount,
-          id,
-          method: input.method,
-          note: input.note,
-          processedByAdminId: input.processedByAdminId,
-          reference: input.reference,
-        })
-        .returning();
-      if (!created) {
-        return null;
-      }
-      return created;
+      const payout = this.dbInstance.transaction((tx) => {
+        const [agg] = tx
+          .select({
+            total: sum(affiliateCommission.commissionAmount).mapWith(Number),
+          })
+          .from(affiliateCommission)
+          .where(
+            and(
+              eq(affiliateCommission.affiliateUserId, input.affiliateUserId),
+              eq(affiliateCommission.status, "PENDING")
+            )
+          )
+          .all();
+        const amount = agg?.total ?? 0;
+        if (amount <= 0) {
+          return null;
+        }
+
+        const id = generateId(AFFILIATE_PAYOUT_ID_PREFIX);
+        tx.insert(affiliatePayout)
+          .values({
+            affiliateUserId: input.affiliateUserId,
+            amount,
+            id,
+            method: input.method,
+            note: input.note,
+            processedByAdminId: input.processedByAdminId,
+            reference: input.reference,
+          })
+          .run();
+
+        tx.update(affiliateCommission)
+          .set({ payoutId: id, status: "PAID" })
+          .where(
+            and(
+              eq(affiliateCommission.affiliateUserId, input.affiliateUserId),
+              eq(affiliateCommission.status, "PENDING")
+            )
+          )
+          .run();
+
+        const [created] = tx
+          .select()
+          .from(affiliatePayout)
+          .where(eq(affiliatePayout.id, id))
+          .all();
+        return created ?? null;
+      });
+      return payout ?? null;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -273,19 +511,144 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async markCommissionsAsPaid(affiliateUserId: string, payoutId: string) {
+  async findMissingCommissions(
+    affiliateUserId?: string
+  ): Promise<MissingCommissionRow[]> {
     try {
-      const result = await this.dbInstance
-        .update(affiliateCommission)
-        .set({ payoutId, status: "PAID" })
+      const rows = this.dbInstance
+        .select({
+          affiliateUserId: user.affiliatedBy,
+          purchaseAmount: order.grossAmount,
+          purchaserUserId: order.userId,
+          transactionId: payment.gatewayTransactionId,
+        })
+        .from(order)
+        .innerJoin(payment, eq(payment.orderId, order.id))
+        .innerJoin(user, eq(user.id, order.userId))
+        .leftJoin(
+          affiliateCommission,
+          eq(affiliateCommission.transactionId, payment.gatewayTransactionId)
+        )
         .where(
           and(
-            eq(affiliateCommission.affiliateUserId, affiliateUserId),
-            eq(affiliateCommission.status, "PENDING")
+            eq(order.status, "PAID"),
+            isNotNull(payment.gatewayTransactionId),
+            isNotNull(user.affiliatedBy),
+            ne(user.affiliatedBy, order.userId),
+            isNull(affiliateCommission.id),
+            affiliateUserId === undefined
+              ? undefined
+              : eq(user.affiliatedBy, affiliateUserId)
           )
-        );
+        )
+        .all();
 
-      return result.changes;
+      return rows.map((row) => ({
+        affiliateUserId: row.affiliateUserId ?? "",
+        purchaseAmount: row.purchaseAmount,
+        purchaserUserId: row.purchaserUserId,
+        transactionId: row.transactionId ?? "",
+      }));
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findInvalidCommissions(
+    affiliateUserId?: string
+  ): Promise<InvalidCommission[]> {
+    try {
+      const rows = this.dbInstance
+        .select({
+          affiliateUserId: affiliateCommission.affiliateUserId,
+          commissionAmount: affiliateCommission.commissionAmount,
+          commissionId: affiliateCommission.id,
+          orderStatus: order.status,
+          purchaserUserId: affiliateCommission.purchaserUserId,
+          transactionId: affiliateCommission.transactionId,
+        })
+        .from(affiliateCommission)
+        .innerJoin(
+          payment,
+          eq(payment.gatewayTransactionId, affiliateCommission.transactionId)
+        )
+        .innerJoin(order, eq(order.id, payment.orderId))
+        .where(
+          and(
+            eq(affiliateCommission.status, "PENDING"),
+            ne(order.status, "PAID"),
+            affiliateUserId === undefined
+              ? undefined
+              : eq(affiliateCommission.affiliateUserId, affiliateUserId)
+          )
+        )
+        .all();
+
+      return rows.map((row) => ({
+        affiliateUserId: row.affiliateUserId,
+        commissionAmount: row.commissionAmount,
+        commissionId: row.commissionId,
+        orderStatus: row.orderStatus,
+        purchaserUserId: row.purchaserUserId,
+        transactionId: row.transactionId,
+      }));
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async backfillCommissions(
+    inserts: InsertAffiliateConversionInput[],
+    voidCommissionIds: string[]
+  ): Promise<BackfillResult> {
+    try {
+      return this.dbInstance.transaction((tx) => {
+        let created = 0;
+        for (const entry of inserts) {
+          const id = generateId(AFFILIATE_COMMISSION_ID_PREFIX);
+          const inserted = tx
+            .insert(affiliateCommission)
+            .values({
+              affiliateUserId: entry.affiliateUserId,
+              commissionAmount: entry.commissionAmount,
+              id,
+              purchaseAmount: entry.purchaseAmount,
+              purchaserUserId: entry.purchaserUserId,
+              status: "PENDING",
+              transactionId: entry.transactionId,
+            })
+            .onConflictDoNothing({ target: affiliateCommission.transactionId })
+            .run();
+          created += inserted.changes;
+        }
+
+        let voided = 0;
+        if (voidCommissionIds.length > 0) {
+          const result = tx
+            .update(affiliateCommission)
+            .set({ status: "VOID" })
+            .where(
+              and(
+                inArray(affiliateCommission.id, voidCommissionIds),
+                eq(affiliateCommission.status, "PENDING")
+              )
+            )
+            .run();
+          voided = result.changes;
+        }
+
+        return { created, voided };
+      });
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -346,24 +709,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async findRelationshipByReferredUserId(referredUserId: string) {
-    try {
-      const [row] = await this.dbInstance
-        .select()
-        .from(affiliateRelationship)
-        .where(eq(affiliateRelationship.referredUserId, referredUserId))
-        .limit(1);
-      return row ?? null;
-    } catch (error) {
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Internal server error",
-      });
-    }
-  }
-
   async findUserById(userId: string) {
     try {
       // oxlint-disable-next-line typescript/no-unsafe-member-access -- Drizzle user table has any in type chain
@@ -383,17 +728,17 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
-  async insertRelationship(referrerUserId: string, referredUserId: string) {
+  async updateUserAffiliatedBy(userId: string, referrerUserId: string | null) {
     try {
-      const id = generateId(AFFILIATE_RELATIONSHIP_ID_PREFIX);
-      const [created] = await this.dbInstance
-        .insert(affiliateRelationship)
-        .values({ id, referredUserId, referrerUserId })
-        .returning();
-      if (!created) {
-        throw new Error("Failed to insert affiliate relationship");
+      const [updated] = await this.dbInstance
+        .update(user)
+        .set({ affiliatedBy: referrerUserId })
+        .where(eq(user.id, userId))
+        .returning({ affiliatedBy: user.affiliatedBy, id: user.id });
+      if (!updated) {
+        return null;
       }
-      return created;
+      return { affiliatedBy: updated.affiliatedBy ?? null, id: updated.id };
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;

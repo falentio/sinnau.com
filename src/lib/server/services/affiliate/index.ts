@@ -1,3 +1,5 @@
+import QuickLRU from "quick-lru";
+
 import { waitUntil } from "../../utils/background-jobs.ts";
 import { planService } from "../plan/index.ts";
 import { userRepo } from "../user/index.ts";
@@ -9,7 +11,8 @@ const affiliateRepo = new AffiliateDrizzleRepository();
 export const affiliateGuard = new AffiliateGuard(affiliateRepo, userRepo);
 export const affiliateService = new AffiliateService(
   affiliateRepo,
-  affiliateGuard
+  affiliateGuard,
+  new QuickLRU({ maxSize: 1000 })
 );
 
 planService.events.on("order:paid", (payload) => {

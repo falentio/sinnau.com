@@ -66,7 +66,7 @@ export const auth = betterAuth({
           return {
             data: {
               ...user,
-              ...(await resolveAffiliateReferrer(ctx)),
+              ...(await resolveAffiliateReferrer(ctx, user.id)),
               emailVerified: true,
               role: isAdmin ? "admin" : "user",
             },

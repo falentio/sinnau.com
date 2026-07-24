@@ -1,11 +1,22 @@
+import { affiliateApplication } from "$lib/server/infras/db/schema/affiliate";
 import { user } from "$lib/server/infras/db/schema/auth-schema";
+import { order, payment } from "$lib/server/infras/db/schema/plan";
+import type {
+  OrderStatus,
+  PaymentGateway,
+  PaymentStatus,
+  PlanDuration,
+  PlanKey,
+} from "$lib/server/infras/db/schema/plan";
 import { getTestingDb } from "$lib/server/infras/db/testing";
+import QuickLRU from "quick-lru";
 import { vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
 import type { UserRepository } from "../user/user.repository";
 import type { AffiliateGuard } from "./affiliate.guard";
 import type {
+  AffiliateApplication,
   AffiliateProfile,
   AffiliateRepository,
 } from "./affiliate.repository";
@@ -16,23 +27,36 @@ export type MockedAffiliateRepository = {
 };
 
 export const createMockRepository = (): MockedAffiliateRepository => ({
+  backfillCommissions: vi.fn<AffiliateRepository["backfillCommissions"]>(),
+  createPayoutForAffiliate:
+    vi.fn<AffiliateRepository["createPayoutForAffiliate"]>(),
   findAffiliatedByUserId:
     vi.fn<AffiliateRepository["findAffiliatedByUserId"]>(),
+  findApplicationById: vi.fn<AffiliateRepository["findApplicationById"]>(),
   findConversionByTransactionId:
     vi.fn<AffiliateRepository["findConversionByTransactionId"]>(),
+  findInvalidCommissions:
+    vi.fn<AffiliateRepository["findInvalidCommissions"]>(),
+  findLatestApplicationByUserId:
+    vi.fn<AffiliateRepository["findLatestApplicationByUserId"]>(),
+  findMissingCommissions:
+    vi.fn<AffiliateRepository["findMissingCommissions"]>(),
+  findPendingApplicationByUserId:
+    vi.fn<AffiliateRepository["findPendingApplicationByUserId"]>(),
   findProfileBySlug: vi.fn<AffiliateRepository["findProfileBySlug"]>(),
   findProfileByUserId: vi.fn<AffiliateRepository["findProfileByUserId"]>(),
-  findRelationshipByReferredUserId:
-    vi.fn<AffiliateRepository["findRelationshipByReferredUserId"]>(),
   findUserById: vi.fn<AffiliateRepository["findUserById"]>(),
   getDashboardSummary: vi.fn<AffiliateRepository["getDashboardSummary"]>(),
+  insertApplication: vi.fn<AffiliateRepository["insertApplication"]>(),
   insertConversion: vi.fn<AffiliateRepository["insertConversion"]>(),
-  insertPayout: vi.fn<AffiliateRepository["insertPayout"]>(),
   insertProfile: vi.fn<AffiliateRepository["insertProfile"]>(),
-  insertRelationship: vi.fn<AffiliateRepository["insertRelationship"]>(),
+  listApplications: vi.fn<AffiliateRepository["listApplications"]>(),
   listPendingPayouts: vi.fn<AffiliateRepository["listPendingPayouts"]>(),
-  markCommissionsAsPaid: vi.fn<AffiliateRepository["markCommissionsAsPaid"]>(),
+  updateApplicationStatus:
+    vi.fn<AffiliateRepository["updateApplicationStatus"]>(),
   updateProfileBalance: vi.fn<AffiliateRepository["updateProfileBalance"]>(),
+  updateUserAffiliatedBy:
+    vi.fn<AffiliateRepository["updateUserAffiliatedBy"]>(),
 });
 
 export type MockedUserRepository = {
@@ -50,6 +74,26 @@ export type MockedAffiliateGuard = {
 export const createMockGuard = (): MockedAffiliateGuard => ({
   requireAdmin: vi.fn<AffiliateGuard["requireAdmin"]>(),
   requireUser: vi.fn<AffiliateGuard["requireUser"]>(),
+});
+
+export const createSlugCache = (): QuickLRU<string, { userId: string }> =>
+  new QuickLRU({ maxSize: 10 });
+
+export const createAffiliateApplicationFixture = (
+  overrides: Partial<AffiliateApplication> = {}
+): AffiliateApplication => ({
+  advantage: "I have a large following and can promote your product",
+  createdAt: new Date(),
+  id: "afa_abc123def456",
+  instagramHandle: null,
+  reviewedAt: null,
+  reviewedByAdminId: null,
+  status: "PENDING",
+  tiktokHandle: null,
+  updatedAt: new Date(),
+  userId: "user-1",
+  youtubeHandle: null,
+  ...overrides,
 });
 
 export const createAffiliateProfileFixture = (
@@ -91,16 +135,55 @@ export class AffiliateTestEnv implements AsyncDisposable {
   }
 
   seedUser(
-    options: { id?: string; email?: string; name?: string } = {}
+    options: {
+      id?: string;
+      email?: string;
+      name?: string;
+      affiliatedBy?: string | null;
+    } = {}
   ): string {
     const id = options.id ?? crypto.randomUUID();
     this.db
       .insert(user)
       .values({
+        affiliatedBy: options.affiliatedBy ?? null,
         email: options.email ?? `${id}@test.local`,
         emailVerified: true,
         id,
         name: options.name ?? "Test User",
+      })
+      .run();
+    return id;
+  }
+
+  seedApplication(options: {
+    id?: string;
+    userId: string;
+    advantage?: string;
+    instagramHandle?: string | null;
+    tiktokHandle?: string | null;
+    youtubeHandle?: string | null;
+    status?: "PENDING" | "ACCEPTED" | "REJECTED";
+    reviewedByAdminId?: string | null;
+    reviewedAt?: Date | null;
+    createdAt?: Date;
+  }): string {
+    const id = options.id ?? `afa_${crypto.randomUUID()}`;
+    this.db
+      .insert(affiliateApplication)
+      .values({
+        advantage:
+          options.advantage ??
+          "I have a large following and can promote your product",
+        createdAt: options.createdAt ?? new Date(),
+        id,
+        instagramHandle: options.instagramHandle ?? null,
+        reviewedAt: options.reviewedAt ?? null,
+        reviewedByAdminId: options.reviewedByAdminId ?? null,
+        status: options.status ?? "PENDING",
+        tiktokHandle: options.tiktokHandle ?? null,
+        userId: options.userId,
+        youtubeHandle: options.youtubeHandle ?? null,
       })
       .run();
     return id;
@@ -112,6 +195,58 @@ export class AffiliateTestEnv implements AsyncDisposable {
 
   seedPurchaser(): string {
     return this.seedUser({ name: "Purchaser" });
+  }
+
+  seedOrder(options: {
+    id?: string;
+    userId: string;
+    grossAmount?: number;
+    status?: OrderStatus;
+    planKey?: PlanKey;
+    sku?: string;
+    durationMonths?: PlanDuration;
+  }): string {
+    const id = options.id ?? `ord_${crypto.randomUUID()}`;
+    this.db
+      .insert(order)
+      .values({
+        durationMonths: options.durationMonths ?? 1,
+        grossAmount: options.grossAmount ?? 100_000,
+        id,
+        planKey: options.planKey ?? "PLUS",
+        sku: options.sku ?? "sku-test",
+        status: options.status ?? "PAID",
+        userId: options.userId,
+      })
+      .run();
+    return id;
+  }
+
+  seedPayment(options: {
+    id?: string;
+    orderId: string;
+    userId: string;
+    gatewayTransactionId?: string | null;
+    amount?: number;
+    status?: PaymentStatus;
+    gateway?: PaymentGateway;
+    gatewayOrderId?: string;
+  }): string {
+    const id = options.id ?? `pay_${crypto.randomUUID()}`;
+    this.db
+      .insert(payment)
+      .values({
+        amount: options.amount ?? 100_000,
+        gateway: options.gateway ?? "midtrans",
+        gatewayOrderId: options.gatewayOrderId ?? `go_${id}`,
+        gatewayTransactionId: options.gatewayTransactionId ?? null,
+        id,
+        orderId: options.orderId,
+        status: options.status ?? "SUCCESS",
+        userId: options.userId,
+      })
+      .run();
+    return id;
   }
 
   // oxlint-disable-next-line require-await

@@ -1,10 +1,11 @@
 import { AFFILIATE_COOKIE_NAME } from "$lib/schemas/affiliate.constant";
-import { userRepo } from "$lib/server/services/user/index";
+import { affiliateService } from "$lib/server/services/affiliate/index";
 
 export const resolveAffiliateReferrer = async (
   ctx: {
     getCookie: (name: string) => string | undefined | null;
-  } | null
+  } | null,
+  userId?: string
 ): Promise<{ affiliatedBy: string } | Record<string, never>> => {
   if (ctx === null) {
     return {};
@@ -15,8 +16,14 @@ export const resolveAffiliateReferrer = async (
     return {};
   }
 
-  const row = await userRepo.findUserById(referrerId);
-  if (!row) {
+  if (userId !== undefined && userId === referrerId) {
+    return {};
+  }
+
+  const hasProfile = await affiliateService
+    .hasProfile(referrerId)
+    .catch(() => false);
+  if (!hasProfile) {
     return {};
   }
 

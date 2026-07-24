@@ -1,115 +1,148 @@
 <script lang="ts">
-  import { AnalyticsEvent, track } from "$lib/analytics/events";
-  import { client } from "$lib/orpc";
+  import AffiliateApplySection from "$lib/components/features/affiliate/affiliate-apply-section.svelte";
+  import AffiliateEarningsStats from "$lib/components/features/affiliate/affiliate-earnings-stats.svelte";
+  import AffiliateHowItWorks from "$lib/components/features/affiliate/affiliate-how-it-works.svelte";
+  import AffiliatePendingSummary from "$lib/components/features/affiliate/affiliate-pending-summary.svelte";
+  import AffiliateReferralCard from "$lib/components/features/affiliate/affiliate-referral-card.svelte";
+  import { createApplyForm } from "$lib/components/features/affiliate/create-apply-form.svelte";
+  import { ArrowLeft01Icon } from "$lib/components/features/icons";
+  import SeoHead from "$lib/components/seo-head.svelte";
+  import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { untrack } from "svelte";
 
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
-  let claiming = $state(false);
-  let claimError = $state("");
-  let copied = $state(false);
+  const commissionLabel = `${Math.round(AFFILIATE_COMMISSION_RATE * 100)}%`;
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("id-ID", {
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      style: "currency",
-    }).format(value);
+  const profile = $derived(data.summary.profile);
 
-  const handleClaim = async () => {
-    claiming = true;
-    claimError = "";
-    try {
-      await client.affiliate.claim({});
-      window.location.reload();
-    } catch (error) {
-      claimError =
-        error instanceof Error ? error.message : "Failed to claim profile";
-    } finally {
-      claiming = false;
-    }
-  };
+  const pendingApplication = $derived(
+    profile || data.application?.status !== "PENDING" ? null : data.application
+  );
 
-  const handleCopy = async () => {
-    if (!data.summary.profile) {
-      return;
-    }
-    const url = new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com")
-      .href;
-    await navigator.clipboard.writeText(url);
-    copied = true;
-    track(AnalyticsEvent.AFFILIATE_LINK_COPIED, {
-      slug: data.summary.profile.slug,
-    });
-    setTimeout(() => {
-      copied = false;
-    }, 2000);
-  };
+  const rejectedApplication = $derived(
+    profile || data.application?.status !== "REJECTED" ? null : data.application
+  );
+
+  const referralUrl = $derived(
+    profile ? new URL(`/r/${profile.slug}`, data.origin).href : ""
+  );
+
+  const { form, formData, submitting, enhance } = createApplyForm(
+    untrack(() =>
+      data.application?.status === "REJECTED" ? data.application : null
+    )
+  );
+
+  const advantageCount = $derived($formData.advantage.trim().length);
 </script>
 
-<div class="mx-auto max-w-2xl space-y-8 p-6">
-  <h1 class="text-2xl font-bold">Affiliate Dashboard</h1>
+<SeoHead
+  title="Afiliasi · sinnau"
+  description="Program afiliasi Sinnau. Bagikan tautan referral-mu dan dapatkan komisi dari setiap langganan yang lewat."
+  robots="noindex"
+/>
 
-  {#if data.summary.profile}
-    <section class="rounded-lg border p-4">
-      <h2 class="text-lg font-semibold">Your Referral Link</h2>
-      <div class="flex items-center gap-2">
-        <p class="break-all rounded bg-muted p-2 font-mono text-sm">
-          {new URL(`/r/${data.summary.profile.slug}`, "https://sinnau.com")
-            .href}
-        </p>
-        <button
-          class="shrink-0 rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
-          onclick={handleCopy}
-        >
-          {copied ? "Tersalin!" : "Salin"}
-        </button>
-      </div>
-    </section>
+<div class="mx-auto w-full max-w-3xl px-6 pt-10 pb-16 md:pt-14">
+  <div class="mb-6 md:mb-8">
+    <a
+      href="/home"
+      class="group inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-sm text-muted-foreground transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:text-foreground"
+    >
+      <HugeiconsIcon
+        icon={ArrowLeft01Icon}
+        class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-0.5"
+      />
+      Kembali
+    </a>
+  </div>
 
-    <section class="grid grid-cols-3 gap-4">
-      <div class="rounded-lg border p-4 text-center">
-        <p class="text-sm text-muted-foreground">Pending Balance</p>
-        <p class="text-2xl font-bold">
-          {formatCurrency(data.summary.pendingBalance)}
-        </p>
-      </div>
-      <div class="rounded-lg border p-4 text-center">
-        <p class="text-sm text-muted-foreground">Total Earned</p>
-        <p class="text-2xl font-bold">
-          {formatCurrency(data.summary.totalEarned)}
-        </p>
-      </div>
-      <div class="rounded-lg border p-4 text-center">
-        <p class="text-sm text-muted-foreground">Conversions</p>
-        <p class="text-2xl font-bold">{data.summary.conversionCount}</p>
-      </div>
-    </section>
-
-    <section class="rounded-lg border p-4">
-      <h2 class="text-lg font-semibold">Total Paid Out</h2>
-      <p class="text-2xl font-bold">
-        {formatCurrency(data.summary.totalPaid)}
-      </p>
-    </section>
-  {:else}
-    <section class="rounded-lg border p-4">
-      <h2 class="text-lg font-semibold">Get Started</h2>
-      <p class="mb-4 text-muted-foreground">
-        You haven't claimed your affiliate profile yet. Start sharing and
-        earning!
-      </p>
-      <button
-        class="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-        onclick={handleClaim}
-        disabled={claiming}
+  {#if profile}
+    <header class="flex flex-col gap-2 pb-8 md:pb-10">
+      <span
+        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
       >
-        {claiming ? "Claiming..." : "Claim Affiliate Profile"}
-      </button>
-      {#if claimError}
-        <p class="mt-2 text-sm text-destructive">{claimError}</p>
-      {/if}
-    </section>
+        Afiliasi
+      </span>
+      <h1
+        class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
+      >
+        Sebarkan tautanmu, panen komisinya
+      </h1>
+      <p class="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+        Setiap kali temanmu berlangganan lewat tautan ini, kamu dapat
+        {commissionLabel} dari nilai transaksinya. Tercatat otomatis, tanpa ribet.
+      </p>
+    </header>
+
+    <AffiliateReferralCard {referralUrl} slug={profile.slug} />
+    <AffiliateEarningsStats
+      conversionCount={data.summary.conversionCount}
+      pendingBalance={data.summary.pendingBalance}
+      totalEarned={data.summary.totalEarned}
+      totalPaid={data.summary.totalPaid}
+    />
+    <AffiliateHowItWorks {commissionLabel} />
+
+    <footer
+      class="mt-10 border-t border-border/60 pt-6 text-[13px] leading-relaxed text-muted-foreground"
+    >
+      Komisi dihitung dari nilai paket yang dibeli lewat tautanmu, dan tercatat
+      otomatis begitu pembayaran berhasil.
+    </footer>
+  {:else if pendingApplication}
+    <header class="flex flex-col gap-2 pb-8 md:pb-10">
+      <span
+        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+      >
+        Afiliasi
+      </span>
+      <h1
+        class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
+      >
+        Aplikasimu sedang ditinjau
+      </h1>
+      <p class="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+        Santai dulu. Tim Sinnau sedang meninjau data yang kamu kirim. Begitu
+        disetujui, tautan referral-mu langsung muncul di halaman ini.
+      </p>
+    </header>
+
+    <AffiliatePendingSummary application={pendingApplication} />
+
+    <p class="mt-6 text-[13px] leading-relaxed text-muted-foreground">
+      Sambil menunggu, siapkan konten terbaikmu. Begitu disetujui, tautan
+      referral-mu langsung aktif di halaman ini.
+    </p>
+  {:else}
+    <header class="flex flex-col gap-2 pb-8 md:pb-10">
+      <span
+        class="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+      >
+        Afiliasi
+      </span>
+      <h1
+        class="font-heading text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl"
+      >
+        Jadi afiliasi Sinnau
+      </h1>
+      <p class="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+        Cuma perlu satu tautan. Bagikan ke audiensmu, dapatkan
+        {commissionLabel} dari tiap langganan yang lewat.
+      </p>
+    </header>
+
+    <AffiliateApplySection
+      {enhance}
+      {form}
+      {formData}
+      submitting={$submitting}
+      {commissionLabel}
+      {advantageCount}
+      rejected={Boolean(rejectedApplication)}
+    />
   {/if}
 </div>

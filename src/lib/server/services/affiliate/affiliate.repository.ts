@@ -1,17 +1,24 @@
-import type { PendingPayout, PendingPayoutsList } from "$lib/schemas/affiliate";
+import type {
+  InvalidCommission,
+  ListAffiliateApplicationsOutput,
+  PendingPayout,
+  PendingPayoutsList,
+} from "$lib/schemas/affiliate";
+import type { AFFILIATE_APPLICATION_STATUSES } from "$lib/schemas/affiliate.constant";
 
 import type {
+  AffiliateApplication,
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
-  AffiliateRelationship,
 } from "../../infras/db/schema/affiliate.ts";
 
 export type {
+  AffiliateApplication,
   AffiliateCommission,
   AffiliatePayout,
   AffiliateProfile,
-  AffiliateRelationship,
+  InvalidCommission,
   PendingPayout,
   PendingPayoutsList,
 };
@@ -24,13 +31,11 @@ export interface InsertAffiliateConversionInput {
   transactionId: string;
 }
 
-export interface InsertAffiliatePayoutInput {
+export interface MissingCommissionRow {
   affiliateUserId: string;
-  amount: number;
-  method: string | null;
-  reference: string | null;
-  note: string | null;
-  processedByAdminId: string;
+  purchaseAmount: number;
+  purchaserUserId: string;
+  transactionId: string;
 }
 
 export interface AffiliateDashboardRawSummary {
@@ -40,7 +45,54 @@ export interface AffiliateDashboardRawSummary {
   conversionCount: number;
 }
 
+export interface CreatePayoutForAffiliateInput {
+  affiliateUserId: string;
+  method: string | null;
+  reference: string | null;
+  note: string | null;
+  processedByAdminId: string;
+}
+
+export interface BackfillResult {
+  created: number;
+  voided: number;
+}
+
+export interface InsertAffiliateApplicationInput {
+  userId: string;
+  instagramHandle: string | null;
+  tiktokHandle: string | null;
+  youtubeHandle: string | null;
+  advantage: string;
+}
+
 export interface AffiliateRepository {
+  insertApplication(
+    input: InsertAffiliateApplicationInput
+  ): Promise<AffiliateApplication>;
+
+  findApplicationById(id: string): Promise<AffiliateApplication | null>;
+
+  findPendingApplicationByUserId(
+    userId: string
+  ): Promise<AffiliateApplication | null>;
+
+  findLatestApplicationByUserId(
+    userId: string
+  ): Promise<AffiliateApplication | null>;
+
+  updateApplicationStatus(
+    id: string,
+    status: "ACCEPTED" | "REJECTED",
+    reviewedByAdminId: string
+  ): Promise<AffiliateApplication | null>;
+
+  listApplications(
+    status: (typeof AFFILIATE_APPLICATION_STATUSES)[number] | undefined,
+    page: number,
+    limit: number
+  ): Promise<ListAffiliateApplicationsOutput>;
+
   insertProfile(
     userId: string,
     slug: string,
@@ -63,27 +115,31 @@ export interface AffiliateRepository {
 
   listPendingPayouts(page: number, limit: number): Promise<PendingPayoutsList>;
 
-  insertPayout(
-    input: InsertAffiliatePayoutInput
+  createPayoutForAffiliate(
+    input: CreatePayoutForAffiliateInput
   ): Promise<AffiliatePayout | null>;
 
-  markCommissionsAsPaid(
-    affiliateUserId: string,
-    payoutId: string
-  ): Promise<number>;
+  findMissingCommissions(
+    affiliateUserId?: string
+  ): Promise<MissingCommissionRow[]>;
+
+  findInvalidCommissions(
+    affiliateUserId?: string
+  ): Promise<InvalidCommission[]>;
+
+  backfillCommissions(
+    inserts: InsertAffiliateConversionInput[],
+    voidCommissionIds: string[]
+  ): Promise<BackfillResult>;
 
   findAffiliatedByUserId(userId: string): Promise<string | null>;
 
   findUserById(userId: string): Promise<{ id: string; name: string } | null>;
 
-  insertRelationship(
-    referrerUserId: string,
-    referredUserId: string
-  ): Promise<AffiliateRelationship>;
-
-  findRelationshipByReferredUserId(
-    referredUserId: string
-  ): Promise<AffiliateRelationship | null>;
+  updateUserAffiliatedBy(
+    userId: string,
+    referrerUserId: string | null
+  ): Promise<{ id: string; affiliatedBy: string | null } | null>;
 
   updateProfileBalance(
     profileId: string,
