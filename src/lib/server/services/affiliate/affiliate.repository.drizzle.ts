@@ -3,6 +3,7 @@ import {
   AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_ID_PREFIX,
+  AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
 } from "$lib/schemas/affiliate.constant";
 import { ORPCError } from "@orpc/server";
@@ -26,6 +27,7 @@ import {
   affiliateApplication,
   affiliateCommission,
   affiliatePayout,
+  affiliatePayoutAccount,
   affiliateProfile,
 } from "../../infras/db/schema/affiliate.ts";
 import { user } from "../../infras/db/schema/auth-schema.ts";
@@ -34,6 +36,7 @@ import { generateId } from "../../utils/nanoid.ts";
 import type {
   AffiliateDashboardRawSummary,
   AffiliatePayout,
+  AffiliatePayoutAccount,
   AffiliateRepository,
   BackfillResult,
   CreatePayoutForAffiliateInput,
@@ -41,6 +44,7 @@ import type {
   InsertAffiliateConversionInput,
   InvalidCommission,
   MissingCommissionRow,
+  UpsertPayoutAccountInput,
 } from "./affiliate.repository.ts";
 
 const isUniqueConstraintError = (error: unknown): boolean => {
@@ -177,7 +181,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
   }
 
   async listApplications(
-    status: string | undefined,
+    status: "PENDING" | "ACCEPTED" | "REJECTED" | undefined,
     page: number,
     limit: number
   ) {
@@ -404,8 +408,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
       const rows = await this.dbInstance
         .select({
+          accountHolderName: affiliatePayoutAccount.accountHolderName,
+          accountNumber: affiliatePayoutAccount.accountNumber,
           affiliateUserId: affiliateCommission.affiliateUserId,
+          bankName: affiliatePayoutAccount.bankName,
           conversionCount: count(affiliateCommission.id),
+          payoutMethod: affiliatePayoutAccount.method,
           pendingBalance: sum(affiliateCommission.commissionAmount).mapWith(
             Number
           ),
@@ -417,6 +425,10 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           affiliateProfile,
           eq(affiliateCommission.affiliateUserId, affiliateProfile.userId)
         )
+        .leftJoin(
+          affiliatePayoutAccount,
+          eq(affiliateCommission.affiliateUserId, affiliatePayoutAccount.userId)
+        )
         .groupBy(affiliateCommission.affiliateUserId)
         .orderBy(asc(affiliateCommission.affiliateUserId))
         .limit(limit)
@@ -425,6 +437,15 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
       const data = rows.map((row) => ({
         affiliateUserId: row.affiliateUserId,
         conversionCount: row.conversionCount,
+        payoutAccount:
+          row.accountNumber === null
+            ? null
+            : {
+                accountHolderName: row.accountHolderName ?? "",
+                accountNumber: row.accountNumber,
+                bankName: row.bankName,
+                method: row.payoutMethod ?? "GOPAY",
+              },
         pendingBalance: row.pendingBalance ?? 0,
         slug: row.slug ?? "unknown",
       }));
@@ -739,6 +760,66 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         return null;
       }
       return { affiliatedBy: updated.affiliatedBy ?? null, id: updated.id };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async findPayoutAccountByUserId(
+    userId: string
+  ): Promise<AffiliatePayoutAccount | null> {
+    try {
+      const [row] = await this.dbInstance
+        .select()
+        .from(affiliatePayoutAccount)
+        .where(eq(affiliatePayoutAccount.userId, userId))
+        .limit(1);
+      return row ?? null;
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async upsertPayoutAccount(
+    input: UpsertPayoutAccountInput
+  ): Promise<AffiliatePayoutAccount> {
+    try {
+      const id = generateId(AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX);
+      const [row] = await this.dbInstance
+        .insert(affiliatePayoutAccount)
+        .values({
+          accountHolderName: input.accountHolderName,
+          accountNumber: input.accountNumber,
+          bankName: input.bankName,
+          id,
+          method: input.method,
+          userId: input.userId,
+        })
+        .onConflictDoUpdate({
+          set: {
+            accountHolderName: input.accountHolderName,
+            accountNumber: input.accountNumber,
+            bankName: input.bankName,
+            method: input.method,
+            updatedAt: new Date(),
+          },
+          target: affiliatePayoutAccount.userId,
+        })
+        .returning();
+      if (!row) {
+        throw new Error("Failed to upsert payout account");
+      }
+      return row;
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;

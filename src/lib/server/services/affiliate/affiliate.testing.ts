@@ -1,4 +1,7 @@
-import { affiliateApplication } from "$lib/server/infras/db/schema/affiliate";
+import {
+  affiliateApplication,
+  affiliatePayoutAccount,
+} from "$lib/server/infras/db/schema/affiliate";
 import { user } from "$lib/server/infras/db/schema/auth-schema";
 import { order, payment } from "$lib/server/infras/db/schema/plan";
 import type {
@@ -17,6 +20,7 @@ import type { UserRepository } from "../user/user.repository";
 import type { AffiliateGuard } from "./affiliate.guard";
 import type {
   AffiliateApplication,
+  AffiliatePayoutAccount,
   AffiliateProfile,
   AffiliateRepository,
 } from "./affiliate.repository";
@@ -41,6 +45,8 @@ export const createMockRepository = (): MockedAffiliateRepository => ({
     vi.fn<AffiliateRepository["findLatestApplicationByUserId"]>(),
   findMissingCommissions:
     vi.fn<AffiliateRepository["findMissingCommissions"]>(),
+  findPayoutAccountByUserId:
+    vi.fn<AffiliateRepository["findPayoutAccountByUserId"]>(),
   findPendingApplicationByUserId:
     vi.fn<AffiliateRepository["findPendingApplicationByUserId"]>(),
   findProfileBySlug: vi.fn<AffiliateRepository["findProfileBySlug"]>(),
@@ -57,6 +63,7 @@ export const createMockRepository = (): MockedAffiliateRepository => ({
   updateProfileBalance: vi.fn<AffiliateRepository["updateProfileBalance"]>(),
   updateUserAffiliatedBy:
     vi.fn<AffiliateRepository["updateUserAffiliatedBy"]>(),
+  upsertPayoutAccount: vi.fn<AffiliateRepository["upsertPayoutAccount"]>(),
 });
 
 export type MockedUserRepository = {
@@ -107,6 +114,20 @@ export const createAffiliateProfileFixture = (
   updatedAt: new Date(),
   userId: "user-1",
   version: 1,
+  ...overrides,
+});
+
+export const createAffiliatePayoutAccountFixture = (
+  overrides: Partial<AffiliatePayoutAccount> = {}
+): AffiliatePayoutAccount => ({
+  accountHolderName: "Test User",
+  accountNumber: "1234567890",
+  bankName: null,
+  createdAt: new Date(),
+  id: "afpa_abc123def456",
+  method: "GOPAY",
+  updatedAt: new Date(),
+  userId: "user-1",
   ...overrides,
 });
 
@@ -243,6 +264,29 @@ export class AffiliateTestEnv implements AsyncDisposable {
         id,
         orderId: options.orderId,
         status: options.status ?? "SUCCESS",
+        userId: options.userId,
+      })
+      .run();
+    return id;
+  }
+
+  seedPayoutAccount(options: {
+    id?: string;
+    userId: string;
+    method?: "GOPAY" | "BANK";
+    bankName?: string | null;
+    accountNumber?: string;
+    accountHolderName?: string;
+  }): string {
+    const id = options.id ?? `afpa_${crypto.randomUUID()}`;
+    this.db
+      .insert(affiliatePayoutAccount)
+      .values({
+        accountHolderName: options.accountHolderName ?? "Test User",
+        accountNumber: options.accountNumber ?? "1234567890",
+        bankName: options.bankName ?? null,
+        id,
+        method: options.method ?? "GOPAY",
         userId: options.userId,
       })
       .run();

@@ -111,6 +111,25 @@ export const affiliateApplication = sqliteTable(
   ]
 );
 
+export const affiliatePayoutAccount = sqliteTable("affiliate_payout_account", {
+  accountHolderName: text("account_holder_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  bankName: text("bank_name"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+  id: text("id").primaryKey(),
+  method: text("method", { enum: ["GOPAY", "BANK"] }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .$onUpdate(() => new Date())
+    .notNull(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
 export const affiliateSubscriptionEvent = sqliteTable(
   "affiliate_subscription_event",
   {
@@ -134,5 +153,6 @@ export type AffiliateProfile = typeof affiliateProfile.$inferSelect;
 export type AffiliatePayout = typeof affiliatePayout.$inferSelect;
 export type AffiliateCommission = typeof affiliateCommission.$inferSelect;
 export type AffiliateApplication = typeof affiliateApplication.$inferSelect;
+export type AffiliatePayoutAccount = typeof affiliatePayoutAccount.$inferSelect;
 export type AffiliateSubscriptionEvent =
   typeof affiliateSubscriptionEvent.$inferSelect;

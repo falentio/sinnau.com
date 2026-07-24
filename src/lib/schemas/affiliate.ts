@@ -1,16 +1,23 @@
 import * as v from "valibot";
 
 import {
+  AFFILIATE_ACCOUNT_HOLDER_MAX_LENGTH,
+  AFFILIATE_ACCOUNT_HOLDER_MIN_LENGTH,
+  AFFILIATE_ACCOUNT_NUMBER_MAX_LENGTH,
+  AFFILIATE_ACCOUNT_NUMBER_MIN_LENGTH,
   AFFILIATE_ADVANTAGE_MAX_LENGTH,
   AFFILIATE_ADVANTAGE_MIN_LENGTH,
   AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_APPLICATION_STATUSES,
+  AFFILIATE_BANK_NAME_MAX_LENGTH,
   AFFILIATE_COMMISSION_ID_PREFIX,
   AFFILIATE_COMMISSION_STATUSES,
   AFFILIATE_HANDLE_MAX_LENGTH,
   AFFILIATE_ID_FIELD_MAX_LENGTH,
   AFFILIATE_ID_PREFIX,
+  AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
+  AFFILIATE_PAYOUT_METHODS,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
   AFFILIATE_TEXT_FIELD_MAX_LENGTH,
 } from "./affiliate.constant.ts";
@@ -21,6 +28,7 @@ export {
   AFFILIATE_ID_PREFIX,
   AFFILIATE_APPLICATION_ID_PREFIX,
   AFFILIATE_COMMISSION_ID_PREFIX,
+  AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
 };
@@ -30,6 +38,8 @@ export const commissionStatusSchema = v.picklist(AFFILIATE_COMMISSION_STATUSES);
 export const applicationStatusSchema = v.picklist(
   AFFILIATE_APPLICATION_STATUSES
 );
+
+export const payoutMethodSchema = v.picklist(AFFILIATE_PAYOUT_METHODS);
 
 export const affiliateApplicationIdSchema = createPrefixedIdSchema(
   AFFILIATE_APPLICATION_ID_PREFIX
@@ -44,6 +54,10 @@ export const affiliateCommissionIdSchema = createPrefixedIdSchema(
 
 export const affiliatePayoutIdSchema = createPrefixedIdSchema(
   AFFILIATE_PAYOUT_ID_PREFIX
+);
+
+export const affiliatePayoutAccountIdSchema = createPrefixedIdSchema(
+  AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX
 );
 
 export const affiliateSubscriptionEventIdSchema = createPrefixedIdSchema(
@@ -118,6 +132,54 @@ export const applyAffiliateInputSchema = v.object({
   youtubeHandle: v.optional(handleSchema),
 });
 
+export const submitPayoutAccountInputSchema = v.pipe(
+  v.object({
+    accountHolderName: v.pipe(
+      v.string(),
+      v.trim(),
+      v.minLength(
+        AFFILIATE_ACCOUNT_HOLDER_MIN_LENGTH,
+        "Nama pemilik rekening minimal 3 karakter"
+      ),
+      v.maxLength(
+        AFFILIATE_ACCOUNT_HOLDER_MAX_LENGTH,
+        "Nama pemilik rekening maksimal 255 karakter"
+      )
+    ),
+    accountNumber: v.pipe(
+      v.string(),
+      v.trim(),
+      v.regex(/^[0-9]+$/u, "Nomor rekening/gopay hanya boleh berisi angka"),
+      v.minLength(
+        AFFILIATE_ACCOUNT_NUMBER_MIN_LENGTH,
+        "Nomor rekening/gopay minimal 5 digit"
+      ),
+      v.maxLength(
+        AFFILIATE_ACCOUNT_NUMBER_MAX_LENGTH,
+        "Nomor rekening/gopay maksimal 30 digit"
+      )
+    ),
+    bankName: v.optional(
+      v.pipe(
+        v.string(),
+        v.trim(),
+        v.minLength(1, "Nama bank diperlukan jika metode BANK"),
+        v.maxLength(
+          AFFILIATE_BANK_NAME_MAX_LENGTH,
+          "Nama bank maksimal 100 karakter"
+        )
+      )
+    ),
+    method: payoutMethodSchema,
+  }),
+  v.check(
+    (input) =>
+      input.method !== "BANK" ||
+      (input.bankName !== undefined && input.bankName.length > 0),
+    "Nama bank diperlukan jika metode BANK"
+  )
+);
+
 export const reviewAffiliateApplicationInputSchema = v.object({
   applicationId: affiliateApplicationIdSchema,
 });
@@ -156,6 +218,8 @@ export const getMyAffiliateProfileInputSchema = v.object({});
 
 export const getMyAffiliateApplicationInputSchema = v.object({});
 
+export const getMyPayoutAccountInputSchema = v.object({});
+
 // --------------------
 // Output schemas
 // --------------------
@@ -192,6 +256,24 @@ export const affiliatePayoutSchema = v.object({
   note: v.nullable(v.string()),
   processedByAdminId: v.string(),
   reference: v.nullable(v.string()),
+});
+
+export const affiliatePayoutAccountSchema = v.object({
+  accountHolderName: v.string(),
+  accountNumber: v.string(),
+  bankName: v.nullable(v.string()),
+  createdAt: v.date(),
+  id: affiliatePayoutAccountIdSchema,
+  method: payoutMethodSchema,
+  updatedAt: v.date(),
+  userId: v.string(),
+});
+
+export const payoutAccountInfoSchema = v.object({
+  accountHolderName: v.string(),
+  accountNumber: v.string(),
+  bankName: v.nullable(v.string()),
+  method: payoutMethodSchema,
 });
 
 export const affiliateSubscriptionEventSchema = v.object({
@@ -239,6 +321,7 @@ export const affiliateDashboardSummarySchema = v.object({
 export const pendingPayoutSchema = v.object({
   affiliateUserId: v.string(),
   conversionCount: v.number(),
+  payoutAccount: v.nullable(payoutAccountInfoSchema),
   pendingBalance: v.number(),
   slug: v.string(),
 });
@@ -405,3 +488,13 @@ export type ListAffiliateApplicationsInput = v.InferOutput<
 export type ListAffiliateApplicationsOutput = v.InferOutput<
   typeof listAffiliateApplicationsOutputSchema
 >;
+
+export type SubmitPayoutAccountInput = v.InferOutput<
+  typeof submitPayoutAccountInputSchema
+>;
+
+export type AffiliatePayoutAccount = v.InferOutput<
+  typeof affiliatePayoutAccountSchema
+>;
+
+export type PayoutAccountInfo = v.InferOutput<typeof payoutAccountInfoSchema>;

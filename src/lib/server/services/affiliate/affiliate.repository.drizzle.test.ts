@@ -1650,4 +1650,135 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       expect(result.data[1]?.id).toBe("afa_older");
     });
   });
+
+  describe.concurrent("findPayoutAccountByUserId", () => {
+    it("returns the payout account when it exists", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedPayoutAccount({
+        accountHolderName: "Budi Santoso",
+        accountNumber: "081234567890",
+        method: "GOPAY",
+        userId: env.userId,
+      });
+
+      const result = await env.repo.findPayoutAccountByUserId(env.userId);
+
+      expect(result).not.toBeNull();
+      expect(result?.userId).toBe(env.userId);
+      expect(result?.method).toBe("GOPAY");
+      expect(result?.bankName).toBeNull();
+      expect(result?.accountNumber).toBe("081234567890");
+      expect(result?.accountHolderName).toBe("Budi Santoso");
+    });
+
+    it("returns null when no payout account exists", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.findPayoutAccountByUserId(env.userId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe.concurrent("upsertPayoutAccount", () => {
+    it("inserts a new payout account", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const before = Date.now();
+
+      const result = await env.repo.upsertPayoutAccount({
+        accountHolderName: "Budi Santoso",
+        accountNumber: "081234567890",
+        bankName: null,
+        method: "GOPAY",
+        userId: env.userId,
+      });
+
+      expect(result.userId).toBe(env.userId);
+      expect(result.method).toBe("GOPAY");
+      expect(result.bankName).toBeNull();
+      expect(result.accountNumber).toBe("081234567890");
+      expect(result.accountHolderName).toBe("Budi Santoso");
+      expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(before);
+    });
+
+    it("updates an existing payout account", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      env.seedPayoutAccount({
+        accountHolderName: "Old Name",
+        accountNumber: "1111111111",
+        method: "GOPAY",
+        userId: env.userId,
+      });
+
+      const result = await env.repo.upsertPayoutAccount({
+        accountHolderName: "New Name",
+        accountNumber: "2222222222",
+        bankName: "BCA",
+        method: "BANK",
+        userId: env.userId,
+      });
+
+      expect(result.method).toBe("BANK");
+      expect(result.bankName).toBe("BCA");
+      expect(result.accountNumber).toBe("2222222222");
+      expect(result.accountHolderName).toBe("New Name");
+
+      const found = await env.repo.findPayoutAccountByUserId(env.userId);
+      expect(found?.accountNumber).toBe("2222222222");
+    });
+  });
+
+  describe.concurrent("listPendingPayouts (payout account enrichment)", () => {
+    it("includes payout account info when present", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug-1", "R1");
+      env.seedPayoutAccount({
+        accountHolderName: "Budi",
+        accountNumber: "081234567890",
+        method: "GOPAY",
+        userId: referrer,
+      });
+
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-enrich-1",
+      });
+
+      const result = await env.repo.listPendingPayouts(1, 10);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]?.payoutAccount).not.toBeNull();
+      expect(result.data[0]?.payoutAccount?.method).toBe("GOPAY");
+      expect(result.data[0]?.payoutAccount?.accountNumber).toBe("081234567890");
+      expect(result.data[0]?.payoutAccount?.accountHolderName).toBe("Budi");
+      expect(result.data[0]?.payoutAccount?.bankName).toBeNull();
+    });
+
+    it("returns null payoutAccount when affiliate has no payout account", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug-1", "R1");
+
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-enrich-2",
+      });
+
+      const result = await env.repo.listPendingPayouts(1, 10);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]?.payoutAccount).toBeNull();
+    });
+  });
 });

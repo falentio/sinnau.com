@@ -10,6 +10,7 @@ Affiliate is responsible for:
 - Subscription event tracking for sign-up rewards (`AffiliateSubscriptionEvent`)
 - Conversion recording and commission accounting (`AffiliateCommission`)
 - Payout processing that marks commissions as paid (`AffiliatePayout`)
+- Payout account management (user submits/updates bank or e-wallet details for payout destination)
 - Dashboard summary (earnings, balance, conversion count)
 - Public slug resolution for affiliate link sharing
 
@@ -102,6 +103,21 @@ interface AffiliatePayout {
 }
 ```
 
+### AffiliatePayoutAccount
+
+```typescript
+interface AffiliatePayoutAccount {
+  id: string; // prefixed "afpa_" + nanoid
+  userId: string; // FK → user.id, unique
+  method: "GOPAY" | "BANK"; // payout method
+  bankName: string | null; // required if BANK, null if GOPAY
+  accountNumber: string; // digits only, 5-30 chars
+  accountHolderName: string; // min 3, max 255 chars
+  createdAt: Date; // ms timestamp
+  updatedAt: Date; // ms timestamp
+}
+```
+
 ### AffiliateDashboardSummary
 
 ```typescript
@@ -122,6 +138,18 @@ interface PendingPayout {
   slug: string; // falls back to "unknown" if profile missing
   pendingBalance: number;
   conversionCount: number;
+  payoutAccount: PayoutAccountInfo | null; // null if not submitted
+}
+```
+
+### PayoutAccountInfo
+
+```typescript
+interface PayoutAccountInfo {
+  method: "GOPAY" | "BANK";
+  bankName: string | null;
+  accountNumber: string;
+  accountHolderName: string;
 }
 ```
 
@@ -187,22 +215,24 @@ Commissions can drift from reality: an order may be paid without a commission be
 
 ## Authorization
 
-| Method                 | Guard          | Procedure             | Error Code                  |
-| ---------------------- | -------------- | --------------------- | --------------------------- |
-| `apply`                | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
-| `acceptApplication`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `rejectApplication`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `getMyApplication`     | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND` |
-| `listApplications`     | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `getMyProfile`         | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND` |
-| `getDashboardSummary`  | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`              |
-| `resolveSlug`          | none           | `publicProcedure`     | —                           |
-| `recordConversion`     | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `recordPayout`         | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `reconcileCommissions` | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `backfillCommissions`  | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `setReferrer`          | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
-| `listPendingPayouts`   | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                 |
+| Method                 | Guard          | Procedure             | Error Code                             |
+| ---------------------- | -------------- | --------------------- | -------------------------------------- |
+| `apply`                | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`                         |
+| `acceptApplication`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `rejectApplication`    | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `getMyApplication`     | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND`            |
+| `listApplications`     | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `getMyProfile`         | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND`            |
+| `getDashboardSummary`  | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`                         |
+| `resolveSlug`          | none           | `publicProcedure`     | —                                      |
+| `recordConversion`     | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `recordPayout`         | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `reconcileCommissions` | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `backfillCommissions`  | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `setReferrer`          | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `listPendingPayouts`   | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `submitPayoutAccount`  | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `AFFILIATE_NO_PROFILE` |
+| `getMyPayoutAccount`   | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND`            |
 
 - `requireUser`: throws `UNAUTHORIZED` if `userId` is `null`, `undefined`, or `""`.
 - `requireAdmin`: throws `UNAUTHORIZED` if not authenticated; throws `FORBIDDEN` if user role is not `"admin"`.
@@ -297,6 +327,19 @@ backfillCommissions({ affiliateUserId? }) → { created: number, voided: number 
 - Idempotent: re-running creates/voids nothing once discrepancies are cleared.
 - Errors: `UNAUTHORIZED`, `FORBIDDEN`.
 
+### submitPayoutAccount
+
+```
+submitPayoutAccount({ method, bankName?, accountNumber, accountHolderName }) → AffiliatePayoutAccount
+```
+
+- Requires authenticated user with an approved affiliate profile.
+- Upserts the user's payout account (creates or updates).
+- `bankName` is required when `method` is `"BANK"`, ignored (normalized to `null`) when `"GOPAY"`.
+- `accountNumber` must be digits only, 5-30 characters.
+- `accountHolderName` must be 3-255 characters after trim.
+- Errors: `UNAUTHORIZED`, `AFFILIATE_NO_PROFILE`.
+
 ## Queries
 
 ### getMyApplication
@@ -350,6 +393,15 @@ resolveSlug({ slug }) → { userId: string }
 - Resolves an affiliate slug to the owner's `userId`.
 - Errors: `NOT_FOUND` (slug does not match any profile).
 
+### getMyPayoutAccount
+
+```
+getMyPayoutAccount({}) → AffiliatePayoutAccount
+```
+
+- Returns the calling user's payout account.
+- Errors: `UNAUTHORIZED`, `NOT_FOUND` (no payout account exists).
+
 ### listPendingPayouts
 
 ```
@@ -358,6 +410,7 @@ listPendingPayouts({ page?, limit? }) → PendingPayoutsList
 
 - Admin-only.
 - Lists affiliates with pending commissions, grouped by user, with aggregated balance and conversion count.
+- Enriched with the affiliate's payout account info (`payoutAccount`), or `null` if not submitted.
 - Defaults: `page = 1`, `limit = 10`.
 - `limit` range: 1–100.
 - Excludes affiliates whose pending balance was already fully paid.
@@ -449,9 +502,22 @@ Index: `affiliate_application_user_status_idx` on (`user_id`, `status`).
 | `processed_by_admin_id` | text         | NOT NULL, FK → user.id ON DELETE CASCADE |
 | `created_at`            | integer (ms) | NOT NULL, DEFAULT now                    |
 
+### Table: `affiliate_payout_account`
+
+| Column                | Type         | Constraints                                      |
+| --------------------- | ------------ | ------------------------------------------------ |
+| `id`                  | text         | PK                                               |
+| `user_id`             | text         | NOT NULL, UNIQUE, FK → user.id ON DELETE CASCADE |
+| `method`              | text         | NOT NULL, CHECK('GOPAY' \| 'BANK')               |
+| `bank_name`           | text         | NULLABLE                                         |
+| `account_number`      | text         | NOT NULL                                         |
+| `account_holder_name` | text         | NOT NULL                                         |
+| `created_at`          | integer (ms) | NOT NULL, DEFAULT now                            |
+| `updated_at`          | integer (ms) | NOT NULL, DEFAULT now, ON UPDATE                 |
+
 ### Cascade Behavior
 
-- Deleting a user CASCADE-deletes their applications, profile, commissions, subscription events, and payouts.
+- Deleting a user CASCADE-deletes their applications, profile, commissions, subscription events, payouts, and payout accounts.
 - Deleting a payout SET NULLs the `payoutId` on associated commissions (commissions are preserved but orphaned).
 - Deleting an admin SET NULLs the `reviewedByAdminId` on associated applications.
 
@@ -488,6 +554,12 @@ Valibot schemas in `src/lib/schemas/affiliate.ts`:
 | `backfillAffiliateCommissionsOutputSchema`  | `{ created: number, voided: number }`                                                              |
 | `missingCommissionSchema`                   | `{ affiliateUserId, expectedCommissionAmount, purchaseAmount, purchaserUserId, transactionId }`    |
 | `invalidCommissionSchema`                   | `{ affiliateUserId, commissionAmount, commissionId, orderStatus, purchaserUserId, transactionId }` |
+| `payoutMethodSchema`                        | Picklist of `["GOPAY", "BANK"]`                                                                    |
+| `affiliatePayoutAccountIdSchema`            | Prefixed ID: `afpa_{2 lowercase}{16 alphanumeric}`                                                 |
+| `submitPayoutAccountInputSchema`            | `{ method, bankName?, accountNumber (digits 5-30), accountHolderName (3-255) }` with BANK check    |
+| `affiliatePayoutAccountSchema`              | Full payout account entity output schema                                                           |
+| `payoutAccountInfoSchema`                   | `{ method, bankName, accountNumber, accountHolderName }` (subset for enriched lists)               |
+| `getMyPayoutAccountInputSchema`             | `{}` (no input)                                                                                    |
 
 Constants in `src/lib/schemas/affiliate.constant.ts`:
 
@@ -498,6 +570,13 @@ Constants in `src/lib/schemas/affiliate.constant.ts`:
 | `AFFILIATE_COMMISSION_ID_PREFIX`         | `"afc"`                               |
 | `AFFILIATE_PAYOUT_ID_PREFIX`             | `"afp"`                               |
 | `AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX` | `"afs"`                               |
+| `AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX`     | `"afpa"`                              |
+| `AFFILIATE_PAYOUT_METHODS`               | `["GOPAY", "BANK"]`                   |
+| `AFFILIATE_ACCOUNT_NUMBER_MIN_LENGTH`    | `5`                                   |
+| `AFFILIATE_ACCOUNT_NUMBER_MAX_LENGTH`    | `30`                                  |
+| `AFFILIATE_BANK_NAME_MAX_LENGTH`         | `100`                                 |
+| `AFFILIATE_ACCOUNT_HOLDER_MIN_LENGTH`    | `3`                                   |
+| `AFFILIATE_ACCOUNT_HOLDER_MAX_LENGTH`    | `255`                                 |
 | `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]`         |
 | `AFFILIATE_APPLICATION_STATUSES`         | `["PENDING", "ACCEPTED", "REJECTED"]` |
 | `AFFILIATE_ADVANTAGE_MIN_LENGTH`         | `10`                                  |
@@ -520,6 +599,7 @@ Constants in `src/lib/schemas/affiliate.constant.ts`:
 | `AFFILIATE_SLUG_CONFLICT`           | Service                    | `"Failed to generate a unique slug after maximum retries"`                                                                                                                     |
 | `AFFILIATE_SELF_REFERRAL`           | Service                    | `"Cannot refer yourself"`                                                                                                                                                      |
 | `AFFILIATE_NO_PENDING_BALANCE`      | Service                    | `"No pending balance to payout"`                                                                                                                                               |
+| `AFFILIATE_NO_PROFILE`              | Service                    | `"You must have an approved affiliate profile"`                                                                                                                                |
 | `AFFILIATE_RECONCILE_BEFORE_PAYOUT` | Service                    | `"Reconcile commissions before paying out this affiliate"`                                                                                                                     |
 | `INTERNAL_SERVER_ERROR`             | Repository (catch wrapper) | `"Internal server error"`                                                                                                                                                      |
 

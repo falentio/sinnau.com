@@ -6,6 +6,7 @@ import { AffiliateService } from "./affiliate.service";
 import {
   captureError,
   createAffiliateApplicationFixture,
+  createAffiliatePayoutAccountFixture,
   createAffiliateProfileFixture,
   createMockGuard,
   createMockRepository,
@@ -1170,6 +1171,7 @@ describe.concurrent("affiliate service", () => {
           {
             affiliateUserId: "user-1",
             conversionCount: 5,
+            payoutAccount: null,
             pendingBalance: 30_000,
             slug: "test",
           },
@@ -1201,6 +1203,155 @@ describe.concurrent("affiliate service", () => {
       guard.requireAdmin.mockImplementation(throwUnauthorized);
 
       const err = await captureError(service.listPendingPayouts({}, null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+  });
+
+  describe.concurrent("getMyPayoutAccount", () => {
+    it("returns the payout account when it exists", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const account = createAffiliatePayoutAccountFixture({ userId: "user-1" });
+      repo.findPayoutAccountByUserId.mockResolvedValue(account);
+
+      const result = await service.getMyPayoutAccount("user-1");
+
+      expect(result).toEqual(account);
+      expect(repo.findPayoutAccountByUserId).toHaveBeenCalledWith("user-1");
+    });
+
+    it("throws NOT_FOUND when no payout account exists", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findPayoutAccountByUserId.mockResolvedValue(null);
+
+      const err = await captureError(service.getMyPayoutAccount("user-1"));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("throws UNAUTHORIZED when not authenticated", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireUser.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.getMyPayoutAccount(null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+  });
+
+  describe.concurrent("submitPayoutAccount", () => {
+    const validInput = {
+      accountHolderName: "Budi Santoso",
+      accountNumber: "081234567890",
+      bankName: undefined,
+      method: "GOPAY" as const,
+    };
+
+    it("submits payout account for user with profile", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(
+        createAffiliateProfileFixture({ userId: "user-1" })
+      );
+      const account = createAffiliatePayoutAccountFixture({
+        accountHolderName: "Budi Santoso",
+        accountNumber: "081234567890",
+        bankName: null,
+        method: "GOPAY",
+        userId: "user-1",
+      });
+      repo.upsertPayoutAccount.mockResolvedValue(account);
+
+      const result = await service.submitPayoutAccount(validInput, "user-1");
+
+      expect(result).toEqual(account);
+      expect(repo.upsertPayoutAccount).toHaveBeenCalledWith({
+        accountHolderName: "Budi Santoso",
+        accountNumber: "081234567890",
+        bankName: null,
+        method: "GOPAY",
+        userId: "user-1",
+      });
+    });
+
+    it("normalizes bankName to null when method is GOPAY", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(
+        createAffiliateProfileFixture({ userId: "user-1" })
+      );
+      const account = createAffiliatePayoutAccountFixture({
+        bankName: null,
+        method: "GOPAY",
+        userId: "user-1",
+      });
+      repo.upsertPayoutAccount.mockResolvedValue(account);
+
+      await service.submitPayoutAccount(
+        { ...validInput, bankName: "BCA" },
+        "user-1"
+      );
+
+      expect(repo.upsertPayoutAccount).toHaveBeenCalledWith(
+        expect.objectContaining({ bankName: null, method: "GOPAY" })
+      );
+    });
+
+    it("passes bankName when method is BANK", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(
+        createAffiliateProfileFixture({ userId: "user-1" })
+      );
+      const account = createAffiliatePayoutAccountFixture({
+        accountHolderName: "Budi Santoso",
+        accountNumber: "1234567890",
+        bankName: "BCA",
+        method: "BANK",
+        userId: "user-1",
+      });
+      repo.upsertPayoutAccount.mockResolvedValue(account);
+
+      const result = await service.submitPayoutAccount(
+        {
+          accountHolderName: "Budi Santoso",
+          accountNumber: "1234567890",
+          bankName: "BCA",
+          method: "BANK",
+        },
+        "user-1"
+      );
+
+      expect(result.bankName).toBe("BCA");
+      expect(repo.upsertPayoutAccount).toHaveBeenCalledWith(
+        expect.objectContaining({ bankName: "BCA", method: "BANK" })
+      );
+    });
+
+    it("throws AFFILIATE_NO_PROFILE when user has no profile", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.submitPayoutAccount(validInput, "user-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "AFFILIATE_NO_PROFILE" });
+      expect(repo.upsertPayoutAccount).not.toHaveBeenCalled();
+    });
+
+    it("throws UNAUTHORIZED when not authenticated", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireUser.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(
+        service.submitPayoutAccount(validInput, null)
+      );
 
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "UNAUTHORIZED" });

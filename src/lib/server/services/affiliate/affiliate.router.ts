@@ -5,8 +5,10 @@ import { affiliateRecordConversion } from "./commands/affiliate.record-conversio
 import { affiliateRecordPayout } from "./commands/affiliate.record-payout";
 import { affiliateRejectApplication } from "./commands/affiliate.reject-application";
 import { affiliateSetReferrer } from "./commands/affiliate.set-referrer";
+import { affiliateSubmitPayoutAccount } from "./commands/affiliate.submit-payout-account";
 import { affiliateGetDashboardSummary } from "./queries/affiliate.get-dashboard-summary";
 import { affiliateGetMyApplication } from "./queries/affiliate.get-my-application";
+import { affiliateGetMyPayoutAccount } from "./queries/affiliate.get-my-payout-account";
 import { affiliateGetMyProfile } from "./queries/affiliate.get-my-profile";
 import { affiliateListApplications } from "./queries/affiliate.list-applications";
 import { affiliateListPendingPayouts } from "./queries/affiliate.list-pending-payouts";
@@ -28,8 +30,10 @@ export const affiliateRouter = {
   apply: affiliateApply,
   getDashboardSummary: affiliateGetDashboardSummary,
   getMyApplication: affiliateGetMyApplication,
+  getMyPayoutAccount: affiliateGetMyPayoutAccount,
   getMyProfile: affiliateGetMyProfile,
   resolveSlug: affiliateResolveSlug,
+  submitPayoutAccount: affiliateSubmitPayoutAccount,
 };
 
 export type AffiliateRouter = typeof affiliateRouter;

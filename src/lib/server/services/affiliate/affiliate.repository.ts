@@ -10,6 +10,7 @@ import type {
   AffiliateApplication,
   AffiliateCommission,
   AffiliatePayout,
+  AffiliatePayoutAccount,
   AffiliateProfile,
 } from "../../infras/db/schema/affiliate.ts";
 
@@ -17,6 +18,7 @@ export type {
   AffiliateApplication,
   AffiliateCommission,
   AffiliatePayout,
+  AffiliatePayoutAccount,
   AffiliateProfile,
   InvalidCommission,
   PendingPayout,
@@ -64,6 +66,14 @@ export interface InsertAffiliateApplicationInput {
   tiktokHandle: string | null;
   youtubeHandle: string | null;
   advantage: string;
+}
+
+export interface UpsertPayoutAccountInput {
+  userId: string;
+  method: "GOPAY" | "BANK";
+  bankName: string | null;
+  accountNumber: string;
+  accountHolderName: string;
 }
 
 export interface AffiliateRepository {
@@ -146,4 +156,12 @@ export interface AffiliateRepository {
     points: number,
     expectedVersion: number
   ): Promise<AffiliateProfile | null>;
+
+  findPayoutAccountByUserId(
+    userId: string
+  ): Promise<AffiliatePayoutAccount | null>;
+
+  upsertPayoutAccount(
+    input: UpsertPayoutAccountInput
+  ): Promise<AffiliatePayoutAccount>;
 }

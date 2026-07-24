@@ -2,6 +2,7 @@ import type {
   AffiliateApplication,
   AffiliateDashboardSummary,
   AffiliatePayout,
+  AffiliatePayoutAccount,
   AffiliateProfile,
   ApplyAffiliateInput,
   BackfillAffiliateCommissionsInput,
@@ -18,6 +19,7 @@ import type {
   ReviewAffiliateApplicationInput,
   SetAffiliateReferrerInput,
   SetAffiliateReferrerOutput,
+  SubmitPayoutAccountInput,
 } from "$lib/schemas/affiliate";
 import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
 import { getLogger } from "@logtape/logtape";
@@ -373,6 +375,43 @@ export class AffiliateService {
       input.page ?? 1,
       input.limit ?? 10
     );
+  }
+
+  async getMyPayoutAccount(
+    userId: string | null | undefined
+  ): Promise<AffiliatePayoutAccount> {
+    const owner = this.guard.requireUser(userId);
+    const account = await this.repo.findPayoutAccountByUserId(owner);
+    if (!account) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Payout account not found",
+      });
+    }
+    return account;
+  }
+
+  async submitPayoutAccount(
+    input: SubmitPayoutAccountInput,
+    userId: string | null | undefined
+  ): Promise<AffiliatePayoutAccount> {
+    const owner = this.guard.requireUser(userId);
+
+    const profile = await this.repo.findProfileByUserId(owner);
+    if (!profile) {
+      throw new ORPCError("AFFILIATE_NO_PROFILE", {
+        message: "You must have an approved affiliate profile",
+      });
+    }
+
+    const bankName = input.method === "BANK" ? (input.bankName ?? null) : null;
+
+    return await this.repo.upsertPayoutAccount({
+      accountHolderName: input.accountHolderName,
+      accountNumber: input.accountNumber,
+      bankName,
+      method: input.method,
+      userId: owner,
+    });
   }
 
   async handlePaymentSuccess(input: HandlePaymentSuccessInput): Promise<void> {
