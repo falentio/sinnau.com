@@ -22,6 +22,7 @@ import type {
 import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
 import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
+import type QuickLRU from "quick-lru";
 
 import { sanitize } from "../../infras/slug.ts";
 import { nanoid } from "../../utils/nanoid.ts";
@@ -41,10 +42,16 @@ const AFFILIATE_SLUG_MAX_RETRIES = 5;
 export class AffiliateService {
   private readonly repo: AffiliateRepository;
   private readonly guard: AffiliateGuard;
+  private readonly slugCache: QuickLRU<string, { userId: string }>;
 
-  constructor(repo: AffiliateRepository, guard: AffiliateGuard) {
+  constructor(
+    repo: AffiliateRepository,
+    guard: AffiliateGuard,
+    slugCache: QuickLRU<string, { userId: string }>
+  ) {
     this.repo = repo;
     this.guard = guard;
+    this.slugCache = slugCache;
   }
 
   async getMyProfile(
@@ -197,13 +204,19 @@ export class AffiliateService {
 
   async resolveSlug(slug: string): Promise<{ userId: string }> {
     const sanitized = sanitize(slug);
+    const cached = this.slugCache.get(sanitized);
+    if (cached) {
+      return cached;
+    }
     const profile = await this.repo.findProfileBySlug(sanitized);
     if (!profile) {
       throw new ORPCError("NOT_FOUND", {
         message: "Affiliate link not found",
       });
     }
-    return { userId: profile.userId };
+    const result = { userId: profile.userId };
+    this.slugCache.set(sanitized, result);
+    return result;
   }
 
   async recordConversion(

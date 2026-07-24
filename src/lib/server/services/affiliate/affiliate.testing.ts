@@ -9,6 +9,7 @@ import type {
   PlanKey,
 } from "$lib/server/infras/db/schema/plan";
 import { getTestingDb } from "$lib/server/infras/db/testing";
+import QuickLRU from "quick-lru";
 import { vi } from "vitest";
 import type { MockedFunction } from "vitest";
 
@@ -74,6 +75,9 @@ export const createMockGuard = (): MockedAffiliateGuard => ({
   requireAdmin: vi.fn<AffiliateGuard["requireAdmin"]>(),
   requireUser: vi.fn<AffiliateGuard["requireUser"]>(),
 });
+
+export const createSlugCache = (): QuickLRU<string, { userId: string }> =>
+  new QuickLRU({ maxSize: 10 });
 
 export const createAffiliateApplicationFixture = (
   overrides: Partial<AffiliateApplication> = {}

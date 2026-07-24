@@ -9,6 +9,7 @@ import {
   createAffiliateProfileFixture,
   createMockGuard,
   createMockRepository,
+  createSlugCache,
 } from "./affiliate.testing";
 
 const throwUnauthorized = (): never => {
@@ -27,7 +28,8 @@ const setupService = () => {
   const service = new AffiliateService(
     repo,
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- mock to impl cast in tests
-    guard as unknown as AffiliateGuard
+    guard as unknown as AffiliateGuard,
+    createSlugCache()
   );
 
   return { guard, repo, service };
