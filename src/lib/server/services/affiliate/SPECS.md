@@ -113,6 +113,7 @@ interface AffiliatePayoutAccount {
   bankName: string | null; // required if BANK, null if GOPAY
   accountNumber: string; // digits only, 5-30 chars
   accountHolderName: string; // min 3, max 255 chars
+  whatsappNumber: string; // contact number for admin, 8-20 chars
   createdAt: Date; // ms timestamp
   updatedAt: Date; // ms timestamp
 }
@@ -150,6 +151,7 @@ interface PayoutAccountInfo {
   bankName: string | null;
   accountNumber: string;
   accountHolderName: string;
+  whatsappNumber: string;
 }
 ```
 
@@ -330,7 +332,7 @@ backfillCommissions({ affiliateUserId? }) → { created: number, voided: number 
 ### submitPayoutAccount
 
 ```
-submitPayoutAccount({ method, bankName?, accountNumber, accountHolderName }) → AffiliatePayoutAccount
+submitPayoutAccount({ method, bankName?, accountNumber, accountHolderName, whatsappNumber }) → AffiliatePayoutAccount
 ```
 
 - Requires authenticated user with an approved affiliate profile.
@@ -338,6 +340,7 @@ submitPayoutAccount({ method, bankName?, accountNumber, accountHolderName }) →
 - `bankName` is required when `method` is `"BANK"`, ignored (normalized to `null`) when `"GOPAY"`.
 - `accountNumber` must be digits only, 5-30 characters.
 - `accountHolderName` must be 3-255 characters after trim.
+- `whatsappNumber` is the contact number admins use to reach the affiliate; 8-20 characters, digits/spaces/hyphens with optional leading `+`.
 - Errors: `UNAUTHORIZED`, `AFFILIATE_NO_PROFILE`.
 
 ## Queries
@@ -512,6 +515,7 @@ Index: `affiliate_application_user_status_idx` on (`user_id`, `status`).
 | `bank_name`           | text         | NULLABLE                                         |
 | `account_number`      | text         | NOT NULL                                         |
 | `account_holder_name` | text         | NOT NULL                                         |
+| `whatsapp_number`     | text         | NOT NULL                                         |
 | `created_at`          | integer (ms) | NOT NULL, DEFAULT now                            |
 | `updated_at`          | integer (ms) | NOT NULL, DEFAULT now, ON UPDATE                 |
 
@@ -525,41 +529,41 @@ Index: `affiliate_application_user_status_idx` on (`user_id`, `status`).
 
 Valibot schemas in `src/lib/schemas/affiliate.ts`:
 
-| Schema                                      | Description                                                                                        |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `commissionStatusSchema`                    | Picklist of `["PENDING", "PAID"]`                                                                  |
-| `applicationStatusSchema`                   | Picklist of `["PENDING", "ACCEPTED", "REJECTED"]`                                                  |
-| `affiliateProfileIdSchema`                  | Prefixed ID: `aff_{2 lowercase}{16 alphanumeric}`                                                  |
-| `affiliateApplicationIdSchema`              | Prefixed ID: `afa_{2 lowercase}{16 alphanumeric}`                                                  |
-| `affiliateCommissionIdSchema`               | Prefixed ID: `afc_{2 lowercase}{16 alphanumeric}`                                                  |
-| `affiliatePayoutIdSchema`                   | Prefixed ID: `afp_{2 lowercase}{16 alphanumeric}`                                                  |
-| `affiliateSubscriptionEventIdSchema`        | Prefixed ID: `afs_{2 lowercase}{16 alphanumeric}`                                                  |
-| `slugSchema`                                | `string`, min 1, max 255, regex `/^[a-z0-9-]+$/u`                                                  |
-| `moneySchema`                               | `number`, min 0                                                                                    |
-| `applyAffiliateInputSchema`                 | `{ advantage (min 10, max 1000), instagramHandle?, tiktokHandle?, youtubeHandle? }`                |
-| `reviewAffiliateApplicationInputSchema`     | `{ applicationId }`                                                                                |
-| `listAffiliateApplicationsInputSchema`      | `{ status?, page?, limit? }` with integer constraints                                              |
-| `affiliateApplicationSchema`                | Full application entity output schema                                                              |
-| `listAffiliateApplicationsOutputSchema`     | `{ data: AffiliateApplication[], pagination }`                                                     |
-| `recordAffiliateConversionInputSchema`      | `{ commissionAmount, purchaseAmount, purchaserUserId, transactionId }`                             |
-| `recordAffiliatePayoutInputSchema`          | `{ affiliateUserId, method?, note?, reference? }`                                                  |
-| `setAffiliateReferrerInputSchema`           | `{ referredUserId, referrerUserId (nullable) }`                                                    |
-| `setAffiliateReferrerOutputSchema`          | `{ userId, affiliatedBy (nullable) }`                                                              |
-| `resolveAffiliateSlugInputSchema`           | `{ slug }`                                                                                         |
-| `getAffiliateDashboardInputSchema`          | `{}` (no input)                                                                                    |
-| `listPendingPayoutsInputSchema`             | `{ page?, limit? }` with integer constraints                                                       |
-| `reconcileAffiliateCommissionsInputSchema`  | `{ affiliateUserId? }`                                                                             |
-| `reconcileAffiliateCommissionsOutputSchema` | `{ invalid: InvalidCommission[], missing: MissingCommission[] }`                                   |
-| `backfillAffiliateCommissionsInputSchema`   | `{ affiliateUserId? }`                                                                             |
-| `backfillAffiliateCommissionsOutputSchema`  | `{ created: number, voided: number }`                                                              |
-| `missingCommissionSchema`                   | `{ affiliateUserId, expectedCommissionAmount, purchaseAmount, purchaserUserId, transactionId }`    |
-| `invalidCommissionSchema`                   | `{ affiliateUserId, commissionAmount, commissionId, orderStatus, purchaserUserId, transactionId }` |
-| `payoutMethodSchema`                        | Picklist of `["GOPAY", "BANK"]`                                                                    |
-| `affiliatePayoutAccountIdSchema`            | Prefixed ID: `afpa_{2 lowercase}{16 alphanumeric}`                                                 |
-| `submitPayoutAccountInputSchema`            | `{ method, bankName?, accountNumber (digits 5-30), accountHolderName (3-255) }` with BANK check    |
-| `affiliatePayoutAccountSchema`              | Full payout account entity output schema                                                           |
-| `payoutAccountInfoSchema`                   | `{ method, bankName, accountNumber, accountHolderName }` (subset for enriched lists)               |
-| `getMyPayoutAccountInputSchema`             | `{}` (no input)                                                                                    |
+| Schema                                      | Description                                                                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `commissionStatusSchema`                    | Picklist of `["PENDING", "PAID"]`                                                                                      |
+| `applicationStatusSchema`                   | Picklist of `["PENDING", "ACCEPTED", "REJECTED"]`                                                                      |
+| `affiliateProfileIdSchema`                  | Prefixed ID: `aff_{2 lowercase}{16 alphanumeric}`                                                                      |
+| `affiliateApplicationIdSchema`              | Prefixed ID: `afa_{2 lowercase}{16 alphanumeric}`                                                                      |
+| `affiliateCommissionIdSchema`               | Prefixed ID: `afc_{2 lowercase}{16 alphanumeric}`                                                                      |
+| `affiliatePayoutIdSchema`                   | Prefixed ID: `afp_{2 lowercase}{16 alphanumeric}`                                                                      |
+| `affiliateSubscriptionEventIdSchema`        | Prefixed ID: `afs_{2 lowercase}{16 alphanumeric}`                                                                      |
+| `slugSchema`                                | `string`, min 1, max 255, regex `/^[a-z0-9-]+$/u`                                                                      |
+| `moneySchema`                               | `number`, min 0                                                                                                        |
+| `applyAffiliateInputSchema`                 | `{ advantage (min 10, max 1000), instagramHandle?, tiktokHandle?, youtubeHandle? }`                                    |
+| `reviewAffiliateApplicationInputSchema`     | `{ applicationId }`                                                                                                    |
+| `listAffiliateApplicationsInputSchema`      | `{ status?, page?, limit? }` with integer constraints                                                                  |
+| `affiliateApplicationSchema`                | Full application entity output schema                                                                                  |
+| `listAffiliateApplicationsOutputSchema`     | `{ data: AffiliateApplication[], pagination }`                                                                         |
+| `recordAffiliateConversionInputSchema`      | `{ commissionAmount, purchaseAmount, purchaserUserId, transactionId }`                                                 |
+| `recordAffiliatePayoutInputSchema`          | `{ affiliateUserId, method?, note?, reference? }`                                                                      |
+| `setAffiliateReferrerInputSchema`           | `{ referredUserId, referrerUserId (nullable) }`                                                                        |
+| `setAffiliateReferrerOutputSchema`          | `{ userId, affiliatedBy (nullable) }`                                                                                  |
+| `resolveAffiliateSlugInputSchema`           | `{ slug }`                                                                                                             |
+| `getAffiliateDashboardInputSchema`          | `{}` (no input)                                                                                                        |
+| `listPendingPayoutsInputSchema`             | `{ page?, limit? }` with integer constraints                                                                           |
+| `reconcileAffiliateCommissionsInputSchema`  | `{ affiliateUserId? }`                                                                                                 |
+| `reconcileAffiliateCommissionsOutputSchema` | `{ invalid: InvalidCommission[], missing: MissingCommission[] }`                                                       |
+| `backfillAffiliateCommissionsInputSchema`   | `{ affiliateUserId? }`                                                                                                 |
+| `backfillAffiliateCommissionsOutputSchema`  | `{ created: number, voided: number }`                                                                                  |
+| `missingCommissionSchema`                   | `{ affiliateUserId, expectedCommissionAmount, purchaseAmount, purchaserUserId, transactionId }`                        |
+| `invalidCommissionSchema`                   | `{ affiliateUserId, commissionAmount, commissionId, orderStatus, purchaserUserId, transactionId }`                     |
+| `payoutMethodSchema`                        | Picklist of `["GOPAY", "BANK"]`                                                                                        |
+| `affiliatePayoutAccountIdSchema`            | Prefixed ID: `afpa_{2 lowercase}{16 alphanumeric}`                                                                     |
+| `submitPayoutAccountInputSchema`            | `{ method, bankName?, accountNumber (digits 5-30), accountHolderName (3-255), whatsappNumber (8-20) }` with BANK check |
+| `affiliatePayoutAccountSchema`              | Full payout account entity output schema                                                                               |
+| `payoutAccountInfoSchema`                   | `{ method, bankName, accountNumber, accountHolderName }` (subset for enriched lists)                                   |
+| `getMyPayoutAccountInputSchema`             | `{}` (no input)                                                                                                        |
 
 Constants in `src/lib/schemas/affiliate.constant.ts`:
 
@@ -577,6 +581,8 @@ Constants in `src/lib/schemas/affiliate.constant.ts`:
 | `AFFILIATE_BANK_NAME_MAX_LENGTH`         | `100`                                 |
 | `AFFILIATE_ACCOUNT_HOLDER_MIN_LENGTH`    | `3`                                   |
 | `AFFILIATE_ACCOUNT_HOLDER_MAX_LENGTH`    | `255`                                 |
+| `AFFILIATE_WHATSAPP_MIN_LENGTH`          | `8`                                   |
+| `AFFILIATE_WHATSAPP_MAX_LENGTH`          | `20`                                  |
 | `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]`         |
 | `AFFILIATE_APPLICATION_STATUSES`         | `["PENDING", "ACCEPTED", "REJECTED"]` |
 | `AFFILIATE_ADVANTAGE_MIN_LENGTH`         | `10`                                  |

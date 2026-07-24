@@ -411,6 +411,7 @@ export class AffiliateService {
       bankName,
       method: input.method,
       userId: owner,
+      whatsappNumber: input.whatsappNumber,
     });
   }
 

@@ -1691,6 +1691,7 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
         bankName: null,
         method: "GOPAY",
         userId: env.userId,
+        whatsappNumber: "081234567890",
       });
 
       expect(result.userId).toBe(env.userId);
@@ -1698,6 +1699,7 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
       expect(result.bankName).toBeNull();
       expect(result.accountNumber).toBe("081234567890");
       expect(result.accountHolderName).toBe("Budi Santoso");
+      expect(result.whatsappNumber).toBe("081234567890");
       expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(before);
     });
 
@@ -1716,12 +1718,14 @@ describe.concurrent("AffiliateDrizzleRepository (schema constraints)", () => {
         bankName: "BCA",
         method: "BANK",
         userId: env.userId,
+        whatsappNumber: "089876543210",
       });
 
       expect(result.method).toBe("BANK");
       expect(result.bankName).toBe("BCA");
       expect(result.accountNumber).toBe("2222222222");
       expect(result.accountHolderName).toBe("New Name");
+      expect(result.whatsappNumber).toBe("089876543210");
 
       const found = await env.repo.findPayoutAccountByUserId(env.userId);
       expect(found?.accountNumber).toBe("2222222222");

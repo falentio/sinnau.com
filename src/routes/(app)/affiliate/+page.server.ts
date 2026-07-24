@@ -19,5 +19,16 @@ export const load: PageServerLoad = async ({ depends, url }) => {
     }
   }
 
-  return { application, origin: url.origin, summary };
+  let payoutAccount: Awaited<
+    ReturnType<typeof client.affiliate.getMyPayoutAccount>
+  > | null = null;
+  if (summary.profile) {
+    try {
+      payoutAccount = await client.affiliate.getMyPayoutAccount({});
+    } catch {
+      payoutAccount = null;
+    }
+  }
+
+  return { application, origin: url.origin, payoutAccount, summary };
 };

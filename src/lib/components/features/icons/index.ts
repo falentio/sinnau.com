@@ -8,6 +8,7 @@ export {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   ArrowUp01Icon,
+  BankIcon,
   Book03Icon,
   Cancel01Icon,
   Cards01Icon,

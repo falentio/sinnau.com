@@ -418,6 +418,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
             Number
           ),
           slug: affiliateProfile.slug,
+          whatsappNumber: affiliatePayoutAccount.whatsappNumber,
         })
         .from(affiliateCommission)
         .where(eq(affiliateCommission.status, "PENDING"))
@@ -445,6 +446,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
                 accountNumber: row.accountNumber,
                 bankName: row.bankName,
                 method: row.payoutMethod ?? "GOPAY",
+                whatsappNumber: row.whatsappNumber ?? "",
               },
         pendingBalance: row.pendingBalance ?? 0,
         slug: row.slug ?? "unknown",
@@ -804,6 +806,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
           id,
           method: input.method,
           userId: input.userId,
+          whatsappNumber: input.whatsappNumber,
         })
         .onConflictDoUpdate({
           set: {
@@ -812,6 +815,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
             bankName: input.bankName,
             method: input.method,
             updatedAt: new Date(),
+            whatsappNumber: input.whatsappNumber,
           },
           target: affiliatePayoutAccount.userId,
         })

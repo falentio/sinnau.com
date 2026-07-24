@@ -128,6 +128,7 @@ export const affiliatePayoutAccount = sqliteTable("affiliate_payout_account", {
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
+  whatsappNumber: text("whatsapp_number").notNull(),
 });
 
 export const affiliateSubscriptionEvent = sqliteTable(

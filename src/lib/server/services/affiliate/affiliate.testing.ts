@@ -128,6 +128,7 @@ export const createAffiliatePayoutAccountFixture = (
   method: "GOPAY",
   updatedAt: new Date(),
   userId: "user-1",
+  whatsappNumber: "081234567890",
   ...overrides,
 });
 
@@ -277,6 +278,7 @@ export class AffiliateTestEnv implements AsyncDisposable {
     bankName?: string | null;
     accountNumber?: string;
     accountHolderName?: string;
+    whatsappNumber?: string;
   }): string {
     const id = options.id ?? `afpa_${crypto.randomUUID()}`;
     this.db
@@ -288,6 +290,7 @@ export class AffiliateTestEnv implements AsyncDisposable {
         id,
         method: options.method ?? "GOPAY",
         userId: options.userId,
+        whatsappNumber: options.whatsappNumber ?? "081234567890",
       })
       .run();
     return id;

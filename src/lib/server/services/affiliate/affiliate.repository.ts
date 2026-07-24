@@ -74,6 +74,7 @@ export interface UpsertPayoutAccountInput {
   bankName: string | null;
   accountNumber: string;
   accountHolderName: string;
+  whatsappNumber: string;
 }
 
 export interface AffiliateRepository {

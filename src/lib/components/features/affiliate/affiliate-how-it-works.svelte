@@ -1,5 +1,8 @@
 <script lang="ts">
-  let { commissionLabel }: { commissionLabel: string } = $props();
+  let {
+    commissionLabel,
+    minimumPayoutLabel,
+  }: { commissionLabel: string; minimumPayoutLabel: string } = $props();
 </script>
 
 <section class="mt-10 border-t border-border/60 pt-8 md:mt-12">
@@ -33,7 +36,7 @@
         </p>
       </div>
     </li>
-    <li class="flex gap-4 py-4 last:pb-0">
+    <li class="flex gap-4 py-4">
       <span
         class="pt-0.5 font-mono text-[13px] text-amber-700 dark:text-amber-300"
         >03</span
@@ -43,6 +46,19 @@
         <p class="mt-0.5 text-sm leading-relaxed text-muted-foreground">
           {commissionLabel} dari nilai transaksi langsung menambah saldo menunggu
           di halaman ini.
+        </p>
+      </div>
+    </li>
+    <li class="flex gap-4 py-4 last:pb-0">
+      <span
+        class="pt-0.5 font-mono text-[13px] text-amber-700 dark:text-amber-300"
+        >04</span
+      >
+      <div>
+        <p class="text-sm font-medium">Cair setiap Jumat</p>
+        <p class="mt-0.5 text-sm leading-relaxed text-muted-foreground">
+          Begitu saldo mencapai minimal {minimumPayoutLabel}, komisi dicairkan
+          setiap hari Jumat ke rekening payout yang kamu daftarkan.
         </p>
       </div>
     </li>

@@ -20,6 +20,8 @@ import {
   AFFILIATE_PAYOUT_METHODS,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
   AFFILIATE_TEXT_FIELD_MAX_LENGTH,
+  AFFILIATE_WHATSAPP_MAX_LENGTH,
+  AFFILIATE_WHATSAPP_MIN_LENGTH,
 } from "./affiliate.constant.ts";
 import { createPrefixedIdSchema } from "./id-schema.ts";
 import { ORDER_STATUSES } from "./plan.constant.ts";
@@ -170,6 +172,22 @@ export const submitPayoutAccountInputSchema = v.pipe(
       )
     ),
     method: payoutMethodSchema,
+    whatsappNumber: v.pipe(
+      v.string(),
+      v.trim(),
+      v.regex(
+        /^\+?[0-9\s-]+$/u,
+        "Nomor WhatsApp hanya boleh berisi angka, spasi, tanda hubung, atau diawali +"
+      ),
+      v.minLength(
+        AFFILIATE_WHATSAPP_MIN_LENGTH,
+        "Nomor WhatsApp minimal 8 karakter"
+      ),
+      v.maxLength(
+        AFFILIATE_WHATSAPP_MAX_LENGTH,
+        "Nomor WhatsApp maksimal 20 karakter"
+      )
+    ),
   }),
   v.check(
     (input) =>
@@ -266,6 +284,7 @@ export const affiliatePayoutAccountSchema = v.object({
   method: payoutMethodSchema,
   updatedAt: v.date(),
   userId: v.string(),
+  whatsappNumber: v.string(),
 });
 
 export const payoutAccountInfoSchema = v.object({
@@ -273,6 +292,7 @@ export const payoutAccountInfoSchema = v.object({
   accountNumber: v.string(),
   bankName: v.nullable(v.string()),
   method: payoutMethodSchema,
+  whatsappNumber: v.string(),
 });
 
 export const affiliateSubscriptionEventSchema = v.object({

@@ -11,11 +11,13 @@
 
   let {
     conversionCount,
+    minimumPayoutLabel,
     pendingBalance,
     totalEarned,
     totalPaid,
   }: {
     conversionCount: number;
+    minimumPayoutLabel: string;
     pendingBalance: number;
     totalEarned: number;
     totalPaid: number;
@@ -40,8 +42,8 @@
       </div>
     </div>
     <p class="mt-4 text-[13px] leading-relaxed text-muted-foreground">
-      Komisi yang belum dibayarkan. Akan dicairkan secara berkala oleh tim
-      Sinnau.
+      Komisi yang belum dibayarkan. Dicairkan setiap Jumat begitu saldo mencapai
+      minimal {minimumPayoutLabel}.
     </p>
   </div>
 

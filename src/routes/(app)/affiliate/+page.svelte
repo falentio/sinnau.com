@@ -2,12 +2,17 @@
   import AffiliateApplySection from "$lib/components/features/affiliate/affiliate-apply-section.svelte";
   import AffiliateEarningsStats from "$lib/components/features/affiliate/affiliate-earnings-stats.svelte";
   import AffiliateHowItWorks from "$lib/components/features/affiliate/affiliate-how-it-works.svelte";
+  import AffiliatePayoutSection from "$lib/components/features/affiliate/affiliate-payout-section.svelte";
   import AffiliatePendingSummary from "$lib/components/features/affiliate/affiliate-pending-summary.svelte";
   import AffiliateReferralCard from "$lib/components/features/affiliate/affiliate-referral-card.svelte";
   import { createApplyForm } from "$lib/components/features/affiliate/create-apply-form.svelte";
+  import { createPayoutForm } from "$lib/components/features/affiliate/create-payout-form.svelte";
   import { ArrowLeft01Icon } from "$lib/components/features/icons";
   import SeoHead from "$lib/components/seo-head.svelte";
-  import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
+  import {
+    AFFILIATE_COMMISSION_RATE,
+    AFFILIATE_MINIMUM_PAYOUT_AMOUNT,
+  } from "$lib/schemas/affiliate.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { untrack } from "svelte";
 
@@ -16,6 +21,12 @@
   let { data }: { data: PageData } = $props();
 
   const commissionLabel = `${Math.round(AFFILIATE_COMMISSION_RATE * 100)}%`;
+
+  const minimumPayoutLabel = new Intl.NumberFormat("id-ID", {
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    style: "currency",
+  }).format(AFFILIATE_MINIMUM_PAYOUT_AMOUNT);
 
   const profile = $derived(data.summary.profile);
 
@@ -38,6 +49,14 @@
   );
 
   const advantageCount = $derived($formData.advantage.trim().length);
+
+  const {
+    enhance: payoutEnhance,
+    errors: payoutErrors,
+    form: payoutForm,
+    formData: payoutFormData,
+    submitting: payoutSubmitting,
+  } = createPayoutForm(untrack(() => data.payoutAccount));
 </script>
 
 <SeoHead
@@ -81,11 +100,25 @@
     <AffiliateReferralCard {referralUrl} slug={profile.slug} />
     <AffiliateEarningsStats
       conversionCount={data.summary.conversionCount}
+      {minimumPayoutLabel}
       pendingBalance={data.summary.pendingBalance}
       totalEarned={data.summary.totalEarned}
       totalPaid={data.summary.totalPaid}
     />
-    <AffiliateHowItWorks {commissionLabel} />
+
+    <div class="mt-4">
+      <AffiliatePayoutSection
+        enhance={payoutEnhance}
+        errors={payoutErrors}
+        form={payoutForm}
+        formData={payoutFormData}
+        hasAccount={Boolean(data.payoutAccount)}
+        {minimumPayoutLabel}
+        submitting={$payoutSubmitting}
+      />
+    </div>
+
+    <AffiliateHowItWorks {commissionLabel} {minimumPayoutLabel} />
 
     <footer
       class="mt-10 border-t border-border/60 pt-6 text-[13px] leading-relaxed text-muted-foreground"
