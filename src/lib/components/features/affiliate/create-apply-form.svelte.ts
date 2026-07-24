@@ -1,4 +1,4 @@
-import { goto, invalidateAll } from "$app/navigation";
+import { goto, invalidate } from "$app/navigation";
 import { resolve } from "$app/paths";
 import { client } from "$lib/orpc";
 import type {
@@ -18,7 +18,7 @@ const submitApplication = async (input: ApplyAffiliateInput) => {
     toast.success("Aplikasi terkirim. Tunggu kabar dari kami!", {
       position: "top-right",
     });
-    await invalidateAll();
+    await invalidate("affiliate:summary");
   } catch (error) {
     if (error instanceof ORPCError) {
       if (error.code === "UNAUTHORIZED") {
@@ -51,6 +51,7 @@ export const createApplyForm = (application: AffiliateApplication | null) => {
     ),
     {
       SPA: true,
+      dataType: "json",
       onUpdate: async ({ form: submittedForm }) => {
         if (!submittedForm.valid) {
           return;
@@ -68,3 +69,5 @@ export const createApplyForm = (application: AffiliateApplication | null) => {
 };
 
 export type AffiliateApplyForm = ReturnType<typeof createApplyForm>;
+export type AffiliateApplyFormObject = AffiliateApplyForm["form"];
+export type AffiliateApplyFormData = AffiliateApplyFormObject["form"];
