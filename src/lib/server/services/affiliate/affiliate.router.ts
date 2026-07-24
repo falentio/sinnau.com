@@ -16,20 +16,20 @@ import { affiliateResolveSlug } from "./queries/affiliate.resolve-slug";
 export const affiliateRouter = {
   admin: {
     acceptApplication: affiliateAcceptApplication,
+    backfillCommissions: affiliateBackfillCommissions,
     listApplications: affiliateListApplications,
+    listPendingPayouts: affiliateListPendingPayouts,
+    reconcileCommissions: affiliateReconcileCommissions,
+    recordConversion: affiliateRecordConversion,
+    recordPayout: affiliateRecordPayout,
     rejectApplication: affiliateRejectApplication,
+    setReferrer: affiliateSetReferrer,
   },
   apply: affiliateApply,
-  backfillCommissions: affiliateBackfillCommissions,
   getDashboardSummary: affiliateGetDashboardSummary,
   getMyApplication: affiliateGetMyApplication,
   getMyProfile: affiliateGetMyProfile,
-  listPendingPayouts: affiliateListPendingPayouts,
-  reconcileCommissions: affiliateReconcileCommissions,
-  recordConversion: affiliateRecordConversion,
-  recordPayout: affiliateRecordPayout,
   resolveSlug: affiliateResolveSlug,
-  setReferrer: affiliateSetReferrer,
 };
 
 export type AffiliateRouter = typeof affiliateRouter;

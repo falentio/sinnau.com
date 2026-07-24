@@ -13,9 +13,12 @@
   import * as Form from "$lib/components/ui/form/index.js";
   import { Input } from "$lib/components/ui/input";
   import { Textarea } from "$lib/components/ui/textarea";
-  import type { ApplyAffiliateInput } from "$lib/schemas/affiliate";
   import { HugeiconsIcon } from "@hugeicons/svelte";
-  import type { SuperForm } from "sveltekit-superforms";
+
+  import type {
+    AffiliateApplyFormObject,
+    AffiliateApplyFormData,
+  } from "./create-apply-form.svelte";
 
   let {
     commissionLabel,
@@ -29,8 +32,8 @@
     commissionLabel: string;
     advantageCount: number;
     enhance: (formElement: HTMLFormElement) => { destroy: () => void };
-    form: SuperForm<ApplyAffiliateInput>;
-    formData: SuperForm<ApplyAffiliateInput>["form"];
+    form: AffiliateApplyFormObject;
+    formData: AffiliateApplyFormData;
     submitting?: boolean;
     rejected?: boolean;
   } = $props();
