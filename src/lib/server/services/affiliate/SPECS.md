@@ -119,6 +119,12 @@ interface AffiliatePayoutAccount {
 }
 ```
 
+## Payout Schedule
+
+- Commissions are paid out **weekly, every Friday**.
+- A payout requires a minimum pending balance of `AFFILIATE_MINIMUM_PAYOUT_AMOUNT` (Rp50.000).
+- This schedule is currently informational copy shown to affiliates (balance card, how-it-works, payout account note); it is not yet enforced by `recordPayout`.
+
 ### AffiliateDashboardSummary
 
 ```typescript
@@ -562,7 +568,7 @@ Valibot schemas in `src/lib/schemas/affiliate.ts`:
 | `affiliatePayoutAccountIdSchema`            | Prefixed ID: `afpa_{2 lowercase}{16 alphanumeric}`                                                                     |
 | `submitPayoutAccountInputSchema`            | `{ method, bankName?, accountNumber (digits 5-30), accountHolderName (3-255), whatsappNumber (8-20) }` with BANK check |
 | `affiliatePayoutAccountSchema`              | Full payout account entity output schema                                                                               |
-| `payoutAccountInfoSchema`                   | `{ method, bankName, accountNumber, accountHolderName }` (subset for enriched lists)                                   |
+| `payoutAccountInfoSchema`                   | `{ method, bankName, accountNumber, accountHolderName, whatsappNumber }` (subset for enriched lists)                   |
 | `getMyPayoutAccountInputSchema`             | `{}` (no input)                                                                                                        |
 
 Constants in `src/lib/schemas/affiliate.constant.ts`:
@@ -583,6 +589,8 @@ Constants in `src/lib/schemas/affiliate.constant.ts`:
 | `AFFILIATE_ACCOUNT_HOLDER_MAX_LENGTH`    | `255`                                 |
 | `AFFILIATE_WHATSAPP_MIN_LENGTH`          | `8`                                   |
 | `AFFILIATE_WHATSAPP_MAX_LENGTH`          | `20`                                  |
+| `AFFILIATE_COMMISSION_RATE`              | `0.25`                                |
+| `AFFILIATE_MINIMUM_PAYOUT_AMOUNT`        | `50000`                               |
 | `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]`         |
 | `AFFILIATE_APPLICATION_STATUSES`         | `["PENDING", "ACCEPTED", "REJECTED"]` |
 | `AFFILIATE_ADVANTAGE_MIN_LENGTH`         | `10`                                  |
