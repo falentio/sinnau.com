@@ -24,6 +24,15 @@ export const AFFILIATE_APPLICATION_STATUSES = [
   "REJECTED",
 ] as const;
 
+export const AFFILIATE_APPLICATION_STATUS_LABEL: Record<
+  (typeof AFFILIATE_APPLICATION_STATUSES)[number],
+  string
+> = {
+  ACCEPTED: "Accepted",
+  PENDING: "Pending",
+  REJECTED: "Rejected",
+};
+
 export const AFFILIATE_ADVANTAGE_MIN_LENGTH = 10;
 export const AFFILIATE_ADVANTAGE_MAX_LENGTH = 1000;
 export const AFFILIATE_HANDLE_MAX_LENGTH = 255;

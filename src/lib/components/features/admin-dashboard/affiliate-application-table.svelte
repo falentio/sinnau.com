@@ -6,6 +6,7 @@
   import * as Table from "$lib/components/ui/table/index.js";
   import { client } from "$lib/orpc";
   import type { AffiliateApplication } from "$lib/schemas/affiliate";
+  import { AFFILIATE_APPLICATION_STATUS_LABEL } from "$lib/schemas/affiliate.constant";
   import { formatDateTime } from "$lib/utils/date";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
@@ -28,22 +29,10 @@
     return "destructive";
   };
 
-  const statusLabel = (status: string) => {
-    switch (status) {
-      case "PENDING": {
-        return "Pending";
-      }
-      case "ACCEPTED": {
-        return "Accepted";
-      }
-      case "REJECTED": {
-        return "Rejected";
-      }
-      default: {
-        return status;
-      }
-    }
-  };
+  const statusLabel = (status: string) =>
+    AFFILIATE_APPLICATION_STATUS_LABEL[
+      status as keyof typeof AFFILIATE_APPLICATION_STATUS_LABEL
+    ] ?? status;
 
   const openReview = (id: string, mode: "accept" | "reject") => {
     reviewAppId = id;

@@ -3,7 +3,10 @@
   import AffiliateApplicationTable from "$lib/components/features/admin-dashboard/affiliate-application-table.svelte";
   import StudySetPagination from "$lib/components/features/app/study-set-pagination.svelte";
   import * as Select from "$lib/components/ui/select/index.js";
-  import { AFFILIATE_APPLICATION_STATUSES } from "$lib/schemas/affiliate.constant";
+  import {
+    AFFILIATE_APPLICATION_STATUS_LABEL,
+    AFFILIATE_APPLICATION_STATUSES,
+  } from "$lib/schemas/affiliate.constant";
   import { navigateWithParams } from "$lib/utils/url";
 
   import type { PageData } from "./$types";
@@ -19,22 +22,10 @@
     });
   };
 
-  const statusLabel = (s: string) => {
-    switch (s) {
-      case "PENDING": {
-        return "Pending";
-      }
-      case "ACCEPTED": {
-        return "Accepted";
-      }
-      case "REJECTED": {
-        return "Rejected";
-      }
-      default: {
-        return s;
-      }
-    }
-  };
+  const statusLabel = (s: string) =>
+    AFFILIATE_APPLICATION_STATUS_LABEL[
+      s as keyof typeof AFFILIATE_APPLICATION_STATUS_LABEL
+    ] ?? s;
 </script>
 
 <div class="container mx-auto p-6">
