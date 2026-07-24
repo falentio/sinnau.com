@@ -163,7 +163,6 @@ export const submitPayoutAccountInputSchema = v.pipe(
       v.pipe(
         v.string(),
         v.trim(),
-        v.minLength(1, "Nama bank diperlukan jika metode BANK"),
         v.maxLength(
           AFFILIATE_BANK_NAME_MAX_LENGTH,
           "Nama bank maksimal 100 karakter"
