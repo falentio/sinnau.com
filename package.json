@@ -17,7 +17,7 @@
     "format": "oxfmt -c ./oxfmt.config.ts",
     "format:check": "oxfmt -c ./oxfmt.config.ts --check",
     "test:unit": "vitest",
-    "test": "pnpm run test:unit -- --run",
+    "test": "pnpm run test:unit --run",
     "test:coverage": "vitest run --coverage",
     "auth:generate": "better-auth generate --config ./src/lib/server/infras/auth/config.ts --output ./src/lib/server/infras/db/schema/auth-schema.ts --yes",
     "db:generate": "drizzle-kit generate",
