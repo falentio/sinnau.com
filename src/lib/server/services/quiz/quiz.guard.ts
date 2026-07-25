@@ -73,6 +73,7 @@ export class QuizGuard {
     if (ch.studySetId !== expectedStudySetId) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Chapter does not belong to the target study set",
+        status: 400,
       });
     }
     if (ch.ownerId !== ownerId) {
@@ -122,6 +123,7 @@ export class QuizGuard {
       throw new ORPCError("PARTIAL_FORBIDDEN", {
         data: { ids: blockedIds },
         message: "Some ids cannot be modified by this user",
+        status: 403,
       });
     }
     return rows;
@@ -138,6 +140,7 @@ export class QuizGuard {
       throw new ORPCError("PARTIAL_FORBIDDEN", {
         data: { ids: blockedIds },
         message: "Some ids cannot be modified by this user",
+        status: 403,
       });
     }
     return owned;

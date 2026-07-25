@@ -100,6 +100,7 @@ export class AiLimitService {
           weekly: { limit: plan.weekly },
         },
         message: "Requested amount exceeds plan limit",
+        status: 429,
       });
     }
 
@@ -125,6 +126,7 @@ export class AiLimitService {
     if (result === "EXCEEDED") {
       throw new ORPCError("AI_LIMIT_EXCEEDED", {
         message: "AI usage limit reached for this period",
+        status: 429,
       });
     }
 
@@ -158,6 +160,7 @@ export class AiLimitService {
     if (!marked) {
       throw new ORPCError("AI_LIMIT_ALREADY_REFUNDED", {
         message: "Usage log has already been refunded",
+        status: 409,
       });
     }
 

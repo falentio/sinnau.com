@@ -55,6 +55,7 @@ export class FlashcardGuard {
     if (ch.studySetId !== expectedStudySetId) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Chapter does not belong to the target study set",
+        status: 400,
       });
     }
     if (ch.ownerId !== ownerId) {
@@ -120,6 +121,7 @@ export class FlashcardGuard {
       throw new ORPCError("PARTIAL_FORBIDDEN", {
         data: { ids: blocked },
         message: "Some flashcards cannot be deleted by the current user",
+        status: 403,
       });
     }
   }

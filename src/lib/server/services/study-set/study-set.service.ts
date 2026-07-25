@@ -49,6 +49,7 @@ export class StudySetService {
       if (error instanceof SlugConflictError) {
         throw new ORPCError("STUDY_SET_SLUG_CONFLICT", {
           message: error.message,
+          status: 400,
         });
       }
       throw error;

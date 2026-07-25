@@ -252,6 +252,7 @@ export class PlanService {
     ) {
       throw new ORPCError("DOWNGRADE_NOT_ALLOWED", {
         message: "Cannot downgrade from an active higher-tier plan",
+        status: 400,
       });
     }
 
@@ -302,6 +303,7 @@ export class PlanService {
     } catch {
       throw new ORPCError("PAYMENT_GATEWAY_ERROR", {
         message: "Failed to initiate QRIS payment",
+        status: 502,
       });
     }
 
@@ -453,6 +455,7 @@ export class PlanService {
     if (!active) {
       throw new ORPCError("NO_ACTIVE_PLAN", {
         message: "User has no active plan",
+        status: 400,
       });
     }
     const monthly = PLAN_MONTHLY_LIMIT[active.planKey];

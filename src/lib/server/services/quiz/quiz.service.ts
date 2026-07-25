@@ -346,6 +346,7 @@ export class QuizService {
     if (!validateQuizOptions(type, options)) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Quiz options violate type constraints",
+        status: 400,
       });
     }
   }

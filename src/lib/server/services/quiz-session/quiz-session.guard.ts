@@ -54,6 +54,7 @@ export class QuizSessionGuard {
     if (!ch || ch.studySetId !== studySetId) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Chapter does not belong to the study set",
+        status: 400,
       });
     }
   }
@@ -76,6 +77,7 @@ export class QuizSessionGuard {
     if (session.status !== "ACTIVE") {
       throw new ORPCError("SESSION_ALREADY_COMPLETED", {
         message: "Cannot modify a completed session",
+        status: 409,
       });
     }
   }
@@ -93,6 +95,7 @@ export class QuizSessionGuard {
     if (quizRow.sessionId !== sessionId) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Quiz does not belong to this session",
+        status: 400,
       });
     }
     return quizRow;
@@ -112,6 +115,7 @@ export class QuizSessionGuard {
     if (notFound.length > 0) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Some option IDs do not exist",
+        status: 400,
       });
     }
 
@@ -119,6 +123,7 @@ export class QuizSessionGuard {
     if (notBelong.length > 0) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Some options do not belong to this quiz",
+        status: 400,
       });
     }
 

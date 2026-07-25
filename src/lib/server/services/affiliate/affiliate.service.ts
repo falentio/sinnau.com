@@ -84,6 +84,7 @@ export class AffiliateService {
     if (existingProfile) {
       throw new ORPCError("AFFILIATE_ALREADY_APPROVED", {
         message: "You already have an affiliate profile",
+        status: 409,
       });
     }
 
@@ -92,6 +93,7 @@ export class AffiliateService {
     if (pendingApplication) {
       throw new ORPCError("AFFILIATE_APPLICATION_PENDING", {
         message: "You already have a pending application",
+        status: 409,
       });
     }
 
@@ -133,6 +135,7 @@ export class AffiliateService {
     if (slug === null) {
       throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
         message: "Failed to generate a unique slug after maximum retries",
+        status: 400,
       });
     }
 
@@ -144,6 +147,7 @@ export class AffiliateService {
     if (!profile) {
       throw new ORPCError("AFFILIATE_SLUG_CONFLICT", {
         message: "Failed to generate a unique slug after maximum retries",
+        status: 400,
       });
     }
 
@@ -238,6 +242,7 @@ export class AffiliateService {
     if (affiliateUserId === input.purchaserUserId) {
       throw new ORPCError("AFFILIATE_SELF_REFERRAL", {
         message: "Cannot refer yourself",
+        status: 400,
       });
     }
 
@@ -284,6 +289,7 @@ export class AffiliateService {
     if (missing.length > 0 || invalid.length > 0) {
       throw new ORPCError("AFFILIATE_RECONCILE_BEFORE_PAYOUT", {
         message: "Reconcile commissions before paying out this affiliate",
+        status: 400,
       });
     }
 
@@ -298,6 +304,7 @@ export class AffiliateService {
     if (!payout) {
       throw new ORPCError("AFFILIATE_NO_PENDING_BALANCE", {
         message: "No pending balance to payout",
+        status: 400,
       });
     }
 
@@ -326,6 +333,7 @@ export class AffiliateService {
       if (referrerUserId === input.referredUserId) {
         throw new ORPCError("AFFILIATE_SELF_REFERRAL", {
           message: "Cannot refer yourself",
+          status: 400,
         });
       }
 
@@ -400,6 +408,7 @@ export class AffiliateService {
     if (!profile) {
       throw new ORPCError("AFFILIATE_NO_PROFILE", {
         message: "You must have an approved affiliate profile",
+        status: 400,
       });
     }
 
@@ -464,6 +473,7 @@ export class AffiliateService {
     if (application.status !== "PENDING") {
       throw new ORPCError("AFFILIATE_APPLICATION_NOT_PENDING", {
         message: "Application is not pending review",
+        status: 400,
       });
     }
     return application;

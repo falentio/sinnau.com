@@ -39,6 +39,7 @@ export class ChapterService {
         if (error instanceof SlugConflictError) {
           throw new ORPCError("CHAPTER_SLUG_CONFLICT", {
             message: error.message,
+            status: 400,
           });
         }
         throw error;
@@ -93,6 +94,7 @@ export class ChapterService {
     if (children > 0) {
       throw new ORPCError("CHAPTER_NOT_EMPTY", {
         message: "Chapter is not empty",
+        status: 409,
       });
     }
 

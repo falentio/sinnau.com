@@ -153,6 +153,7 @@ export class GenerateService {
     if (this.activeOwners.has(owner)) {
       throw new ORPCError("CONCURRENCY_LIMIT", {
         message: "A generation is already in progress",
+        status: 409,
       });
     }
 
@@ -160,6 +161,7 @@ export class GenerateService {
     if (usage.daily.remaining < 3000 || usage.weekly.remaining < 3000) {
       throw new ORPCError("AI_LIMIT_EXCEEDED", {
         message: "AI usage limit reached for this period",
+        status: 429,
       });
     }
 
@@ -171,6 +173,7 @@ export class GenerateService {
     } catch {
       throw new ORPCError("LITEPARSE_FAILED", {
         message: "Failed to parse the PDF file",
+        status: 422,
       });
     }
     logger.info("Generation parse finished", () => ({

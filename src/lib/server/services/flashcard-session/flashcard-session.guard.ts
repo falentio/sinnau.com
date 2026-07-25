@@ -65,6 +65,7 @@ export class FlashcardSessionGuard {
     if (card.studySetId !== studySetId) {
       throw new ORPCError("VALIDATION_FAILED", {
         message: "Flashcard does not belong to the study set",
+        status: 400,
       });
     }
     return card;
