@@ -71,7 +71,12 @@ export type MockedUserRepository = {
 };
 
 export const createMockUserRepository = (): MockedUserRepository => ({
+  banUser: vi.fn<UserRepository["banUser"]>(),
   findUserById: vi.fn<UserRepository["findUserById"]>(),
+  findUserDetail: vi.fn<UserRepository["findUserDetail"]>(),
+  listUsers: vi.fn<UserRepository["listUsers"]>(),
+  unbanUser: vi.fn<UserRepository["unbanUser"]>(),
+  updateUserRole: vi.fn<UserRepository["updateUserRole"]>(),
 });
 
 export type MockedAffiliateGuard = {
