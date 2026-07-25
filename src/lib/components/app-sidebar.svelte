@@ -6,6 +6,7 @@
     Cards01Icon,
     CrownIcon,
     Home01Icon,
+    Link03Icon,
     PieChartIcon,
     Quiz01Icon,
     Search02Icon,
@@ -86,8 +87,12 @@
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
-              <HugeiconsIcon icon={Book03Icon} />
-              <span>Modul</span>
+              {#snippet child({ props })}
+                <a href="/affiliate" {...props}>
+                  <HugeiconsIcon icon={Link03Icon} />
+                  <span>Affiliate</span>
+                </a>
+              {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
           <Sidebar.MenuItem>

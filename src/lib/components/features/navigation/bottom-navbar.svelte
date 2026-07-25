@@ -2,9 +2,9 @@
   import { page } from "$app/state";
   import {
     AiBeautifyIcon,
-    Book03Icon,
     CrownIcon,
     Home01Icon,
+    Link03Icon,
     Search02Icon,
     Settings02Icon,
   } from "$lib/components/features/icons";
@@ -58,12 +58,13 @@
     </Button>
 
     <Button
+      href="/affiliate/"
       variant="ghost"
       class="flex h-auto min-w-[3.5rem] flex-col gap-0.5 rounded-full px-3 py-2 text-[10px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.96]"
-      aria-label="Perpustakaan"
+      aria-label="Affiliate"
     >
-      <HugeiconsIcon icon={Book03Icon} class="size-5" strokeWidth={1.5} />
-      Pustaka
+      <HugeiconsIcon icon={Link03Icon} class="size-5" strokeWidth={1.5} />
+      Affiliate
     </Button>
 
     <Button
