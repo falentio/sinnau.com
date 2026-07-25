@@ -66,6 +66,22 @@
 
   const banStatusLabel = (s: string) =>
     BAN_STATUS_LABELS[s as keyof typeof BAN_STATUS_LABELS] ?? s;
+
+  const hasActiveFilters = $derived(
+    currentRole !== "" ||
+      currentBanStatus !== "" ||
+      (page.url.searchParams.get("email") ?? "") !== ""
+  );
+
+  const handleClearFilters = () => {
+    emailInput = "";
+    navigateWithParams(page.url.searchParams, {
+      banStatus: null,
+      email: null,
+      page: null,
+      role: null,
+    });
+  };
 </script>
 
 <div class="container mx-auto p-6">
@@ -127,6 +143,11 @@
         </Select.Content>
       </Select.Root>
     </div>
+    {#if hasActiveFilters}
+      <Button variant="ghost" onclick={handleClearFilters}>
+        Clear filters
+      </Button>
+    {/if}
   </div>
 
   <UserTable users={data.users} ongrantplan={handleGrantPlan} />
