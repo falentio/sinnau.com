@@ -16,6 +16,8 @@
   import type { AdminUser, UserDetail } from "$lib/schemas/user";
   import { USER_ROLE_LABELS } from "$lib/schemas/user.constant";
   import { formatDateTime } from "$lib/utils/date";
+  import { Copy01Icon } from "@hugeicons/core-free-icons";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
   import { createColumnHelper, getCoreRowModel } from "@tanstack/table-core";
   import type {
@@ -231,6 +233,15 @@
       }
     }
   });
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("ID copied");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
 </script>
 
 {#snippet actionsCell({ row }: { row: Row<AdminUser> })}
@@ -378,7 +389,7 @@
   open={detailUserId !== null}
   onOpenChange={() => (detailUserId = null)}
 >
-  <Dialog.Content class="max-w-lg">
+  <Dialog.Content class="max-w-xl">
     <Dialog.Header>
       <Dialog.Title>User Details</Dialog.Title>
     </Dialog.Header>
@@ -387,68 +398,93 @@
         <span class="text-muted-foreground">Loading...</span>
       </div>
     {:else if detailData}
-      <div class="space-y-3 text-sm">
-        <div class="grid grid-cols-3 gap-2">
+      {@const data = detailData}
+      <div class="space-y-4 text-sm">
+        <div class="flex items-center gap-2">
           <span class="font-medium">ID</span>
-          <span class="col-span-2 truncate font-mono text-xs"
-            >{detailData.id}</span
+          <button
+            onclick={() => copyToClipboard(data.id)}
+            class="inline-flex items-center gap-1 truncate font-mono text-xs text-muted-foreground hover:text-foreground"
           >
+            {data.id}
+            <HugeiconsIcon icon={Copy01Icon} class="size-3 shrink-0" />
+          </button>
         </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Name</span>
-          <span class="col-span-2">{detailData.name}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Email</span>
-          <span class="col-span-2 font-mono text-xs">{detailData.email}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Verified</span>
-          <span class="col-span-2"
-            >{detailData.emailVerified ? "Yes" : "No"}</span
-          >
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Role</span>
-          <span class="col-span-2">
-            <Badge variant={roleVariant(detailData.role)}>
-              {roleLabel(detailData.role)}
-            </Badge>
-          </span>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Banned</span>
-          <span class="col-span-2">
-            <Badge variant={banVariant(detailData.banned)}>
-              {detailData.banned ? "Yes" : "No"}
-            </Badge>
-          </span>
-        </div>
-        {#if detailData.banned}
-          <div class="grid grid-cols-3 gap-2">
-            <span class="font-medium">Ban Reason</span>
-            <span class="col-span-2">{detailData.banReason ?? "\u2014"}</span>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <h4
+              class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            >
+              Account
+            </h4>
+            <div class="space-y-2">
+              <div>
+                <span class="text-xs text-muted-foreground">Name</span>
+                <p class="font-medium">{data.name}</p>
+              </div>
+              <div>
+                <span class="text-xs text-muted-foreground">Email</span>
+                <p class="truncate font-mono text-xs">{data.email}</p>
+              </div>
+              <div>
+                <span class="text-xs text-muted-foreground">Verified</span>
+                <p>{data.emailVerified ? "Yes" : "No"}</p>
+              </div>
+              <div>
+                <span class="text-xs text-muted-foreground">Created</span>
+                <p>{formatDateTime(data.createdAt)}</p>
+              </div>
+            </div>
           </div>
-        {/if}
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Created</span>
-          <span class="col-span-2">{formatDateTime(detailData.createdAt)}</span>
+          <div class="space-y-2">
+            <h4
+              class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            >
+              Status
+            </h4>
+            <div class="space-y-2">
+              <div>
+                <span class="text-xs text-muted-foreground">Role</span>
+                <div class="mt-0.5">
+                  <Badge variant={roleVariant(data.role)}>
+                    {roleLabel(data.role)}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <span class="text-xs text-muted-foreground">Banned</span>
+                <div class="mt-0.5">
+                  <Badge variant={banVariant(data.banned)}>
+                    {data.banned ? "Yes" : "No"}
+                  </Badge>
+                </div>
+              </div>
+              {#if data.banned}
+                <div>
+                  <span class="text-xs text-muted-foreground">Ban Reason</span>
+                  <p>{data.banReason ?? "\u2014"}</p>
+                </div>
+              {/if}
+              <div>
+                <span class="text-xs text-muted-foreground">Login Method</span>
+                <p>{data.lastLoginMethod ?? "\u2014"}</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Login Method</span>
-          <span class="col-span-2"
-            >{detailData.lastLoginMethod ?? "\u2014"}</span
-          >
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Affiliated By</span>
-          <span class="col-span-2 font-mono text-xs"
-            >{detailData.affiliatedBy ?? "\u2014"}</span
-          >
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Sessions</span>
-          <span class="col-span-2">{detailData.sessionCount}</span>
+        <div class="border-t pt-3">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-xs text-muted-foreground">Affiliated By</span>
+              <p class="truncate font-mono text-xs">
+                {data.affiliatedBy ?? "\u2014"}
+              </p>
+            </div>
+            <div>
+              <span class="text-xs text-muted-foreground">Session Count</span>
+              <p class="font-medium">{data.sessionCount}</p>
+            </div>
+          </div>
         </div>
       </div>
     {/if}

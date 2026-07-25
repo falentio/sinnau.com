@@ -72,6 +72,18 @@
       submitting = false;
     }
   };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const truncate = (id: string) =>
+    id.length > 16 ? `${id.slice(0, 16)}\u2026` : id;
 </script>
 
 <Table.Root>
@@ -91,7 +103,13 @@
     {#each applications as app (app.id)}
       <Table.Row>
         <Table.Cell class="max-w-32 truncate font-mono text-xs">
-          {app.userId}
+          <button
+            onclick={() => copyToClipboard(app.userId, "User ID")}
+            class="hover:underline"
+            title={app.userId}
+          >
+            {truncate(app.userId)}
+          </button>
         </Table.Cell>
         <Table.Cell class="max-w-48 truncate text-muted-foreground">
           {app.advantage}
