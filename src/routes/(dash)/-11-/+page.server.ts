@@ -18,12 +18,8 @@ export const load: PageServerLoad = async ({ depends }) => {
       client.plan.admin.listGrants({ page: 1 }),
     ]);
 
-  const recentUsersResult = await client.user.admin.listUsers({
-    page: 1,
-  });
-
   return {
-    recentUsers: recentUsersResult.data,
+    recentUsers: userResult.data.slice(0, 5),
     stats: {
       pendingAffiliateApps: affiliateResult.pagination.total,
       totalGrants: grantResult.pagination.total,

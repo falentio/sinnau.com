@@ -7,12 +7,10 @@
     icon,
     label,
     value,
-    trend,
   }: {
     icon: IconSvgElement;
     label: string;
     value: number | string;
-    trend?: string;
   } = $props();
 </script>
 
@@ -26,9 +24,6 @@
     <div class="flex min-w-0 flex-col gap-1">
       <span class="text-sm text-muted-foreground">{label}</span>
       <span class="text-2xl font-bold tracking-tight">{value}</span>
-      {#if trend}
-        <span class="text-xs text-muted-foreground">{trend}</span>
-      {/if}
     </div>
   </Card.Content>
 </Card.Root>
