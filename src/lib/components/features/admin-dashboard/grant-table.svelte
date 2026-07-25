@@ -4,6 +4,7 @@
   import type { AdminGrant } from "$lib/schemas/plan";
   import { PLAN_NAME } from "$lib/schemas/plan.constant";
   import { formatDate } from "$lib/utils/date";
+  import { toast } from "svelte-sonner";
 
   let { grants }: { grants: AdminGrant[] } = $props();
 
@@ -20,6 +21,18 @@
       }
     }
   };
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+
+  const truncate = (id: string) =>
+    id.length > 16 ? `${id.slice(0, 16)}\u2026` : id;
 </script>
 
 <Table.Root>
@@ -37,8 +50,14 @@
   <Table.Body>
     {#each grants as grant (grant.id)}
       <Table.Row>
-        <Table.Cell class="max-w-40 truncate font-mono text-xs">
-          {grant.userId}
+        <Table.Cell class="max-w-32 truncate font-mono text-xs">
+          <button
+            onclick={() => copyToClipboard(grant.userId, "User ID")}
+            class="hover:underline"
+            title={grant.userId}
+          >
+            {truncate(grant.userId)}
+          </button>
         </Table.Cell>
         <Table.Cell>
           <Badge variant={variantForPlanKey(grant.planKey)}>
@@ -49,10 +68,20 @@
           {grant.durationMonths}mo
         </Table.Cell>
         <Table.Cell class="max-w-48 truncate text-muted-foreground">
-          {grant.note ?? "—"}
+          {grant.note ?? "\u2014"}
         </Table.Cell>
-        <Table.Cell class="font-mono text-xs">
-          {grant.grantedBy ?? "—"}
+        <Table.Cell class="max-w-32 truncate font-mono text-xs">
+          {#if grant.grantedBy}
+            <button
+              onclick={() => copyToClipboard(grant.grantedBy!, "Admin ID")}
+              class="hover:underline"
+              title={grant.grantedBy}
+            >
+              {truncate(grant.grantedBy)}
+            </button>
+          {:else}
+            —
+          {/if}
         </Table.Cell>
         <Table.Cell class="text-nowrap">
           {formatDate(grant.grantedAt)}
