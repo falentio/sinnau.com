@@ -2,7 +2,8 @@ import { beforeEach, describe, it, vi } from "vitest";
 
 import { resolveAffiliateReferrer } from "./affiliate-hooks";
 
-vi.mock(import("$lib/server/services/affiliate/index"), () => ({
+// oxlint-disable-next-line vitest/prefer-import-in-mock — dynamic import causes type mismatch with class instance exports
+vi.mock("$lib/server/services/affiliate/index", () => ({
   affiliateService: {
     hasProfile: vi.fn<() => Promise<boolean>>(),
   },
