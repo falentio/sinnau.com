@@ -1,4 +1,5 @@
 import { createServerClient } from "$lib/orpc.server";
+import { LIST_USERS_SORT_KEYS } from "$lib/schemas/user.constant";
 import { parsePage } from "$lib/utils/pagination";
 
 import type { PageServerLoad } from "./$types";
@@ -25,6 +26,28 @@ const parseBanStatusParam = (
   return undefined;
 };
 
+type SortKey = (typeof LIST_USERS_SORT_KEYS)[number];
+
+const parseSortKeyParam = (value: string | null): SortKey | undefined => {
+  if (
+    value !== null &&
+    (LIST_USERS_SORT_KEYS as readonly string[]).includes(value)
+  ) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- checked via includes above
+    return value as SortKey;
+  }
+  return undefined;
+};
+
+const parseSortDirParam = (
+  value: string | null
+): "asc" | "desc" | undefined => {
+  if (value === "asc" || value === "desc") {
+    return value;
+  }
+  return undefined;
+};
+
 export const load: PageServerLoad = async ({ depends, url }) => {
   depends("user:list");
 
@@ -32,6 +55,8 @@ export const load: PageServerLoad = async ({ depends, url }) => {
   const email = url.searchParams.get("email") ?? undefined;
   const role = parseRoleParam(url.searchParams.get("role"));
   const banStatus = parseBanStatusParam(url.searchParams.get("banStatus"));
+  const sortKey = parseSortKeyParam(url.searchParams.get("sortKey"));
+  const sortDir = parseSortDirParam(url.searchParams.get("sortDir"));
 
   const client = createServerClient();
   const result = await client.user.admin.listUsers({
@@ -39,6 +64,8 @@ export const load: PageServerLoad = async ({ depends, url }) => {
     email,
     page,
     role,
+    sortDir,
+    sortKey,
   });
 
   return {

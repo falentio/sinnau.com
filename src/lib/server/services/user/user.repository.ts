@@ -23,6 +23,8 @@ export interface ListUsersFilters {
   email?: string;
   page: number;
   role?: "admin" | "user";
+  sortDir?: "asc" | "desc";
+  sortKey?: string;
 }
 
 export interface UserRepository {

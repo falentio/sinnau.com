@@ -34,6 +34,8 @@ export class UserService {
       email: input.email,
       page: input.page ?? 1,
       role: input.role,
+      sortDir: input.sortDir,
+      sortKey: input.sortKey,
     });
   }
 

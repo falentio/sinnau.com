@@ -1,9 +1,16 @@
 import * as v from "valibot";
 
-import { BAN_STATUS_FILTERS, USER_ROLES } from "./user.constant.ts";
+import {
+  BAN_STATUS_FILTERS,
+  LIST_USERS_SORT_KEYS,
+  USER_ROLES,
+} from "./user.constant.ts";
 
 const roleSchema = v.picklist(USER_ROLES);
 const banStatusSchema = v.picklist(BAN_STATUS_FILTERS);
+
+const sortKeySchema = v.picklist(LIST_USERS_SORT_KEYS);
+const sortDirSchema = v.picklist(["asc", "desc"]);
 
 const pageSchema = v.optional(
   v.pipe(
@@ -46,6 +53,8 @@ export const listUsersInputSchema = v.object({
   email: v.optional(v.string()),
   page: pageSchema,
   role: v.optional(roleSchema),
+  sortDir: v.optional(sortDirSchema, "desc"),
+  sortKey: v.optional(sortKeySchema, "createdAt"),
 });
 export type ListUsersInput = v.InferOutput<typeof listUsersInputSchema>;
 

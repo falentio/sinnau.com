@@ -28,6 +28,12 @@
   const currentBanStatus = $derived(
     page.url.searchParams.get("banStatus") ?? ""
   );
+  const currentSortKey = $derived(
+    page.url.searchParams.get("sortKey") ?? "createdAt"
+  );
+  const currentSortDir = $derived(
+    (page.url.searchParams.get("sortDir") as "asc" | "desc") ?? "desc"
+  );
 
   const handleRoleChange = (value: string) => {
     navigateWithParams(page.url.searchParams, {
@@ -59,6 +65,14 @@
   const handleGrantPlan = (userId: string) => {
     grantDialogUserId = userId;
     grantDialogOpen = true;
+  };
+
+  const handleSortChange = (key: string, dir: "asc" | "desc") => {
+    navigateWithParams(page.url.searchParams, {
+      page: null,
+      sortDir: dir,
+      sortKey: key,
+    });
   };
 
   const roleLabel = (r: string) =>
@@ -150,7 +164,13 @@
     {/if}
   </div>
 
-  <UserTable users={data.users} ongrantplan={handleGrantPlan} />
+  <UserTable
+    users={data.users}
+    ongrantplan={handleGrantPlan}
+    onsortchange={handleSortChange}
+    sortKey={currentSortKey}
+    sortDir={currentSortDir}
+  />
 
   {#if data.pagination.totalPages > 1}
     <div class="mt-6 flex justify-center">

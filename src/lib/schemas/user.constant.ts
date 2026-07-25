@@ -1,5 +1,13 @@
 export const USER_PAGE_LIMIT = 10;
 
+export const LIST_USERS_SORT_KEYS = [
+  "banned",
+  "createdAt",
+  "email",
+  "name",
+  "role",
+] as const;
+
 export const USER_ROLES = ["admin", "user"] as const;
 
 export const USER_ROLE_LABELS = {

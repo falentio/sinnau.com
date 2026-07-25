@@ -2,6 +2,11 @@
   import { invalidate } from "$app/navigation";
   import Badge from "$lib/components/ui/badge/badge.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
+  import {
+    createSvelteTable,
+    FlexRender,
+    renderSnippet,
+  } from "$lib/components/ui/data-table/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
@@ -12,14 +17,27 @@
   import { USER_ROLE_LABELS } from "$lib/schemas/user.constant";
   import { formatDateTime } from "$lib/utils/date";
   import { ORPCError } from "@orpc/client";
+  import { createColumnHelper, getCoreRowModel } from "@tanstack/table-core";
+  import type {
+    Column,
+    Row,
+    SortingState,
+    Updater,
+  } from "@tanstack/table-core";
   import { toast } from "svelte-sonner";
 
   let {
     users,
     ongrantplan,
+    sortKey = "createdAt",
+    sortDir = "desc",
+    onsortchange,
   }: {
     users: AdminUser[];
     ongrantplan?: (userId: string) => void;
+    sortKey?: string;
+    sortDir?: "asc" | "desc";
+    onsortchange?: (key: string, dir: "asc" | "desc") => void;
   } = $props();
 
   let detailUserId = $state<string | null>(null);
@@ -31,6 +49,19 @@
   let confirmNewRole = $state<"admin" | "user">("admin");
   let banReason = $state("");
   let submitting = $state(false);
+
+  const sorting = $derived<SortingState>(
+    sortKey ? [{ desc: sortDir === "desc", id: sortKey }] : []
+  );
+  const handleSortingChange = (updater: Updater<SortingState>) => {
+    const next = typeof updater === "function" ? updater(sorting) : updater;
+    const [first] = next;
+    if (first) {
+      onsortchange?.(first.id, first.desc ? "desc" : "asc");
+    } else {
+      onsortchange?.("createdAt", "desc");
+    }
+  };
 
   const roleLabel = (r: string | null) => {
     if (r === null) {
@@ -46,6 +77,61 @@
 
   const banVariant = (banned: boolean | null): "destructive" | "secondary" =>
     banned ? "destructive" : "secondary";
+
+  const sortArrow = (column: Column<AdminUser>, label: string): string => {
+    const sorted = column.getIsSorted();
+    if (sorted === "asc") {
+      return `${label} \u25B2`;
+    }
+    if (sorted === "desc") {
+      return `${label} \u25BC`;
+    }
+    return label;
+  };
+
+  const columnHelper = createColumnHelper<AdminUser>();
+
+  const columns = [
+    columnHelper.accessor("name", {
+      enableSorting: true,
+      header: ({ column }) => sortArrow(column, "Name"),
+    }),
+    columnHelper.accessor("email", {
+      enableSorting: true,
+      header: ({ column }) => sortArrow(column, "Email"),
+    }),
+    columnHelper.accessor("role", {
+      cell: ({ getValue }) => roleLabel(getValue()),
+      enableSorting: true,
+      header: ({ column }) => sortArrow(column, "Role"),
+    }),
+    columnHelper.accessor("banned", {
+      cell: ({ getValue }) => (getValue() ? "Banned" : "Active"),
+      enableSorting: true,
+      header: ({ column }) => sortArrow(column, "Status"),
+    }),
+    columnHelper.accessor("createdAt", {
+      cell: ({ getValue }) => formatDateTime(getValue()),
+      enableSorting: true,
+      header: ({ column }) => sortArrow(column, "Created"),
+    }),
+    columnHelper.display({
+      cell: (ctx) => renderSnippet(actionsCell, { row: ctx.row }),
+      id: "actions",
+    }),
+  ];
+
+  const table = $derived(
+    createSvelteTable({
+      columns,
+      data: users,
+      enableSorting: true,
+      getCoreRowModel: getCoreRowModel(),
+      manualSorting: true,
+      onSortingChange: handleSortingChange,
+      state: { sorting },
+    })
+  );
 
   const openDetail = async (userId: string) => {
     detailUserId = userId;
@@ -147,72 +233,141 @@
   });
 </script>
 
+{#snippet actionsCell({ row }: { row: Row<AdminUser> })}
+  <DropdownMenu.DropdownMenu>
+    <DropdownMenu.Trigger>
+      <Button variant="outline" size="sm">Actions</Button>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content>
+      <DropdownMenu.Item onclick={() => openDetail(row.original.id)}>
+        Detail
+      </DropdownMenu.Item>
+      <DropdownMenu.Item onclick={() => ongrantplan?.(row.original.id)}>
+        Grant Plan
+      </DropdownMenu.Item>
+      <DropdownMenu.Separator />
+      <DropdownMenu.Item
+        onclick={() =>
+          openConfirm(
+            row.original.id,
+            "changeRole",
+            row.original.role ?? undefined
+          )}
+      >
+        Change Role
+      </DropdownMenu.Item>
+      {#if row.original.banned}
+        <DropdownMenu.Item
+          onclick={() => openConfirm(row.original.id, "unban")}
+        >
+          Unban
+        </DropdownMenu.Item>
+      {:else}
+        <DropdownMenu.Item onclick={() => openConfirm(row.original.id, "ban")}>
+          Ban
+        </DropdownMenu.Item>
+      {/if}
+    </DropdownMenu.Content>
+  </DropdownMenu.DropdownMenu>
+{/snippet}
+
+{#snippet roleCell({ row }: { row: Row<AdminUser> })}
+  <Badge variant={roleVariant(row.original.role)}>
+    {roleLabel(row.original.role)}
+  </Badge>
+{/snippet}
+
+{#snippet statusCell({ row }: { row: Row<AdminUser> })}
+  <Badge variant={banVariant(row.original.banned)}>
+    {row.original.banned ? "Banned" : "Active"}
+  </Badge>
+{/snippet}
+
 <Table.Root>
   <Table.Header>
-    <Table.Row>
-      <Table.Head>Name</Table.Head>
-      <Table.Head>Email</Table.Head>
-      <Table.Head>Role</Table.Head>
-      <Table.Head>Status</Table.Head>
-      <Table.Head>Created</Table.Head>
-      <Table.Head>Actions</Table.Head>
-    </Table.Row>
+    {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+      <Table.Row>
+        {#each headerGroup.headers as header (header.id)}
+          {#if header.column.getCanSort()}
+            {@const handler = header.column.getToggleSortingHandler()}
+            <Table.Head
+              class="cursor-pointer select-none"
+              onclick={() => handler?.(undefined)}
+            >
+              <FlexRender
+                content={header.column.columnDef.header}
+                context={header.getContext()}
+              />
+            </Table.Head>
+          {:else}
+            <Table.Head>
+              <FlexRender
+                content={header.column.columnDef.header}
+                context={header.getContext()}
+              />
+            </Table.Head>
+          {/if}
+        {/each}
+      </Table.Row>
+    {/each}
   </Table.Header>
   <Table.Body>
-    {#each users as u (u.id)}
+    {#each table.getRowModel().rows as row (row.id)}
       <Table.Row>
-        <Table.Cell class="max-w-40 truncate font-medium">
-          {u.name}
-        </Table.Cell>
-        <Table.Cell
-          class="max-w-48 truncate font-mono text-xs text-muted-foreground"
-        >
-          {u.email}
-        </Table.Cell>
-        <Table.Cell>
-          <Badge variant={roleVariant(u.role)}>
-            {roleLabel(u.role)}
-          </Badge>
-        </Table.Cell>
-        <Table.Cell>
-          <Badge variant={banVariant(u.banned)}>
-            {u.banned ? "Banned" : "Active"}
-          </Badge>
-        </Table.Cell>
-        <Table.Cell class="text-nowrap text-xs text-muted-foreground">
-          {formatDateTime(u.createdAt)}
-        </Table.Cell>
-        <Table.Cell>
-          <DropdownMenu.DropdownMenu>
-            <DropdownMenu.Trigger>
-              <Button variant="outline" size="sm">Actions</Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
-              <DropdownMenu.Item onclick={() => openDetail(u.id)}>
-                Detail
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onclick={() => ongrantplan?.(u.id)}>
-                Grant Plan
-              </DropdownMenu.Item>
-              <DropdownMenu.Separator />
-              <DropdownMenu.Item
-                onclick={() =>
-                  openConfirm(u.id, "changeRole", u.role ?? undefined)}
-              >
-                Change Role
-              </DropdownMenu.Item>
-              {#if u.banned}
-                <DropdownMenu.Item onclick={() => openConfirm(u.id, "unban")}>
-                  Unban
-                </DropdownMenu.Item>
-              {:else}
-                <DropdownMenu.Item onclick={() => openConfirm(u.id, "ban")}>
-                  Ban
-                </DropdownMenu.Item>
+        {#each row.getVisibleCells() as cell (cell.id)}
+          {#if cell.column.id === "role"}
+            <Table.Cell>
+              <Badge variant={roleVariant(cell.getValue() as string | null)}>
+                {roleLabel(cell.getValue() as string | null)}
+              </Badge>
+            </Table.Cell>
+          {:else if cell.column.id === "banned"}
+            <Table.Cell>
+              <Badge variant={banVariant(cell.getValue() as boolean | null)}>
+                {cell.getValue() ? "Banned" : "Active"}
+              </Badge>
+            </Table.Cell>
+          {:else if cell.column.id === "email"}
+            <Table.Cell
+              class="max-w-48 truncate font-mono text-xs text-muted-foreground"
+            >
+              <FlexRender
+                content={cell.column.columnDef.cell}
+                context={cell.getContext()}
+              />
+            </Table.Cell>
+          {:else if cell.column.id === "name"}
+            <Table.Cell class="max-w-40 truncate font-medium">
+              <FlexRender
+                content={cell.column.columnDef.cell}
+                context={cell.getContext()}
+              />
+            </Table.Cell>
+          {:else if cell.column.id === "createdAt"}
+            <Table.Cell class="text-nowrap text-xs text-muted-foreground">
+              <FlexRender
+                content={cell.column.columnDef.cell}
+                context={cell.getContext()}
+              />
+            </Table.Cell>
+          {:else if cell.column.id === "actions"}
+            <Table.Cell>
+              {#if cell.column.columnDef.cell}
+                <FlexRender
+                  content={cell.column.columnDef.cell}
+                  context={cell.getContext()}
+                />
               {/if}
-            </DropdownMenu.Content>
-          </DropdownMenu.DropdownMenu>
-        </Table.Cell>
+            </Table.Cell>
+          {:else}
+            <Table.Cell>
+              <FlexRender
+                content={cell.column.columnDef.cell}
+                context={cell.getContext()}
+              />
+            </Table.Cell>
+          {/if}
+        {/each}
       </Table.Row>
     {/each}
   </Table.Body>
