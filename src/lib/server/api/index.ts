@@ -9,6 +9,7 @@ import { quizSessionRouter } from "$lib/server/services/quiz-session/quiz-sessio
 import { quizRouter } from "$lib/server/services/quiz/quiz.router";
 import { studySetSearchRouter } from "$lib/server/services/study-set-search/study-set-search.router";
 import { studySetRouter } from "$lib/server/services/study-set/study-set.router";
+import { userRouter } from "$lib/server/services/user/user.router";
 
 import {
   publicProcedure,
@@ -38,6 +39,7 @@ export const router = {
   unimplemented: publicProcedure.handler(() => {
     throw new Error("This procedure is not yet implemented.");
   }),
+  user: userRouter,
 };
 
 export type Router = typeof router;

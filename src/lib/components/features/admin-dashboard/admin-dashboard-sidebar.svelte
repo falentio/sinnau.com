@@ -33,6 +33,15 @@
           <Sidebar.MenuItem>
             <Sidebar.MenuButton>
               {#snippet child({ props })}
+                <a href="/-11-/users" {...props}>
+                  <span>Users</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              {#snippet child({ props })}
                 <a href="/-11-/affiliate/applications" {...props}>
                   <span>Affiliate Applications</span>
                 </a>

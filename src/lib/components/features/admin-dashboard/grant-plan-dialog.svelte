@@ -14,11 +14,13 @@
 
   let {
     open = $bindable(false),
+    initialUserId = $bindable(""),
   }: {
     open: boolean;
+    initialUserId?: string;
   } = $props();
 
-  let userId = $state("");
+  let userId = $state(initialUserId);
   let planKey = $state<(typeof PLAN_KEYS)[number]>("LITE");
   let durationMonths = $state(1);
   const DURATION_OPTIONS = [1, 2, 3, 6, 9, 12] as const;
@@ -58,7 +60,7 @@
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      userId = "";
+      userId = initialUserId;
       planKey = "LITE";
       durationMonths = 1;
       note = "";
