@@ -27,6 +27,8 @@ const adminUserFields = {
   image: v.nullable(v.string()),
   lastLoginMethod: v.nullable(v.string()),
   name: v.string(),
+  // Output/display schemas use v.string() to match the DB type (string | null).
+  // Input validation for role is handled by changeRoleInputSchema.
   role: v.nullable(v.string()),
 } as const;
 

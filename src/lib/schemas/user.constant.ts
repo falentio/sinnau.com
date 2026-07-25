@@ -7,10 +7,9 @@ export const USER_ROLE_LABELS = {
   user: "User",
 } as const;
 
-export const BAN_STATUS_FILTERS = ["all", "banned", "active"] as const;
+export const BAN_STATUS_FILTERS = ["banned", "active"] as const;
 
 export const BAN_STATUS_LABELS = {
   active: "Active",
-  all: "All",
   banned: "Banned",
 } as const;

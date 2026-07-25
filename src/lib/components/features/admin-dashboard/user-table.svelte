@@ -280,7 +280,7 @@
           <span class="col-span-2">{formatDateTime(detailData.createdAt)}</span>
         </div>
         <div class="grid grid-cols-3 gap-2">
-          <span class="font-medium">Last Login</span>
+          <span class="font-medium">Login Method</span>
           <span class="col-span-2"
             >{detailData.lastLoginMethod ?? "\u2014"}</span
           >

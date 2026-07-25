@@ -20,12 +20,18 @@
     initialUserId?: string;
   } = $props();
 
-  let userId = $state(initialUserId);
+  let userId = $state("");
   let planKey = $state<(typeof PLAN_KEYS)[number]>("LITE");
   let durationMonths = $state(1);
   const DURATION_OPTIONS = [1, 2, 3, 6, 9, 12] as const;
   let note = $state("");
   let submitting = $state(false);
+
+  $effect(() => {
+    if (open) {
+      userId = initialUserId;
+    }
+  });
 
   const handleSubmit = async () => {
     if (!userId.trim()) {
@@ -60,7 +66,6 @@
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      userId = initialUserId;
       planKey = "LITE";
       durationMonths = 1;
       note = "";
