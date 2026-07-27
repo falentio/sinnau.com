@@ -24,6 +24,7 @@ export const user = sqliteTable(
     banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
     lastLoginMethod: text("last_login_method"),
     affiliatedBy: text("affiliated_by"),
+    tosAcceptedAt: integer("tos_accepted_at", { mode: "timestamp_ms" }),
   },
   (table) => [index("user_affiliated_by_idx").on(table.affiliatedBy)]
 );

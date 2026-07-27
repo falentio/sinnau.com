@@ -105,6 +105,11 @@ export const config = {
         required: false,
         type: "string",
       },
+      tosAcceptedAt: {
+        input: true,
+        required: false,
+        type: "date",
+      },
     },
   },
 } satisfies BetterAuthOptions;

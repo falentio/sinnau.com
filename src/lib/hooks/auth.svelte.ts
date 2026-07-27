@@ -1,7 +1,11 @@
 import { browser } from "$app/environment";
 import { env } from "$env/dynamic/public";
 import { dashClient } from "@better-auth/infra/client";
-import { adminClient, lastLoginMethodClient } from "better-auth/client/plugins";
+import {
+  adminClient,
+  inferAdditionalFields,
+  lastLoginMethodClient,
+} from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
 import posthog from "posthog-js";
 import { toast } from "svelte-sonner";
@@ -21,7 +25,19 @@ export const authClient = createAuthClient({
       }
     },
   },
-  plugins: [adminClient(), lastLoginMethodClient(), dashClient()],
+  plugins: [
+    adminClient(),
+    inferAdditionalFields({
+      user: {
+        tosAcceptedAt: {
+          required: false,
+          type: "date",
+        },
+      },
+    }),
+    lastLoginMethodClient(),
+    dashClient(),
+  ],
 });
 
 type _Session = (typeof authClient.$Infer)["Session"];

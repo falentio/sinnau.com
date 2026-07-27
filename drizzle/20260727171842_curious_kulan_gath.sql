@@ -1,0 +1,1 @@
+ALTER TABLE `user` ADD `tos_accepted_at` integer;

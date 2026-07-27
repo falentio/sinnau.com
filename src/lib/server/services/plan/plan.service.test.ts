@@ -121,6 +121,7 @@ const setupService = (midtrans = createMockMidtrans()) => {
       lastLoginMethod: null,
       name: "User",
       role: null,
+      tosAcceptedAt: null,
       updatedAt: now,
     };
     // oxlint-disable-next-line typescript/no-unsafe-return
@@ -790,6 +791,7 @@ describe.concurrent("PlanService unit tests", () => {
           lastLoginMethod: null,
           name: "User",
           role: null,
+          tosAcceptedAt: null,
           updatedAt: now,
         };
         // oxlint-disable-next-line typescript/no-unsafe-return

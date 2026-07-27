@@ -152,6 +152,7 @@ describe.concurrent("PlanGuard unit", () => {
         lastLoginMethod: null,
         name: "U",
         role: null,
+        tosAcceptedAt: null,
         updatedAt: now,
       };
       userRepo.findUserById.mockResolvedValue(user);

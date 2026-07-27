@@ -72,8 +72,11 @@ const adminRoutes: ((routeId: string) => boolean)[] = [
   (routeId) => routeId.includes("/(dash)/"),
 ];
 
+const ONBOARDING_ROUTE = "/onboarding";
+
 const guardedRoutes: ((routeId: string) => boolean)[] = [
   (routeId) => routeId.includes("/(app)/"),
+  (routeId) => routeId.includes(ONBOARDING_ROUTE),
   ...adminRoutes,
 ];
 
@@ -347,6 +350,21 @@ const adminGuardHandle: Handle = async ({ event, resolve }) => {
   return await resolve(event);
 };
 
+const tosGuardHandle: Handle = async ({ event, resolve }) => {
+  const routeId = event.route.id ?? "";
+  const isOnboarding = routeId.includes(ONBOARDING_ROUTE);
+  const { user } = event.locals;
+
+  if (user && !user.tosAcceptedAt && !isOnboarding) {
+    const requiresAuth = guardedRoutes.some((guard) => guard(routeId));
+    if (requiresAuth) {
+      redirect(302, "/onboarding");
+    }
+  }
+
+  return await resolve(event);
+};
+
 const posthogProxyHandle: Handle = async ({ event, resolve }) => {
   const { pathname } = event.url;
   if (!pathname.startsWith("/ph")) {
@@ -392,6 +410,7 @@ export const handle = sequence(
   watermarkHeaderHandle,
   betterAuthHandle,
   authGuardHandle,
+  tosGuardHandle,
   adminGuardHandle,
   rateLimiterHandle
 );
