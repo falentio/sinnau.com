@@ -92,7 +92,7 @@
         languageStyle: "student-friendly",
         pdf: undefined as unknown as File,
         title: "",
-        visibility: "PRIVATE",
+        visibility: "PUBLIC",
       },
       valibotClient(createGenerateInputSchema)
     ),
@@ -364,7 +364,7 @@
     </Form.Field>
   {/if}
 
-  <div class="mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end">
+  <div class=" flex flex-col gap-2 sm:flex-row sm:justify-end">
     <Button
       class="w-full sm:w-auto"
       variant="outline"
@@ -374,7 +374,7 @@
       Batal
     </Button>
     <Form.Button class="w-full sm:w-auto" disabled={$submitting}>
-      {$submitting ? "Membuat..." : "Hasilkan Modul"}
+      {$submitting ? "Membuat..." : "Generate Modul"}
     </Form.Button>
   </div>
 </form>
