@@ -72,9 +72,8 @@
         serverError = getErrorMessage(error);
         return;
       }
-      serverError = "Akun berhasil dibuat. Silakan masuk.";
       track(AnalyticsEvent.USER_SIGNED_UP, { method: "email" });
-      setTimeout(() => goto(resolve("/(auth)/login")), 1500);
+      await goto(resolve("/(app)/home"));
     } catch (error) {
       serverError = getErrorMessage(error);
     } finally {
