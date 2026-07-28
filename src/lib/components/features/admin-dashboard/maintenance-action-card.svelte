@@ -2,6 +2,7 @@
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Card from "$lib/components/ui/card/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import type { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
 
@@ -29,7 +30,7 @@
     } catch (error) {
       const message =
         error instanceof Error
-          ? error.message
+          ? getErrorMessage(error)
           : "An unexpected error occurred.";
       toast.error(message, { position: "top-right" });
     } finally {

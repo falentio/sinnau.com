@@ -35,18 +35,12 @@
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient } from "$lib/hooks/auth.svelte";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { toast } from "svelte-sonner";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
   let pending = $state(false);
-
-  const getErrorMessage = (error: { message?: string } | null | undefined) => {
-    if (error?.message) {
-      return error.message;
-    }
-    return "Kata sandi belum bisa diubah. Coba lagi sebentar.";
-  };
 
   const changePassword = async (data: ProfilePasswordForm) => {
     pending = true;
@@ -63,7 +57,7 @@
       toast.success("Kata sandi berhasil diubah.", { position: "top-right" });
       return true;
     } catch (error) {
-      toast.error(getErrorMessage(error as { message?: string }), {
+      toast.error(getErrorMessage(error), {
         position: "top-right",
       });
       return false;

@@ -116,3 +116,68 @@ export const actions: Actions = {
 
 **Context:**
 Apply this fix in SvelteKit form actions (`+page.server.ts`) where `redirect()` is used in one branch and the other branch returns data. `redirect()` from `@sveltejs/kit` is typed as `never` (it throws), so `return redirect(...)` is functionally equivalent to `redirect(...)` alone. This approach does NOT apply when: (a) the function is not a SvelteKit form action or load function, (b) `redirect` is imported from a different library that actually returns, or (c) the fix would require restructuring beyond adding a single `return` keyword.
+
+---
+
+## Use `String()` for safe indexing of any-like properties
+
+**Explain:**
+The `typescript(no-unsafe-member-access)` rule flags computed property access (`obj[key]`) when the key resolves to an `any` or unsafe type. This prevents runtime errors from indexing objects with unexpected or non-string values. When a value has a generic or opaque type (e.g. `error.code` from a generic error class), direct indexing is unsafe because oxlint cannot verify the key type.
+
+**Reason:**
+Using `String(error.code)` instead of `error.code` directly wraps the value in a runtime string conversion. This satisfies the linter because `String()` always returns a `string`, making the index operation safe. The runtime behavior is unchanged for string values (they pass through `String()` unchanged), and the conversion handles edge cases like `undefined` or `null` gracefully (producing `"undefined"` or `"null"` strings instead of throwing). This is preferred over a type assertion (`as string`) because `no-unsafe-type-assertion` may also flag narrowing from `any` to `string`.
+
+**Before:**
+
+```ts
+return ORPC_ERROR_MESSAGES[error.code] ?? FALLBACK_MESSAGE;
+```
+
+**After:**
+
+```ts
+return ORPC_ERROR_MESSAGES[String(error.code)] ?? FALLBACK_MESSAGE;
+```
+
+**Context:**
+Apply this fix in utility functions, error handlers, and any code indexing a `Record<string, T>` with a property whose type is generic, opaque, or `any`-like. This is the correct approach when: (a) the key comes from an external library's generic type that resolves to `any`, (b) the value is known to be a string at runtime but TypeScript/oxlint cannot prove it, and (c) a type assertion would be flagged by `no-unsafe-type-assertion`. This approach does NOT apply when: (a) the key has a well-known string literal type that can be directly indexed, (b) `String()` conversion would silently accept an incorrect type and mask a real bug (prefer validation instead), or (c) performance is critical and the overhead of `String()` is unacceptable in a hot path.
+
+---
+
+## Eliminate unsafe type assertions via control flow narrowing
+
+**Explain:**
+The `typescript(no-unsafe-type-assertion)` rule flags type assertions (`value as T`) where the asserted type `T` is narrower than the original type. This prevents unsafe assumptions about runtime types. When validating an `unknown` value through a series of type guards (`typeof`, `in`, `instanceof`), TypeScript's control flow analysis narrows the type automatically — making the explicit assertion redundant.
+
+**Reason:**
+After the chained conditions `typeof error === "object"`, `error !== null`, `"message" in error`, and `typeof error.message === "string"`, TypeScript narrows `error` from `unknown` to `object & { message: string }`. Inside the if-block, `error.message` can be accessed as a `string` without any type assertion. Removing the `as { message: string }` cast eliminates the lint violation while keeping the same runtime behavior — the narrowing is provably correct from the guard expressions.
+
+**Before:**
+
+```ts
+if (
+  typeof error === "object" &&
+  error !== null &&
+  "message" in error &&
+  typeof error.message === "string"
+) {
+  const msg = (error as { message: string }).message;
+  return AUTH_ERROR_MESSAGES[msg] ?? FALLBACK_MESSAGE;
+}
+```
+
+**After:**
+
+```ts
+if (
+  typeof error === "object" &&
+  error !== null &&
+  "message" in error &&
+  typeof error.message === "string"
+) {
+  return AUTH_ERROR_MESSAGES[error.message] ?? FALLBACK_MESSAGE;
+}
+```
+
+**Context:**
+Apply this fix in utility functions that validate `unknown` values through sequential type guards. This is the correct approach when TypeScript's `in` operator narrowing (available since TS 4.9) combined with `typeof` checks produces a provably safe narrowed type. The property access is safe because the guards have already confirmed the shape and type. This approach does NOT apply when: (a) the checks don't form a complete type narrowing chain and the type would remain `unknown`/`any` inside the block, (b) the assertion is needed to widen a type (e.g. `as string[]` from `readonly string[]`), or (c) the value comes from an untrusted source where validation should be stricter than what narrowing alone provides.

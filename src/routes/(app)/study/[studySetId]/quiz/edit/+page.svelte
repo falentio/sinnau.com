@@ -22,6 +22,7 @@
     QUIZ_OPTION_TEXT_MAX_LENGTH,
     QUIZ_QUESTION_TEXT_MAX_LENGTH,
   } from "$lib/schemas/quiz.constant";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { Cancel01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
@@ -85,9 +86,9 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else if (error instanceof Error) {
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else {
             toast.error("Quiz belum bisa diperbarui. Coba lagi sebentar.", {
               position: "top-right",

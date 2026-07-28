@@ -6,6 +6,7 @@ import type {
   SubmitPayoutAccountInput,
 } from "$lib/schemas/affiliate";
 import { submitPayoutAccountInputSchema } from "$lib/schemas/affiliate";
+import { getErrorMessage } from "$lib/utils/error-messages";
 import { ORPCError } from "@orpc/client";
 import { untrack } from "svelte";
 import { toast } from "svelte-sonner";
@@ -23,9 +24,9 @@ const submitPayoutAccount = async (input: SubmitPayoutAccountInput) => {
         await goto(resolve("/(auth)/login"));
         return;
       }
-      toast.error(error.message, { position: "top-right" });
+      toast.error(getErrorMessage(error), { position: "top-right" });
     } else if (error instanceof Error) {
-      toast.error(error.message, { position: "top-right" });
+      toast.error(getErrorMessage(error), { position: "top-right" });
     } else {
       toast.error("Data payout belum bisa disimpan. Coba lagi sebentar.", {
         position: "top-right",

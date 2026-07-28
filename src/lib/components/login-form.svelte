@@ -25,6 +25,7 @@
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient } from "$lib/hooks/auth.svelte";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -32,13 +33,6 @@
 
   let serverError = $state("");
   let pending = $state(false);
-
-  const getErrorMessage = (error: { message?: string } | null | undefined) => {
-    if (error?.message) {
-      return error.message;
-    }
-    return "Tidak bisa masuk. Periksa email dan kata sandi.";
-  };
 
   const signIn = async (data: LoginForm) => {
     pending = true;
@@ -53,7 +47,7 @@
       }
       await goto(resolve("/(app)/home"));
     } catch (error) {
-      serverError = getErrorMessage(error as { message?: string });
+      serverError = getErrorMessage(error);
     } finally {
       pending = false;
     }

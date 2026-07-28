@@ -17,18 +17,12 @@
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient, getUser } from "$lib/hooks/auth.svelte";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { toast } from "svelte-sonner";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
   const user = getUser;
-
-  const getErrorMessage = (error: { message?: string } | null | undefined) => {
-    if (error?.message) {
-      return error.message;
-    }
-    return "Nama belum bisa diperbarui. Coba lagi sebentar.";
-  };
 
   const updateName = async (name: string) => {
     try {
@@ -39,7 +33,7 @@
       }
       toast.success("Nama berhasil diperbarui.", { position: "top-right" });
     } catch (error) {
-      toast.error(getErrorMessage(error as { message?: string }), {
+      toast.error(getErrorMessage(error), {
         position: "top-right",
       });
     }

@@ -9,6 +9,7 @@
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { client } from "$lib/orpc";
   import { PLAN_KEYS, PLAN_NAME } from "$lib/schemas/plan.constant";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
 
@@ -51,9 +52,9 @@
       await invalidate("plan:grants");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Failed to grant plan. Please try again.", {
           position: "top-right",

@@ -13,6 +13,7 @@
     PLAN_DURATION_PAID_MONTHS,
     PLAN_TIER_RANK as tierRank,
   } from "$lib/schemas/plan.constant";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
   import type { PageData } from "./$types";
@@ -75,7 +76,7 @@
       await goto(`/subs/checkout/${result.orderId}`);
     } catch (error) {
       if (error instanceof Error) {
-        checkoutError = error.message;
+        checkoutError = getErrorMessage(error);
         return;
       }
       checkoutError = "Gagal memproses pesanan. Coba lagi.";

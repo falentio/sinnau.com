@@ -18,6 +18,7 @@
   import { client } from "$lib/orpc";
   import type { CreateGenerateInput } from "$lib/schemas/generate";
   import { createGenerateInputSchema } from "$lib/schemas/generate";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
@@ -72,9 +73,9 @@
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Pembuatan modul gagal. Coba lagi sebentar.", {
           position: "top-right",

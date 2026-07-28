@@ -18,6 +18,7 @@
     createFlashcardsInputSchema,
   } from "$lib/schemas/flashcard";
   import type { CreateFlashcardsInput } from "$lib/schemas/flashcard";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
@@ -53,9 +54,9 @@
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Flashcard belum bisa dibuat. Coba lagi sebentar.", {
           position: "top-right",

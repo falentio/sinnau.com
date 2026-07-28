@@ -6,6 +6,7 @@
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { client } from "$lib/orpc";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { ORPCError } from "@orpc/client";
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
@@ -59,9 +60,9 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else if (error instanceof Error) {
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else {
             toast.error("Study set belum bisa dihapus. Coba lagi sebentar.", {
               position: "top-right",

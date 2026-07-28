@@ -4,6 +4,7 @@ import { page } from "$app/state";
 import { AnalyticsEvent, track } from "$lib/analytics/events";
 import { client } from "$lib/orpc";
 import { createQuizSessionInputSchema } from "$lib/schemas/quiz-session";
+import { getErrorMessage } from "$lib/utils/error-messages";
 import { ORPCError } from "@orpc/client";
 import { toast } from "svelte-sonner";
 import { defaults, superForm } from "sveltekit-superforms";
@@ -41,9 +42,9 @@ export const newSessionForm = () => {
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Sesi belum bisa dibuat. Coba lagi sebentar.", {
           position: "top-right",

@@ -9,6 +9,7 @@
   import * as Table from "$lib/components/ui/table/index.js";
   import { client } from "$lib/orpc";
   import type { PendingPayout } from "$lib/schemas/affiliate";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { Wallet01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
@@ -47,7 +48,7 @@
       await invalidate("affiliate:payouts");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Failed to record payout", { position: "top-right" });
       }

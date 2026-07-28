@@ -14,6 +14,7 @@
     CHAPTER_DESCRIPTION_MAX_LENGTH,
     CHAPTER_TITLE_MAX_LENGTH,
   } from "$lib/schemas/chapter.constant";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { navigateWithParams } from "$lib/utils/url";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
@@ -70,9 +71,9 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else if (error instanceof Error) {
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else {
             toast.error("Chapter belum bisa dibuat. Coba lagi sebentar.", {
               position: "top-right",

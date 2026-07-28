@@ -8,6 +8,7 @@
   import type { AffiliateApplication } from "$lib/schemas/affiliate";
   import { AFFILIATE_APPLICATION_STATUS_LABEL } from "$lib/schemas/affiliate.constant";
   import { formatDateTime } from "$lib/utils/date";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
 
@@ -60,9 +61,9 @@
       await invalidate("affiliate:applications");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Failed to process application. Please try again.", {
           position: "top-right",

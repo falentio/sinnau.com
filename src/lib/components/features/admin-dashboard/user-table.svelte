@@ -16,6 +16,7 @@
   import type { AdminUser, UserDetail } from "$lib/schemas/user";
   import { USER_ROLE_LABELS } from "$lib/schemas/user.constant";
   import { formatDateTime } from "$lib/utils/date";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { Copy01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { ORPCError } from "@orpc/client";
@@ -144,7 +145,7 @@
       detailData = result as unknown as UserDetail;
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(error.message);
+        toast.error(getErrorMessage(error));
       } else {
         toast.error("Failed to load user details");
       }
@@ -191,7 +192,7 @@
       await invalidate("user:list");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(error.message);
+        toast.error(getErrorMessage(error));
       } else {
         toast.error("Failed to perform action. Please try again.");
       }

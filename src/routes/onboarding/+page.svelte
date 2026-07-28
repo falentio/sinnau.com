@@ -18,6 +18,7 @@
   import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
   import { authClient } from "$lib/hooks/auth.svelte";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -33,14 +34,12 @@
         tosAcceptedAt: new Date(),
       });
       if (error) {
-        serverError = error.message ?? "Gagal menyimpan persetujuan.";
+        serverError = getErrorMessage(error);
         return;
       }
       await goto("/home");
     } catch (error) {
-      serverError =
-        (error as { message?: string }).message ??
-        "Gagal menyimpan persetujuan.";
+      serverError = getErrorMessage(error);
     } finally {
       pending = false;
     }

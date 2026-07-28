@@ -10,6 +10,7 @@
   import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { authClient, getUser } from "$lib/hooks/auth.svelte";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { HugeiconsIcon } from "@hugeicons/svelte";
   import { toast } from "svelte-sonner";
 
@@ -54,13 +55,6 @@
     github: GithubIcon,
     google: GoogleIcon,
   } as const;
-
-  const getErrorMessage = (error: { message?: string } | null | undefined) => {
-    if (error?.message) {
-      return error.message;
-    }
-    return "Metode masuk belum bisa diubah. Coba lagi sebentar.";
-  };
 
   const linkProvider = async (provider: "google" | "github") => {
     pendingProvider = provider;

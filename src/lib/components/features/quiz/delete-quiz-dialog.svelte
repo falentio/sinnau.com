@@ -4,6 +4,7 @@
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { client } from "$lib/orpc";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
 
@@ -38,9 +39,9 @@
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Quiz belum bisa dihapus. Coba lagi sebentar.", {
           position: "top-right",

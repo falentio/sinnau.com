@@ -9,6 +9,7 @@
   import Textarea from "$lib/components/ui/textarea/textarea.svelte";
   import { client } from "$lib/orpc";
   import { updateStudySetInputSchema } from "$lib/schemas/study-set";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { ORPCError } from "@orpc/client";
   import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
@@ -64,9 +65,9 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else if (error instanceof Error) {
-            toast.error(error.message, { position: "top-right" });
+            toast.error(getErrorMessage(error), { position: "top-right" });
           } else {
             toast.error(
               "Study set belum bisa diperbarui. Coba lagi sebentar.",

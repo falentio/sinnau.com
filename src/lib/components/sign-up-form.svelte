@@ -47,6 +47,7 @@
   import * as Form from "$lib/components/ui/form/index.js";
   import Input from "$lib/components/ui/input/input.svelte";
   import { authClient } from "$lib/hooks/auth.svelte";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -54,13 +55,6 @@
 
   let serverError = $state("");
   let pending = $state(false);
-
-  const getErrorMessage = (error: { message?: string } | null | undefined) => {
-    if (error?.message) {
-      return error.message;
-    }
-    return "Tidak bisa mendaftar. Coba lagi sebentar.";
-  };
 
   const signUp = async (data: SignUpForm) => {
     pending = true;
@@ -82,7 +76,7 @@
       track(AnalyticsEvent.USER_SIGNED_UP, { method: "email" });
       setTimeout(() => goto(resolve("/(auth)/login")), 1500);
     } catch (error) {
-      serverError = getErrorMessage(error as { message?: string });
+      serverError = getErrorMessage(error);
     } finally {
       pending = false;
     }

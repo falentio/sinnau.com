@@ -4,6 +4,7 @@ import { page } from "$app/state";
 import { client } from "$lib/orpc";
 import type { CreateQuizInput } from "$lib/schemas/quiz";
 import { createQuizInputSchema } from "$lib/schemas/quiz";
+import { getErrorMessage } from "$lib/utils/error-messages";
 import { ORPCError } from "@orpc/client";
 import { toast } from "svelte-sonner";
 import { defaults, superForm } from "sveltekit-superforms";
@@ -56,9 +57,9 @@ export const createQuizForm = () => {
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else if (error instanceof Error) {
-        toast.error(error.message, { position: "top-right" });
+        toast.error(getErrorMessage(error), { position: "top-right" });
       } else {
         toast.error("Quiz belum bisa dibuat. Coba lagi sebentar.", {
           position: "top-right",

@@ -9,6 +9,7 @@
   import { client } from "$lib/orpc";
   import type { FlashcardQueueItem } from "$lib/schemas/flashcard-session";
   import type { FlashcardSessionRating } from "$lib/schemas/flashcard-session.constant";
+  import { getErrorMessage } from "$lib/utils/error-messages";
   import { tsfsStateFromDb } from "$lib/utils/fsrs-compat";
   import { toast } from "svelte-sonner";
   import { Rating, fsrs } from "ts-fsrs";
@@ -149,9 +150,7 @@
       await invalidate(`flashcard-session:queue:${studySetId}`);
       currentIndex += 1;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Gagal menyimpan review";
-      toast.error(message);
+      toast.error(getErrorMessage(error));
     } finally {
       submittingFor = null;
     }

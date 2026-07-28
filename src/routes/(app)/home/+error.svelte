@@ -22,7 +22,7 @@
   const friendlyError = $derived(
     errorMap[page.error?.message ?? ""] ??
       errorMap[page.error?.code ?? ""] ?? {
-        message: page.error?.message ?? "Terjadi kesalahan. Coba lagi nanti.",
+        message: "Terjadi kesalahan. Coba lagi nanti.",
         title: "Terjadi kesalahan",
       }
   );
