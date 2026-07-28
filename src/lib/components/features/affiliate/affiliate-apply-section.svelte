@@ -177,6 +177,16 @@
       dilirik.
     </p>
 
+    <Alert variant="default">
+      <HugeiconsIcon icon={Alert02Icon} />
+      <AlertTitle>Data sosial hanya untuk skor</AlertTitle>
+      <AlertDescription>
+        Media sosial yang kamu isi hanya dipakai dalam proses penilaian
+        aplikasi. Kamu tidak diwajibkan memakai akun tersebut untuk kegiatan
+        afiliasi.
+      </AlertDescription>
+    </Alert>
+
     <Form.Button disabled={submitting}>
       {submitting ? "Mengirim..." : "Kirim aplikasi"}
     </Form.Button>

@@ -1,9 +1,15 @@
 <script lang="ts">
   import {
+    Alert02Icon,
     BankIcon,
     CheckmarkCircle02Icon,
     Wallet01Icon,
   } from "$lib/components/features/icons";
+  import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+  } from "$lib/components/ui/alert";
   import * as Form from "$lib/components/ui/form/index.js";
   import { Input } from "$lib/components/ui/input";
   import * as ToggleGroup from "$lib/components/ui/toggle-group";
@@ -180,11 +186,16 @@
       </div>
     {/if}
 
-    <div class="flex items-center justify-between gap-3">
-      <p class="text-xs leading-relaxed text-muted-foreground">
-        Pencairan setiap Jumat, minimal {minimumPayoutLabel}. Data bisa diubah
-        kapan pun sebelum pencairan berikutnya.
-      </p>
+    <Alert variant="default">
+      <HugeiconsIcon icon={Alert02Icon} />
+      <AlertTitle>Jadwal pencairan</AlertTitle>
+      <AlertDescription>
+        Pencairan dilakukan setiap hari Jumat, minimal {minimumPayoutLabel}.
+        Data bisa diubah kapan pun sebelum pencairan berikutnya.
+      </AlertDescription>
+    </Alert>
+
+    <div class="flex items-center justify-end gap-3">
       <Form.Button disabled={submitting} class="shrink-0">
         {submitting ? "Menyimpan..." : hasAccount ? "Perbarui" : "Simpan"}
       </Form.Button>
