@@ -46,7 +46,7 @@
     {/if}
     <span class="flex-auto"></span>
     <div class="sticky right-0 bg-background px-1">
-      <Button variant="outline" size="icon-sm"
+      <Button variant="outline" size="icon-sm" href="/study/generate"
         ><HugeiconsIcon icon={AiBeautifyIcon} /></Button
       >
     </div>

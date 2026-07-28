@@ -52,6 +52,7 @@
       variant="default"
       class="flex h-auto min-w-[3.5rem] flex-col gap-0.5 rounded-full px-3 py-2 text-[10px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.96]"
       aria-label="AI Studio"
+      href="/study/generate"
     >
       <HugeiconsIcon icon={AiBeautifyIcon} class="size-5" strokeWidth={1.5} />
       Generate
