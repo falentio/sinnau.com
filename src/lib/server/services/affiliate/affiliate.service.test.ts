@@ -528,6 +528,29 @@ describe.concurrent("affiliate service", () => {
 
       expect(repo.findProfileBySlug).toHaveBeenCalledWith("test-slug");
     });
+
+    it("serves a cached slug without querying the repository again", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileBySlug.mockResolvedValue({
+        createdAt: new Date(),
+        id: "aff_abc",
+        nameSnapshot: "Test",
+        points: 0,
+        slug: "test-slug",
+        updatedAt: new Date(),
+        userId: "user-1",
+        version: 1,
+      });
+
+      const first = await service.resolveSlug("test-slug");
+      const second = await service.resolveSlug("test-slug");
+
+      expect(first).toEqual({ userId: "user-1" });
+      expect(second).toEqual({ userId: "user-1" });
+      expect(repo.findProfileBySlug).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe.concurrent("recordConversion", () => {
@@ -1330,6 +1353,37 @@ describe.concurrent("affiliate service", () => {
       expect(result.bankName).toBe("BCA");
       expect(repo.upsertPayoutAccount).toHaveBeenCalledWith(
         expect.objectContaining({ bankName: "BCA", method: "BANK" })
+      );
+    });
+
+    it("defaults bankName to null when method is BANK and bankName is omitted", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findProfileByUserId.mockResolvedValue(
+        createAffiliateProfileFixture({ userId: "user-1" })
+      );
+      repo.upsertPayoutAccount.mockResolvedValue(
+        createAffiliatePayoutAccountFixture({
+          bankName: null,
+          method: "BANK",
+          userId: "user-1",
+        })
+      );
+
+      await service.submitPayoutAccount(
+        {
+          accountHolderName: "Budi Santoso",
+          accountNumber: "1234567890",
+          bankName: undefined,
+          method: "BANK",
+          whatsappNumber: "081234567890",
+        },
+        "user-1"
+      );
+
+      expect(repo.upsertPayoutAccount).toHaveBeenCalledWith(
+        expect.objectContaining({ bankName: null, method: "BANK" })
       );
     });
 

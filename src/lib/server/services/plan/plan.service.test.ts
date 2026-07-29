@@ -27,6 +27,7 @@ import {
   EMPTY_ORDER_LIST,
   captureError,
 } from "./plan.testing.ts";
+import type { MockedPlanRepository } from "./plan.testing.ts";
 
 class MockPlanGuard extends PlanGuard {
   requireOwner = vi.fn<PlanGuard["requireOwner"]>();
@@ -160,6 +161,15 @@ const setupService = (midtrans = createMockMidtrans()) => {
   return { guard, midtrans, repo, service };
 };
 
+const setupPaidOrder = (repo: MockedPlanRepository) => {
+  repo.findOrderById.mockResolvedValue(
+    createOrderFixture({ id: "ord_test", status: "PAID" })
+  );
+  repo.findPaymentByOrderId.mockResolvedValue(
+    createPaymentFixture({ orderId: "ord_test" })
+  );
+};
+
 describe.concurrent("PlanService unit tests", () => {
   describe("checkout", () => {
     it("throws UNAUTHORIZED when the caller is not authenticated", async ({
@@ -204,6 +214,9 @@ describe.concurrent("PlanService unit tests", () => {
       expect(result.paymentType).toBe("QRIS");
       expect(result.grossAmount).toBe(30_000);
       expect(result.paymentData.qrString).toBe("QRCODE");
+      expect(result.paymentData.actions).toEqual([
+        { method: "GET", name: "generate-qr-code", url: "https://qr" },
+      ]);
       expect(result.orderId).toMatch(/^ord_/u);
 
       const insertedOrder = repo.insertOrder.mock.calls[0]?.[0];
@@ -258,11 +271,111 @@ describe.concurrent("PlanService unit tests", () => {
       vi.mocked(midtrans).createQris.mockRejectedValue(
         new Error("network down")
       );
-      const { service } = setupService(midtrans);
+      const { repo, service } = setupService(midtrans);
       const err = await captureError(
         service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1")
       );
       expect(err).toMatchObject({ code: "PAYMENT_GATEWAY_ERROR" });
+      // The PENDING order and payment are inserted before the gateway call,
+      // so a gateway failure leaves them as orphans in the DB.
+      expect(repo.insertOrder).toHaveBeenCalledTimes(1);
+      expect(repo.insertPayment).toHaveBeenCalledTimes(1);
+      expect(repo.updatePayment).not.toHaveBeenCalled();
+    });
+
+    it("allows a same-tier renewal when the active plan matches the purchase", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findActiveUserPlan.mockResolvedValue(
+        createUserPlanFixture({ planKey: "PREMIUM", userId: "user-1" })
+      );
+      const result = await service.checkout(
+        { durationMonths: 1, planKey: "PREMIUM" },
+        "user-1"
+      );
+      expect(result.grossAmount).toBe(100_000);
+      expect(repo.insertOrder).toHaveBeenCalledWith(
+        expect.objectContaining({ planKey: "PREMIUM", status: "PENDING" })
+      );
+    });
+
+    it("allows an upgrade from an active lower-tier plan", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findActiveUserPlan.mockResolvedValue(
+        createUserPlanFixture({ planKey: "LITE", userId: "user-1" })
+      );
+      const result = await service.checkout(
+        { durationMonths: 1, planKey: "PREMIUM" },
+        "user-1"
+      );
+      expect(result.grossAmount).toBe(100_000);
+      expect(repo.insertOrder).toHaveBeenCalledWith(
+        expect.objectContaining({ planKey: "PREMIUM", userId: "user-1" })
+      );
+    });
+
+    it("computes the 12-month discounted gross amount", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const result = await service.checkout(
+        { durationMonths: 12, planKey: "PREMIUM" },
+        "user-1"
+      );
+      expect(result.grossAmount).toBe(900_000);
+      expect(repo.insertOrder.mock.calls[0]?.[0].sku).toBe("premium-12m");
+    });
+
+    it("propagates the error when updatePayment fails after Midtrans succeeds", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.updatePayment.mockRejectedValue(new Error("db write failed"));
+      const err = await captureError(
+        service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1")
+      );
+      expect(err).toBeInstanceOf(Error);
+      // The QRIS already exists at the gateway, but the local record has no
+      // link to it — the order and payment were inserted before the failure.
+      expect(repo.insertOrder).toHaveBeenCalledTimes(1);
+      expect(repo.insertPayment).toHaveBeenCalledTimes(1);
+    });
+
+    it("passes through undefined actions when Midtrans omits them", async ({
+      expect,
+    }) => {
+      const midtrans = createMockMidtrans();
+      vi.mocked(midtrans).createQris.mockResolvedValue(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- simulate a malformed gateway response
+        { qr_string: "QRCODE" } as unknown as QrisChargeResponse
+      );
+      const { service } = setupService(midtrans);
+      const result = await service.checkout(
+        { durationMonths: 1, planKey: "LITE" },
+        "user-1"
+      );
+      expect(result.paymentData.actions).toBeUndefined();
+      expect(result.paymentData.qrString).toBe("QRCODE");
+    });
+
+    it("writes an undefined gatewayTransactionId when Midtrans omits transaction_id", async ({
+      expect,
+    }) => {
+      const midtrans = createMockMidtrans();
+      vi.mocked(midtrans).createQris.mockResolvedValue(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- simulate a malformed gateway response
+        {
+          actions: [
+            { method: "GET", name: "generate-qr-code", url: "https://qr" },
+          ],
+          qr_string: "QRCODE",
+        } as unknown as QrisChargeResponse
+      );
+      const { repo, service } = setupService(midtrans);
+      await service.checkout({ durationMonths: 1, planKey: "LITE" }, "user-1");
+      const patch = repo.updatePayment.mock.calls[0]?.[1];
+      expect(patch?.gatewayTransactionId).toBeUndefined();
     });
   });
 
@@ -303,6 +416,14 @@ describe.concurrent("PlanService unit tests", () => {
         "PENDING",
       ]);
     });
+
+    it("forwards an empty excludeStatuses array unchanged", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      await service.listOrders({ excludeStatuses: [], page: 1 }, "user-1");
+      expect(repo.findOrdersByUser).toHaveBeenCalledWith("user-1", 1, []);
+    });
   });
 
   describe("listPlans", () => {
@@ -311,23 +432,62 @@ describe.concurrent("PlanService unit tests", () => {
     }) => {
       const { service } = setupService();
       const plans = service.listPlans();
-      expect(plans).toHaveLength(3);
-      const lite = plans.find((p) => p.key === "LITE");
-      const premium = plans.find((p) => p.key === "PREMIUM");
-      expect(lite?.monthlyPrice).toBe(30_000);
-      // oxlint-disable typescript/no-unsafe-assignment -- expect.any(String) returns AsymmetricMatcher<any> which is safe in test assertions
-      expect(lite?.durations).toEqual([
-        // oxlint-disable-next-line typescript/no-unsafe-assignment
-        { discountLabel: expect.any(String), grossAmount: 30_000, months: 1 },
-        // oxlint-disable-next-line typescript/no-unsafe-assignment
-        { discountLabel: expect.any(String), grossAmount: 150_000, months: 6 },
-        // oxlint-disable-next-line typescript/no-unsafe-assignment
-        { discountLabel: expect.any(String), grossAmount: 270_000, months: 12 },
+      expect(plans).toEqual([
+        {
+          benefits: [
+            "Batas generate hingga 180 modul per bulan",
+            "Quiz tanpa batas",
+            "Sesi flashcard dengan FSRS",
+            "Analisis kelemahan per bab",
+          ],
+          durations: [
+            { discountLabel: "Harga penuh", grossAmount: 30_000, months: 1 },
+            { discountLabel: "Bayar 5 bulan", grossAmount: 150_000, months: 6 },
+            {
+              discountLabel: "Bayar 9 bulan",
+              grossAmount: 270_000,
+              months: 12,
+            },
+          ],
+          key: "LITE",
+          monthlyPrice: 30_000,
+          name: "Lite",
+        },
+        {
+          benefits: ["Semua keuntungan Lite", "Batas generate 2× lebih besar"],
+          durations: [
+            { discountLabel: "Harga penuh", grossAmount: 50_000, months: 1 },
+            { discountLabel: "Bayar 5 bulan", grossAmount: 250_000, months: 6 },
+            {
+              discountLabel: "Bayar 9 bulan",
+              grossAmount: 450_000,
+              months: 12,
+            },
+          ],
+          key: "PLUS",
+          monthlyPrice: 50_000,
+          name: "Plus",
+        },
+        {
+          benefits: [
+            "Semua keuntungan Lite",
+            "Batas generate 6× lebih besar",
+            "Prioritas dukungan pelanggan",
+          ],
+          durations: [
+            { discountLabel: "Harga penuh", grossAmount: 100_000, months: 1 },
+            { discountLabel: "Bayar 5 bulan", grossAmount: 500_000, months: 6 },
+            {
+              discountLabel: "Bayar 9 bulan",
+              grossAmount: 900_000,
+              months: 12,
+            },
+          ],
+          key: "PREMIUM",
+          monthlyPrice: 100_000,
+          name: "Premium",
+        },
       ]);
-      // oxlint-enable typescript/no-unsafe-assignment
-      expect(premium?.durations.find((d) => d.months === 12)?.grossAmount).toBe(
-        900_000
-      );
     });
   });
 
@@ -543,6 +703,9 @@ describe.concurrent("PlanService unit tests", () => {
       repo.findOrderById.mockResolvedValue(
         createOrderFixture({ id: "ord_test", status: "PENDING" })
       );
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({ orderId: "ord_test" })
+      );
 
       const emitted: unknown[] = [];
       service.events.on("order:paid", (payload) => {
@@ -554,6 +717,14 @@ describe.concurrent("PlanService unit tests", () => {
       );
 
       expect(emitted).toHaveLength(0);
+      expect(repo.updateOrderStatus).toHaveBeenCalledWith(
+        "ord_test",
+        "EXPIRED"
+      );
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: "FAILED" })
+      );
     });
 
     it("revokes the plan on a reversal (refund) of a paid order", async ({
@@ -575,6 +746,140 @@ describe.concurrent("PlanService unit tests", () => {
       );
       expect(repo.deleteUserPlan).toHaveBeenCalledWith(expect.any(String));
       expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+    });
+
+    it("returns undefined when updateOrderStatus fails after the guards pass", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PENDING" })
+      );
+      repo.updateOrderStatus.mockResolvedValue(null);
+
+      const result = await service.handleWebhook(makeWebhookBody());
+
+      expect(result).toBeUndefined();
+      expect(repo.setOrderAppliedAt).not.toHaveBeenCalled();
+      expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+    });
+
+    it("applies the plan on settlement even when no payment row exists", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({ id: "ord_test", status: "PENDING" });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByOrderId.mockResolvedValue(null);
+      repo.findPaidOrdersForUser.mockResolvedValue([
+        createOrderFixture({
+          appliedAt: new Date(),
+          planKey: "LITE",
+          status: "PAID",
+        }),
+      ]);
+
+      await service.handleWebhook(makeWebhookBody());
+
+      expect(repo.updateOrderStatus).toHaveBeenCalledWith("ord_test", "PAID");
+      expect(repo.updatePayment).not.toHaveBeenCalled();
+      expect(repo.setOrderAppliedAt).toHaveBeenCalledWith(
+        "ord_test",
+        expect.any(Number)
+      );
+      expect(repo.upsertUserPlan).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: order.userId })
+      );
+    });
+
+    it("cancels a pending order without re-deriving the plan", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PENDING" })
+      );
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({ orderId: "ord_test" })
+      );
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "deny" })
+      );
+
+      expect(repo.updateOrderStatus).toHaveBeenCalledWith(
+        "ord_test",
+        "CANCELLED"
+      );
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: "CANCELLED" })
+      );
+      expect(repo.findPaidOrdersForUser).not.toHaveBeenCalled();
+      expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+      expect(repo.deleteUserPlan).not.toHaveBeenCalled();
+    });
+
+    it("maps a deny webhook on a paid order to a CANCELLED payment", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      setupPaidOrder(repo);
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "deny" })
+      );
+
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: "CANCELLED" })
+      );
+    });
+
+    it("maps a cancel webhook on a paid order to a CANCELLED payment", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      setupPaidOrder(repo);
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "cancel" })
+      );
+
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: "CANCELLED" })
+      );
+    });
+
+    it("maps a failure webhook on a paid order to a FAILED payment", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      setupPaidOrder(repo);
+
+      await service.handleWebhook(
+        makeWebhookBody({ transaction_status: "failure" })
+      );
+
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: "FAILED" })
+      );
+    });
+
+    it("falls through to the transition check when no payment matches a duplicate status", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({ id: "ord_test", status: "PAID" });
+      repo.findOrderById.mockResolvedValue(order);
+      repo.findPaymentByTransactionId.mockResolvedValue(null);
+
+      const result = await service.handleWebhook(makeWebhookBody());
+
+      expect(result).toBe(order);
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -746,7 +1051,8 @@ describe.concurrent("PlanService unit tests", () => {
         planKey: "LITE",
         userId: "user-1",
       };
-      const err = await captureError(service.grantPlan(input, null));
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- exercises the undefined admin path separate from null
+      const err = await captureError(service.grantPlan(input, undefined));
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "FORBIDDEN" });
     });
@@ -833,6 +1139,80 @@ describe.concurrent("PlanService unit tests", () => {
         })
       );
     });
+
+    it("defaults note to null when omitted and forwards an explicit note", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+
+      await service.grantPlan(
+        { durationMonths: 1, planKey: "LITE", userId: "target-user" },
+        "admin-1"
+      );
+      expect(repo.insertAdminGrant).toHaveBeenCalledWith(
+        expect.objectContaining({ note: null })
+      );
+
+      repo.insertAdminGrant.mockClear();
+      await service.grantPlan(
+        {
+          durationMonths: 1,
+          note: "Compensatory grant",
+          planKey: "LITE",
+          userId: "target-user",
+        },
+        "admin-1"
+      );
+      expect(repo.insertAdminGrant).toHaveBeenCalledWith(
+        expect.objectContaining({ note: "Compensatory grant" })
+      );
+    });
+
+    it("keeps the committed grant even when plan derivation fails", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findPaidOrdersForUser.mockRejectedValue(
+        new Error("derivation failed")
+      );
+
+      const err = await captureError(
+        service.grantPlan(
+          { durationMonths: 1, planKey: "LITE", userId: "target-user" },
+          "admin-1"
+        )
+      );
+
+      expect(err).toBeInstanceOf(Error);
+      // The grant row is the audit trail and is committed before derivation,
+      // so it must survive a derivation failure.
+      expect(repo.insertAdminGrant).toHaveBeenCalledTimes(1);
+    });
+
+    it("computes expiresAt as now plus the granted duration", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const now = 1_700_000_000_000;
+      const nowSpy = vi.spyOn(Date, "now").mockReturnValue(now);
+      try {
+        await service.grantPlan(
+          { durationMonths: 3, planKey: "LITE", userId: "target-user" },
+          "admin-1"
+        );
+      } finally {
+        nowSpy.mockRestore();
+      }
+
+      const monthMs = 30 * 24 * 60 * 60 * 1000;
+      expect(repo.insertAdminGrant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          expiresAt: new Date(now + 3 * monthMs),
+          grantedAt: new Date(now),
+          startedAt: new Date(now),
+        })
+      );
+    });
   });
 
   describe.concurrent("listGrants", () => {
@@ -876,6 +1256,32 @@ describe.concurrent("PlanService unit tests", () => {
         data: [expect.objectContaining({ id: "grant-1" })],
         pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },
       });
+    });
+
+    it("forwards filter params to the repository", async ({ expect }) => {
+      const { repo, service } = setupService();
+      await service.listGrants(
+        { grantedBy: "admin-1", page: 1, planKey: "PLUS", userId: "user-1" },
+        "admin-1"
+      );
+      expect(repo.listAdminGrants).toHaveBeenCalledWith({
+        grantedBy: "admin-1",
+        page: 1,
+        planKey: "PLUS",
+        userId: "user-1",
+      });
+    });
+
+    it("defaults page to 1 when page is undefined", async ({ expect }) => {
+      const { repo, service } = setupService();
+      await service.listGrants(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- exercise the defensive `?? 1` fallback
+        { page: undefined } as unknown as ListGrantsInput,
+        "admin-1"
+      );
+      expect(repo.listAdminGrants).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1 })
+      );
     });
   });
 });
@@ -1079,5 +1485,63 @@ describe.concurrent(deriveUserPlan, () => {
       now
     );
     expect(result).toBeNull();
+  });
+
+  it("extends the expiry when a same-tier order is applied without alwaysApply", async ({
+    expect,
+  }) => {
+    const day0 = 1_000_000;
+    const day15 = day0 + 15 * 24 * 60 * 60 * 1000;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: false,
+          appliedAt: day0,
+          durationMonths: 1,
+          planKey: "PREMIUM",
+        },
+        {
+          alwaysApply: false,
+          appliedAt: day15,
+          durationMonths: 2,
+          planKey: "PREMIUM",
+        },
+      ],
+      day0
+    );
+    expect(result).toEqual({
+      expiresAt: day0 + MONTH_MS + 2 * MONTH_MS,
+      planKey: "PREMIUM",
+      startedAt: day0,
+    });
+  });
+
+  it("extends rather than restarts when appliedAt equals the current expiry", async ({
+    expect,
+  }) => {
+    const day0 = 1_000_000;
+    const expiry = day0 + MONTH_MS;
+    const result = deriveUserPlan(
+      [
+        {
+          alwaysApply: false,
+          appliedAt: day0,
+          durationMonths: 1,
+          planKey: "LITE",
+        },
+        {
+          alwaysApply: false,
+          appliedAt: expiry,
+          durationMonths: 1,
+          planKey: "LITE",
+        },
+      ],
+      day0
+    );
+    expect(result).toEqual({
+      expiresAt: expiry + MONTH_MS,
+      planKey: "LITE",
+      startedAt: day0,
+    });
   });
 });
