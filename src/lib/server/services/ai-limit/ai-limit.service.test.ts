@@ -102,6 +102,36 @@ describe.concurrent(AiLimitService, () => {
       expect(usage.daily.remaining).toBe(4997);
     });
 
+    it("clamps remaining to zero when usage overshoots the limit", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.sumUsageInWindow
+        .mockResolvedValueOnce(6000)
+        .mockResolvedValueOnce(25_000);
+
+      const usage = await service.getUsage("owner-1");
+
+      expect(usage.daily.used).toBe(6000);
+      expect(usage.daily.remaining).toBe(0);
+      expect(usage.weekly.used).toBe(25_000);
+      expect(usage.weekly.remaining).toBe(0);
+    });
+
+    it("returns zero remaining when usage exactly meets the limit", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.sumUsageInWindow
+        .mockResolvedValueOnce(5000)
+        .mockResolvedValueOnce(20_000);
+
+      const usage = await service.getUsage("owner-1");
+
+      expect(usage.daily.remaining).toBe(0);
+      expect(usage.weekly.remaining).toBe(0);
+    });
+
     it("computes daily reset at next midnight UTC", async ({ expect }) => {
       const { service } = setupService();
 
@@ -192,8 +222,10 @@ describe.concurrent(AiLimitService, () => {
       expect(result.logId).toMatch(/^aiu_/u);
       expect(result.usage.daily.used).toBe(1);
       expect(result.usage.daily.remaining).toBe(4999);
+      expect(result.usage.daily.limit).toBe(5000);
       expect(result.usage.weekly.used).toBe(1);
       expect(result.usage.weekly.remaining).toBe(19_999);
+      expect(result.usage.weekly.limit).toBe(20_000);
       expect(result.usage.planKey).toBe("FREE");
     });
 
@@ -283,6 +315,17 @@ describe.concurrent(AiLimitService, () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
+      // eslint-disable-next-line no-unsafe-type-assertion
+      const { data } = err as {
+        data?: {
+          requestedAmount: number;
+          daily: { limit: number };
+          weekly: { limit: number };
+        };
+      };
+      expect(data?.requestedAmount).toBe(20_001);
+      expect(data?.daily).toMatchObject({ limit: 5000 });
+      expect(data?.weekly).toMatchObject({ limit: 20_000 });
       expect(repo.consumeIfWithinQuota).not.toHaveBeenCalled();
     });
 
@@ -298,6 +341,34 @@ describe.concurrent(AiLimitService, () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("propagates error when lookupPlan fails", async ({ expect }) => {
+      const repo = createMockRepository();
+      const guard = createMockGuard();
+      guard.requireOwner.mockReturnValue("owner-1");
+      repo.consumeIfWithinQuota.mockResolvedValue({
+        dailyTotal: 0,
+        id: generateId(AI_LIMIT_ID_PREFIX),
+        weeklyTotal: 0,
+      });
+
+      // oxlint-disable-next-line no-unsafe-type-assertion
+      const service = new AiLimitService(
+        repo,
+        // oxlint-disable-next-line no-unsafe-type-assertion
+        guard as unknown as AiLimitGuard,
+        lookupPlanUnavailable
+      );
+
+      const err = await captureError(
+        service.consume({ amount: 1, featureKey: "generate" }, "owner-1")
+      );
+      expect(err).toBeInstanceOf(Error);
+      // oxlint-disable-next-line no-unsafe-type-assertion
+      expect((err as { message: string }).message).toBe(
+        "Plan service unavailable"
+      );
     });
   });
 
@@ -315,6 +386,26 @@ describe.concurrent(AiLimitService, () => {
       expect(repo.markRefunded).toHaveBeenCalledWith(log.id, "owner-1");
       expect(result.refundedLogId).toBe(log.id);
       expect(result.usage).toBeDefined();
+    });
+
+    it("returns the full usage shape after a refund", async ({ expect }) => {
+      const { repo, guard, service } = setupService();
+      const log = createAiUsageLogFixture({ ownerId: "owner-1" });
+      guard.assertLogOwnerOrForbidden.mockResolvedValue(log);
+      repo.markRefunded.mockResolvedValue(true);
+      repo.sumUsageInWindow.mockResolvedValue(0);
+
+      const result = await service.refund({ logId: log.id }, "owner-1");
+
+      expect(result.usage.planKey).toBe("FREE");
+      expect(result.usage.daily.limit).toBe(5000);
+      expect(result.usage.daily.used).toBe(0);
+      expect(result.usage.daily.remaining).toBe(5000);
+      expect(result.usage.daily.resetsAt).toBeInstanceOf(Date);
+      expect(result.usage.weekly.limit).toBe(20_000);
+      expect(result.usage.weekly.used).toBe(0);
+      expect(result.usage.weekly.remaining).toBe(20_000);
+      expect(result.usage.weekly.resetsAt).toBeInstanceOf(Date);
     });
 
     it("throws FORBIDDEN when log does not belong to the user", async ({
