@@ -2,6 +2,7 @@ import { generateAdminCleanupChunks } from "./commands/generate.admin-cleanup-ch
 import { generateCreate } from "./commands/generate.create.ts";
 import { generateCheckByStudySet } from "./queries/generate.check-by-study-set.ts";
 import { generateCheck } from "./queries/generate.check.ts";
+import { generateHasAccess } from "./queries/generate.has-access.ts";
 import { generateLanguageStyles } from "./queries/generate.language-styles.ts";
 
 export const generateRouter = {
@@ -11,6 +12,7 @@ export const generateRouter = {
   check: generateCheck,
   checkByStudySet: generateCheckByStudySet,
   create: generateCreate,
+  hasAccess: generateHasAccess,
   languageStyles: generateLanguageStyles,
 };
 

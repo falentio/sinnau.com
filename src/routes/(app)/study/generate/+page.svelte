@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
+  import PlanRequiredDialog from "$lib/components/features/generate/plan-required-dialog.svelte";
   import {
     ArrowDown01Icon,
     ArrowLeft01Icon,
@@ -43,6 +44,21 @@
 
   let advancedMode = $state(false);
   let selectedPdf = $state<File | null>(null);
+  let showPlanDialog = $state(false);
+  let planDialogReason = $state<"NO_ACTIVE_PLAN" | "AI_LIMIT_EXCEEDED" | null>(
+    null
+  );
+
+  $effect(() => {
+    if (
+      data.hasAccess &&
+      !data.hasAccess.canGenerate &&
+      data.hasAccess.reason
+    ) {
+      showPlanDialog = true;
+      planDialogReason = data.hasAccess.reason;
+    }
+  });
 
   const submitGenerate = async (input: CreateGenerateInput) => {
     try {
@@ -71,6 +87,17 @@
       if (error instanceof ORPCError) {
         if (error.code === "UNAUTHORIZED") {
           await goto(resolve("/(auth)/login"));
+          return;
+        }
+        if (
+          error.code === "AI_LIMIT_EXCEEDED" ||
+          error.code === "NO_ACTIVE_PLAN"
+        ) {
+          showPlanDialog = true;
+          planDialogReason =
+            error.code === "NO_ACTIVE_PLAN"
+              ? "NO_ACTIVE_PLAN"
+              : "AI_LIMIT_EXCEEDED";
           return;
         }
         toast.error(getErrorMessage(error), { position: "top-right" });
@@ -378,3 +405,5 @@
     </Form.Button>
   </div>
 </form>
+
+<PlanRequiredDialog bind:open={showPlanDialog} reason={planDialogReason} />

@@ -173,6 +173,15 @@ export const languageStyleItemSchema = v.object({
 
 export const getLanguageStylesOutputSchema = v.array(languageStyleItemSchema);
 
+// ─── HasAccess ──────────────────────────────────────────────────────────
+
+export const hasAccessOutputSchema = v.object({
+  canGenerate: v.boolean(),
+  reason: v.optional(
+    v.nullable(v.picklist(["NO_ACTIVE_PLAN", "AI_LIMIT_EXCEEDED"]))
+  ),
+});
+
 // ─── Inferred types ────────────────────────────────────────────────────
 
 export type TokenUsage = v.InferOutput<typeof tokenUsageSchema>;
@@ -210,3 +219,4 @@ export type LanguageStyleItem = v.InferOutput<typeof languageStyleItemSchema>;
 export type GetLanguageStylesOutput = v.InferOutput<
   typeof getLanguageStylesOutputSchema
 >;
+export type HasAccessOutput = v.InferOutput<typeof hasAccessOutputSchema>;

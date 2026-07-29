@@ -16,6 +16,9 @@ const ERRORS = {
   LITEPARSE_FAILED: {
     message: "Failed to parse the PDF file",
   },
+  NO_ACTIVE_PLAN: {
+    message: "User has no active plan",
+  },
   STUDY_SET_SLUG_CONFLICT: {
     message: "Failed to generate a unique slug after maximum retries",
   },

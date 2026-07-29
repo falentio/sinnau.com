@@ -759,4 +759,95 @@ describe.concurrent(GenerateService, () => {
       }
     });
   });
+
+  describe("hasAccess", () => {
+    it("throws UNAUTHORIZED when ownerId is null", async ({ expect }) => {
+      const { service, guard } = setupService();
+      guard.requireOwner.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.hasAccess(null));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+
+    it("returns canGenerate true when quota is sufficient", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+
+      const result = await service.hasAccess("user-1");
+      expect(result).toEqual({ canGenerate: true, reason: null });
+    });
+
+    it("returns canGenerate false with AI_LIMIT_EXCEEDED when daily remaining < 3000", async ({
+      expect,
+    }) => {
+      const { service, aiLimitService } = setupService();
+      aiLimitService.getUsage.mockResolvedValue({
+        daily: { remaining: 2000 },
+        weekly: { remaining: 10_000 },
+      });
+
+      const result = await service.hasAccess("user-1");
+      expect(result).toEqual({
+        canGenerate: false,
+        reason: "AI_LIMIT_EXCEEDED",
+      });
+    });
+
+    it("returns canGenerate false with AI_LIMIT_EXCEEDED when weekly remaining < 3000", async ({
+      expect,
+    }) => {
+      const { service, aiLimitService } = setupService();
+      aiLimitService.getUsage.mockResolvedValue({
+        daily: { remaining: 10_000 },
+        weekly: { remaining: 2000 },
+      });
+
+      const result = await service.hasAccess("user-1");
+      expect(result).toEqual({
+        canGenerate: false,
+        reason: "AI_LIMIT_EXCEEDED",
+      });
+    });
+
+    it("returns canGenerate false with NO_ACTIVE_PLAN when getUsage throws NO_ACTIVE_PLAN", async ({
+      expect,
+    }) => {
+      const { service, aiLimitService } = setupService();
+      aiLimitService.getUsage.mockRejectedValue(
+        new ORPCError("NO_ACTIVE_PLAN", {
+          message: "User has no active plan",
+        })
+      );
+
+      const result = await service.hasAccess("user-1");
+      expect(result).toEqual({
+        canGenerate: false,
+        reason: "NO_ACTIVE_PLAN",
+      });
+    });
+
+    it("propagates unexpected errors from getUsage", async ({ expect }) => {
+      const { service, aiLimitService } = setupService();
+      aiLimitService.getUsage.mockRejectedValue(
+        new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Internal server error",
+        })
+      );
+
+      const err = await captureError(service.hasAccess("user-1"));
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    });
+
+    it("does not call consume or parseLiteparse", async ({ expect }) => {
+      const { service, aiLimitService, pipeline } = setupService();
+
+      await service.hasAccess("user-1");
+      expect(aiLimitService.consume).not.toHaveBeenCalled();
+      expect(pipeline.parseLiteparse).not.toHaveBeenCalled();
+      expect(pipeline.runLLM).not.toHaveBeenCalled();
+    });
+  });
 });

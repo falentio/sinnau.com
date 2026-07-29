@@ -2,6 +2,7 @@ import {
   CHUNK_CLEANUP_AGE_DAYS,
   CHUNK_POLL_LIMIT,
   GENERATE_AI_CHARS_PER_UNIT,
+  GENERATE_AI_LIMIT_MIN_REMAINING,
   GENERATE_AI_UNIT_SCALE,
   GENERATE_CHUNK_QUERY_CUTOFF_MS,
   GENERATE_ID_PREFIX,
@@ -19,6 +20,7 @@ import type {
   CheckGenerateContentOutput,
   CreateGenerateInput,
   CreateGenerateOutput,
+  HasAccessOutput,
 } from "../../../schemas/generate.ts";
 import type { Generate } from "../../infras/db/schema/generate.ts";
 import type {
@@ -158,7 +160,10 @@ export class GenerateService {
     }
 
     const usage = await this.aiLimitService.getUsage(owner);
-    if (usage.daily.remaining < 3000 || usage.weekly.remaining < 3000) {
+    if (
+      usage.daily.remaining < GENERATE_AI_LIMIT_MIN_REMAINING ||
+      usage.weekly.remaining < GENERATE_AI_LIMIT_MIN_REMAINING
+    ) {
       throw new ORPCError("AI_LIMIT_EXCEEDED", {
         message: "AI usage limit reached for this period",
         status: 429,
@@ -388,6 +393,29 @@ export class GenerateService {
       status: row.status,
       studySetId: row.studySetId,
     };
+  }
+
+  async hasAccess(
+    ownerId: string | null | undefined
+  ): Promise<HasAccessOutput> {
+    const owner = this.guard.requireOwner(ownerId);
+
+    let usage: { daily: { remaining: number }; weekly: { remaining: number } };
+    try {
+      usage = await this.aiLimitService.getUsage(owner);
+    } catch (error) {
+      if (error instanceof ORPCError && error.code === "NO_ACTIVE_PLAN") {
+        return { canGenerate: false, reason: "NO_ACTIVE_PLAN" };
+      }
+      throw error;
+    }
+
+    const canGenerate =
+      usage.daily.remaining >= GENERATE_AI_LIMIT_MIN_REMAINING &&
+      usage.weekly.remaining >= GENERATE_AI_LIMIT_MIN_REMAINING;
+    return canGenerate
+      ? { canGenerate: true, reason: null }
+      : { canGenerate: false, reason: "AI_LIMIT_EXCEEDED" };
   }
 
   async cleanupChunks(
