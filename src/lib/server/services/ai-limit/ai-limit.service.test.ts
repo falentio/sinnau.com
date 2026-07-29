@@ -19,7 +19,12 @@ const defaultPlan: AiLimitPlan = {
   weekly: 20_000,
 };
 
-const setupService = (plan: AiLimitPlan = defaultPlan) => {
+type LookupPlanFn = (userId: string) => Promise<AiLimitPlan>;
+
+const setupService = (
+  plan: AiLimitPlan = defaultPlan,
+  lookupPlanOverride?: LookupPlanFn
+) => {
   const repo = createMockRepository();
   const guard = createMockGuard();
 
@@ -44,12 +49,11 @@ const setupService = (plan: AiLimitPlan = defaultPlan) => {
   const log = createAiUsageLogFixture();
   guard.assertLogOwnerOrForbidden.mockResolvedValue(log);
 
-  // eslint-disable-next-line promise-function-async
-  const lookupPlan = () => Promise.resolve(plan);
-  // oxlint-disable-next-line no-unsafe-type-assertion
+  const lookupPlan = lookupPlanOverride ?? (async () => plan);
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const service = new AiLimitService(
     repo,
-    // oxlint-disable-next-line no-unsafe-type-assertion
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     guard as unknown as AiLimitGuard,
     lookupPlan
   );
@@ -185,20 +189,17 @@ describe.concurrent(AiLimitService, () => {
       repo.sumUsageInWindow.mockResolvedValue(0);
       repo.markRefunded.mockResolvedValue(true);
 
-      // oxlint-disable-next-line no-unsafe-type-assertion
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const service = new AiLimitService(
         repo,
-        // oxlint-disable-next-line no-unsafe-type-assertion
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         guard as unknown as AiLimitGuard,
         lookupPlanUnavailable
       );
 
       const err = await captureError(service.getUsage("owner-1"));
       expect(err).toBeInstanceOf(Error);
-      // oxlint-disable-next-line no-unsafe-type-assertion
-      expect((err as { message: string }).message).toBe(
-        "Plan service unavailable"
-      );
+      expect(err).toMatchObject({ message: "Plan service unavailable" });
     });
   });
 
@@ -292,17 +293,13 @@ describe.concurrent(AiLimitService, () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
-      // eslint-disable-next-line no-unsafe-type-assertion
-      const { data } = err as {
-        data?: {
-          requestedAmount: number;
-          daily: { limit: number };
-          weekly: { limit: number };
-        };
-      };
-      expect(data?.requestedAmount).toBe(5001);
-      expect(data?.daily).toMatchObject({ limit: 5000 });
-      expect(data?.weekly).toMatchObject({ limit: 20_000 });
+      expect(err).toMatchObject({
+        data: {
+          daily: { limit: 5000 },
+          requestedAmount: 5001,
+          weekly: { limit: 20_000 },
+        },
+      });
       expect(repo.consumeIfWithinQuota).not.toHaveBeenCalled();
     });
 
@@ -315,17 +312,13 @@ describe.concurrent(AiLimitService, () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AI_LIMIT_EXCEEDED" });
-      // eslint-disable-next-line no-unsafe-type-assertion
-      const { data } = err as {
-        data?: {
-          requestedAmount: number;
-          daily: { limit: number };
-          weekly: { limit: number };
-        };
-      };
-      expect(data?.requestedAmount).toBe(20_001);
-      expect(data?.daily).toMatchObject({ limit: 5000 });
-      expect(data?.weekly).toMatchObject({ limit: 20_000 });
+      expect(err).toMatchObject({
+        data: {
+          daily: { limit: 5000 },
+          requestedAmount: 20_001,
+          weekly: { limit: 20_000 },
+        },
+      });
       expect(repo.consumeIfWithinQuota).not.toHaveBeenCalled();
     });
 
@@ -344,8 +337,10 @@ describe.concurrent(AiLimitService, () => {
     });
 
     it("propagates error when lookupPlan fails", async ({ expect }) => {
-      const repo = createMockRepository();
-      const guard = createMockGuard();
+      const { guard, repo, service } = setupService(
+        undefined,
+        lookupPlanUnavailable
+      );
       guard.requireOwner.mockReturnValue("owner-1");
       repo.consumeIfWithinQuota.mockResolvedValue({
         dailyTotal: 0,
@@ -353,22 +348,11 @@ describe.concurrent(AiLimitService, () => {
         weeklyTotal: 0,
       });
 
-      // oxlint-disable-next-line no-unsafe-type-assertion
-      const service = new AiLimitService(
-        repo,
-        // oxlint-disable-next-line no-unsafe-type-assertion
-        guard as unknown as AiLimitGuard,
-        lookupPlanUnavailable
-      );
-
       const err = await captureError(
         service.consume({ amount: 1, featureKey: "generate" }, "owner-1")
       );
       expect(err).toBeInstanceOf(Error);
-      // oxlint-disable-next-line no-unsafe-type-assertion
-      expect((err as { message: string }).message).toBe(
-        "Plan service unavailable"
-      );
+      expect(err).toMatchObject({ message: "Plan service unavailable" });
     });
   });
 
@@ -449,10 +433,9 @@ describe.concurrent(AiLimitService, () => {
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "AI_LIMIT_ALREADY_REFUNDED" });
-      // eslint-disable-next-line no-unsafe-type-assertion
-      expect((err as { message: string }).message).toBe(
-        "Usage log has already been refunded"
-      );
+      expect(err).toMatchObject({
+        message: "Usage log has already been refunded",
+      });
     });
   });
 });

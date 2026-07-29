@@ -27,6 +27,7 @@ import {
   EMPTY_ORDER_LIST,
   captureError,
 } from "./plan.testing.ts";
+import type { MockedPlanRepository } from "./plan.testing.ts";
 
 class MockPlanGuard extends PlanGuard {
   requireOwner = vi.fn<PlanGuard["requireOwner"]>();
@@ -158,6 +159,15 @@ const setupService = (midtrans = createMockMidtrans()) => {
 
   const service = new PlanService(repo, guard, midtrans);
   return { guard, midtrans, repo, service };
+};
+
+const setupPaidOrder = (repo: MockedPlanRepository) => {
+  repo.findOrderById.mockResolvedValue(
+    createOrderFixture({ id: "ord_test", status: "PAID" })
+  );
+  repo.findPaymentByOrderId.mockResolvedValue(
+    createPaymentFixture({ orderId: "ord_test" })
+  );
 };
 
 describe.concurrent("PlanService unit tests", () => {
@@ -814,12 +824,7 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.findOrderById.mockResolvedValue(
-        createOrderFixture({ id: "ord_test", status: "PAID" })
-      );
-      repo.findPaymentByOrderId.mockResolvedValue(
-        createPaymentFixture({ orderId: "ord_test" })
-      );
+      setupPaidOrder(repo);
 
       await service.handleWebhook(
         makeWebhookBody({ transaction_status: "deny" })
@@ -835,12 +840,7 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.findOrderById.mockResolvedValue(
-        createOrderFixture({ id: "ord_test", status: "PAID" })
-      );
-      repo.findPaymentByOrderId.mockResolvedValue(
-        createPaymentFixture({ orderId: "ord_test" })
-      );
+      setupPaidOrder(repo);
 
       await service.handleWebhook(
         makeWebhookBody({ transaction_status: "cancel" })
@@ -856,12 +856,7 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const { repo, service } = setupService();
-      repo.findOrderById.mockResolvedValue(
-        createOrderFixture({ id: "ord_test", status: "PAID" })
-      );
-      repo.findPaymentByOrderId.mockResolvedValue(
-        createPaymentFixture({ orderId: "ord_test" })
-      );
+      setupPaidOrder(repo);
 
       await service.handleWebhook(
         makeWebhookBody({ transaction_status: "failure" })
