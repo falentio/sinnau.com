@@ -32,9 +32,9 @@ export const PLAN_MONTHLY_PRICE: Record<(typeof PLAN_KEYS)[number], number> = {
 
 // Monthly AI generate limit per tier
 export const PLAN_MONTHLY_LIMIT: Record<(typeof PLAN_KEYS)[number], number> = {
-  LITE: 180_000,
-  PLUS: 360_000,
-  PREMIUM: 1_080_000,
+  LITE: 120_000,
+  PLUS: 240_000,
+  PREMIUM: 720_000,
 };
 
 // Months the user actually pays for, per purchased duration
@@ -43,8 +43,8 @@ export const PLAN_DURATION_PAID_MONTHS: Record<
   number
 > = {
   1: 1,
-  12: 9,
-  6: 5,
+  12: 7,
+  6: 4,
 };
 
 // Tier rank for upgrade / downgrade comparisons (higher = better)
@@ -63,7 +63,7 @@ export const PLAN_NAME_FALLBACK = "Tidak Diketahui";
 
 export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
   LITE: [
-    "Batas generate hingga 180 modul per bulan",
+    "Batas generate hingga 120 modul per bulan",
     "Quiz tanpa batas",
     "Sesi flashcard dengan FSRS",
     "Analisis kelemahan per bab",
@@ -80,7 +80,7 @@ export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
 export const PLAN_DAILY_DIVISOR = 10;
 export const PLAN_WEEKLY_DIVISOR = 4;
 
-// Divide internal unit counts for user-facing display (e.g. 180_000 → "180 modul")
+// Divide internal unit counts for user-facing display (e.g. 120_000 → "120 modul")
 export const PLAN_UNIT_DISPLAY_DIVISOR = 1000;
 
 // Days per purchased month for entitlement window math

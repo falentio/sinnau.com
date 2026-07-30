@@ -91,23 +91,23 @@ No database table. Plans are hardcoded constants in `src/lib/schemas/plan.consta
 
 | Plan    | Monthly Price (IDR) | Monthly Generate Limit | Benefits                                                                    |
 | ------- | ------------------- | ---------------------- | --------------------------------------------------------------------------- |
-| LITE    | 30,000              | 60                     | unlimited quiz attempts, FSRS flashcard session, weak chapter spot analysis |
-| PLUS    | 50,000              | 120                    | all LITE benefits, 2x generate limit                                        |
-| PREMIUM | 100,000             | 360                    | all LITE benefits, 6x generate limit                                        |
+| LITE    | 30,000              | 120                    | unlimited quiz attempts, FSRS flashcard session, weak chapter spot analysis |
+| PLUS    | 50,000              | 240                    | all LITE benefits, 2x generate limit                                        |
+| PREMIUM | 100,000             | 720                    | all LITE benefits, 6x generate limit                                        |
 
 ### Duration pricing
 
 - 1 month: full monthly price
-- 6 months: pay for 5 months
-- 12 months: pay for 9 months
+- 6 months: pay for 4 months
+- 12 months: pay for 7 months
 
 Example gross amounts:
 
 | Plan    | 1 month | 6 months | 12 months |
 | ------- | ------- | -------- | --------- |
-| LITE    | 30,000  | 150,000  | 270,000   |
-| PLUS    | 50,000  | 250,000  | 450,000   |
-| PREMIUM | 100,000 | 500,000  | 900,000   |
+| LITE    | 30,000  | 120,000  | 210,000   |
+| PLUS    | 50,000  | 200,000  | 350,000   |
+| PREMIUM | 100,000 | 400,000  | 700,000   |
 
 ## Field Rules
 
@@ -281,9 +281,9 @@ Resulting limits:
 
 | Plan    | Monthly | Daily | Weekly |
 | ------- | ------- | ----- | ------ |
-| LITE    | 60      | 6     | 15     |
-| PLUS    | 120     | 12    | 30     |
-| PREMIUM | 360     | 36    | 90     |
+| LITE    | 120     | 12    | 30     |
+| PLUS    | 240     | 24    | 60     |
+| PREMIUM | 720     | 72    | 180    |
 
 ## Admin
 

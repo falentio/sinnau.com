@@ -22,7 +22,7 @@
         "Sesi flashcard dengan FSRS",
         "Analisis kelemahan per bab",
       ],
-      monthly: 180_000,
+      monthly: 120_000,
       name: "Lite",
     },
     PLUS: {
@@ -31,7 +31,7 @@
         "2× batas kuota per bulan",
         "Riwayat lebih panjang",
       ],
-      monthly: 360_000,
+      monthly: 240_000,
       name: "Plus",
     },
     PREMIUM: {
@@ -41,7 +41,7 @@
         "Priority saat jam sibuk",
         "Akses fitur beta lebih dulu",
       ],
-      monthly: 1_080_000,
+      monthly: 720_000,
       name: "Premium",
     },
   };

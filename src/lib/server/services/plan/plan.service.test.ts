@@ -260,7 +260,7 @@ describe.concurrent("PlanService unit tests", () => {
         { durationMonths: 6, planKey: "PLUS" },
         "user-1"
       );
-      expect(result.grossAmount).toBe(250_000);
+      expect(result.grossAmount).toBe(200_000);
       expect(repo.insertOrder.mock.calls[0]?.[0].sku).toBe("plus-6m");
     });
 
@@ -323,7 +323,7 @@ describe.concurrent("PlanService unit tests", () => {
         { durationMonths: 12, planKey: "PREMIUM" },
         "user-1"
       );
-      expect(result.grossAmount).toBe(900_000);
+      expect(result.grossAmount).toBe(700_000);
       expect(repo.insertOrder.mock.calls[0]?.[0].sku).toBe("premium-12m");
     });
 
@@ -435,17 +435,17 @@ describe.concurrent("PlanService unit tests", () => {
       expect(plans).toEqual([
         {
           benefits: [
-            "Batas generate hingga 180 modul per bulan",
+            "Batas generate hingga 120 modul per bulan",
             "Quiz tanpa batas",
             "Sesi flashcard dengan FSRS",
             "Analisis kelemahan per bab",
           ],
           durations: [
             { discountLabel: "Harga penuh", grossAmount: 30_000, months: 1 },
-            { discountLabel: "Bayar 5 bulan", grossAmount: 150_000, months: 6 },
+            { discountLabel: "Bayar 4 bulan", grossAmount: 120_000, months: 6 },
             {
-              discountLabel: "Bayar 9 bulan",
-              grossAmount: 270_000,
+              discountLabel: "Bayar 7 bulan",
+              grossAmount: 210_000,
               months: 12,
             },
           ],
@@ -457,10 +457,10 @@ describe.concurrent("PlanService unit tests", () => {
           benefits: ["Semua keuntungan Lite", "Batas generate 2× lebih besar"],
           durations: [
             { discountLabel: "Harga penuh", grossAmount: 50_000, months: 1 },
-            { discountLabel: "Bayar 5 bulan", grossAmount: 250_000, months: 6 },
+            { discountLabel: "Bayar 4 bulan", grossAmount: 200_000, months: 6 },
             {
-              discountLabel: "Bayar 9 bulan",
-              grossAmount: 450_000,
+              discountLabel: "Bayar 7 bulan",
+              grossAmount: 350_000,
               months: 12,
             },
           ],
@@ -476,10 +476,10 @@ describe.concurrent("PlanService unit tests", () => {
           ],
           durations: [
             { discountLabel: "Harga penuh", grossAmount: 100_000, months: 1 },
-            { discountLabel: "Bayar 5 bulan", grossAmount: 500_000, months: 6 },
+            { discountLabel: "Bayar 4 bulan", grossAmount: 400_000, months: 6 },
             {
-              discountLabel: "Bayar 9 bulan",
-              grossAmount: 900_000,
+              discountLabel: "Bayar 7 bulan",
+              grossAmount: 700_000,
               months: 12,
             },
           ],

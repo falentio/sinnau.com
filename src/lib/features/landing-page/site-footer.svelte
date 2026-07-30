@@ -8,6 +8,7 @@
         { href: "/#how-it-works", label: "Cara kerja" },
         { href: "/#retention", label: "Ingat lebih lama" },
         { href: "/study/new/", label: "Buat modul" },
+        { href: "/plans", label: "Paket & Harga" },
       ],
       title: "Produk",
     },
