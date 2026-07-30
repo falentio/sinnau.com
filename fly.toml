@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for sinnau-com on 2026-07-04T11:34:50Z
+# fly.toml app configuration file generated for sinnau-com-production on 2026-07-31T00:38:12+07:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -6,14 +6,15 @@
 app = 'sinnau-com-production'
 primary_region = 'sin'
 
-[build]
+[deploy]
+strategy = 'immediate'
 
 [env]
-NODE_ENV = "production"
-ENVIRONMENT = "production"
-BETTER_AUTH_URL = "https://sinnau.com"
-PORT = "11085"
-BODY_SIZE_LIMIT = "50M"
+BETTER_AUTH_URL = 'https://sinnau.com'
+BODY_SIZE_LIMIT = '50M'
+ENVIRONMENT = 'production'
+NODE_ENV = 'production'
+PORT = '11085'
 
 [[mounts]]
 source = 'data'
@@ -22,7 +23,7 @@ destination = '/app/data'
 [http_service]
 internal_port = 11085
 force_https = true
-auto_stop_machines = 'stop'
+auto_stop_machines = 'off'
 auto_start_machines = true
 min_machines_running = 0
 processes = ['app']
