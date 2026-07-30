@@ -5,6 +5,7 @@
   import { Separator } from "$lib/components/ui/separator/index.js";
   import {
     PLAN_DAILY_DIVISOR,
+    PLAN_MONTHLY_LIMIT,
     PLAN_NAME_FALLBACK,
     PLAN_UNIT_DISPLAY_DIVISOR,
     PLAN_WEEKLY_DIVISOR,
@@ -22,7 +23,7 @@
         "Sesi flashcard dengan FSRS",
         "Analisis kelemahan per bab",
       ],
-      monthly: 120_000,
+      monthly: PLAN_MONTHLY_LIMIT.LITE,
       name: "Lite",
     },
     PLUS: {
@@ -31,7 +32,7 @@
         "2× batas kuota per bulan",
         "Riwayat lebih panjang",
       ],
-      monthly: 240_000,
+      monthly: PLAN_MONTHLY_LIMIT.PLUS,
       name: "Plus",
     },
     PREMIUM: {
@@ -41,7 +42,7 @@
         "Priority saat jam sibuk",
         "Akses fitur beta lebih dulu",
       ],
-      monthly: 720_000,
+      monthly: PLAN_MONTHLY_LIMIT.PREMIUM,
       name: "Premium",
     },
   };

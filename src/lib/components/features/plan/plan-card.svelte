@@ -17,7 +17,7 @@
   }: {
     plan: PlanCatalogItem;
     selectedDuration: 1 | 6 | 12;
-    variant?: "default" | "featured" | "wide";
+    variant?: "default" | "featured";
     disabled?: boolean;
     href?: string;
     ctaLabel?: string;

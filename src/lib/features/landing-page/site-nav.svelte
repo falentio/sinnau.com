@@ -14,7 +14,6 @@
     { href: "/#features", label: "Fitur" },
     { href: "/#how-it-works", label: "Cara kerja" },
     { href: "/#retention", label: "Ingat terus" },
-    { href: "/plans", label: "Paket" },
     { href: "/#faq", label: "Tanya jawab" },
   ];
 </script>

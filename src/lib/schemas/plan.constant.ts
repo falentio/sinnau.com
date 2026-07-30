@@ -61,9 +61,12 @@ export const PLAN_NAME: Record<(typeof PLAN_KEYS)[number], string> = {
 };
 export const PLAN_NAME_FALLBACK = "Tidak Diketahui";
 
+// Divide internal unit counts for user-facing display (e.g. 120_000 → "120 modul")
+export const PLAN_UNIT_DISPLAY_DIVISOR = 1000;
+
 export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
   LITE: [
-    "Batas generate hingga 120 modul per bulan",
+    `Batas generate hingga ${PLAN_MONTHLY_LIMIT.LITE / PLAN_UNIT_DISPLAY_DIVISOR} modul per bulan`,
     "Quiz tanpa batas",
     "Sesi flashcard dengan FSRS",
     "Analisis kelemahan per bab",
@@ -79,9 +82,6 @@ export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
 // Used to translate monthly limits into daily / weekly windows
 export const PLAN_DAILY_DIVISOR = 10;
 export const PLAN_WEEKLY_DIVISOR = 4;
-
-// Divide internal unit counts for user-facing display (e.g. 120_000 → "120 modul")
-export const PLAN_UNIT_DISPLAY_DIVISOR = 1000;
 
 // Days per purchased month for entitlement window math
 export const PLAN_DAYS_PER_MONTH = 30;
