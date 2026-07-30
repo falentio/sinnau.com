@@ -20,6 +20,18 @@
   .landing-v3 * {
     border-color: var(--landing-border);
   }
+
+  .plan-card-landing {
+    --card: var(--landing-card);
+    --foreground: var(--landing-fg);
+    --muted-foreground: var(--landing-muted);
+    --border: var(--landing-border);
+    --background: var(--landing-surface-subtle);
+    --muted: var(--landing-surface-subtle);
+    --ring: var(--landing-accent);
+    --plan-accent: var(--landing-accent);
+    --plan-accent-ink: var(--landing-accent-ink);
+  }
 }
 
 @layer utilities {

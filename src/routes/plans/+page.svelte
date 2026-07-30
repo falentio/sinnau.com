@@ -1,11 +1,11 @@
 <script lang="ts">
   import "$lib/features/landing-page/landing.css";
   import { page } from "$app/stores";
+  import PlanCard from "$lib/components/features/plan/plan-card.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import CtaBanner from "$lib/features/landing-page/cta-banner.svelte";
   import Faq from "$lib/features/landing-page/faq.svelte";
-  import PlanCard from "$lib/features/landing-page/plan-card.svelte";
   import { reveal } from "$lib/features/landing-page/reveal";
   import SiteFooter from "$lib/features/landing-page/site-footer.svelte";
   import SiteNav from "$lib/features/landing-page/site-nav.svelte";
@@ -75,11 +75,13 @@
 
       <div class="mx-auto mt-10 flex max-w-3xl flex-col gap-5 pb-8">
         {#each data.plans as plan, i (plan.key)}
-          <div use:reveal={{ delay: 80 + i * 60 }}>
+          <div class="plan-card-landing" use:reveal={{ delay: 80 + i * 60 }}>
             <PlanCard
               {plan}
               {selectedDuration}
               variant={i === 1 ? "featured" : "default"}
+              href={$page.data.user ? "/subs/plans/" : "/sign-up/"}
+              ctaLabel={$page.data.user ? "Pilih paket" : "Daftar sekarang"}
             />
           </div>
         {/each}

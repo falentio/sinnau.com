@@ -1,57 +1,75 @@
 <script lang="ts">
-  import { Tick02Icon } from "$lib/components/features/icons";
+  import { ArrowRight01Icon, Tick02Icon } from "$lib/components/features/icons";
   import { formatIdr } from "$lib/components/features/plan";
+  import type { PlanCatalogItem } from "$lib/schemas/plan";
+  import { PLAN_DURATION_PAID_MONTHS } from "$lib/schemas/plan.constant";
   import { cn } from "$lib/utils";
   import { HugeiconsIcon } from "@hugeicons/svelte";
-
-  interface Duration {
-    months: 1 | 6 | 12;
-    grossAmount: number;
-    label: string;
-    savingsLabel: string;
-  }
-
-  interface Plan {
-    key: "LITE" | "PLUS" | "PREMIUM";
-    name: string;
-    monthlyPrice: number;
-    benefits: string[];
-    durations: Duration[];
-  }
 
   let {
     plan,
     selectedDuration,
     variant = "default",
     disabled = false,
+    href,
+    ctaLabel = "Aktifkan paket ini",
     onselect,
   }: {
-    plan: Plan;
+    plan: PlanCatalogItem;
     selectedDuration: 1 | 6 | 12;
     variant?: "default" | "featured" | "wide";
     disabled?: boolean;
-    onselect?: (planKey: Plan["key"], months: 1 | 6 | 12) => void;
+    href?: string;
+    ctaLabel?: string;
+    onselect?: (planKey: PlanCatalogItem["key"], months: 1 | 6 | 12) => void;
   } = $props();
 
   const isFeatured = $derived(variant === "featured");
-  const duration = $derived(
-    plan.durations.find((d) => d.months === selectedDuration) ??
-      (plan.durations[0] as (typeof plan.durations)[number])
+  const duration = $derived.by(() => {
+    const matched =
+      plan.durations.find((d) => d.months === selectedDuration) ??
+      (plan.durations[0] as (typeof plan.durations)[number]);
+    const paidMonths = PLAN_DURATION_PAID_MONTHS[matched.months];
+    const savings = matched.months - paidMonths;
+    return {
+      grossAmount: matched.grossAmount,
+      label: `Bayar ${paidMonths} bulan`,
+      months: matched.months,
+      savingsLabel: savings === 0 ? "harga penuh" : `hemat ${savings} bulan`,
+    };
+  });
+
+  const ctaBoxClasses = $derived(
+    cn([
+      "group/btn relative flex flex-col gap-1 overflow-hidden rounded-2xl border p-5 text-left transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+      isFeatured
+        ? "border-[var(--plan-accent)]/25 bg-linear-to-b from-[var(--plan-accent)]/10 to-[var(--plan-accent)]/[0.03] hover:from-[var(--plan-accent)]/15 hover:to-[var(--plan-accent)]/[0.05]"
+        : "border-border/70 bg-background hover:border-foreground/30 hover:bg-muted/50",
+    ])
+  );
+
+  const pillClasses = $derived(
+    cn([
+      "mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+      isFeatured
+        ? "bg-foreground text-background group-hover/btn:bg-foreground/90"
+        : "border bg-background text-foreground",
+    ])
   );
 </script>
 
 <article
-  class={[
+  class={cn([
     "group relative flex flex-col overflow-hidden rounded-3xl border bg-card p-6 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:flex-row lg:items-stretch lg:gap-8 lg:p-8",
     isFeatured
-      ? "border-amber-500/30 bg-linear-to-b from-amber-500/6 via-card to-card shadow-[0_1px_0_0_rgba(217,119,6,0.08)] ring-1 ring-amber-500/10"
+      ? "border-[var(--plan-accent)]/30 bg-linear-to-b from-[var(--plan-accent)]/6 via-card to-card shadow-[0_1px_0_0_color-mix(in_oklab,var(--plan-accent)_8%,transparent)] ring-1 ring-[var(--plan-accent)]/10"
       : "border-border/60 ring-1 ring-foreground/4",
     disabled && "opacity-60 saturate-50",
-  ]}
+  ])}
 >
   {#if isFeatured}
     <div
-      class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent"
+      class="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[var(--plan-accent)]/40 to-transparent"
     ></div>
   {/if}
 
@@ -66,7 +84,7 @@
           </h3>
           {#if isFeatured}
             <span
-              class="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-700 dark:text-amber-400"
+              class="rounded-full bg-[var(--plan-accent)]/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--plan-accent-ink)]"
             >
               Paling diminati
             </span>
@@ -95,12 +113,12 @@
       {#each plan.benefits as benefit (benefit)}
         <li class="flex items-start gap-2.5 text-sm text-foreground/85">
           <span
-            class={[
+            class={cn([
               "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
               isFeatured
-                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                ? "bg-[var(--plan-accent)]/15 text-[var(--plan-accent-ink)]"
                 : "bg-foreground/[0.06] text-foreground/70",
-            ]}
+            ])}
           >
             <HugeiconsIcon icon={Tick02Icon} class="size-3" strokeWidth={2.5} />
           </span>
@@ -111,17 +129,7 @@
   </div>
 
   <div class="mt-8 flex flex-col lg:mt-0 lg:w-72 lg:shrink-0 lg:justify-end">
-    <button
-      type="button"
-      {disabled}
-      onclick={() => onselect?.(plan.key, duration.months)}
-      class={cn([
-        "group/btn relative flex flex-col gap-1 overflow-hidden rounded-2xl border p-5 text-left transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:border-ring disabled:pointer-events-none disabled:opacity-50",
-        isFeatured
-          ? "border-amber-500/25 bg-gradient-to-b from-amber-500/10 to-amber-500/[0.03] hover:from-amber-500/15 hover:to-amber-500/[0.05]"
-          : "border-border/70 bg-background hover:border-foreground/30 hover:bg-muted/50",
-      ])}
-    >
+    {#snippet ctaContent()}
       <div class="flex items-baseline justify-between">
         <span
           class="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
@@ -130,7 +138,7 @@
         </span>
         {#if isFeatured}
           <span
-            class="font-heading text-[10px] font-medium uppercase tracking-[0.18em] text-amber-700 dark:text-amber-400"
+            class="font-heading text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--plan-accent-ink)]"
           >
             Hemat paling banyak
           </span>
@@ -147,17 +155,34 @@
         {duration.label} · {duration.savingsLabel}
       </span>
 
-      <span
-        class={cn([
-          "mt-3 inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-foreground px-4 text-[13px] font-medium text-background transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:bg-foreground/90",
-          !isFeatured
-            ? "bg-background text-foreground border"
-            : "bg-foreground text-background ",
-        ])}
-      >
-        Aktifkan paket ini
+      <span class={pillClasses}>
+        {ctaLabel}
+        {#if href}
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            class="size-3.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:translate-x-0.5"
+          />
+        {/if}
       </span>
-    </button>
+    {/snippet}
+
+    {#if href}
+      <a {href} class={ctaBoxClasses}>
+        {@render ctaContent()}
+      </a>
+    {:else}
+      <button
+        type="button"
+        {disabled}
+        onclick={() => onselect?.(plan.key, duration.months)}
+        class={cn(
+          ctaBoxClasses,
+          "cursor-pointer active:scale-[0.985] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50"
+        )}
+      >
+        {@render ctaContent()}
+      </button>
+    {/if}
   </div>
 
   {#if disabled}

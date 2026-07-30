@@ -2,17 +2,13 @@
   import { goto } from "$app/navigation";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
   import { ArrowLeft01Icon } from "$lib/components/features/icons";
+  import PlanCard from "$lib/components/features/plan/plan-card.svelte";
   import ActivePlanBanner from "$lib/components/features/subs/active-plan-banner.svelte";
-  import PlanCard from "$lib/components/features/subs/plan-card.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import Faq from "$lib/features/landing-page/faq.svelte";
   import { client } from "$lib/orpc";
-  import type { PlanCatalogItem } from "$lib/schemas/plan";
-  import {
-    PLAN_DURATION_PAID_MONTHS,
-    PLAN_TIER_RANK as tierRank,
-  } from "$lib/schemas/plan.constant";
+  import { PLAN_TIER_RANK as tierRank } from "$lib/schemas/plan.constant";
   import { getErrorMessage } from "$lib/utils/error-messages";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
@@ -30,27 +26,6 @@
   });
 
   let checkoutError = $state<string | null>(null);
-
-  const toPlanCardDuration = (d: PlanCatalogItem["durations"][number]) => {
-    const paidMonths = PLAN_DURATION_PAID_MONTHS[d.months];
-    const savings = d.months - paidMonths;
-    return {
-      grossAmount: d.grossAmount,
-      label: `Bayar ${paidMonths} bulan`,
-      months: d.months,
-      savingsLabel: savings === 0 ? "harga penuh" : `hemat ${savings} bulan`,
-    };
-  };
-
-  const plans = $derived(
-    data.plans.map((p) => ({
-      benefits: p.benefits,
-      durations: p.durations.map(toPlanCardDuration),
-      key: p.key,
-      monthlyPrice: p.monthlyPrice,
-      name: p.name,
-    }))
-  );
 
   const activePlanKey = $derived(data.activePlan?.planKey ?? null);
   const isDowngrade = (planKey: "LITE" | "PLUS" | "PREMIUM") => {
@@ -163,7 +138,7 @@
   </div>
 
   <section class="flex flex-col gap-4 pt-8 md:gap-5 md:pt-10 pb-8">
-    {#each plans as plan, i}
+    {#each data.plans as plan, i (plan.key)}
       <PlanCard
         {plan}
         {selectedDuration}
