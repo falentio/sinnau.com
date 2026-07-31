@@ -35,6 +35,9 @@ worktrees/
 
 # Brainstorming mockups
 .superpowers/
+.ruff_cache/
+.kimchi/
+.crush/
 
 **/*.pdf
 
