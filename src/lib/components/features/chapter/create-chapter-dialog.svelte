@@ -60,9 +60,7 @@
         }
         try {
           await submitChapter(submittedForm.data);
-          toast.success("Chapter berhasil dibuat.", {
-            position: "top-right",
-          });
+          toast.success("Chapter berhasil dibuat.");
           await invalidateAll();
           handleOpenChange(false);
         } catch (error) {
@@ -71,13 +69,11 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else if (error instanceof Error) {
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else {
-            toast.error("Chapter belum bisa dibuat. Coba lagi sebentar.", {
-              position: "top-right",
-            });
+            toast.error("Chapter belum bisa dibuat. Coba lagi sebentar.");
           }
         }
       },

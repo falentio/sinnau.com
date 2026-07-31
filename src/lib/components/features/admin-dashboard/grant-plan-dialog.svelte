@@ -36,7 +36,7 @@
 
   const handleSubmit = async () => {
     if (!userId.trim()) {
-      toast.error("User ID is required", { position: "top-right" });
+      toast.error("User ID is required");
       return;
     }
     submitting = true;
@@ -47,18 +47,16 @@
         planKey,
         userId: userId.trim(),
       });
-      toast.success("Plan granted successfully", { position: "top-right" });
+      toast.success("Plan granted successfully");
       open = false;
       await invalidate("plan:grants");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Failed to grant plan. Please try again.", {
-          position: "top-right",
-        });
+        toast.error("Failed to grant plan. Please try again.");
       }
     } finally {
       submitting = false;

@@ -23,16 +23,14 @@
     loading = true;
     try {
       const result = await actionFn();
-      toast.success(`${result.deletedCount} records deleted.`, {
-        position: "top-right",
-      });
+      toast.success(`${result.deletedCount} records deleted.`);
       open = false;
     } catch (error) {
       const message =
         error instanceof Error
           ? getErrorMessage(error)
           : "An unexpected error occurred.";
-      toast.error(message, { position: "top-right" });
+      toast.error(message);
     } finally {
       loading = false;
     }

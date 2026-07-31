@@ -54,9 +54,7 @@
         }
         try {
           await updateStudySet(submittedForm.data);
-          toast.success("Study set berhasil diperbarui.", {
-            position: "top-right",
-          });
+          toast.success("Study set berhasil diperbarui.");
           await invalidate(`study-set:${studySetId}`);
           open = false;
         } catch (error) {
@@ -65,14 +63,11 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else if (error instanceof Error) {
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else {
-            toast.error(
-              "Study set belum bisa diperbarui. Coba lagi sebentar.",
-              { position: "top-right" }
-            );
+            toast.error("Study set belum bisa diperbarui. Coba lagi sebentar.");
           }
         }
       },

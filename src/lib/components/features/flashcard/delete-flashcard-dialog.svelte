@@ -28,9 +28,7 @@
     submitting = true;
     try {
       await client.flashcard.delete({ ids: [flashcardId] });
-      toast.success("Flashcard berhasil dihapus.", {
-        position: "top-right",
-      });
+      toast.success("Flashcard berhasil dihapus.");
       await invalidate(`flashcard:${flashcardId}`);
       await invalidate(`flashcard:list:${studySetId}`);
       open = false;
@@ -40,13 +38,11 @@
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Flashcard belum bisa dihapus. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Flashcard belum bisa dihapus. Coba lagi sebentar.");
       }
     } finally {
       submitting = false;

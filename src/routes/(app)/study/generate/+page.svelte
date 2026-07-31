@@ -75,9 +75,7 @@
         generate_id: result.generateId,
         language_style: input.languageStyle,
       });
-      toast.success("Pembuatan modul dimulai.", {
-        position: "top-right",
-      });
+      toast.success("Pembuatan modul dimulai.");
       await goto(
         resolve("/(app)/generate/[genId]/waiting-room", {
           genId: result.generateId,
@@ -100,13 +98,11 @@
               : "AI_LIMIT_EXCEEDED";
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Pembuatan modul gagal. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Pembuatan modul gagal. Coba lagi sebentar.");
       }
     }
   };

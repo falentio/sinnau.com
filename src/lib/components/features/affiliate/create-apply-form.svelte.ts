@@ -16,9 +16,7 @@ import { valibotClient } from "sveltekit-superforms/adapters";
 const submitApplication = async (input: ApplyAffiliateInput) => {
   try {
     await client.affiliate.apply(input);
-    toast.success("Aplikasi terkirim. Tunggu kabar dari kami!", {
-      position: "top-right",
-    });
+    toast.success("Aplikasi terkirim. Tunggu kabar dari kami!");
     await invalidate("affiliate:summary");
   } catch (error) {
     if (error instanceof ORPCError) {
@@ -26,13 +24,11 @@ const submitApplication = async (input: ApplyAffiliateInput) => {
         await goto(resolve("/(auth)/login"));
         return;
       }
-      toast.error(getErrorMessage(error), { position: "top-right" });
+      toast.error(getErrorMessage(error));
     } else if (error instanceof Error) {
-      toast.error(getErrorMessage(error), { position: "top-right" });
+      toast.error(getErrorMessage(error));
     } else {
-      toast.error("Aplikasi belum bisa dikirim. Coba lagi sebentar.", {
-        position: "top-right",
-      });
+      toast.error("Aplikasi belum bisa dikirim. Coba lagi sebentar.");
     }
   }
 };

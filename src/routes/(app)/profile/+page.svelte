@@ -64,12 +64,10 @@
         provider,
       });
       if (error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       }
     } catch (error) {
-      toast.error(getErrorMessage(error as { message?: string }), {
-        position: "top-right",
-      });
+      toast.error(getErrorMessage(error as { message?: string }));
     } finally {
       pendingProvider = null;
     }

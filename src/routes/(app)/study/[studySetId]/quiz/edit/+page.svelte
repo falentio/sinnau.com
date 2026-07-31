@@ -75,9 +75,7 @@
             ...submittedForm.data,
             id: quiz.id,
           } as UpdateQuizInput);
-          toast.success("Quiz berhasil diperbarui.", {
-            position: "top-right",
-          });
+          toast.success("Quiz berhasil diperbarui.");
           await invalidate(`quiz:list:${studySetId}`);
           await goto(quizListHref);
         } catch (error) {
@@ -86,13 +84,11 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else if (error instanceof Error) {
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else {
-            toast.error("Quiz belum bisa diperbarui. Coba lagi sebentar.", {
-              position: "top-right",
-            });
+            toast.error("Quiz belum bisa diperbarui. Coba lagi sebentar.");
           }
         }
       },

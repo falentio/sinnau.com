@@ -46,7 +46,7 @@
         flashcards: [data],
         studySetId,
       });
-      toast.success("Flashcard berhasil dibuat.", { position: "top-right" });
+      toast.success("Flashcard berhasil dibuat.");
       await goto(flashcardListHref);
     } catch (error) {
       if (error instanceof ORPCError) {
@@ -54,13 +54,11 @@
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Flashcard belum bisa dibuat. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Flashcard belum bisa dibuat. Coba lagi sebentar.");
       }
     }
   };

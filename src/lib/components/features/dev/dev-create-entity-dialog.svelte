@@ -47,18 +47,18 @@
     try {
       await onSubmit(count);
       open = false;
-      toast.success(successMessage(count), { position: "top-right" });
+      toast.success(successMessage(count));
     } catch (error) {
       if (error instanceof ORPCError) {
         if (error.code === "UNAUTHORIZED") {
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error(fallbackError, { position: "top-right" });
+        toast.error(fallbackError);
       }
     } finally {
       pending = false;

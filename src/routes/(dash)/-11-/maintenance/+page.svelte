@@ -56,9 +56,7 @@
     if (failed === 0) {
       toast.success(`All ${succeeded} maintenance tasks completed.`);
     } else {
-      toast.error(`${failed} of ${actions.length} tasks failed.`, {
-        position: "top-right",
-      });
+      toast.error(`${failed} of ${actions.length} tasks failed.`);
     }
   };
 </script>

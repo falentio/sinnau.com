@@ -16,7 +16,7 @@ import { valibotClient } from "sveltekit-superforms/adapters";
 const submitPayoutAccount = async (input: SubmitPayoutAccountInput) => {
   try {
     await client.affiliate.submitPayoutAccount(input);
-    toast.success("Data payout tersimpan.", { position: "top-right" });
+    toast.success("Data payout tersimpan.");
     await invalidate("affiliate:summary");
   } catch (error) {
     if (error instanceof ORPCError) {
@@ -24,13 +24,11 @@ const submitPayoutAccount = async (input: SubmitPayoutAccountInput) => {
         await goto(resolve("/(auth)/login"));
         return;
       }
-      toast.error(getErrorMessage(error), { position: "top-right" });
+      toast.error(getErrorMessage(error));
     } else if (error instanceof Error) {
-      toast.error(getErrorMessage(error), { position: "top-right" });
+      toast.error(getErrorMessage(error));
     } else {
-      toast.error("Data payout belum bisa disimpan. Coba lagi sebentar.", {
-        position: "top-right",
-      });
+      toast.error("Data payout belum bisa disimpan. Coba lagi sebentar.");
     }
   }
 };

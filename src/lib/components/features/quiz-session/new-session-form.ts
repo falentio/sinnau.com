@@ -29,7 +29,7 @@ export const newSessionForm = () => {
         session_id: session.id,
         study_set_id: studySetId,
       });
-      toast.success("Sesi baru dibuat.", { position: "top-right" });
+      toast.success("Sesi baru dibuat.");
       await goto(
         resolve("/(app)/session/[studySetId]/quiz/[sessionId]", {
           sessionId: session.id,
@@ -42,13 +42,11 @@ export const newSessionForm = () => {
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Sesi belum bisa dibuat. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Sesi belum bisa dibuat. Coba lagi sebentar.");
       }
     }
   };

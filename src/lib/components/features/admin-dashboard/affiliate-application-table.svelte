@@ -50,24 +50,22 @@
         await client.affiliate.admin.acceptApplication({
           applicationId: reviewAppId,
         });
-        toast.success("Application accepted", { position: "top-right" });
+        toast.success("Application accepted");
       } else {
         await client.affiliate.admin.rejectApplication({
           applicationId: reviewAppId,
         });
-        toast.success("Application rejected", { position: "top-right" });
+        toast.success("Application rejected");
       }
       reviewAppId = null;
       await invalidate("affiliate:applications");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Failed to process application. Please try again.", {
-          position: "top-right",
-        });
+        toast.error("Failed to process application. Please try again.");
       }
     } finally {
       submitting = false;

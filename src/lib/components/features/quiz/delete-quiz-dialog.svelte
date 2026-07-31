@@ -28,9 +28,7 @@
     submitting = true;
     try {
       await client.quiz.delete({ ids: [quizId] });
-      toast.success("Quiz berhasil dihapus.", {
-        position: "top-right",
-      });
+      toast.success("Quiz berhasil dihapus.");
       await invalidate(`quiz:list:${studySetId}`);
       open = false;
     } catch (error) {
@@ -39,13 +37,11 @@
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Quiz belum bisa dihapus. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Quiz belum bisa dihapus. Coba lagi sebentar.");
       }
     } finally {
       submitting = false;

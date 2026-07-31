@@ -51,15 +51,13 @@
         revokeOtherSessions: false,
       });
       if (error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
         return false;
       }
-      toast.success("Kata sandi berhasil diubah.", { position: "top-right" });
+      toast.success("Kata sandi berhasil diubah.");
       return true;
     } catch (error) {
-      toast.error(getErrorMessage(error), {
-        position: "top-right",
-      });
+      toast.error(getErrorMessage(error));
       return false;
     } finally {
       pending = false;

@@ -34,9 +34,7 @@
         study_set_id: studySet.id,
         visibility: data.visibility,
       });
-      toast.success("Modul belajar berhasil dibuat.", {
-        position: "top-right",
-      });
+      toast.success("Modul belajar berhasil dibuat.");
       await goto(
         resolve("/(app)/study/[studySetId]/flashcard", {
           studySetId: studySet.id,
@@ -50,20 +48,15 @@
         }
         if (error.code === "STUDY_SET_SLUG_CONFLICT") {
           toast.error(
-            "Gagal membuat tautan unik. Coba lagi dengan judul berbeda.",
-            {
-              position: "top-right",
-            }
+            "Gagal membuat tautan unik. Coba lagi dengan judul berbeda."
           );
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Modul belajar belum bisa dibuat. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Modul belajar belum bisa dibuat. Coba lagi sebentar.");
       }
     }
   };

@@ -49,7 +49,7 @@ export const createQuizForm = () => {
   const submitQuiz = async (data: CreateQuizInput) => {
     try {
       await client.quiz.create(data);
-      toast.success("Quiz berhasil dibuat.", { position: "top-right" });
+      toast.success("Quiz berhasil dibuat.");
       await goto(quizListHref);
     } catch (error) {
       if (error instanceof ORPCError) {
@@ -57,13 +57,11 @@ export const createQuizForm = () => {
           await goto(resolve("/(auth)/login"));
           return;
         }
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else if (error instanceof Error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Quiz belum bisa dibuat. Coba lagi sebentar.", {
-          position: "top-right",
-        });
+        toast.error("Quiz belum bisa dibuat. Coba lagi sebentar.");
       }
     }
   };

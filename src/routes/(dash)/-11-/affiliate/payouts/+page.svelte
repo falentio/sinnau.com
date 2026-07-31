@@ -43,14 +43,14 @@
         note: payoutNote || undefined,
         reference: payoutReference || undefined,
       });
-      toast.success("Payout recorded", { position: "top-right" });
+      toast.success("Payout recorded");
       payoutDialogOpen = false;
       await invalidate("affiliate:payouts");
     } catch (error) {
       if (error instanceof ORPCError) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
       } else {
-        toast.error("Failed to record payout", { position: "top-right" });
+        toast.error("Failed to record payout");
       }
     } finally {
       submitting = false;

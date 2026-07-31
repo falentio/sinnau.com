@@ -50,9 +50,7 @@
         }
         try {
           await deleteStudySet();
-          toast.success("Study set berhasil dihapus.", {
-            position: "top-right",
-          });
+          toast.success("Study set berhasil dihapus.");
           await goto(resolve("/home/"));
         } catch (error) {
           if (error instanceof ORPCError) {
@@ -60,13 +58,11 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else if (error instanceof Error) {
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else {
-            toast.error("Study set belum bisa dihapus. Coba lagi sebentar.", {
-              position: "top-right",
-            });
+            toast.error("Study set belum bisa dihapus. Coba lagi sebentar.");
           }
         }
       },

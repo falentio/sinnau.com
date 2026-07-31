@@ -28,14 +28,12 @@
     try {
       const { error } = await authClient.updateUser({ name });
       if (error) {
-        toast.error(getErrorMessage(error), { position: "top-right" });
+        toast.error(getErrorMessage(error));
         return;
       }
-      toast.success("Nama berhasil diperbarui.", { position: "top-right" });
+      toast.success("Nama berhasil diperbarui.");
     } catch (error) {
-      toast.error(getErrorMessage(error), {
-        position: "top-right",
-      });
+      toast.error(getErrorMessage(error));
     }
   };
 

@@ -56,9 +56,7 @@
             id: flashcard.id,
             importance: flashcard.importance,
           });
-          toast.success("Flashcard berhasil diperbarui.", {
-            position: "top-right",
-          });
+          toast.success("Flashcard berhasil diperbarui.");
           await invalidate(`flashcard:${flashcard.id}`);
           await invalidate(`flashcard:list:${studySetId}`);
           open = false;
@@ -68,14 +66,11 @@
               await goto(resolve("/(auth)/login"));
               return;
             }
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else if (error instanceof Error) {
-            toast.error(getErrorMessage(error), { position: "top-right" });
+            toast.error(getErrorMessage(error));
           } else {
-            toast.error(
-              "Flashcard belum bisa diperbarui. Coba lagi sebentar.",
-              { position: "top-right" }
-            );
+            toast.error("Flashcard belum bisa diperbarui. Coba lagi sebentar.");
           }
         }
       },
