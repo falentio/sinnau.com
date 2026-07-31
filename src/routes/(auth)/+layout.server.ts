@@ -16,5 +16,8 @@ export const load: LayoutServerLoad = () => {
   ) {
     oauthProviders.push("github");
   }
-  return { oauthProviders };
+  return {
+    emailPasswordEnabled: !env.DISABLE_EMAIL_PASSWORD,
+    oauthProviders,
+  };
 };

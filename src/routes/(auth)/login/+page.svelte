@@ -17,5 +17,8 @@
   description="Lanjutkan dari tempat kamu berhenti."
   gradient="top-left"
 >
-  <LoginForm providers={data.oauthProviders} />
+  <LoginForm
+    emailPasswordEnabled={data.emailPasswordEnabled}
+    providers={data.oauthProviders}
+  />
 </AuthLayout>

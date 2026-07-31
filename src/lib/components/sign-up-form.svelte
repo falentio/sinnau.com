@@ -51,7 +51,11 @@
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
-  let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
+  let {
+    emailPasswordEnabled = true,
+    providers = [],
+  }: { emailPasswordEnabled?: boolean; providers?: ("google" | "github")[] } =
+    $props();
 
   let serverError = $state("");
   let pending = $state(false);
@@ -109,10 +113,12 @@
 </script>
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
-  <div class="flex flex-col gap-2 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight">Mulai belajar</h1>
-    <p class="text-sm text-muted-foreground">Mulai belajar dalam 30 detik.</p>
-  </div>
+  {#if emailPasswordEnabled}
+    <div class="flex flex-col gap-2 text-center">
+      <h1 class="text-2xl font-semibold tracking-tight">Mulai belajar</h1>
+      <p class="text-sm text-muted-foreground">Mulai belajar dalam 30 detik.</p>
+    </div>
+  {/if}
 
   {#if serverError}
     <div
@@ -122,81 +128,85 @@
     </div>
   {/if}
 
-  <Form.Field {form} name="name">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Nama</Form.Label>
-        <Input
-          {...props}
-          type="text"
-          bind:value={$formData.name}
-          disabled={$submitting || pending}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+  {#if emailPasswordEnabled}
+    <Form.Field {form} name="name">
+      <Form.Control>
+        {#snippet children({ props })}
+          <Form.Label>Nama</Form.Label>
+          <Input
+            {...props}
+            type="text"
+            bind:value={$formData.name}
+            disabled={$submitting || pending}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
 
-  <Form.Field {form} name="email">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Email</Form.Label>
-        <Input
-          {...props}
-          type="email"
-          placeholder="m@example.com"
-          bind:value={$formData.email}
-          disabled={$submitting || pending}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+    <Form.Field {form} name="email">
+      <Form.Control>
+        {#snippet children({ props })}
+          <Form.Label>Email</Form.Label>
+          <Input
+            {...props}
+            type="email"
+            placeholder="m@example.com"
+            bind:value={$formData.email}
+            disabled={$submitting || pending}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
 
-  <Form.Field {form} name="password">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Kata Sandi</Form.Label>
-        <Input
-          {...props}
-          type="password"
-          bind:value={$formData.password}
-          disabled={$submitting || pending}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+    <Form.Field {form} name="password">
+      <Form.Control>
+        {#snippet children({ props })}
+          <Form.Label>Kata Sandi</Form.Label>
+          <Input
+            {...props}
+            type="password"
+            bind:value={$formData.password}
+            disabled={$submitting || pending}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
 
-  <Form.Field {form} name="confirmPassword">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Konfirmasi Kata Sandi</Form.Label>
-        <Input
-          {...props}
-          type="password"
-          bind:value={$formData.confirmPassword}
-          disabled={$submitting || pending}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+    <Form.Field {form} name="confirmPassword">
+      <Form.Control>
+        {#snippet children({ props })}
+          <Form.Label>Konfirmasi Kata Sandi</Form.Label>
+          <Input
+            {...props}
+            type="password"
+            bind:value={$formData.confirmPassword}
+            disabled={$submitting || pending}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
 
-  <Form.Button class="w-full" disabled={$submitting || pending}>
-    {$submitting || pending ? "Mendaftarkan..." : "Mulai belajar gratis"}
-  </Form.Button>
+    <Form.Button class="w-full" disabled={$submitting || pending}>
+      {$submitting || pending ? "Mendaftarkan..." : "Mulai belajar gratis"}
+    </Form.Button>
 
-  <p class="text-center text-[11px] text-muted-foreground">
-    Gratis selamanya. Tidak ada spam. Hapus kapan saja.
-  </p>
+    <p class="text-center text-[11px] text-muted-foreground">
+      Gratis selamanya. Tidak ada spam. Hapus kapan saja.
+    </p>
+  {/if}
 
   <OAuthButtons {providers} />
 
-  <div class="text-center text-sm">
-    Sudah punya akun?
-    <a href={resolve("/(auth)/login")} class="underline underline-offset-4"
-      >Masuk</a
-    >
-  </div>
+  {#if emailPasswordEnabled}
+    <div class="text-center text-sm">
+      Sudah punya akun?
+      <a href={resolve("/(auth)/login")} class="underline underline-offset-4"
+        >Masuk</a
+      >
+    </div>
+  {/if}
 </form>

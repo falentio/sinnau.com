@@ -17,5 +17,8 @@
   description="Ubah catatan kuliah jadi nilai bagus."
   gradient="bottom-right"
 >
-  <SignUpForm providers={data.oauthProviders} />
+  <SignUpForm
+    emailPasswordEnabled={data.emailPasswordEnabled}
+    providers={data.oauthProviders}
+  />
 </AuthLayout>

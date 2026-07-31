@@ -29,7 +29,11 @@
   import { defaults, superForm } from "sveltekit-superforms";
   import { valibotClient } from "sveltekit-superforms/adapters";
 
-  let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
+  let {
+    emailPasswordEnabled = true,
+    providers = [],
+  }: { emailPasswordEnabled?: boolean; providers?: ("google" | "github")[] } =
+    $props();
 
   let serverError = $state("");
   let pending = $state(false);
@@ -79,14 +83,16 @@
 </script>
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
-  <div class="flex flex-col gap-2 text-center">
-    <h1 class="text-2xl font-semibold tracking-tight">
-      Selamat datang kembali
-    </h1>
-    <p class="text-sm text-muted-foreground">
-      Lanjutkan dari mana kamu tinggalkan.
-    </p>
-  </div>
+  {#if emailPasswordEnabled}
+    <div class="flex flex-col gap-2 text-center">
+      <h1 class="text-2xl font-semibold tracking-tight">
+        Selamat datang kembali
+      </h1>
+      <p class="text-sm text-muted-foreground">
+        Lanjutkan dari mana kamu tinggalkan.
+      </p>
+    </div>
+  {/if}
 
   {#if serverError}
     <div
@@ -96,47 +102,51 @@
     </div>
   {/if}
 
-  <Form.Field {form} name="email">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Email</Form.Label>
-        <Input
-          {...props}
-          type="email"
-          placeholder="m@example.com"
-          bind:value={$formData.email}
-          disabled={$submitting || pending}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+  {#if emailPasswordEnabled}
+    <Form.Field {form} name="email">
+      <Form.Control>
+        {#snippet children({ props })}
+          <Form.Label>Email</Form.Label>
+          <Input
+            {...props}
+            type="email"
+            placeholder="m@example.com"
+            bind:value={$formData.email}
+            disabled={$submitting || pending}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
 
-  <Form.Field {form} name="password">
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Kata Sandi</Form.Label>
-        <Input
-          {...props}
-          type="password"
-          bind:value={$formData.password}
-          disabled={$submitting || pending}
-        />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
+    <Form.Field {form} name="password">
+      <Form.Control>
+        {#snippet children({ props })}
+          <Form.Label>Kata Sandi</Form.Label>
+          <Input
+            {...props}
+            type="password"
+            bind:value={$formData.password}
+            disabled={$submitting || pending}
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
 
-  <Form.Button class="w-full" disabled={$submitting || pending}>
-    {$submitting || pending ? "Masuk..." : "Lanjutkan belajar"}
-  </Form.Button>
+    <Form.Button class="w-full" disabled={$submitting || pending}>
+      {$submitting || pending ? "Masuk..." : "Lanjutkan belajar"}
+    </Form.Button>
+  {/if}
 
   <OAuthButtons {providers} />
 
-  <div class="text-center text-sm">
-    Belum punya akun?
-    <a href={resolve("/(auth)/sign-up")} class="underline underline-offset-4"
-      >Daftar</a
-    >
-  </div>
+  {#if emailPasswordEnabled}
+    <div class="text-center text-sm">
+      Belum punya akun?
+      <a href={resolve("/(auth)/sign-up")} class="underline underline-offset-4"
+        >Daftar</a
+      >
+    </div>
+  {/if}
 </form>
