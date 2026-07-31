@@ -77,7 +77,7 @@
         return;
       }
       track(AnalyticsEvent.USER_SIGNED_UP, { method: "email" });
-      await goto(resolve("/(app)/home"));
+      await goto("/onboarding");
     } catch (error) {
       serverError = getErrorMessage(error);
     } finally {
@@ -113,12 +113,16 @@
 </script>
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
-  {#if emailPasswordEnabled}
-    <div class="flex flex-col gap-2 text-center">
-      <h1 class="text-2xl font-semibold tracking-tight">Mulai belajar</h1>
-      <p class="text-sm text-muted-foreground">Mulai belajar dalam 30 detik.</p>
-    </div>
-  {/if}
+  <div class="flex flex-col gap-2 text-center">
+    <h1 class="text-2xl font-semibold tracking-tight">Mulai belajar</h1>
+    <p class="text-sm text-muted-foreground">
+      {#if emailPasswordEnabled}
+        Mulai belajar dalam 30 detik.
+      {:else}
+        Daftar untuk mulai belajar.
+      {/if}
+    </p>
+  </div>
 
   {#if serverError}
     <div
@@ -199,7 +203,7 @@
     </p>
   {/if}
 
-  <OAuthButtons {providers} />
+  <OAuthButtons {providers} showSeparator={emailPasswordEnabled} />
 
   {#if emailPasswordEnabled}
     <div class="text-center text-sm">

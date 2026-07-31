@@ -49,7 +49,7 @@
         serverError = getErrorMessage(error);
         return;
       }
-      await goto(resolve("/(app)/home"));
+      await goto("/onboarding");
     } catch (error) {
       serverError = getErrorMessage(error);
     } finally {
@@ -83,16 +83,18 @@
 </script>
 
 <form class="flex flex-col gap-6" method="POST" use:enhance novalidate>
-  {#if emailPasswordEnabled}
-    <div class="flex flex-col gap-2 text-center">
-      <h1 class="text-2xl font-semibold tracking-tight">
-        Selamat datang kembali
-      </h1>
-      <p class="text-sm text-muted-foreground">
+  <div class="flex flex-col gap-2 text-center">
+    <h1 class="text-2xl font-semibold tracking-tight">
+      Selamat datang kembali
+    </h1>
+    <p class="text-sm text-muted-foreground">
+      {#if emailPasswordEnabled}
         Lanjutkan dari mana kamu tinggalkan.
-      </p>
-    </div>
-  {/if}
+      {:else}
+        Masuk untuk melanjutkan belajar.
+      {/if}
+    </p>
+  </div>
 
   {#if serverError}
     <div
@@ -139,7 +141,7 @@
     </Form.Button>
   {/if}
 
-  <OAuthButtons {providers} />
+  <OAuthButtons {providers} showSeparator={emailPasswordEnabled} />
 
   {#if emailPasswordEnabled}
     <div class="text-center text-sm">

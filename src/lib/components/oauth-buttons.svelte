@@ -5,7 +5,11 @@
 
   import Button from "./ui/button/button.svelte";
 
-  let { providers = [] }: { providers?: ("google" | "github")[] } = $props();
+  let {
+    providers = [],
+    showSeparator = true,
+  }: { providers?: ("google" | "github")[]; showSeparator?: boolean } =
+    $props();
 
   let pendingProvider = $state<"google" | "github" | null>(null);
 
@@ -17,7 +21,7 @@
   const signIn = async (provider: "google" | "github") => {
     pendingProvider = provider;
     await authClient.signIn.social({
-      callbackURL: "/",
+      callbackURL: "/onboarding",
       provider,
     });
   };
@@ -29,11 +33,13 @@
 </script>
 
 {#if providers.length > 0}
-  <div
-    class="relative my-2 text-center text-xs uppercase text-muted-foreground"
-  >
-    <span class="bg-background px-2">Atau</span>
-  </div>
+  {#if showSeparator}
+    <div
+      class="relative my-2 text-center text-xs uppercase text-muted-foreground"
+    >
+      <span class="bg-background px-2">Atau</span>
+    </div>
+  {/if}
 
   <div class="grid gap-3">
     {#each providers as provider (provider)}
