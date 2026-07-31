@@ -27,7 +27,10 @@ export const generate = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
+    extractionType: text("extraction_type").notNull().default("normal"),
     id: text("id").primaryKey(),
+    languageStyle: text("language_style").notNull().default("student-friendly"),
+    logId: text("log_id"),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

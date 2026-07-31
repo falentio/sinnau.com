@@ -23,7 +23,7 @@ const logger = getLogger(["sinnau.com", "http", "middleware"]);
 setClient(createServerClient());
 
 if (!building) {
-  await generateService.startupRecovery();
+  await generateService.startupResume();
 }
 
 const betterAuthHandle: Handle = async ({ event, resolve }) => {

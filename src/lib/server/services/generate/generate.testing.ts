@@ -34,6 +34,7 @@ export const createMockRepository = (): MockedGenerateRepository => ({
   findGenerateById: vi.fn<GenerateRepository["findGenerateById"]>(),
   findGenerateInputByGenerateId:
     vi.fn<GenerateRepository["findGenerateInputByGenerateId"]>(),
+  findStuckGenerations: vi.fn<GenerateRepository["findStuckGenerations"]>(),
   insertGenerate: vi.fn<GenerateRepository["insertGenerate"]>(),
   insertGenerateInput: vi.fn<GenerateRepository["insertGenerateInput"]>(),
   loadChunkResults: vi.fn<GenerateRepository["loadChunkResults"]>(),
@@ -91,7 +92,10 @@ export const createGenerateFixture = (
 ): Generate => ({
   completedAt: null,
   createdAt: new Date("2026-01-01"),
+  extractionType: "normal",
   id: generateId(GENERATE_ID_PREFIX),
+  languageStyle: "student-friendly",
+  logId: null,
   ownerId: "owner-1",
   startedAt: new Date(),
   status: "CREATED",
@@ -170,7 +174,10 @@ export class GenerateTestEnv implements AsyncDisposable {
     const id = overrides.id ?? generateId(GENERATE_ID_PREFIX);
     return await this.repo.insertGenerate({
       completedAt: overrides.completedAt ?? null,
+      extractionType: overrides.extractionType ?? "normal",
       id,
+      languageStyle: overrides.languageStyle ?? "student-friendly",
+      logId: overrides.logId ?? null,
       ownerId: overrides.ownerId ?? this.ownerId,
       startedAt: overrides.startedAt ?? new Date(),
       status: overrides.status ?? "CREATED",

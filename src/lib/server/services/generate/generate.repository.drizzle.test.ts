@@ -73,7 +73,10 @@ describe.concurrent("GenerateDrizzleRepository", () => {
       const before = Date.now();
       const created = await env.repo.insertGenerate({
         completedAt: null,
+        extractionType: "normal",
         id: "gen-1",
+        languageStyle: "student-friendly",
+        logId: null,
         ownerId: env.ownerId,
         startedAt: new Date(),
         status: "CREATED",
@@ -221,6 +224,33 @@ describe.concurrent("GenerateDrizzleRepository", () => {
       await env.seedGenerate({ id: "gen-2", status: "FAILED" });
       const count = await env.repo.finalizeStuckAsFailed("test");
       expect(count).toBe(0);
+    });
+  });
+
+  describe("findStuckGenerations", () => {
+    it("returns CREATED and ONGOING rows", async ({ expect }) => {
+      await using env = new GenerateTestEnv();
+      await env.seedGenerate({ id: "gen-1", status: "CREATED" });
+      await env.seedGenerate({ id: "gen-2", status: "ONGOING" });
+      await env.seedGenerate({ id: "gen-3", status: "COMPLETED" });
+      await env.seedGenerate({ id: "gen-4", status: "FAILED" });
+      await env.seedGenerate({
+        id: "gen-5",
+        status: "PARTIAL_COMPLETED",
+      });
+
+      const stuck = await env.repo.findStuckGenerations();
+      const ids = stuck.map((r) => r.id).toSorted();
+      expect(ids).toEqual(["gen-1", "gen-2"]);
+    });
+
+    it("returns an empty array when no rows are stuck", async ({ expect }) => {
+      await using env = new GenerateTestEnv();
+      await env.seedGenerate({ id: "gen-1", status: "COMPLETED" });
+      await env.seedGenerate({ id: "gen-2", status: "FAILED" });
+
+      const stuck = await env.repo.findStuckGenerations();
+      expect(stuck).toEqual([]);
     });
   });
 
@@ -1153,7 +1183,10 @@ describe.concurrent("GenerateDrizzleRepository (schema constraints)", () => {
       const insertOrphan = async () =>
         await env.repo.insertGenerate({
           completedAt: null,
+          extractionType: "normal",
           id: "gen-orphan",
+          languageStyle: "student-friendly",
+          logId: null,
           ownerId: "does-not-exist",
           startedAt: new Date(),
           status: "CREATED",
@@ -1169,7 +1202,10 @@ describe.concurrent("GenerateDrizzleRepository (schema constraints)", () => {
       const insertOrphan = async () =>
         await env.repo.insertGenerate({
           completedAt: null,
+          extractionType: "normal",
           id: "gen-orphan",
+          languageStyle: "student-friendly",
+          logId: null,
           ownerId: env.ownerId,
           startedAt: new Date(),
           status: "CREATED",

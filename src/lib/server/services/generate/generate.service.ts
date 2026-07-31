@@ -222,7 +222,10 @@ export class GenerateService {
 
     const generateRow = await this.repo.insertGenerate({
       completedAt: null,
+      extractionType: input.extractionType ?? "normal",
       id: newId,
+      languageStyle: input.languageStyle ?? "student-friendly",
+      logId,
       ownerId: owner,
       startedAt: new Date(),
       status: "CREATED",
@@ -426,8 +429,42 @@ export class GenerateService {
     return { deletedCount };
   }
 
-  async startupRecovery(): Promise<void> {
-    await this.repo.finalizeStuckAsFailed("Server restarted during generation");
+  async startupResume(): Promise<void> {
+    const stuck = await this.repo.findStuckGenerations();
+    logger.info("Startup resume: found stuck generations", () => ({
+      count: stuck.length,
+    }));
+    for (const row of stuck) {
+      const inputRow = await this.repo.findGenerateInputByGenerateId(row.id);
+      if (!inputRow) {
+        logger.warn("Startup resume: no input found, marking failed", () => ({
+          generateId: row.id,
+        }));
+        await this.repo.updateGenerateStatus(row.id, "FAILED", Date.now());
+        continue;
+      }
+      this.activeOwners.add(row.ownerId);
+      logger.info("Startup resume: resuming generation", () => ({
+        generateId: row.id,
+        ownerId: row.ownerId,
+      }));
+      const pipelinePromise = this.runPipeline({
+        extractionType: row.extractionType,
+        generateId: row.id,
+        isInputTruncated: inputRow.isInputTruncated,
+        languageStyle: row.languageStyle,
+        logId: row.logId,
+        ownerId: row.ownerId,
+        pdfText: inputRow.input,
+        studySetId: row.studySetId,
+      });
+      waitUntil(
+        // oxlint-disable-next-line promise/prefer-await-to-then
+        pipelinePromise.finally(() => {
+          this.activeOwners.delete(row.ownerId);
+        })
+      );
+    }
   }
 
   private async runPipeline(params: {
@@ -435,7 +472,7 @@ export class GenerateService {
     generateId: string;
     isInputTruncated?: boolean;
     languageStyle: string;
-    logId: string;
+    logId: string | null;
     ownerId: string;
     pdfText: string;
     studySetId: string;
@@ -518,7 +555,9 @@ export class GenerateService {
         generateId: gId,
         totalChunkCount,
       }));
-      await this.aiLimitService.refund({ logId }, ownerId);
+      if (logId !== null && logId !== "") {
+        await this.aiLimitService.refund({ logId }, ownerId);
+      }
       await this.retryStatusUpdate(gId, "FAILED", Date.now());
       return;
     }

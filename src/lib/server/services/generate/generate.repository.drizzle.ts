@@ -110,6 +110,22 @@ export class GenerateDrizzleRepository implements GenerateRepository {
     return result.changes;
   }
 
+  async findStuckGenerations(): Promise<Generate[]> {
+    try {
+      return await this.dbInstance
+        .select()
+        .from(generate)
+        .where(inArray(generate.status, ["CREATED", "ONGOING"]));
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
   async insertGenerateInput(
     row: Omit<GenerateInput, "id">
   ): Promise<GenerateInput> {

@@ -28,6 +28,7 @@ export interface GenerateRepository {
   findGenerateById(id: string): Promise<Generate | null>;
   findActiveByStudySetId(studySetId: string): Promise<Generate | null>;
   finalizeStuckAsFailed(reason: string): Promise<number>;
+  findStuckGenerations(): Promise<Generate[]>;
   insertGenerateInput(row: Omit<GenerateInput, "id">): Promise<GenerateInput>;
   findGenerateInputByGenerateId(
     generateId: string

@@ -53,6 +53,7 @@ const setupService = () => {
   repo.loadChunkResults.mockResolvedValue([]);
   repo.deleteOldChunks.mockResolvedValue(0);
   repo.finalizeStuckAsFailed.mockResolvedValue(0);
+  repo.findStuckGenerations.mockResolvedValue([]);
 
   guard.requireOwner.mockReturnValue("user-1");
 
@@ -275,8 +276,35 @@ describe.concurrent(GenerateService, () => {
 
       expect(repo.insertGenerate).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
+          extractionType: "normal",
+          languageStyle: "student-friendly",
+          logId: "aiu_test_log",
           ownerId: "user-1",
           status: "CREATED",
+        })
+      );
+    });
+
+    it("persists custom languageStyle and extractionType", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        {
+          extractionType: "exhaustive",
+          languageStyle: "academic",
+          pdf,
+          title: "Set",
+        },
+        "user-1"
+      );
+
+      expect(repo.insertGenerate).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          extractionType: "exhaustive",
+          languageStyle: "academic",
         })
       );
     });
@@ -702,13 +730,73 @@ describe.concurrent(GenerateService, () => {
     });
   });
 
-  describe("startupRecovery", () => {
-    it("delegates to repo.finalizeStuckAsFailed", async ({ expect }) => {
-      const { repo, service } = setupService();
-      repo.finalizeStuckAsFailed.mockResolvedValue(2);
+  describe("startupResume", () => {
+    it("resumes stuck generations by re-running the pipeline", async ({
+      expect,
+    }) => {
+      const { repo, pipeline, service } = setupService();
+      const stuck = createGenerateFixture({
+        extractionType: "exhaustive",
+        id: "gen_stuck1",
+        languageStyle: "academic",
+        logId: "aiu_log_1",
+        ownerId: "user-1",
+        status: "ONGOING",
+        studySetId: "sts-1",
+      });
+      repo.findStuckGenerations.mockResolvedValue([stuck]);
+      repo.findGenerateInputByGenerateId.mockResolvedValue({
+        generateId: "gen_stuck1",
+        id: "ginp_1",
+        input: "pdf text content",
+        isInputTruncated: false,
+      });
 
-      await service.startupRecovery();
-      expect(repo.finalizeStuckAsFailed).toHaveBeenCalledOnce();
+      await service.startupResume();
+
+      await vi.waitFor(() => {
+        expect(pipeline.runLLM).toHaveBeenCalledWith(
+          expect.objectContaining({
+            extractionType: "exhaustive",
+            generateId: "gen_stuck1",
+            languageStyle: "academic",
+            pdfText: "pdf text content",
+          })
+        );
+      });
+    });
+
+    it("marks generation as FAILED when no input row exists", async ({
+      expect,
+    }) => {
+      const { repo, pipeline, service } = setupService();
+      const stuck = createGenerateFixture({
+        id: "gen_noinput",
+        status: "CREATED",
+      });
+      repo.findStuckGenerations.mockResolvedValue([stuck]);
+      repo.findGenerateInputByGenerateId.mockResolvedValue(null);
+
+      await service.startupResume();
+
+      expect(repo.updateGenerateStatus).toHaveBeenCalledWith(
+        "gen_noinput",
+        "FAILED",
+        expect.any(Number)
+      );
+      expect(pipeline.runLLM).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when there are no stuck generations", async ({
+      expect,
+    }) => {
+      const { repo, pipeline, service } = setupService();
+      repo.findStuckGenerations.mockResolvedValue([]);
+
+      await service.startupResume();
+
+      expect(repo.findStuckGenerations).toHaveBeenCalledOnce();
+      expect(pipeline.runLLM).not.toHaveBeenCalled();
     });
   });
 

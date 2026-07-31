@@ -17,7 +17,7 @@ GenerateService is responsible for:
 - the finalization transaction that writes generated content into `chapter`, `quiz`, `quiz_option`, `flashcard` and sets `generate.status` to `COMPLETED` or `PARTIAL_COMPLETED` **after** finalization commits
 - reporting the generation outcome via the `status` field on the poll endpoint (no separate error code or error message columns)
 - the short-poll query that aggregates row state + per-chunk `index/kind` summaries for the client UI
-- startup recovery that marks all `CREATED` and `ONGOING` rows as `FAILED` on server boot
+- startup recovery that resumes all `CREATED` and `ONGOING` rows on server boot (re-running the pipeline from where it left off)
 
 GenerateService is not responsible for:
 
@@ -45,6 +45,9 @@ interface Generate {
   ownerId: string; // FK → user.id
   studySetId: string; // FK → study_set.id. Never nulled once created.
   status: "CREATED" | "ONGOING" | "COMPLETED" | "PARTIAL_COMPLETED" | "FAILED";
+  languageStyle: string; // persisted for startup resume, e.g. "student-friendly"
+  extractionType: string; // persisted for startup resume, e.g. "normal" | "exhaustive"
+  logId: string | null; // FK → ai_usage_log.id, used for refund on failure
   startedAt: number; // Unix ms
   completedAt?: number; // Unix ms
   createdAt: number; // Unix ms
@@ -88,7 +91,10 @@ interface GenerateChunkResult {
   - `ONGOING` — pipeline is executing (LLM chunks being processed).
   - `COMPLETED` — 100% of chunks produced valid output. Finalization committed, content inserted.
   - `PARTIAL_COMPLETED` — at least 1 but less than 100% of chunks produced valid output. Finalization committed with whatever content succeeded. Study set is usable with partial content.
-  - `FAILED` — 0 valid chunks produced, or pipeline threw before any valid chunk, or finalization failed, or server restarted mid-generation.
+  - `FAILED` — 0 valid chunks produced, or pipeline threw before any valid chunk, or finalization failed.
+- `languageStyle` is persisted at insert time (defaults to `"student-friendly"`). Used by startup resume to re-run the pipeline with the original style.
+- `extractionType` is persisted at insert time (defaults to `"normal"`). Used by startup resume to re-run the pipeline with the original extraction type.
+- `logId` is the `ai_usage_log.id` returned by `aiLimitService.consume`. Used for refund when the generation fails with 0 successful chunks. Nullable for backwards compatibility with rows created before this column existed.
 - `startedAt` is set at `insertGenerate` (status=CREATED). It is the request time, not the LLM-start time.
 - `completedAt` is set on transition to `COMPLETED`, `PARTIAL_COMPLETED`, or `FAILED`.
 - `createdAt` and `updatedAt` are managed by Drizzle defaults and `$onUpdate`.
@@ -168,9 +174,11 @@ export interface GenerateRepository {
   ): Promise<Generate>;
   updateGenerateStatus(
     id: string,
-    status: Generate["status"]
+    status: Generate["status"],
+    completedAt?: number
   ): Promise<Generate | null>;
   findGenerateById(id: string): Promise<Generate | null>;
+  findStuckGenerations(): Promise<Generate[]>;
   finalizeStuckAsFailed(reason: string): Promise<number>;
   insertGenerateInput(row: Omit<GenerateInput, "id">): Promise<GenerateInput>;
   findGenerateInputByGenerateId(
@@ -370,18 +378,34 @@ Errors:
 - `generate_input.input` is `text` (no length cap in SQLite). The 500k character limit is enforced at the application level before insertion.
 - Foreign keys cascade on `generate` delete (cleanup for both `generate_input` and `generate_chunk_result`).
 
-## Startup Recovery
+## Startup Resume
 
-When the server starts, all `generate` rows stuck at `status = CREATED` or `status = ONGOING` are finalized to `FAILED`:
+When the server starts, all `generate` rows stuck at `status = CREATED` or `status = ONGOING` are resumed:
 
 ```
 Server boot
-├── repo.finalizeStuckAsFailed(reason: "Server restarted during generation")
-│   └── UPDATE generate SET status = 'FAILED', completed_at = now
-│       WHERE status IN ('CREATED', 'ONGOING')
+├── repo.findStuckGenerations()
+│   └── SELECT * FROM generate WHERE status IN ('CREATED', 'ONGOING')
+└── for each stuck row:
+    ├── repo.findGenerateInputByGenerateId(id)
+    ├── if no input row:
+    │   └── repo.updateGenerateStatus(id, "FAILED", now)
+    └── else:
+        └── waitUntil(runPipeline({
+              generateId, ownerId, studySetId,
+              pdfText: inputRow.input,
+              isInputTruncated: inputRow.isInputTruncated,
+              languageStyle: row.languageStyle,
+              extractionType: row.extractionType,
+              logId: row.logId ?? ""
+            }))
 ```
 
-No chunk results are cleaned up — they stay in `generate_chunk_result` for potential future retry. The `generate` row is visible in the poll response as `FAILED`. The in-memory concurrency gate is reset (process restart), so the user can re-upload immediately.
+The pipeline's `runLLM` stage uses `GenerationStorage.loadChunkResults()` to skip already-processed chunks (the `processChunkGroup` skip-if-done logic in `infras/generate/generate.ts`). This means a generation that was interrupted mid-way resumes from where it left off — only unprocessed chunks are sent to the LLM.
+
+If a stuck row has no `generate_input` (edge case: crash between `insertGenerate` and `insertGenerateInput`), it is marked `FAILED` immediately.
+
+The in-memory concurrency gate (`activeOwners`) is populated during resume, so the owner cannot start a new generation while the resumed one is running.
 
 ## Admin Cleanup
 
@@ -427,7 +451,7 @@ This spec incorporates the following decisions made during design review:
 - **In-memory concurrency gate** at service layer (replaces DB-level unique index). Per-owner, rejects duplicate immediately.
 - **Dedupe-on-write** for chunk results: delete-before-insert per `(generateId, index)` in a transaction.
 - **Poll response** returns `{ status, studySetId, isInputTruncated, chunks[], maxCreatedAt }`.
-- **Startup recovery** marks `CREATED` and `ONGOING` rows to `FAILED` on boot.
+- **Startup resume** resumes `CREATED` and `ONGOING` rows on boot by re-running the pipeline (skip-if-done logic handles already-processed chunks).
 - **Finalization batched per table** (chapters, quizzes, flashcards+options in separate transactions).
 - **`languageStyle` max length 32** added to schema.
 - **`tokenUsageSchema.reasoning`** fixed (was `resoning`).
