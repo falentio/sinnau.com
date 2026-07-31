@@ -46,6 +46,9 @@ if (
 
 export const auth = betterAuth({
   ...config,
+  ...(env.DISABLE_EMAIL_PASSWORD && {
+    emailAndPassword: { ...config.emailAndPassword, enabled: false },
+  }),
   account: {
     accountLinking: {
       disableImplicitLinking: false,
@@ -75,10 +78,10 @@ export const auth = betterAuth({
       },
     },
   },
-  // oxlint-disable typescript/consistent-return typescript/no-unsafe-assignment
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/change-password") {
+        // oxlint-disable typescript/no-unsafe-assignment -- BetterAuth ctx and ctx.body are any-typed (deeply generic context / no body schema), so the returned context object inherits any; not resolvable by oxlint
         return {
           context: {
             ...ctx,
@@ -88,7 +91,9 @@ export const auth = betterAuth({
             },
           },
         };
+        // oxlint-enable typescript/no-unsafe-assignment
       }
+      return null;
     }),
   },
   secret: env.BETTER_AUTH_SECRET,

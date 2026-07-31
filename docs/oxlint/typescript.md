@@ -181,3 +181,51 @@ if (
 
 **Context:**
 Apply this fix in utility functions that validate `unknown` values through sequential type guards. This is the correct approach when TypeScript's `in` operator narrowing (available since TS 4.9) combined with `typeof` checks produces a provably safe narrowed type. The property access is safe because the guards have already confirmed the shape and type. This approach does NOT apply when: (a) the checks don't form a complete type narrowing chain and the type would remain `unknown`/`any` inside the block, (b) the assertion is needed to widen a type (e.g. `as string[]` from `readonly string[]`), or (c) the value comes from an untrusted source where validation should be stricter than what narrowing alone provides.
+
+---
+
+## Return `null` from BetterAuth middleware on non-matching paths
+
+**Explain:**
+The `typescript(consistent-return)` rule requires async functions to return a value on every code path. BetterAuth's `hooks.before` middleware (`createAuthMiddleware` from `better-auth/api`) is an async callback that commonly returns a modified `{ context }` object only inside a conditional — e.g. only for the `/change-password` path — and falls through without a return on other paths. Because the function returns a value on one path and nothing on another, oxlint flags it as inconsistent, even though the fall-through `undefined` is a valid `MiddlewareResponse`.
+
+**Reason:**
+Adding an explicit `return null` after the conditional makes every code path return a value, satisfying the rule without changing behavior. BetterAuth's middleware return type is `MiddlewareResponse = null | void | undefined | Record<string, any>` — `null`, `undefined`, and `void` are all treated identically as "no modification" when the returned value lacks a `context` key. This is preferred over suppressing the rule because it is a real, behavior-neutral fix: the suppression surface shrinks to only the genuinely unresolvable `no-unsafe-assignment` spread, and the explicit `return null` documents the middleware contract (every path ends in an explicit response).
+
+**Before:**
+
+```ts
+hooks: {
+  before: createAuthMiddleware(async (ctx) => {
+    if (ctx.path === "/change-password") {
+      return {
+        context: {
+          ...ctx,
+          body: { ...ctx.body, revokeOtherSessions: true },
+        },
+      };
+    }
+  }),
+},
+```
+
+**After:**
+
+```ts
+hooks: {
+  before: createAuthMiddleware(async (ctx) => {
+    if (ctx.path === "/change-password") {
+      return {
+        context: {
+          ...ctx,
+          body: { ...ctx.body, revokeOtherSessions: true },
+        },
+      };
+    }
+    return null;
+  }),
+},
+```
+
+**Context:**
+Apply this fix in BetterAuth config modules (`src/lib/server/infras/auth/`) when a `hooks.before`/`hooks.after` `createAuthMiddleware` callback returns a value on only some request paths. This is the correct approach when: (a) the middleware genuinely has a no-op path that currently falls through, (b) the return type is BetterAuth's `MiddlewareResponse` (which accepts `null`), and (c) the conditional returns an object literal whose spread of `ctx`/`ctx.body` still needs a separate `oxlint-disable` block for `no-unsafe-assignment` (BetterAuth's context type is a deeply generic type with `Record<string, any>` fields oxlint cannot resolve). This approach does NOT apply when: (a) the async function legitimately returns a Promise that resolves to nothing in all paths (add no `return` at all), (b) the middleware should throw or short-circuit instead of returning a no-op response, or (c) the surrounding code is a SvelteKit form action/load function — use the `return redirect(...)` pattern documented above instead.

@@ -87,6 +87,9 @@ export const env = {
   get DB_FILE_NAME() {
     return read("DB_FILE_NAME") ?? ".data/data.db";
   },
+  get DISABLE_EMAIL_PASSWORD() {
+    return (read("DISABLE_EMAIL_PASSWORD") ?? "false") === "true";
+  },
   get GENERATE_USE_MOCK() {
     return read("GENERATE_USE_MOCK") ?? "false";
   },
