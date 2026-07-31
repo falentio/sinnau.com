@@ -10,6 +10,7 @@ import { wideEventStorage } from "$lib/server/infras/als";
 import { auth } from "$lib/server/infras/auth";
 import { env } from "$lib/server/infras/env";
 import { generateService } from "$lib/server/services/generate";
+import { waitUntil } from "$lib/server/utils/background-jobs";
 import { nanoid } from "$lib/server/utils/nanoid";
 import { TokenBucketRateLimiter } from "$lib/server/utils/rate-limiter";
 import { getLogger, lazy, withContext } from "@logtape/logtape";
@@ -23,7 +24,7 @@ const logger = getLogger(["sinnau.com", "http", "middleware"]);
 setClient(createServerClient());
 
 if (!building) {
-  await generateService.startupResume();
+  waitUntil(generateService.startupResume());
 }
 
 const betterAuthHandle: Handle = async ({ event, resolve }) => {
