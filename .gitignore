@@ -1,6 +1,5 @@
 node_modules
-.playwright-mcp
-.playwright-cli
+.playwright-*
 # Local database
 .data/*
 !.data/.gitkeep
