@@ -10,6 +10,7 @@
   import SiteNav from "$lib/features/landing-page/site-nav.svelte";
   import {
     AFFILIATE_COMMISSION_RATE,
+    AFFILIATE_COOKIE_MAX_AGE_SECONDS,
     AFFILIATE_MINIMUM_PAYOUT_AMOUNT,
   } from "$lib/schemas/affiliate.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
@@ -19,6 +20,10 @@
   let { data }: { data: PageData } = $props();
 
   const commissionLabel = `${Math.round(AFFILIATE_COMMISSION_RATE * 100)}%`;
+
+  const clickWindowLabel = `${Math.round(
+    AFFILIATE_COOKIE_MAX_AGE_SECONDS / (60 * 60 * 24)
+  )} hari`;
 
   const minimumPayoutLabel = new Intl.NumberFormat("id-ID", {
     currency: "IDR",
@@ -37,7 +42,7 @@
     {
       label: "Klik tercatat",
       note: "mereka tak harus langsung membayar",
-      value: "30 hari",
+      value: clickWindowLabel,
     },
     {
       label: "Minimal pencairan",
@@ -54,7 +59,7 @@
 
 <SeoHead
   title="Program Afiliasi · sinnau"
-  description="Dapatkan 25% komisi dari setiap langganan yang datang lewat tautan referral-mu. Daftar gratis, pencairan setiap Jumat."
+  description={`Dapatkan ${commissionLabel} komisi dari setiap langganan yang datang lewat tautan referral-mu. Daftar gratis, pencairan setiap Jumat.`}
 />
 
 <div class="landing-v3 relative min-h-[100dvh]">
@@ -72,7 +77,7 @@
         <h1
           class="mt-3 font-display text-[36px] leading-[1.04] tracking-[-0.03em] text-balance sm:text-[46px]"
         >
-          Dapatkan 25% komisi<br />dari tiap langganan
+          Dapatkan {commissionLabel} komisi<br />dari tiap langganan
         </h1>
         <p
           class="mt-4 text-[15px] leading-relaxed text-[var(--landing-muted)] text-pretty sm:text-[16px]"
@@ -174,10 +179,3 @@
 
   <SiteFooter />
 </div>
-
-<style>
-  :global(.affiliate-how-landing) {
-    --border: var(--landing-border);
-    --muted-foreground: var(--landing-muted);
-  }
-</style>

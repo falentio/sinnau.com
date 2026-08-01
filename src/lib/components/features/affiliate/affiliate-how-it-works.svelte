@@ -31,7 +31,8 @@
       <div>
         <p class="text-sm font-medium">Temanmu berlangganan</p>
         <p class="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-          Begitu mereka membeli paket, langganan itu langsung menjadi komisimu.
+          Klik tercatat 30 hari, jadi mereka tak harus langsung membayar. Begitu
+          mereka membeli paket, langganan itu langsung menjadi komisimu.
         </p>
       </div>
     </li>

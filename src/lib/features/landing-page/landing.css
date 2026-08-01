@@ -32,6 +32,11 @@
     --plan-accent: var(--landing-accent);
     --plan-accent-ink: var(--landing-accent-ink);
   }
+
+  .affiliate-how-landing {
+    --border: var(--landing-border);
+    --muted-foreground: var(--landing-muted);
+  }
 }
 
 @layer utilities {
