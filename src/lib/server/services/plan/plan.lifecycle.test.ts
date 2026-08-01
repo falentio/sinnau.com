@@ -4,7 +4,7 @@ import { describe, it, vi } from "vitest";
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import { PlanService } from "./plan.service.ts";
-import { createMockGuard, PlanTestEnv } from "./plan.testing.ts";
+import { captureError, createMockGuard, PlanTestEnv } from "./plan.testing.ts";
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -248,13 +248,9 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
         userId: env.ownerId,
       });
 
-      let thrown: unknown = null;
-      try {
-        await service.acceptPayment({ orderId: order.id }, "admin-1");
-      } catch (error) {
-        thrown = error;
-      }
-
+      const thrown = await captureError(
+        service.acceptPayment({ orderId: order.id }, "admin-1")
+      );
       expect(thrown).toMatchObject({ code: "ORDER_NOT_ACCEPTABLE" });
       const refreshed = await env.repo.findOrderById(order.id);
       expect(refreshed?.status).toBe("EXPIRED");

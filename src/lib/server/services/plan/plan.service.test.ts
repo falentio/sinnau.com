@@ -970,6 +970,25 @@ describe.concurrent("PlanService unit tests", () => {
       expect(repo.deleteUserPlan).not.toHaveBeenCalled();
     });
 
+    it("throws NOT_FOUND when the order disappears before the status update", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PENDING" })
+      );
+      repo.updateOrderStatus.mockResolvedValue(null);
+
+      const err = await captureError(
+        service.acceptPayment({ orderId: "ord_test" }, "admin-1")
+      );
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+      expect(repo.findPaymentByOrderId).not.toHaveBeenCalled();
+      expect(repo.setOrderAppliedAt).not.toHaveBeenCalled();
+    });
+
     it("marks a PENDING order as PAID, records the admin in the payment payload, derives the plan, and emits order:paid", async ({
       expect,
     }) => {

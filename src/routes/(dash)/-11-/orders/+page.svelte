@@ -15,7 +15,6 @@
   import { navigateWithParams } from "$lib/utils/url";
   import { Dollar01Icon } from "@hugeicons/core-free-icons";
   import { HugeiconsIcon } from "@hugeicons/svelte";
-  import { ORPCError } from "@orpc/client";
   import { toast } from "svelte-sonner";
 
   import type { PageData } from "./$types";
@@ -49,9 +48,7 @@
       acceptOrderId = null;
       await invalidate("plan:orders");
     } catch (error) {
-      if (error instanceof ORPCError) {
-        toast.error(getErrorMessage(error));
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         toast.error(getErrorMessage(error));
       } else {
         toast.error("Failed to accept payment. Please try again.");
