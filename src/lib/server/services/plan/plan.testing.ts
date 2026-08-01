@@ -76,6 +76,12 @@ export const createMockGuard = (): MockedPlanGuard => ({
   requireOwner: vi.fn<PlanGuard["requireOwner"]>(),
 });
 
+// PlanGuard's private fields are nominal; a structurally-identical mock can
+// not be assigned to the class type, so the cast is centralized here.
+export const toPlanGuard = (guard: MockedPlanGuard): PlanGuard =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  guard as unknown as PlanGuard;
+
 export const createUserPlanFixture = (
   overrides: Partial<UserPlan> = {}
 ): UserPlan => ({
@@ -262,8 +268,7 @@ export class PlanTestEnv implements AsyncDisposable {
 
   // oxlint-disable-next-line class-methods-use-this
   createGuard(): PlanGuard {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    return createMockGuard() as unknown as PlanGuard;
+    return toPlanGuard(createMockGuard());
   }
 
   // oxlint-disable-next-line require-await

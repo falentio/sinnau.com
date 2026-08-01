@@ -1,20 +1,19 @@
 import { createServerClient } from "$lib/orpc.server";
-import { ORDER_STATUSES } from "$lib/schemas/plan.constant";
+import { orderStatusSchema } from "$lib/schemas/plan";
 import { parsePage } from "$lib/utils/pagination";
+import * as v from "valibot";
 
 import type { PageServerLoad } from "./$types";
-
-const isOrderStatus = (
-  value: string | null
-): value is (typeof ORDER_STATUSES)[number] =>
-  value !== null && (ORDER_STATUSES as readonly string[]).includes(value);
 
 export const load: PageServerLoad = async ({ depends, url }) => {
   depends("plan:orders");
 
   const page = parsePage(url.searchParams.get("page"));
-  const statusParam = url.searchParams.get("status");
-  const status = isOrderStatus(statusParam) ? statusParam : undefined;
+  const parsedStatus = v.safeParse(
+    orderStatusSchema,
+    url.searchParams.get("status")
+  );
+  const status = parsedStatus.success ? parsedStatus.output : undefined;
 
   const client = createServerClient();
   const result = await client.plan.admin.listOrders({ page, status });

@@ -393,7 +393,7 @@ export class PlanService {
     });
   }
 
-  async listAllOrders(
+  async listAdminOrders(
     input: AdminListOrdersInput,
     adminId: string | null | undefined
   ): Promise<OrderListResult> {
@@ -429,25 +429,23 @@ export class PlanService {
     }
 
     const payment = await this.repo.findPaymentByOrderId(order.id);
-    if (payment) {
-      await this.repo.updatePayment(payment.id, {
-        payload: JSON.stringify({
-          acceptedAt: new Date().toISOString(),
-          acceptedBy: admin,
-          type: "admin-accept",
-        }),
-        status: "SUCCESS",
+    if (!payment) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Payment record not found for order",
       });
     }
-
-    await this.repo.setOrderAppliedAt(order.id, Date.now());
-    await this.deriveAndUpsert(order.userId);
-    this.events.emit("order:paid", {
-      grossAmount: order.grossAmount,
-      transactionId: payment?.gatewayTransactionId ?? "",
-      userId: order.userId,
+    await this.repo.updatePayment(payment.id, {
+      payload: JSON.stringify({
+        acceptedAt: new Date().toISOString(),
+        acceptedBy: admin,
+        type: "admin-accept",
+      }),
+      status: "SUCCESS",
     });
-    return updated;
+
+    await this.settlePaidOrder(order, payment.gatewayTransactionId ?? "");
+    const fresh = await this.repo.findOrderById(order.id);
+    return fresh ?? updated;
   }
 
   static parseQrisUrl(payload: string | null): string | null {
@@ -578,18 +576,25 @@ export class PlanService {
     }
 
     if (target === "PAID") {
-      await this.repo.setOrderAppliedAt(order.id, Date.now());
-      await this.deriveAndUpsert(order.userId);
-      this.events.emit("order:paid", {
-        grossAmount: order.grossAmount,
-        transactionId: body.transaction_id,
-        userId: order.userId,
-      });
+      await this.settlePaidOrder(order, body.transaction_id);
     } else if (target === "CANCELLED" && prevStatus === "PAID") {
       await this.deriveAndUpsert(order.userId);
     }
 
     return updated;
+  }
+
+  private async settlePaidOrder(
+    order: Order,
+    transactionId: string
+  ): Promise<void> {
+    await this.repo.setOrderAppliedAt(order.id, Date.now());
+    await this.deriveAndUpsert(order.userId);
+    this.events.emit("order:paid", {
+      grossAmount: order.grossAmount,
+      transactionId,
+      userId: order.userId,
+    });
   }
 
   private async deriveAndUpsert(userId: string): Promise<void> {

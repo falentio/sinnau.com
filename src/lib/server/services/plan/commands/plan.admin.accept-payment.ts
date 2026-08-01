@@ -5,6 +5,7 @@ import { planService } from "../index";
 
 const ERRORS = {
   FORBIDDEN: { message: "Admin access required" },
+  INTERNAL_SERVER_ERROR: { message: "Payment record not found for order" },
   NOT_FOUND: { message: "Order not found" },
   ORDER_NOT_ACCEPTABLE: {
     message: "Order cannot be accepted in its current status",

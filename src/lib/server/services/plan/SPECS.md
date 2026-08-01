@@ -355,9 +355,10 @@ interface AcceptPaymentInput {
 - Rejects terminal orders (`EXPIRED`, `CANCELLED`) with `ORDER_NOT_ACCEPTABLE`.
 - Marks the order `PAID`, sets `appliedAt`, and re-derives the user's plan (same lifecycle rules as the webhook).
 - Updates the matching `Payment` row to `SUCCESS` and writes an audit payload: `{ type: "admin-accept", acceptedBy: <adminId>, acceptedAt: <ISO> }`. `gatewayTransactionId` is left untouched (it was captured at checkout from the QRIS charge response).
+- A missing `Payment` row is a data-integrity anomaly: the command fails with `INTERNAL_SERVER_ERROR` instead of silently emitting `order:paid` with an empty transaction id (stricter than the webhook, which keeps its `if (payment)` guard).
 - Emits the same `order:paid` event as the webhook (with `transactionId` from the payment's `gatewayTransactionId`) so downstream services (e.g. affiliate commissions) stay functional.
-- Returns the updated `Order`.
-- Errors: `FORBIDDEN` (caller is not admin), `NOT_FOUND` (order missing), `ORDER_NOT_ACCEPTABLE` (order is in a terminal status).
+- Returns the refreshed `Order` (with `appliedAt` set) rather than the pre-settlement row.
+- Errors: `FORBIDDEN` (caller is not admin), `NOT_FOUND` (order missing), `ORDER_NOT_ACCEPTABLE` (order is in a terminal status), `INTERNAL_SERVER_ERROR` (no payment row).
 
 ### Lifecycle integration
 

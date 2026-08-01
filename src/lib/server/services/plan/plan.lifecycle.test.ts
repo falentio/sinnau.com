@@ -4,7 +4,12 @@ import { describe, it, vi } from "vitest";
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import { PlanService } from "./plan.service.ts";
-import { captureError, createMockGuard, PlanTestEnv } from "./plan.testing.ts";
+import {
+  captureError,
+  createMockGuard,
+  PlanTestEnv,
+  toPlanGuard,
+} from "./plan.testing.ts";
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -178,8 +183,7 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
       guard.requireAdmin.mockImplementation((id) => id ?? "admin-1");
       return new PlanService(
         env.repo,
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        guard as unknown as ReturnType<PlanTestEnv["createGuard"]>,
+        toPlanGuard(guard),
         createStubMidtrans()
       );
     };

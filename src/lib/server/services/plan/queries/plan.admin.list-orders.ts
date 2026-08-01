@@ -16,5 +16,5 @@ export const planAdminListOrders = adminProcedure
   .output(listOrdersOutputSchema)
   .handler(
     async ({ input, context }) =>
-      await planService.listAllOrders(input, context.user.id)
+      await planService.listAdminOrders(input, context.user.id)
   );

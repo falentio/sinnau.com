@@ -1000,7 +1000,16 @@ describe.concurrent("PlanService unit tests", () => {
         status: "PENDING",
         userId: "user-1",
       });
-      repo.findOrderById.mockResolvedValue(pending);
+      const paid = createOrderFixture({
+        appliedAt: new Date(),
+        id: "ord_test",
+        planKey: "LITE",
+        status: "PAID",
+        userId: "user-1",
+      });
+      repo.findOrderById
+        .mockResolvedValueOnce(pending)
+        .mockResolvedValueOnce(paid);
       repo.findPaymentByOrderId.mockResolvedValue(
         createPaymentFixture({
           gatewayTransactionId: "txn-1",
@@ -1024,7 +1033,8 @@ describe.concurrent("PlanService unit tests", () => {
         "admin-1"
       );
 
-      expect(result).toMatchObject({ id: "ord_test", status: "PAID" });
+      expect(result).toBe(paid);
+      expect(repo.findOrderById).toHaveBeenCalledTimes(2);
       expect(repo.updateOrderStatus).toHaveBeenCalledWith("ord_test", "PAID");
       expect(repo.updatePayment).toHaveBeenCalledWith(
         expect.any(String),
@@ -1050,44 +1060,38 @@ describe.concurrent("PlanService unit tests", () => {
       });
     });
 
-    it("accepts a PENDING order without a payment row, skipping the payment update", async ({
+    it("throws INTERNAL_SERVER_ERROR when no payment row exists and leaves the state unchanged", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
       repo.findOrderById.mockResolvedValue(
         createOrderFixture({ id: "ord_test", status: "PENDING" })
       );
+      repo.updateOrderStatus.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PAID" })
+      );
       repo.findPaymentByOrderId.mockResolvedValue(null);
-      repo.findPaidOrdersForUser.mockResolvedValue([
-        createOrderFixture({ appliedAt: new Date(), status: "PAID" }),
-      ]);
 
-      let emitted: unknown = null;
-      service.events.on("order:paid", (payload) => {
-        emitted = payload;
+      let emitted = false;
+      service.events.on("order:paid", () => {
+        emitted = true;
       });
 
-      const result = await service.acceptPayment(
-        { orderId: "ord_test" },
-        "admin-1"
+      const err = await captureError(
+        service.acceptPayment({ orderId: "ord_test" }, "admin-1")
       );
 
-      expect(result.status).toBe("PAID");
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
       expect(repo.updatePayment).not.toHaveBeenCalled();
-      expect(repo.setOrderAppliedAt).toHaveBeenCalledWith(
-        "ord_test",
-        expect.any(Number)
-      );
-      expect(repo.upsertUserPlan).toHaveBeenCalled();
-      expect(emitted).toEqual({
-        grossAmount: 30_000,
-        transactionId: "",
-        userId: "owner-1",
-      });
+      expect(repo.setOrderAppliedAt).not.toHaveBeenCalled();
+      expect(repo.findPaidOrdersForUser).not.toHaveBeenCalled();
+      expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+      expect(emitted).toBe(false);
     });
   });
 
-  describe("listAllOrders", () => {
+  describe("listAdminOrders", () => {
     it("throws FORBIDDEN when the caller is not an admin", async ({
       expect,
     }) => {
@@ -1096,7 +1100,7 @@ describe.concurrent("PlanService unit tests", () => {
         throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
       });
       const err = await captureError(
-        service.listAllOrders({ page: 1 }, "user-1")
+        service.listAdminOrders({ page: 1 }, "user-1")
       );
       expect(err).toBeInstanceOf(ORPCError);
       expect(err).toMatchObject({ code: "FORBIDDEN" });
@@ -1116,7 +1120,7 @@ describe.concurrent("PlanService unit tests", () => {
       };
       repo.listOrders.mockResolvedValue(page1);
 
-      const result = await service.listAllOrders(
+      const result = await service.listAdminOrders(
         { page: 1, status: "PENDING" },
         "admin-1"
       );

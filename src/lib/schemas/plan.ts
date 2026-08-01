@@ -223,6 +223,7 @@ export type ListGrantsOutput = v.InferOutput<typeof listGrantsOutputSchema>;
 // Re-export shared primitives for callers that need them
 export {
   orderIdSchema,
+  orderStatusSchema,
   paymentIdSchema,
   paymentStatusSchema,
   planDurationSchema,

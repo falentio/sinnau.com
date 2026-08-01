@@ -4,6 +4,7 @@ import {
 } from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, gt, gte, lte, notInArray, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import type { DB } from "../../infras/db/client.ts";
 import { db as defaultDb } from "../../infras/db/client.ts";
@@ -163,34 +164,11 @@ export class PlanDrizzleRepository implements PlanRepository {
     excludeStatuses?: OrderStatus[]
   ): Promise<OrderListResult> {
     try {
-      const limit = PLAN_PAGE_LIMIT;
-      const offset = (page - 1) * limit;
       const filters = [eq(order.userId, userId)];
       if (excludeStatuses && excludeStatuses.length > 0) {
         filters.push(notInArray(order.status, excludeStatuses));
       }
-      const whereClause = and(...filters);
-      const rows = await this.dbInstance
-        .select()
-        .from(order)
-        .where(whereClause)
-        .orderBy(desc(order.createdAt))
-        .limit(limit)
-        .offset(offset);
-      const [{ total } = { total: 0 }] = await this.dbInstance
-        .select({ total: sql<number>`count(*)` })
-        .from(order)
-        .where(whereClause);
-      const totalCount = total;
-      return {
-        data: rows,
-        pagination: {
-          limit,
-          page,
-          total: totalCount,
-          totalPages: Math.max(1, Math.ceil(totalCount / limit)),
-        },
-      };
+      return await this.selectOrdersPage(and(...filters), page);
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -203,34 +181,11 @@ export class PlanDrizzleRepository implements PlanRepository {
 
   async listOrders(filters: ListOrdersFilters): Promise<OrderListResult> {
     try {
-      const limit = PLAN_PAGE_LIMIT;
-      const offset = (page: number) => (page - 1) * limit;
       const conditions: ReturnType<typeof eq>[] = [];
       if (filters.status !== undefined) {
         conditions.push(eq(order.status, filters.status));
       }
-      const whereClause = and(...conditions);
-      const rows = await this.dbInstance
-        .select()
-        .from(order)
-        .where(whereClause)
-        .orderBy(desc(order.createdAt))
-        .limit(limit)
-        .offset(offset(filters.page));
-      const [{ total } = { total: 0 }] = await this.dbInstance
-        .select({ total: sql<number>`count(*)` })
-        .from(order)
-        .where(whereClause);
-      const totalCount = total;
-      return {
-        data: rows,
-        pagination: {
-          limit,
-          page: filters.page,
-          total: totalCount,
-          totalPages: Math.max(1, Math.ceil(totalCount / limit)),
-        },
-      };
+      return await this.selectOrdersPage(and(...conditions), filters.page);
     } catch (error) {
       if (error instanceof ORPCError) {
         throw error;
@@ -239,6 +194,35 @@ export class PlanDrizzleRepository implements PlanRepository {
         message: "Internal server error",
       });
     }
+  }
+
+  private async selectOrdersPage(
+    whereClause: SQL | undefined,
+    page: number
+  ): Promise<OrderListResult> {
+    const limit = PLAN_PAGE_LIMIT;
+    const offset = (page - 1) * limit;
+    const rows = await this.dbInstance
+      .select()
+      .from(order)
+      .where(whereClause)
+      .orderBy(desc(order.createdAt))
+      .limit(limit)
+      .offset(offset);
+    const [{ total } = { total: 0 }] = await this.dbInstance
+      .select({ total: sql<number>`count(*)` })
+      .from(order)
+      .where(whereClause);
+    const totalCount = total;
+    return {
+      data: rows,
+      pagination: {
+        limit,
+        page,
+        total: totalCount,
+        totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+      },
+    };
   }
 
   async findPaidOrdersForUser(userId: string): Promise<Order[]> {
