@@ -28,6 +28,7 @@ import type {
 import type {
   AdminGrantListResult,
   ListAdminGrantsFilters,
+  ListOrdersFilters,
   OrderListResult,
   PaymentUpdatePatch,
   PlanRepository,
@@ -186,6 +187,46 @@ export class PlanDrizzleRepository implements PlanRepository {
         pagination: {
           limit,
           page,
+          total: totalCount,
+          totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+        },
+      };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async listOrders(filters: ListOrdersFilters): Promise<OrderListResult> {
+    try {
+      const limit = PLAN_PAGE_LIMIT;
+      const offset = (page: number) => (page - 1) * limit;
+      const conditions: ReturnType<typeof eq>[] = [];
+      if (filters.status !== undefined) {
+        conditions.push(eq(order.status, filters.status));
+      }
+      const whereClause = and(...conditions);
+      const rows = await this.dbInstance
+        .select()
+        .from(order)
+        .where(whereClause)
+        .orderBy(desc(order.createdAt))
+        .limit(limit)
+        .offset(offset(filters.page));
+      const [{ total } = { total: 0 }] = await this.dbInstance
+        .select({ total: sql<number>`count(*)` })
+        .from(order)
+        .where(whereClause);
+      const totalCount = total;
+      return {
+        data: rows,
+        pagination: {
+          limit,
+          page: filters.page,
           total: totalCount,
           totalPages: Math.max(1, Math.ceil(totalCount / limit)),
         },

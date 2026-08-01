@@ -44,6 +44,7 @@ export const createMockRepository = (): MockedPlanRepository => ({
   insertOrder: vi.fn<PlanRepository["insertOrder"]>(),
   insertPayment: vi.fn<PlanRepository["insertPayment"]>(),
   listAdminGrants: vi.fn<PlanRepository["listAdminGrants"]>(),
+  listOrders: vi.fn<PlanRepository["listOrders"]>(),
   setOrderAppliedAt: vi.fn<PlanRepository["setOrderAppliedAt"]>(),
   updateOrderStatus: vi.fn<PlanRepository["updateOrderStatus"]>(),
   updatePayment: vi.fn<PlanRepository["updatePayment"]>(),

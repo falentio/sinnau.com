@@ -84,6 +84,53 @@ describe.concurrent("PlanDrizzleRepository", () => {
       expect(page2.data).toHaveLength(5);
     });
 
+    describe("listOrders", () => {
+      it("paginates orders across all users", async ({ expect }) => {
+        await using env = new PlanTestEnv();
+        for (let i = 0; i < 25; i += 1) {
+          await env.seedOrder({
+            id: `ord_${i.toString().padStart(2, "0")}`,
+            userId: i % 2 === 0 ? env.ownerId : env.otherId,
+          });
+        }
+        const page1 = await env.repo.listOrders({ page: 1 });
+        expect(page1.data).toHaveLength(20);
+        expect(page1.pagination).toMatchObject({
+          limit: 20,
+          page: 1,
+          total: 25,
+          totalPages: 2,
+        });
+        const page2 = await env.repo.listOrders({ page: 2 });
+        expect(page2.data).toHaveLength(5);
+      });
+
+      it("filters orders by status", async ({ expect }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_paid", status: "PAID" });
+        await env.seedOrder({ id: "ord_pending", status: "PENDING" });
+        const result = await env.repo.listOrders({
+          page: 1,
+          status: "PENDING",
+        });
+        expect(result.data.map((o) => o.id)).toEqual(["ord_pending"]);
+        expect(result.pagination.total).toBe(1);
+      });
+
+      it("returns an empty page when no order matches the status", async ({
+        expect,
+      }) => {
+        await using env = new PlanTestEnv();
+        await env.seedOrder({ id: "ord_pending", status: "PENDING" });
+        const result = await env.repo.listOrders({
+          page: 1,
+          status: "PAID",
+        });
+        expect(result.data).toEqual([]);
+        expect(result.pagination).toMatchObject({ page: 1, total: 0 });
+      });
+    });
+
     describe("findOrdersByUser with excludeStatuses", () => {
       it("returns all orders when excludeStatuses is omitted", async ({
         expect,

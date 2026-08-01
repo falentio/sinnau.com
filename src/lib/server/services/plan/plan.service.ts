@@ -1,6 +1,8 @@
 import { EventEmitter } from "node:events";
 
 import type {
+  AcceptPaymentInput,
+  AdminListOrdersInput,
   CheckoutInput,
   CheckoutOutput,
   GetOrder,
@@ -389,6 +391,63 @@ export class PlanService {
       planKey: input.planKey,
       userId: input.userId,
     });
+  }
+
+  async listAllOrders(
+    input: AdminListOrdersInput,
+    adminId: string | null | undefined
+  ): Promise<OrderListResult> {
+    this.guard.requireAdmin(adminId);
+    return await this.repo.listOrders({
+      page: input.page ?? 1,
+      status: input.status,
+    });
+  }
+
+  async acceptPayment(
+    input: AcceptPaymentInput,
+    adminId: string | null | undefined
+  ): Promise<Order> {
+    const admin = this.guard.requireAdmin(adminId);
+    const order = await this.repo.findOrderById(input.orderId);
+    if (!order) {
+      throw new ORPCError("NOT_FOUND", { message: "Order not found" });
+    }
+    if (order.status === "PAID") {
+      return order;
+    }
+    if (TERMINAL_STATUSES.has(order.status)) {
+      throw new ORPCError("ORDER_NOT_ACCEPTABLE", {
+        message: "Order cannot be accepted in its current status",
+        status: 400,
+      });
+    }
+
+    const updated = await this.repo.updateOrderStatus(order.id, "PAID");
+    if (!updated) {
+      throw new ORPCError("NOT_FOUND", { message: "Order not found" });
+    }
+
+    const payment = await this.repo.findPaymentByOrderId(order.id);
+    if (payment) {
+      await this.repo.updatePayment(payment.id, {
+        payload: JSON.stringify({
+          acceptedAt: new Date().toISOString(),
+          acceptedBy: admin,
+          type: "admin-accept",
+        }),
+        status: "SUCCESS",
+      });
+    }
+
+    await this.repo.setOrderAppliedAt(order.id, Date.now());
+    await this.deriveAndUpsert(order.userId);
+    this.events.emit("order:paid", {
+      grossAmount: order.grossAmount,
+      transactionId: payment?.gatewayTransactionId ?? "",
+      userId: order.userId,
+    });
+    return updated;
   }
 
   static parseQrisUrl(payload: string | null): string | null {

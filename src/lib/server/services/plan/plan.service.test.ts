@@ -883,6 +883,233 @@ describe.concurrent("PlanService unit tests", () => {
     });
   });
 
+  describe("acceptPayment", () => {
+    it("throws FORBIDDEN when the caller is not an admin", async ({
+      expect,
+    }) => {
+      const { guard, repo, service } = setupService();
+      guard.requireAdmin.mockImplementation(() => {
+        throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
+      });
+      const err = await captureError(
+        service.acceptPayment({ orderId: "ord_test" }, "user-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(repo.findOrderById).not.toHaveBeenCalled();
+    });
+
+    it("throws NOT_FOUND when the order does not exist", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(null);
+      const err = await captureError(
+        service.acceptPayment({ orderId: "ord_missing" }, "admin-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "NOT_FOUND" });
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+    });
+
+    it("throws ORDER_NOT_ACCEPTABLE when the order is EXPIRED", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "EXPIRED" })
+      );
+      const err = await captureError(
+        service.acceptPayment({ orderId: "ord_test" }, "admin-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({
+        code: "ORDER_NOT_ACCEPTABLE",
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- expect.stringMatching returns any which is safe in test assertions
+        message: expect.stringMatching(/cannot be accepted/u),
+      });
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+      expect(repo.setOrderAppliedAt).not.toHaveBeenCalled();
+    });
+
+    it("throws ORDER_NOT_ACCEPTABLE when the order is CANCELLED", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "CANCELLED" })
+      );
+      const err = await captureError(
+        service.acceptPayment({ orderId: "ord_test" }, "admin-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({
+        code: "ORDER_NOT_ACCEPTABLE",
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- expect.stringMatching returns any which is safe in test assertions
+        message: expect.stringMatching(/cannot be accepted/u),
+      });
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+      expect(repo.setOrderAppliedAt).not.toHaveBeenCalled();
+    });
+
+    it("returns the order unchanged when it is already PAID", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const order = createOrderFixture({ id: "ord_test", status: "PAID" });
+      repo.findOrderById.mockResolvedValue(order);
+
+      const result = await service.acceptPayment(
+        { orderId: "ord_test" },
+        "admin-1"
+      );
+
+      expect(result).toBe(order);
+      expect(repo.updateOrderStatus).not.toHaveBeenCalled();
+      expect(repo.updatePayment).not.toHaveBeenCalled();
+      expect(repo.setOrderAppliedAt).not.toHaveBeenCalled();
+      expect(repo.upsertUserPlan).not.toHaveBeenCalled();
+      expect(repo.deleteUserPlan).not.toHaveBeenCalled();
+    });
+
+    it("marks a PENDING order as PAID, records the admin in the payment payload, derives the plan, and emits order:paid", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const pending = createOrderFixture({
+        grossAmount: 120_000,
+        id: "ord_test",
+        planKey: "LITE",
+        status: "PENDING",
+        userId: "user-1",
+      });
+      repo.findOrderById.mockResolvedValue(pending);
+      repo.findPaymentByOrderId.mockResolvedValue(
+        createPaymentFixture({
+          gatewayTransactionId: "txn-1",
+          orderId: "ord_test",
+        })
+      );
+      repo.updateOrderStatus.mockImplementation(async (id, status) =>
+        createOrderFixture({ id, status, userId: "user-1" })
+      );
+      repo.findPaidOrdersForUser.mockResolvedValue([
+        createOrderFixture({ appliedAt: new Date(), status: "PAID" }),
+      ]);
+
+      let emitted: unknown = null;
+      service.events.on("order:paid", (payload) => {
+        emitted = payload;
+      });
+
+      const result = await service.acceptPayment(
+        { orderId: "ord_test" },
+        "admin-1"
+      );
+
+      expect(result).toMatchObject({ id: "ord_test", status: "PAID" });
+      expect(repo.updateOrderStatus).toHaveBeenCalledWith("ord_test", "PAID");
+      expect(repo.updatePayment).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ status: "SUCCESS" })
+      );
+      const paymentPatch = repo.updatePayment.mock.calls[0]?.[1];
+      expect(JSON.parse(String(paymentPatch?.payload))).toEqual({
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- expect.any returns any which is safe in test assertions
+        acceptedAt: expect.any(String),
+        acceptedBy: "admin-1",
+        type: "admin-accept",
+      });
+      expect(repo.setOrderAppliedAt).toHaveBeenCalledWith(
+        "ord_test",
+        expect.any(Number)
+      );
+      expect(repo.findPaidOrdersForUser).toHaveBeenCalledWith("user-1");
+      expect(repo.upsertUserPlan).toHaveBeenCalled();
+      expect(emitted).toEqual({
+        grossAmount: 120_000,
+        transactionId: "txn-1",
+        userId: "user-1",
+      });
+    });
+
+    it("accepts a PENDING order without a payment row, skipping the payment update", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      repo.findOrderById.mockResolvedValue(
+        createOrderFixture({ id: "ord_test", status: "PENDING" })
+      );
+      repo.findPaymentByOrderId.mockResolvedValue(null);
+      repo.findPaidOrdersForUser.mockResolvedValue([
+        createOrderFixture({ appliedAt: new Date(), status: "PAID" }),
+      ]);
+
+      let emitted: unknown = null;
+      service.events.on("order:paid", (payload) => {
+        emitted = payload;
+      });
+
+      const result = await service.acceptPayment(
+        { orderId: "ord_test" },
+        "admin-1"
+      );
+
+      expect(result.status).toBe("PAID");
+      expect(repo.updatePayment).not.toHaveBeenCalled();
+      expect(repo.setOrderAppliedAt).toHaveBeenCalledWith(
+        "ord_test",
+        expect.any(Number)
+      );
+      expect(repo.upsertUserPlan).toHaveBeenCalled();
+      expect(emitted).toEqual({
+        grossAmount: 30_000,
+        transactionId: "",
+        userId: "owner-1",
+      });
+    });
+  });
+
+  describe("listAllOrders", () => {
+    it("throws FORBIDDEN when the caller is not an admin", async ({
+      expect,
+    }) => {
+      const { guard, repo, service } = setupService();
+      guard.requireAdmin.mockImplementation(() => {
+        throw new ORPCError("FORBIDDEN", { message: "Admin access required" });
+      });
+      const err = await captureError(
+        service.listAllOrders({ page: 1 }, "user-1")
+      );
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "FORBIDDEN" });
+      expect(repo.listOrders).not.toHaveBeenCalled();
+    });
+
+    it("lists all orders with the given page and status filter", async ({
+      expect,
+    }) => {
+      const { repo, service } = setupService();
+      const page1 = {
+        data: [
+          createOrderFixture({ id: "ord_1", status: "PENDING" }),
+          createOrderFixture({ id: "ord_2", status: "PAID" }),
+        ],
+        pagination: { limit: 20, page: 1, total: 2, totalPages: 1 },
+      };
+      repo.listOrders.mockResolvedValue(page1);
+
+      const result = await service.listAllOrders(
+        { page: 1, status: "PENDING" },
+        "admin-1"
+      );
+
+      expect(repo.listOrders).toHaveBeenCalledWith({
+        page: 1,
+        status: "PENDING",
+      });
+      expect(result).toBe(page1);
+    });
+  });
+
   describe.concurrent("getOrder", () => {
     const validPayload = JSON.stringify({
       actions: [

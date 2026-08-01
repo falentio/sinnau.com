@@ -66,6 +66,14 @@ export const listOrdersInputSchema = v.object({
 });
 export type ListOrdersInput = v.InferOutput<typeof listOrdersInputSchema>;
 
+export const adminListOrdersInputSchema = v.object({
+  page: pageSchema,
+  status: v.optional(orderStatusSchema),
+});
+export type AdminListOrdersInput = v.InferOutput<
+  typeof adminListOrdersInputSchema
+>;
+
 export const orderSchema = v.object({
   createdAt: v.date(),
   durationMonths: planDurationSchema,
@@ -136,6 +144,13 @@ export const getAiLimitPlanForUserOutputSchema = v.object({
 export type GetAiLimitPlanForUserOutput = v.InferOutput<
   typeof getAiLimitPlanForUserOutputSchema
 >;
+
+// ─── Admin accept payment (manual confirmation) ──────────────────────
+
+export const acceptPaymentInputSchema = v.object({
+  orderId: orderIdSchema,
+});
+export type AcceptPaymentInput = v.InferOutput<typeof acceptPaymentInputSchema>;
 
 // ─── Admin grants (issue #23) ────────────────────────────────────────
 

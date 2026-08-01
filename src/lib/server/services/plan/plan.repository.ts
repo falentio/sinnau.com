@@ -44,6 +44,11 @@ export interface ListAdminGrantsFilters {
   userId?: string;
 }
 
+export interface ListOrdersFilters {
+  page: number;
+  status?: OrderStatus;
+}
+
 export type PaymentUpdatePatch = Partial<
   Pick<Payment, "gatewayTransactionId" | "payload" | "status" | "updatedAt">
 >;
@@ -63,6 +68,7 @@ export interface PlanRepository {
     excludeStatuses?: OrderStatus[]
   ): Promise<OrderListResult>;
   findPaidOrdersForUser(userId: string): Promise<Order[]>;
+  listOrders(filters: ListOrdersFilters): Promise<OrderListResult>;
   updateOrderStatus(id: string, status: OrderStatus): Promise<Order | null>;
   setOrderAppliedAt(id: string, appliedAtMs: number): Promise<Order | null>;
 

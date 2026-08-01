@@ -4,7 +4,7 @@ import { describe, it, vi } from "vitest";
 import type { MidtransClient } from "../../infras/midtrans/client.ts";
 import type { WebhookBody } from "../../infras/midtrans/types.ts";
 import { PlanService } from "./plan.service.ts";
-import { PlanTestEnv } from "./plan.testing.ts";
+import { createMockGuard, PlanTestEnv } from "./plan.testing.ts";
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -170,5 +170,97 @@ describe.concurrent("PlanService lifecycle (integration)", () => {
     expect(
       await env.repo.findActiveUserPlan(env.ownerId, Date.now())
     ).toBeNull();
+  });
+
+  describe("acceptPayment", () => {
+    const createService = (env: PlanTestEnv) => {
+      const guard = createMockGuard();
+      guard.requireAdmin.mockImplementation((id) => id ?? "admin-1");
+      return new PlanService(
+        env.repo,
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        guard as unknown as ReturnType<PlanTestEnv["createGuard"]>,
+        createStubMidtrans()
+      );
+    };
+
+    it("marks a PENDING order PAID, records the admin, derives the plan, and emits order:paid", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const service = createService(env);
+
+      const order = await env.seedOrder({
+        durationMonths: 1,
+        id: "ord_accept",
+        planKey: "LITE",
+        status: "PENDING",
+        userId: env.ownerId,
+      });
+      await env.seedPayment({
+        gatewayTransactionId: "txn_accept",
+        orderId: order.id,
+        userId: env.ownerId,
+      });
+
+      let emitted: unknown = null;
+      service.events.on("order:paid", (payload) => {
+        emitted = payload;
+      });
+
+      const updated = await service.acceptPayment(
+        { orderId: order.id },
+        "admin-1"
+      );
+
+      expect(updated.status).toBe("PAID");
+      const stored = await env.repo.findOrderById(order.id);
+      expect(stored?.status).toBe("PAID");
+      expect(stored?.appliedAt).not.toBeNull();
+
+      const payment = await env.repo.findPaymentByOrderId(order.id);
+      expect(payment?.status).toBe("SUCCESS");
+      expect(JSON.parse(payment?.payload ?? "{}")).toEqual({
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- expect.any returns any which is safe in test assertions
+        acceptedAt: expect.any(String),
+        acceptedBy: "admin-1",
+        type: "admin-accept",
+      });
+
+      const plan = await env.repo.findActiveUserPlan(env.ownerId, Date.now());
+      expect(plan?.planKey).toBe("LITE");
+      expect(emitted).toEqual({
+        grossAmount: order.grossAmount,
+        transactionId: "txn_accept",
+        userId: env.ownerId,
+      });
+    });
+
+    it("rejects an EXPIRED order and leaves the state unchanged", async ({
+      expect,
+    }) => {
+      await using env = new PlanTestEnv();
+      const service = createService(env);
+
+      const order = await env.seedOrder({
+        id: "ord_expired",
+        status: "EXPIRED",
+        userId: env.ownerId,
+      });
+
+      let thrown: unknown = null;
+      try {
+        await service.acceptPayment({ orderId: order.id }, "admin-1");
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toMatchObject({ code: "ORDER_NOT_ACCEPTABLE" });
+      const refreshed = await env.repo.findOrderById(order.id);
+      expect(refreshed?.status).toBe("EXPIRED");
+      expect(
+        await env.repo.findActiveUserPlan(env.ownerId, Date.now())
+      ).toBeNull();
+    });
   });
 });

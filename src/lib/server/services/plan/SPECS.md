@@ -326,6 +326,39 @@ interface ListGrantsInput {
 - Pagination: 20 per page. No `status` filter (deferred to the revoke map).
 - Errors: `FORBIDDEN` (caller is not admin).
 
+### admin.listOrders
+
+```typescript
+interface AdminListOrdersInput {
+  page?: number; // default 1
+  status?: "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
+}
+```
+
+- Requires `adminProcedure` (role-gated).
+- Returns all users' orders (unlike the owner-scoped `listOrders`), newest first, 20 per page, optionally filtered by `status`.
+- Errors: `FORBIDDEN` (caller is not admin).
+
+### admin.acceptPayment
+
+Manual confirmation that a payment was received, replicating the `settlement` webhook path (`PENDING → PAID`) for cases where the webhook was missed or the customer paid outside the gateway flow.
+
+```typescript
+interface AcceptPaymentInput {
+  orderId: string; // ord_*
+}
+```
+
+- Requires `adminProcedure` (role-gated).
+- Looks up the order by `orderId` (`NOT_FOUND` if missing).
+- Idempotent: an already-`PAID` order is returned unchanged.
+- Rejects terminal orders (`EXPIRED`, `CANCELLED`) with `ORDER_NOT_ACCEPTABLE`.
+- Marks the order `PAID`, sets `appliedAt`, and re-derives the user's plan (same lifecycle rules as the webhook).
+- Updates the matching `Payment` row to `SUCCESS` and writes an audit payload: `{ type: "admin-accept", acceptedBy: <adminId>, acceptedAt: <ISO> }`. `gatewayTransactionId` is left untouched (it was captured at checkout from the QRIS charge response).
+- Emits the same `order:paid` event as the webhook (with `transactionId` from the payment's `gatewayTransactionId`) so downstream services (e.g. affiliate commissions) stay functional.
+- Returns the updated `Order`.
+- Errors: `FORBIDDEN` (caller is not admin), `NOT_FOUND` (order missing), `ORDER_NOT_ACCEPTABLE` (order is in a terminal status).
+
 ### Lifecycle integration
 
 Admin grants participate in `deriveAndUpsert` alongside paid orders. The combined list is sorted by `appliedAt`/`startedAt` asc and fed to `deriveUserPlan` with an `alwaysApply: true` flag on grant rows. The L1 invariant is enforced inside `deriveUserPlan` — grants are never silently skipped on tier mismatch.
@@ -344,7 +377,7 @@ export const lookupAiLimitPlan = (userId: string) =>
 ## Authorization
 
 - `checkout`, `listOrders`, `getOrder`, and `getAiLimitPlanForUser` require authentication.
-- `admin.grantPlan` and `admin.listGrants` require `adminProcedure` (role-gated).
+- `admin.grantPlan`, `admin.listGrants`, `admin.listOrders`, and `admin.acceptPayment` require `adminProcedure` (role-gated).
 - `listPlans` is public.
 - `handleWebhook` is server-side only; signature verification is performed by `MidtransClient` before the event reaches the plan domain.
 
@@ -387,6 +420,7 @@ export const lookupAiLimitPlan = (userId: string) =>
 - `NOT_FOUND`: order, payment, or target user not found.
 - `FORBIDDEN`: caller is not an admin (raised by `adminProcedure` or the guard's `requireAdmin`).
 - `PAYMENT_GATEWAY_ERROR`: Midtrans API returned an error during checkout.
+- `ORDER_NOT_ACCEPTABLE`: admin attempted to accept an order in a terminal status (`EXPIRED`, `CANCELLED`).
 
 ## Deferred / Out Of Scope
 
