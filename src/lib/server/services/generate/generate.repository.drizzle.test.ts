@@ -902,6 +902,45 @@ describe.concurrent("GenerateDrizzleRepository", () => {
       );
     });
 
+    it("skips study_set_content when a chapter content is whitespace-only", async ({
+      expect,
+    }) => {
+      await using env = new GenerateTestEnv();
+
+      const successfulChunks: SuccessRecord[] = [
+        makeSuccessRecord(0, {
+          chapter: [{ content: "   ", slug: "ws", title: "Whitespace" }],
+          flashcard: [],
+          quiz: [],
+        }),
+      ];
+
+      await env.repo.finalizeGenerateTransaction({
+        generateId: "gen-1",
+        ownerId: env.ownerId,
+        studySetId: env.studySetId,
+        successfulChunks,
+      });
+
+      const chapters = env.db
+        .select()
+        .from(chapter)
+        .where(eq(chapter.studySetId, env.studySetId))
+        .all();
+      expect(chapters).toHaveLength(1);
+
+      const contents = env.db
+        .select()
+        .from(studySetContent)
+        .where(eq(studySetContent.studySetId, env.studySetId))
+        .all();
+      expect(contents).toHaveLength(0);
+
+      expect(env.db.select().from(studySetContentToChapter).all()).toHaveLength(
+        0
+      );
+    });
+
     it("links quizzes and flashcards to their chapters by chapterId", async ({
       expect,
     }) => {

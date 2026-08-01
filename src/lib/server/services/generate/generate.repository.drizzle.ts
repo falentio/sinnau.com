@@ -413,15 +413,17 @@ export class GenerateDrizzleRepository implements GenerateRepository {
         studySetId
       );
 
-      if (error instanceof ORPCError) {
-        throw error;
-      }
-
       if (rollbackErrors.length > 0) {
         logger.error("Saga rollback failed", { rollbackErrors });
       }
 
-      throw error;
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
     }
   }
 }
