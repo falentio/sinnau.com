@@ -12,7 +12,7 @@ Browser                          SvelteKit Server
 │   handleError →      │
 │   captureException() │
 │                      │
-│ auth.svelte.ts       │
+│ posthog-identify.svelte│
 │   $effect → identify │
 │   / reset on logout  │
 │                      │
@@ -24,7 +24,7 @@ Browser                          SvelteKit Server
 
 - **Reverse proxy**: `/ph/*` routes proxied to `eu.i.posthog.com` (API) and `eu-assets.i.posthog.com` (static/array assets) in `hooks.server.ts`
 - **Init**: `posthog.init()` in `+layout.ts` load function, skipped when `PUBLIC_POSTHOG_KEY` is unset
-- **Identification**: `posthog.identify(userId, { email, is_admin, name })` via `$effect` in `auth.svelte.ts`; `posthog.reset()` on sign-out
+- **Identification**: `posthog.identify(userId, { email, is_admin, name })` via `$effect` in `posthog-identify.svelte` (mounted in root layout); `posthog.reset()` on sign-out
 - **Error tracking**: `posthog.captureException(error)` for non-404 client errors in `hooks.client.ts`
 - **Configuration**: `person_profiles: identified_only`, `autocapture` with `/ph/.*` ignore list, `api_host: /ph`
 

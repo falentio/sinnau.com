@@ -210,7 +210,7 @@ Fires after successful `client.studySetSearch.search()`.
 
 ## Person Properties
 
-Set via `posthog.identify()` in `src/lib/hooks/auth.svelte.ts:72`:
+Set via `posthog.identify()` in `src/lib/components/features/analytics/posthog-identify.svelte:18`:
 
 | Property   | Type      | Description        |
 | ---------- | --------- | ------------------ |
