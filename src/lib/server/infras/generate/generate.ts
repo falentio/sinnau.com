@@ -1,3 +1,4 @@
+import { STUDY_SET_CONTENT_MAX_LENGTH } from "$lib/schemas/study-set-content.constant";
 import { chunkContent } from "$lib/server/infras/generate/chunk";
 import { valibotSchema } from "@ai-sdk/valibot";
 import { getLogger } from "@logtape/logtape";
@@ -22,6 +23,19 @@ const modelMeta = (
 };
 
 export const ChapterSchema = v.object({
+  content: v.optional(
+    v.pipe(
+      v.string(),
+      v.maxLength(
+        STUDY_SET_CONTENT_MAX_LENGTH,
+        `Chapter content must be at most ${STUDY_SET_CONTENT_MAX_LENGTH} characters`
+      ),
+      v.description(`
+Self-contained study notes for this chapter, written as plain text that a learner can read without access to the original material.
+Explain the concepts in the chapter in a clear, well-structured way. Omit this field only when the chapter is extracted from a table of contents and no subject content is available yet; otherwise always include it.
+`)
+    )
+  ),
   slug: v.pipe(
     v.string(),
     v.description(`

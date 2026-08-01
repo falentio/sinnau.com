@@ -1,6 +1,7 @@
 import { CHAPTER_ID_PREFIX } from "$lib/schemas/chapter";
 import { FLASHCARD_ID_PREFIX } from "$lib/schemas/flashcard";
 import { QUIZ_ID_PREFIX, QUIZ_OPTION_ID_PREFIX } from "$lib/schemas/quiz";
+import { STUDY_SET_CONTENT_ID_PREFIX } from "$lib/schemas/study-set-content.constant";
 import type {
   ChunkRecord,
   SuccessRecord,
@@ -24,6 +25,10 @@ import type {
   GenerateInput,
 } from "../../infras/db/schema/generate.ts";
 import { quiz, quizOption } from "../../infras/db/schema/quiz.ts";
+import {
+  studySetContent,
+  studySetContentToChapter,
+} from "../../infras/db/schema/study-set-content.ts";
 import { studySet } from "../../infras/db/schema/study-set.ts";
 import { generateId as createId } from "../../utils/nanoid.ts";
 import type {
@@ -32,6 +37,21 @@ import type {
 } from "./generate.repository.ts";
 
 const logger = getLogger(["sinnau.com", "generate", "repo"]);
+
+const collectChapterContent = (
+  content: string | undefined,
+  chapterId: string,
+  studySetId: string,
+  contentRows: (typeof studySetContent.$inferInsert)[],
+  contentToChapterRows: (typeof studySetContentToChapter.$inferInsert)[]
+): void => {
+  if (content === undefined || content === "") {
+    return;
+  }
+  const contentId = createId(STUDY_SET_CONTENT_ID_PREFIX);
+  contentRows.push({ content, id: contentId, studySetId });
+  contentToChapterRows.push({ chapterId, contentId });
+};
 
 export class GenerateDrizzleRepository implements GenerateRepository {
   private readonly dbInstance: DB;
@@ -265,6 +285,9 @@ export class GenerateDrizzleRepository implements GenerateRepository {
 
       const seenSlugs = new Set(slugToId.keys());
       const chapterRows: (typeof chapter.$inferInsert)[] = [];
+      const contentRows: (typeof studySetContent.$inferInsert)[] = [];
+      const contentToChapterRows: (typeof studySetContentToChapter.$inferInsert)[] =
+        [];
       const quizRows: (typeof quiz.$inferInsert)[] = [];
       const optionRows: (typeof quizOption.$inferInsert)[] = [];
       const flashcardRows: (typeof flashcard.$inferInsert)[] = [];
@@ -287,6 +310,13 @@ export class GenerateDrizzleRepository implements GenerateRepository {
             studySetId,
             title: genChapter.title,
           });
+          collectChapterContent(
+            genChapter.content,
+            id,
+            studySetId,
+            contentRows,
+            contentToChapterRows
+          );
         }
 
         for (const genQuiz of content.quiz) {
@@ -329,6 +359,12 @@ export class GenerateDrizzleRepository implements GenerateRepository {
       if (chapterRows.length > 0) {
         await this.dbInstance.insert(chapter).values(chapterRows);
       }
+      if (contentRows.length > 0) {
+        await this.dbInstance.insert(studySetContent).values(contentRows);
+        await this.dbInstance
+          .insert(studySetContentToChapter)
+          .values(contentToChapterRows);
+      }
       if (quizRows.length > 0) {
         await this.dbInstance.insert(quiz).values(quizRows);
       }
@@ -348,10 +384,6 @@ export class GenerateDrizzleRepository implements GenerateRepository {
         await this.dbInstance
           .delete(flashcard)
           .where(eq(flashcard.studySetId, studySetId));
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError);
-      }
-      try {
         await this.dbInstance
           .delete(quiz)
           .where(eq(quiz.studySetId, studySetId));
@@ -362,6 +394,9 @@ export class GenerateDrizzleRepository implements GenerateRepository {
         await this.dbInstance
           .delete(chapter)
           .where(eq(chapter.studySetId, studySetId));
+        await this.dbInstance
+          .delete(studySetContent)
+          .where(eq(studySetContent.studySetId, studySetId));
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError);
       }

@@ -520,7 +520,11 @@ The `submitContentTool` is used to submit new content based on the chunk.
 ```
 {
   "chapter": [
-    { "title": "Cell Structure", "slug": "cell_structure" }
+    {
+      "title": "Cell Structure",
+      "slug": "cell_structure",
+      "content": "The cell is the basic unit of life. The cell membrane controls what enters and leaves the cell. The nucleus stores genetic material (DNA). Mitochondria release usable energy from glucose through cellular respiration. The ribosome is the site of protein synthesis."
+    }
   ],
   "quiz": [
     {
@@ -544,6 +548,12 @@ The `submitContentTool` is used to submit new content based on the chunk.
   ]
 }
 ```
+
+**Chapter `content` field**
+
+- Every new chapter must include `content`: self-contained study notes written as plain text that a learner can read without access to the original material.
+- Explain the chapter's concepts clearly and in a well-structured way, mirroring the learning points you extract into quizzes and flashcards.
+- If the chapter is only known from a table of contents and no subject content is available yet, include a brief outline of what the chapter covers instead of omitting `content`.
 
 **Validation rules**
 

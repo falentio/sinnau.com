@@ -11,6 +11,10 @@ import {
 } from "$lib/server/infras/db/schema/generate";
 import { quiz, quizOption } from "$lib/server/infras/db/schema/quiz";
 import { studySet } from "$lib/server/infras/db/schema/study-set";
+import {
+  studySetContent,
+  studySetContentToChapter,
+} from "$lib/server/infras/db/schema/study-set-content";
 import type {
   ChunkRecord,
   FailureRecord,
@@ -715,7 +719,13 @@ describe.concurrent("GenerateDrizzleRepository", () => {
 
       const successfulChunks: SuccessRecord[] = [
         makeSuccessRecord(0, {
-          chapter: [{ slug: "intro", title: "Introduction" }],
+          chapter: [
+            {
+              content: "Study notes for the introduction chapter.",
+              slug: "intro",
+              title: "Introduction",
+            },
+          ],
           flashcard: [
             {
               back: "Answer 1",
@@ -762,6 +772,21 @@ describe.concurrent("GenerateDrizzleRepository", () => {
       expect(chapters).toHaveLength(1);
       expect(chapters[0]?.title).toBe("Introduction");
 
+      const contents = env.db
+        .select()
+        .from(studySetContent)
+        .where(eq(studySetContent.studySetId, env.studySetId))
+        .all();
+      expect(contents).toHaveLength(1);
+      expect(contents[0]?.content).toBe(
+        "Study notes for the introduction chapter."
+      );
+
+      const links = env.db.select().from(studySetContentToChapter).all();
+      expect(links).toHaveLength(1);
+      expect(links[0]?.chapterId).toBe(chapters[0]?.id);
+      expect(links[0]?.contentId).toBe(contents[0]?.id);
+
       const quizzes = env.db
         .select()
         .from(quiz)
@@ -791,12 +816,24 @@ describe.concurrent("GenerateDrizzleRepository", () => {
 
       const successfulChunks: SuccessRecord[] = [
         makeSuccessRecord(0, {
-          chapter: [{ slug: "intro", title: "Introduction" }],
+          chapter: [
+            {
+              content: "First chunk notes.",
+              slug: "intro",
+              title: "Introduction",
+            },
+          ],
           flashcard: [],
           quiz: [],
         }),
         makeSuccessRecord(1, {
-          chapter: [{ slug: "intro", title: "Introduction Duplicate" }],
+          chapter: [
+            {
+              content: "Duplicate notes.",
+              slug: "intro",
+              title: "Introduction Duplicate",
+            },
+          ],
           flashcard: [],
           quiz: [],
         }),
@@ -816,6 +853,53 @@ describe.concurrent("GenerateDrizzleRepository", () => {
         .all();
       expect(chapters).toHaveLength(1);
       expect(chapters[0]?.title).toBe("Introduction");
+
+      const contents = env.db
+        .select()
+        .from(studySetContent)
+        .where(eq(studySetContent.studySetId, env.studySetId))
+        .all();
+      expect(contents).toHaveLength(1);
+      expect(contents[0]?.content).toBe("First chunk notes.");
+    });
+
+    it("skips study_set_content when a chapter has no content", async ({
+      expect,
+    }) => {
+      await using env = new GenerateTestEnv();
+
+      const successfulChunks: SuccessRecord[] = [
+        makeSuccessRecord(0, {
+          chapter: [{ slug: "toc-only", title: "ToC Chapter" }],
+          flashcard: [],
+          quiz: [],
+        }),
+      ];
+
+      await env.repo.finalizeGenerateTransaction({
+        generateId: "gen-1",
+        ownerId: env.ownerId,
+        studySetId: env.studySetId,
+        successfulChunks,
+      });
+
+      const chapters = env.db
+        .select()
+        .from(chapter)
+        .where(eq(chapter.studySetId, env.studySetId))
+        .all();
+      expect(chapters).toHaveLength(1);
+
+      const contents = env.db
+        .select()
+        .from(studySetContent)
+        .where(eq(studySetContent.studySetId, env.studySetId))
+        .all();
+      expect(contents).toHaveLength(0);
+
+      expect(env.db.select().from(studySetContentToChapter).all()).toHaveLength(
+        0
+      );
     });
 
     it("links quizzes and flashcards to their chapters by chapterId", async ({
@@ -1075,7 +1159,13 @@ describe.concurrent("GenerateDrizzleRepository", () => {
 
       const successfulChunks: SuccessRecord[] = [
         makeSuccessRecord(0, {
-          chapter: [{ slug: "new-ch", title: "New Chapter" }],
+          chapter: [
+            {
+              content: "Notes for the new chapter.",
+              slug: "new-ch",
+              title: "New Chapter",
+            },
+          ],
           flashcard: [],
           quiz: [],
         }),
@@ -1096,6 +1186,13 @@ describe.concurrent("GenerateDrizzleRepository", () => {
         .where(eq(chapter.studySetId, env.studySetId))
         .all();
       expect(chapters).toHaveLength(0);
+
+      const contents = env.db
+        .select()
+        .from(studySetContent)
+        .where(eq(studySetContent.studySetId, env.studySetId))
+        .all();
+      expect(contents).toHaveLength(0);
     });
 
     it("marks generated content with isAiGenerated flag and updates study_set", async ({

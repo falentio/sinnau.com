@@ -97,8 +97,16 @@ const createMockContents = (chunkIndex: number): SuccessRecord["content"] => {
 
   return {
     chapter: [
-      { slug: introSlug, title: `Chapter ${chapterNum}: Introduction` },
-      { slug: conceptsSlug, title: `Chapter ${chapterNum}: Key Concepts` },
+      {
+        content: `This chapter introduces the core ideas of chapter ${chapterNum}: the definition of life, the scientific method, and the unifying themes of biology. Read this material to understand the foundations before moving on.`,
+        slug: introSlug,
+        title: `Chapter ${chapterNum}: Introduction`,
+      },
+      {
+        content: `This chapter covers the key concepts of chapter ${chapterNum}, including cells, energy, genetics, and homeostasis. Each concept is explored with definitions, examples, and their connections to one another.`,
+        slug: conceptsSlug,
+        title: `Chapter ${chapterNum}: Key Concepts`,
+      },
     ],
     flashcard: [
       {
