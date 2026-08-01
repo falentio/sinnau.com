@@ -143,7 +143,6 @@ const securityHeadersHandle: Handle = async ({ event, resolve }) => {
     );
     response.headers.set("cross-origin-resource-policy", "same-origin");
     response.headers.set("cross-origin-opener-policy", "same-origin");
-    // oxlint-disable-next-line no-shadow
   } catch (error) {
     logger.error("Failed to set security headers", () => ({
       error: error instanceof Error ? error.message : String(error),
@@ -188,7 +187,6 @@ const wideEventStorageHandle: Handle = async ({ event, resolve }) => {
             },
           });
           return result;
-          // oxlint-disable-next-line no-shadow
         } catch (error) {
           if (isRedirect(error)) {
             wideEventStorage.assign({
@@ -244,7 +242,6 @@ const watermarkHeaderHandle: Handle = async ({ event, resolve }) => {
     response.headers.set("x-sinnau-version", env.APP_VERSION);
     response.headers.set("x-sinnau-sha", env.APP_SHA);
     response.headers.set("x-ily", "ANA");
-    // oxlint-disable-next-line no-shadow
   } catch (error) {
     logger.error("Failed to set x-powered-by header", () => ({
       error: error instanceof Error ? error.message : String(error),
