@@ -31,8 +31,7 @@
       <div>
         <p class="text-sm font-medium">Temanmu berlangganan</p>
         <p class="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-          Klik tercatat selama 30 hari. Begitu mereka membeli paket, langganan
-          itu langsung tercatat sebagai konversimu.
+          Begitu mereka membeli paket, langganan itu langsung menjadi komisimu.
         </p>
       </div>
     </li>
@@ -44,8 +43,7 @@
       <div>
         <p class="text-sm font-medium">Komisi masuk saldo</p>
         <p class="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-          {commissionLabel} dari nilai transaksi langsung menambah saldo menunggu
-          di halaman ini.
+          {commissionLabel} dari nilai paket langsung menambah saldo menunggumu.
         </p>
       </div>
     </li>
@@ -58,7 +56,7 @@
         <p class="text-sm font-medium">Cair setiap Jumat</p>
         <p class="mt-0.5 text-sm leading-relaxed text-muted-foreground">
           Begitu saldo mencapai minimal {minimumPayoutLabel}, komisi dicairkan
-          setiap hari Jumat ke rekening payout yang kamu daftarkan.
+          setiap hari Jumat ke rekening yang kamu daftarkan.
         </p>
       </div>
     </li>

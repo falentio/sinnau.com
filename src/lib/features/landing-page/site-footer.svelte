@@ -9,6 +9,7 @@
         { href: "/#retention", label: "Ingat lebih lama" },
         { href: "/study/new/", label: "Buat modul" },
         { href: "/plans", label: "Paket & Harga" },
+        { href: "/event/affiliate", label: "Program Afiliasi" },
       ],
       title: "Produk",
     },
