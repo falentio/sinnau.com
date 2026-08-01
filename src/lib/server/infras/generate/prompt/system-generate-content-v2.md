@@ -551,9 +551,9 @@ The `submitContentTool` is used to submit new content based on the chunk.
 
 **Chapter `content` field**
 
-- Every new chapter must include `content`: self-contained study notes written as plain text that a learner can read without access to the original material.
+- Every new chapter should include `content`: self-contained study notes written as plain text that a learner can read without access to the original material.
 - Explain the chapter's concepts clearly and in a well-structured way, mirroring the learning points you extract into quizzes and flashcards.
-- If the chapter is only known from a table of contents and no subject content is available yet, include a brief outline of what the chapter covers instead of omitting `content`.
+- If the chapter is only known from a table of contents and no subject content is available yet, you may omit `content` or include a brief outline of what the chapter covers.
 
 **Validation rules**
 

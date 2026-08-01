@@ -45,12 +45,42 @@ const collectChapterContent = (
   contentRows: (typeof studySetContent.$inferInsert)[],
   contentToChapterRows: (typeof studySetContentToChapter.$inferInsert)[]
 ): void => {
-  if (content === undefined || content === "") {
+  if (content === undefined || content.trim() === "") {
     return;
   }
   const contentId = createId(STUDY_SET_CONTENT_ID_PREFIX);
   contentRows.push({ content, id: contentId, studySetId });
   contentToChapterRows.push({ chapterId, contentId });
+};
+
+const rollbackGeneratedContent = async (
+  db: DB,
+  studySetId: string
+): Promise<unknown[]> => {
+  const rollbackErrors: unknown[] = [];
+  try {
+    await db.delete(flashcard).where(eq(flashcard.studySetId, studySetId));
+  } catch (rollbackError) {
+    rollbackErrors.push(rollbackError);
+  }
+  try {
+    await db.delete(quiz).where(eq(quiz.studySetId, studySetId));
+  } catch (rollbackError) {
+    rollbackErrors.push(rollbackError);
+  }
+  try {
+    await db.delete(chapter).where(eq(chapter.studySetId, studySetId));
+  } catch (rollbackError) {
+    rollbackErrors.push(rollbackError);
+  }
+  try {
+    await db
+      .delete(studySetContent)
+      .where(eq(studySetContent.studySetId, studySetId));
+  } catch (rollbackError) {
+    rollbackErrors.push(rollbackError);
+  }
+  return rollbackErrors;
 };
 
 export class GenerateDrizzleRepository implements GenerateRepository {
@@ -270,8 +300,6 @@ export class GenerateDrizzleRepository implements GenerateRepository {
   }): Promise<void> {
     const { ownerId, studySetId, successfulChunks } = params;
 
-    const rollbackErrors: unknown[] = [];
-
     try {
       const existingRows = await this.dbInstance
         .select({ id: chapter.id, slug: chapter.slug })
@@ -380,26 +408,10 @@ export class GenerateDrizzleRepository implements GenerateRepository {
         .set({ isAiGenerated: true })
         .where(eq(studySet.id, studySetId));
     } catch (error) {
-      try {
-        await this.dbInstance
-          .delete(flashcard)
-          .where(eq(flashcard.studySetId, studySetId));
-        await this.dbInstance
-          .delete(quiz)
-          .where(eq(quiz.studySetId, studySetId));
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError);
-      }
-      try {
-        await this.dbInstance
-          .delete(chapter)
-          .where(eq(chapter.studySetId, studySetId));
-        await this.dbInstance
-          .delete(studySetContent)
-          .where(eq(studySetContent.studySetId, studySetId));
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError);
-      }
+      const rollbackErrors = await rollbackGeneratedContent(
+        this.dbInstance,
+        studySetId
+      );
 
       if (error instanceof ORPCError) {
         throw error;
