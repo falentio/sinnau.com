@@ -139,7 +139,7 @@ const securityHeadersHandle: Handle = async ({ event, resolve }) => {
     response.headers.set("referrer-policy", "no-referrer");
     response.headers.set(
       "permissions-policy",
-      "camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=(), bluetooth=()"
+      "camera=(), microphone=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), payment=(), usb=()"
     );
     response.headers.set("cross-origin-resource-policy", "same-origin");
     response.headers.set("cross-origin-opener-policy", "same-origin");

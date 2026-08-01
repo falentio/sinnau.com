@@ -1,5 +1,4 @@
 import { browser } from "$app/environment";
-import { env } from "$env/dynamic/public";
 import { dashClient } from "@better-auth/infra/client";
 import {
   adminClient,
@@ -7,7 +6,6 @@ import {
   lastLoginMethodClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
-import posthog from "posthog-js";
 import { toast } from "svelte-sonner";
 
 export const authClient = createAuthClient({
@@ -73,22 +71,4 @@ if (browser) {
       user = s.data?.user ?? null;
     }
   });
-
-  if (env.PUBLIC_POSTHOG_KEY !== undefined && env.PUBLIC_POSTHOG_KEY !== "") {
-    let identified = false;
-    $effect(() => {
-      const u = getUser();
-      if (u) {
-        identified = true;
-        posthog.identify(u.id, {
-          email: u.email,
-          is_admin: u.role === "admin",
-          name: u.name,
-        });
-      } else if (identified) {
-        identified = false;
-        posthog.reset();
-      }
-    });
-  }
 }
