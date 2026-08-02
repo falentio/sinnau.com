@@ -22,6 +22,15 @@ export const CHUNK_CLEANUP_AGE_DAYS = 30;
 
 export const GENERATE_LANGUAGE_STYLE_MAX_LENGTH = 32;
 export const GENERATE_LANGUAGE_STYLE_PATTERN = /^[a-z-]+$/u;
+
+export const GENERATE_OUTPUT_LANGUAGES = [
+  "detect",
+  "english",
+  "indonesian",
+] as const;
+export type GenerateOutputLanguage = (typeof GENERATE_OUTPUT_LANGUAGES)[number];
+export const GENERATE_OUTPUT_LANGUAGE_MAX_LENGTH = 16;
+export const GENERATE_OUTPUT_LANGUAGE_PATTERN = /^[a-z]+$/u;
 export const GENERATE_PDF_MAX_SIZE_MB = 30;
 export const GENERATE_PDF_MAX_SIZE_BYTES =
   GENERATE_PDF_MAX_SIZE_MB * 1024 * 1024;

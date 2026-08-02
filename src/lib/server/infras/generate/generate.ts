@@ -8,6 +8,7 @@ import * as v from "valibot";
 
 import { composeSystemPrompt } from "./language-style";
 import type { LanguageStyleId } from "./language-style";
+import type { OutputLanguageId } from "./output-language";
 
 const logger = getLogger(["sinnau.com", "generate", "infra"]);
 
@@ -368,6 +369,7 @@ export interface GenerateOptions {
   languageModel: LanguageModel;
   storage: GenerationStorage;
   languageStyle?: LanguageStyleId;
+  outputLanguage?: OutputLanguageId;
 }
 
 export interface GenerateResult {
@@ -625,7 +627,7 @@ export const generate = async (
     languageModel: opts.languageModel,
     maxSteps,
     storage: opts.storage,
-    systemPrompt: composeSystemPrompt(opts.languageStyle),
+    systemPrompt: composeSystemPrompt(opts.languageStyle, opts.outputLanguage),
   };
 
   const { groups, totalChunks } = planChunks({
@@ -648,6 +650,7 @@ export const generate = async (
     maxSteps,
     maxTokens,
     modelId: modelMeta(opts.languageModel).modelId,
+    outputLanguage: opts.outputLanguage ?? "detect",
     provider: modelMeta(opts.languageModel).provider,
     totalChunks,
   }));

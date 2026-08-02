@@ -7,6 +7,8 @@ import {
   GENERATE_ID_PREFIX,
   GENERATE_LANGUAGE_STYLE_MAX_LENGTH,
   GENERATE_LANGUAGE_STYLE_PATTERN,
+  GENERATE_OUTPUT_LANGUAGE_MAX_LENGTH,
+  GENERATE_OUTPUT_LANGUAGE_PATTERN,
   GENERATE_PDF_MAX_SIZE_BYTES,
   GENERATE_STATUSES,
 } from "./generate.constant.ts";
@@ -143,6 +145,13 @@ export const createGenerateInputSchema = v.object({
       v.maxLength(GENERATE_LANGUAGE_STYLE_MAX_LENGTH)
     )
   ),
+  outputLanguage: v.optional(
+    v.pipe(
+      v.string(),
+      v.regex(GENERATE_OUTPUT_LANGUAGE_PATTERN),
+      v.maxLength(GENERATE_OUTPUT_LANGUAGE_MAX_LENGTH)
+    )
+  ),
   pdf: v.pipe(v.instance(File), v.maxSize(GENERATE_PDF_MAX_SIZE_BYTES)),
   title: generateTitleSchema,
   visibility: v.optional(v.picklist(STUDY_SET_VISIBILITIES)),
@@ -172,6 +181,16 @@ export const languageStyleItemSchema = v.object({
 });
 
 export const getLanguageStylesOutputSchema = v.array(languageStyleItemSchema);
+
+// ─── GetOutputLanguages ───────────────────────────────────────────────
+
+export const outputLanguageItemSchema = v.object({
+  isDefault: v.boolean(),
+  label: v.string(),
+  value: v.string(),
+});
+
+export const getOutputLanguagesOutputSchema = v.array(outputLanguageItemSchema);
 
 // ─── HasAccess ──────────────────────────────────────────────────────────
 
@@ -218,5 +237,9 @@ export type DeleteOldChunksOutput = v.InferOutput<
 export type LanguageStyleItem = v.InferOutput<typeof languageStyleItemSchema>;
 export type GetLanguageStylesOutput = v.InferOutput<
   typeof getLanguageStylesOutputSchema
+>;
+export type OutputLanguageItem = v.InferOutput<typeof outputLanguageItemSchema>;
+export type GetOutputLanguagesOutput = v.InferOutput<
+  typeof getOutputLanguagesOutputSchema
 >;
 export type HasAccessOutput = v.InferOutput<typeof hasAccessOutputSchema>;

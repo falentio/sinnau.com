@@ -9,7 +9,10 @@
     ArrowUp01Icon,
     Delete02Icon,
     FileUploadIcon,
+    LanguageCircleIcon,
   } from "$lib/components/features/icons";
+  import FlagEnglish from "$lib/components/features/icons/flag-english.svelte";
+  import FlagIndonesia from "$lib/components/features/icons/flag-indonesia.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as Form from "$lib/components/ui/form/index.js";
@@ -68,12 +71,14 @@
         generate_id: result.generateId,
         language_style: input.languageStyle,
         method: "ai_generate",
+        output_language: input.outputLanguage,
         visibility: input.visibility,
       });
       track(AnalyticsEvent.GENERATION_STARTED, {
         extraction_type: input.extractionType,
         generate_id: result.generateId,
         language_style: input.languageStyle,
+        output_language: input.outputLanguage,
       });
       toast.success("Pembuatan modul dimulai.");
       await goto(
@@ -113,6 +118,7 @@
         description: "",
         extractionType: "normal",
         languageStyle: "student-friendly",
+        outputLanguage: "detect",
         pdf: undefined as unknown as File,
         title: "",
         visibility: "PUBLIC",
@@ -148,6 +154,12 @@
       ?.label ??
       data.languageStyles.find((s) => s.isDefault)?.label ??
       "Ramah Pelajar"
+  );
+  const selectedOutputLanguageLabel = $derived(
+    data.outputLanguages.find((item) => item.value === $formData.outputLanguage)
+      ?.label ??
+      data.outputLanguages.find((s) => s.isDefault)?.label ??
+      "Ikuti Dokumen"
   );
 
   const handlePdfChange = (e: Event) => {
@@ -264,6 +276,51 @@
     </Form.Control>
     <Form.Description
       >Privat hanya untukmu, publik bisa diakses lewat tautan langsung.</Form.Description
+    >
+    <Form.FieldErrors />
+  </Form.Field>
+
+  {#snippet outputLanguageIcon(value: string | undefined)}
+    {#if value === "english"}
+      <FlagEnglish />
+    {:else if value === "indonesian"}
+      <FlagIndonesia />
+    {:else}
+      <HugeiconsIcon icon={LanguageCircleIcon} class="size-4 shrink-0" />
+    {/if}
+  {/snippet}
+
+  <Form.Field {form} name="outputLanguage">
+    <Form.Control>
+      <Form.Label>Bahasa Output</Form.Label>
+      <Select.Root
+        type="single"
+        name="outputLanguage"
+        items={data.outputLanguages}
+        bind:value={$formData.outputLanguage}
+        disabled={$submitting}
+      >
+        <Select.Trigger class="w-full" aria-label="Pilih bahasa output">
+          <span class="flex min-w-0 flex-1 items-center gap-2 text-left">
+            {@render outputLanguageIcon($formData.outputLanguage)}
+            <span class="truncate">{selectedOutputLanguageLabel}</span>
+          </span>
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Group>
+            <Select.Label>Bahasa Output</Select.Label>
+            {#each data.outputLanguages as item (item.value)}
+              <Select.Item value={item.value} label={item.label}>
+                {@render outputLanguageIcon(item.value)}
+                {item.label}
+              </Select.Item>
+            {/each}
+          </Select.Group>
+        </Select.Content>
+      </Select.Root>
+    </Form.Control>
+    <Form.Description
+      >Pilih bahasa untuk hasil modul yang dibuat.</Form.Description
     >
     <Form.FieldErrors />
   </Form.Field>

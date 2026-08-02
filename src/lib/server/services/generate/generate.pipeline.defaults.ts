@@ -8,6 +8,7 @@ import type {
 } from "$lib/server/infras/generate/generate";
 import { generate as runGenerate } from "$lib/server/infras/generate/generate";
 import type { LanguageStyleId } from "$lib/server/infras/generate/language-style";
+import type { OutputLanguageId } from "$lib/server/infras/generate/output-language";
 import type { LiteparseClient } from "@falentio/liteparse-client";
 
 import type { GenerateRepository } from "./generate.repository.ts";
@@ -28,6 +29,7 @@ type RunLLMImpl = (input: {
   isInputTruncated?: boolean;
   pdfText: string;
   languageStyle: string;
+  outputLanguage: string;
   extractionType: string;
   storage: GenerationStorage;
   generateId: string;
@@ -45,6 +47,8 @@ export const createRunLLMDefault =
       languageModel: getDefaultModel(),
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       languageStyle: input.languageStyle as LanguageStyleId | undefined,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      outputLanguage: input.outputLanguage as OutputLanguageId | undefined,
       storage: input.storage,
     });
 

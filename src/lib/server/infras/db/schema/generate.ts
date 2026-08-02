@@ -31,6 +31,7 @@ export const generate = sqliteTable(
     id: text("id").primaryKey(),
     languageStyle: text("language_style").notNull().default("student-friendly"),
     logId: text("log_id"),
+    outputLanguage: text("output_language").notNull().default("detect"),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

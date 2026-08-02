@@ -28,6 +28,7 @@ export {
   IdeaIcon,
   InformationCircleIcon,
   InstagramIcon,
+  LanguageCircleIcon,
   Link03Icon,
   LockIcon,
   LockPasswordIcon,

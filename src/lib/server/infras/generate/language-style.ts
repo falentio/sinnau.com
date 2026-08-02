@@ -1,3 +1,4 @@
+import { getOutputLanguage } from "./output-language";
 import academic from "./prompt/language-style/academic.md?raw";
 import elementary from "./prompt/language-style/elementary.md?raw";
 import studentFriendly from "./prompt/language-style/student-friendly.md?raw";
@@ -28,15 +29,21 @@ export const getLanguageStyle = (
 };
 
 const LANGUAGE_STYLE_PLACEHOLDER = "{{LANGUAGE_STYLE}}";
+const OUTPUT_LANGUAGE_PLACEHOLDER = "{{OUTPUT_LANGUAGE}}";
 
 export const composeSystemPrompt = (
-  id: string = DEFAULT_LANGUAGE_STYLE
+  id: string = DEFAULT_LANGUAGE_STYLE,
+  outputLanguage?: string
 ): string => {
   const profile = getLanguageStyle(id);
-  const composed = SYSTEM_PROMPT.replace(LANGUAGE_STYLE_PLACEHOLDER, profile);
+  const languageProfile = getOutputLanguage(outputLanguage);
+  const composed = SYSTEM_PROMPT.replace(
+    LANGUAGE_STYLE_PLACEHOLDER,
+    profile
+  ).replace(OUTPUT_LANGUAGE_PLACEHOLDER, languageProfile);
   if (composed === SYSTEM_PROMPT) {
     throw new Error(
-      `System prompt is missing the ${LANGUAGE_STYLE_PLACEHOLDER} placeholder`
+      `System prompt is missing the ${LANGUAGE_STYLE_PLACEHOLDER} or ${OUTPUT_LANGUAGE_PLACEHOLDER} placeholder`
     );
   }
   return composed;

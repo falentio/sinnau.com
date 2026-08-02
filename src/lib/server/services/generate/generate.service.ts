@@ -104,6 +104,12 @@ export interface LanguageStyleItem {
   isDefault: boolean;
 }
 
+export interface OutputLanguageItem {
+  value: string;
+  label: string;
+  isDefault: boolean;
+}
+
 export class GenerateService {
   private readonly activeOwners = new Set<string>();
 
@@ -226,6 +232,7 @@ export class GenerateService {
       id: newId,
       languageStyle: input.languageStyle ?? "student-friendly",
       logId,
+      outputLanguage: input.outputLanguage ?? "detect",
       ownerId: owner,
       startedAt: new Date(),
       status: "CREATED",
@@ -261,6 +268,7 @@ export class GenerateService {
       isInputTruncated: truncated,
       languageStyle: input.languageStyle ?? "student-friendly",
       logId,
+      outputLanguage: input.outputLanguage ?? "detect",
       ownerId: owner,
       pdfText: inputText,
       studySetId: studySet.id,
@@ -454,6 +462,7 @@ export class GenerateService {
         isInputTruncated: inputRow.isInputTruncated,
         languageStyle: row.languageStyle,
         logId: row.logId,
+        outputLanguage: row.outputLanguage,
         ownerId: row.ownerId,
         pdfText: inputRow.input,
         studySetId: row.studySetId,
@@ -473,6 +482,7 @@ export class GenerateService {
     isInputTruncated?: boolean;
     languageStyle: string;
     logId: string | null;
+    outputLanguage: string;
     ownerId: string;
     pdfText: string;
     studySetId: string;
@@ -482,6 +492,7 @@ export class GenerateService {
       generateId: gId,
       languageStyle,
       logId,
+      outputLanguage,
       ownerId,
       pdfText,
       studySetId,
@@ -524,6 +535,7 @@ export class GenerateService {
         generateId: gId,
         isInputTruncated: params.isInputTruncated,
         languageStyle,
+        outputLanguage,
         pdfText,
         storage,
       });
@@ -601,6 +613,15 @@ export class GenerateService {
       },
       { isDefault: false, label: "Akademik", value: "academic" },
       { isDefault: false, label: "Dasar", value: "elementary" },
+    ];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getOutputLanguages(): OutputLanguageItem[] {
+    return [
+      { isDefault: true, label: "Ikuti Dokumen", value: "detect" },
+      { isDefault: false, label: "English", value: "english" },
+      { isDefault: false, label: "Bahasa Indonesia", value: "indonesian" },
     ];
   }
 

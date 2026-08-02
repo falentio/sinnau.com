@@ -51,6 +51,7 @@ const runMockPipeline = async () => {
     extractionType: "normal",
     generateId: "gen-test",
     languageStyle: "student-friendly",
+    outputLanguage: "detect",
     pdfText: text,
     storage,
   });

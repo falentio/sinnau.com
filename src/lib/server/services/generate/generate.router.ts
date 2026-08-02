@@ -4,6 +4,7 @@ import { generateCheckByStudySet } from "./queries/generate.check-by-study-set.t
 import { generateCheck } from "./queries/generate.check.ts";
 import { generateHasAccess } from "./queries/generate.has-access.ts";
 import { generateLanguageStyles } from "./queries/generate.language-styles.ts";
+import { generateOutputLanguages } from "./queries/generate.output-languages.ts";
 
 export const generateRouter = {
   admin: {
@@ -14,6 +15,7 @@ export const generateRouter = {
   create: generateCreate,
   hasAccess: generateHasAccess,
   languageStyles: generateLanguageStyles,
+  outputLanguages: generateOutputLanguages,
 };
 
 export type GenerateRouter = typeof generateRouter;

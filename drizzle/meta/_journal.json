@@ -141,6 +141,13 @@
       "when": 1785510431049,
       "tag": "20260731150711_mature_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1785682178274,
+      "tag": "20260802144938_wild_sersi",
+      "breakpoints": true
     }
   ]
 }

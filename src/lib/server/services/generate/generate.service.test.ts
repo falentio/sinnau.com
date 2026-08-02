@@ -279,6 +279,7 @@ describe.concurrent(GenerateService, () => {
           extractionType: "normal",
           languageStyle: "student-friendly",
           logId: "aiu_test_log",
+          outputLanguage: "detect",
           ownerId: "user-1",
           status: "CREATED",
         })
@@ -305,6 +306,26 @@ describe.concurrent(GenerateService, () => {
         expect.objectContaining({
           extractionType: "exhaustive",
           languageStyle: "academic",
+        })
+      );
+    });
+
+    it("persists custom outputLanguage", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const pdf = new File(["fake"], "test.pdf");
+
+      await service.createGenerate(
+        {
+          outputLanguage: "indonesian",
+          pdf,
+          title: "Set",
+        },
+        "user-1"
+      );
+
+      expect(repo.insertGenerate).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          outputLanguage: "indonesian",
         })
       );
     });
@@ -836,6 +857,54 @@ describe.concurrent(GenerateService, () => {
       const { service } = setupService();
 
       const result = service.getLanguageStyles();
+
+      for (const item of result) {
+        expect(item).toHaveProperty("value");
+        expect(item).toHaveProperty("label");
+        expect(item).toHaveProperty("isDefault");
+        expect(typeof item.value).toBe("string");
+        expect(typeof item.label).toBe("string");
+        expect(typeof item.isDefault).toBe("boolean");
+      }
+    });
+  });
+
+  describe("getOutputLanguages", () => {
+    it("returns all three output languages with labels and isDefault", ({
+      expect,
+    }) => {
+      const { service } = setupService();
+
+      const result = service.getOutputLanguages();
+
+      expect(result).toHaveLength(3);
+      expect(result).toEqual([
+        { isDefault: true, label: "Ikuti Dokumen", value: "detect" },
+        { isDefault: false, label: "English", value: "english" },
+        {
+          isDefault: false,
+          label: "Bahasa Indonesia",
+          value: "indonesian",
+        },
+      ]);
+    });
+
+    it("has exactly one default language", ({ expect }) => {
+      const { service } = setupService();
+
+      const result = service.getOutputLanguages();
+      const defaults = result.filter((s) => s.isDefault);
+
+      expect(defaults).toHaveLength(1);
+      expect(defaults[0]?.value).toBe("detect");
+    });
+
+    it("every item has value, label, and isDefault properties", ({
+      expect,
+    }) => {
+      const { service } = setupService();
+
+      const result = service.getOutputLanguages();
 
       for (const item of result) {
         expect(item).toHaveProperty("value");

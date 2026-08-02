@@ -11,6 +11,7 @@ export type RunLLMFn = (input: {
   isInputTruncated?: boolean;
   pdfText: string;
   languageStyle: string;
+  outputLanguage: string;
   extractionType: string;
   storage: GenerationStorage;
   generateId: string;

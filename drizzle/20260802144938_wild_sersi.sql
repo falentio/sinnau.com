@@ -1,0 +1,1 @@
+ALTER TABLE `generate` ADD `output_language` text DEFAULT 'detect' NOT NULL;
