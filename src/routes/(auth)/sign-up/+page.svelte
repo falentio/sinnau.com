@@ -7,7 +7,7 @@
 </script>
 
 <SeoHead
-  title="Daftar Sinnau — Ubah Catatan Kuliah Jadi Nilai Bagus"
+  title="Daftar Sinnau · Ubah Catatan Kuliah Jadi Nilai Bagus"
   description="Daftar gratis sinnau. Ubah PDF catatan kuliah jadi flashcard dan quiz interaktif dengan AI spaced repetition (FSRS). Belajar lebih efisien, raih IPK terbaikmu."
   robots="noindex"
 />

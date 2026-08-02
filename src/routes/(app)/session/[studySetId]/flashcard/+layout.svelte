@@ -10,7 +10,7 @@
 <SeoHead
   title="Review - {data.studySet.title} · sinnau"
   description="Review {data.studySet
-    .title} dengan flashcard — jawab kartu ulang pakai sistem spaced repetition (FSRS) dan lihat hasil belajarmu di sinnau."
+    .title} dengan flashcard: jawab kartu ulang pakai sistem spaced repetition (FSRS) dan lihat hasil belajarmu di sinnau."
   robots="noindex"
 />
 

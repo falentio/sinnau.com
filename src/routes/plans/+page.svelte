@@ -26,7 +26,7 @@
 
 <SeoHead
   title="Paket & Harga · sinnau"
-  description="Bandingkan paket Sinnau — LITE, PLUS, PREMIUM. Bayar sekali, akses sampai habis, tanpa tagihan berulang."
+  description="Bandingkan paket Sinnau: LITE, PLUS, PREMIUM. Bayar sekali, akses sampai habis, tanpa tagihan berulang."
 />
 
 <div class="landing-v3 relative min-h-[100dvh]">
@@ -49,7 +49,7 @@
         <p
           class="mt-4 text-[15px] leading-relaxed text-[var(--landing-muted)] text-pretty sm:text-[16px]"
         >
-          Bayar sekali, aktif sampai durasi habis. Kamu yang pegang kendali —
+          Bayar sekali, aktif sampai durasi habis. Kamu yang pegang kendali,
           nggak ada tagihan kejutan.
         </p>
       </div>

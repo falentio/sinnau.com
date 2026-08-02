@@ -14,7 +14,7 @@
 <SeoHead
   title="Quiz - {data.studySet.title} · sinnau"
   description="Kerjakan kuis {data.studySet
-    .title} — jawab soal pilihan ganda, cek skor, dan lihat pembahasan buat persiapan ujian di sinnau."
+    .title}: jawab soal pilihan ganda, cek skor, dan lihat pembahasan buat persiapan ujian di sinnau."
   robots="noindex"
 />
 

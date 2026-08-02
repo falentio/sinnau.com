@@ -161,7 +161,7 @@
     <div class="mb-2 flex flex-col gap-1">
       <h1 class="text-2xl font-semibold tracking-tight">Jelajahi</h1>
       <p class="text-sm text-muted-foreground">
-        Temukan modul belajar buatan komunitas — dari sesama mahasiswa.
+        Temukan modul belajar buatan komunitas, dari sesama mahasiswa.
       </p>
     </div>
   </div>
@@ -273,7 +273,7 @@
         <HugeiconsIcon icon={Search02Icon} class="size-5" />
       </div>
       <p class="text-sm text-muted-foreground">
-        Ketik kata kunci untuk mulai mencari — coba 'fisika', 'sejarah', atau
+        Ketik kata kunci untuk mulai mencari, coba 'fisika', 'sejarah', atau
         topik favoritmu.
       </p>
     </div>

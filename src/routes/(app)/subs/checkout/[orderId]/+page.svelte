@@ -302,7 +302,7 @@
     class="flex flex-col gap-3 border-t border-border/60 py-8 text-[13px] text-muted-foreground md:flex-row md:items-center md:justify-between"
   >
     <p>
-      Tidak jadi? Biarkan saja — pesanan kedaluwarsa otomatis tanpa biaya apa
+      Tidak jadi? Biarkan saja, pesanan kedaluwarsa otomatis tanpa biaya apa
       pun.
     </p>
     <a

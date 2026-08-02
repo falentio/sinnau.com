@@ -31,7 +31,7 @@
 
 <SeoHead
   title="Hasil Review Flashcard · sinnau"
-  description="Lihat hasil review flashcard kamu — jumlah kartu benar dan salah, skor akhir, serta ringkasan performa untuk sesi belajar ini."
+  description="Lihat hasil review flashcard kamu: jumlah kartu benar dan salah, skor akhir, serta ringkasan performa untuk sesi belajar ini."
   robots="noindex"
 />
 

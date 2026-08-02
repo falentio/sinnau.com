@@ -61,7 +61,7 @@
 
 <SeoHead
   title="Paket · sinnau"
-  description="Bandingkan paket Sinnau — LITE, PLUS, PREMIUM. Pilih durasi 1, 6, atau 12 bulan. Bayar sekali, akses sampai habis, tanpa tagihan berulang."
+  description="Bandingkan paket Sinnau: LITE, PLUS, PREMIUM. Pilih durasi 1, 6, atau 12 bulan. Bayar sekali, akses sampai habis, tanpa tagihan berulang."
   robots="noindex"
 />
 
@@ -91,7 +91,7 @@
       Cari paket yang pas dengan ritme belajarmu
     </h1>
     <p class="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-      Bayar sekali, aktif sampai durasi habis. Kamu yang pegang kendali — nggak
+      Bayar sekali, aktif sampai durasi habis. Kamu yang pegang kendali, nggak
       ada tagihan kejutan.
     </p>
   </header>
@@ -155,7 +155,7 @@
     class="flex flex-col gap-3 border-t border-border/60 mt-32 py-10 text-[13px] text-muted-foreground"
   >
     <p>
-      Pembayaran melalui QRIS. Tidak jadi bayar? Pesanan kedaluwarsa otomatis —
+      Pembayaran melalui QRIS. Tidak jadi bayar? Pesanan kedaluwarsa otomatis,
       tidak ada yang terpotong.
     </p>
   </footer>

@@ -126,7 +126,7 @@
               Berlaku sampai {planExpiry.label} ·
               {planExpiry.daysRemaining} hari lagi
             {:else}
-              Paket diperpanjang — akses berlanjut
+              Paket diperpanjang, akses berlanjut
             {/if}
           </span>
         </div>
@@ -182,7 +182,7 @@
         Pesanan
       </h2>
       <p class="text-sm text-muted-foreground">
-        Pesanan yang sudah selesai — aktif, kedaluwarsa, atau dibatalkan.
+        Pesanan yang sudah selesai: aktif, kedaluwarsa, atau dibatalkan.
       </p>
       {#if orderCountLabel}
         <p
