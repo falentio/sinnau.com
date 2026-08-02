@@ -9,7 +9,7 @@
 
 <StaticPage
   title="Kebijakan Privasi · sinnau"
-  description="Kebijakan privasi sinnau — bagaimana kami mengumpulkan, menggunakan, melindungi, dan menghormati data pribadi kamu."
+  description="Kebijakan privasi sinnau, bagaimana kami mengumpulkan, menggunakan, melindungi, dan menghormati data pribadi kamu."
   heading="Kebijakan Privasi"
 >
   <p class="text-muted-foreground">Terakhir diperbarui: 23 Juli 2026</p>
@@ -460,8 +460,8 @@
     <h2 class="text-lg font-semibold text-foreground">9. Keamanan Data</h2>
     <p class="font-semibold italic">
       Ringkasan: Kami melindungi data kamu dengan langkah-langkah teknis dan
-      organisasi yang wajar. Tapi tidak ada sistem yang 100% aman — laporkan
-      jika kamu mencurigai pelanggaran.
+      organisasi yang wajar. Tapi tidak ada sistem yang 100% aman. Laporkan jika
+      kamu mencurigai pelanggaran.
     </p>
     <p>
       Kami menerapkan langkah-langkah keamanan teknis dan organisasi yang wajar
@@ -545,7 +545,7 @@
       11. Cookie & Teknologi Pelacakan
     </h2>
     <p class="font-semibold italic">
-      Ringkasan: Kami menggunakan cookie seperlunya — hanya untuk fungsionalitas
+      Ringkasan: Kami menggunakan cookie seperlunya, hanya untuk fungsionalitas
       dan analitik, bukan untuk iklan. Kamu bisa mengontrolnya di pengaturan
       browser.
     </p>
@@ -553,7 +553,7 @@
     <ul class="list-disc space-y-1 pl-5">
       <li>
         <strong>Cookie Esensial:</strong> Diperlukan agar Layanan berfungsi dengan
-        baik — mengelola sesi login, mengingat preferensi, dan menjaga keamanan.
+        baik, seperti mengelola sesi login, mengingat preferensi, dan menjaga keamanan.
       </li>
       <li>
         <strong>Cookie Analitik:</strong> Membantu Kami memahami bagaimana Pengguna
@@ -564,9 +564,9 @@
     <p>
       Kami <strong>tidak</strong> menggunakan cookie pemasaran/iklan atau teknologi
       pelacakan pihak ketiga untuk iklan bertarget. Kamu dapat mengontrol cookie melalui
-      pengaturan browser kamu — kamu dapat memblokir, menghapus, atau mendapatkan
-      peringatan saat cookie dipasang. Harap diperhatikan bahwa memblokir cookie esensial
-      dapat memengaruhi fungsi Layanan.
+      pengaturan browser kamu. Kamu dapat memblokir, menghapus, atau mendapatkan peringatan
+      saat cookie dipasang. Harap diperhatikan bahwa memblokir cookie esensial dapat
+      memengaruhi fungsi Layanan.
     </p>
   </section>
 
@@ -574,7 +574,7 @@
     <h2 class="text-lg font-semibold text-foreground">12. Kontak</h2>
     <p class="font-semibold italic">
       Ringkasan: Ada pertanyaan tentang data kamu? Ingin menggunakan hak Subjek
-      Data? Hubungi kami — kami siap membantu.
+      Data? Hubungi kami. Kami siap membantu.
     </p>
     <p>
       Jika kamu memiliki pertanyaan, permintaan terkait data pribadi, atau ingin

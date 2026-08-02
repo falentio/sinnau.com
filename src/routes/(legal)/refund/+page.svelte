@@ -9,7 +9,7 @@
 
 <StaticPage
   title="Kebijakan Pengembalian Dana · sinnau"
-  description="Kebijakan pengembalian dana sinnau — semua pembelian bersifat final dan tidak dapat dikembalikan."
+  description="Kebijakan pengembalian dana sinnau, semua pembelian bersifat final dan tidak dapat dikembalikan."
   heading="Kebijakan Pengembalian Dana"
 >
   <p class="text-muted-foreground">Terakhir diperbarui: 23 Juli 2026</p>
@@ -61,7 +61,7 @@
     </h2>
     <p class="font-semibold italic">
       Ringkasan: Setiap pembelian yang sudah diselesaikan tidak dapat
-      dikembalikan dalam bentuk apa pun — baik uang, kredit, maupun penukaran ke
+      dikembalikan dalam bentuk apa pun, baik uang, kredit, maupun penukaran ke
       produk lain.
     </p>
     <p>

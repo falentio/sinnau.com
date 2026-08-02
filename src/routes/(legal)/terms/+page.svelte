@@ -123,7 +123,7 @@
   <section id="definisi">
     <h2 class="text-lg font-semibold text-foreground">2. Definisi</h2>
     <p class="font-semibold italic">
-      Ringkasan: Istilah-istilah penting yang dipakai di seluruh Ketentuan ini —
+      Ringkasan: Istilah-istilah penting yang dipakai di seluruh Ketentuan ini,
       supaya tidak ada salah paham.
     </p>
     <p>Dalam Ketentuan ini, istilah-istilah berikut memiliki arti:</p>
@@ -327,8 +327,8 @@
       7. Penggunaan yang Dilarang
     </h2>
     <p class="font-semibold italic">
-      Ringkasan: Jangan menyalahgunakan sinnau — tidak boleh spam, konten
-      ilegal, menipu, meretas, atau merusak pengalaman pengguna lain.
+      Ringkasan: Jangan menyalahgunakan sinnau: tidak boleh spam, konten ilegal,
+      menipu, meretas, atau merusak pengalaman pengguna lain.
     </p>
     <p>Kamu setuju untuk tidak menggunakan Layanan untuk:</p>
     <ul class="list-disc space-y-1 pl-5">
@@ -374,7 +374,7 @@
     <h2 class="text-lg font-semibold text-foreground">8. Fitur Berbasis AI</h2>
     <p class="font-semibold italic">
       Ringkasan: sinnau menggunakan AI untuk membantu belajar kamu. Namun, AI
-      bisa salah — selalu periksa kembali hasilnya. Kamu bertanggung jawab atas
+      bisa salah, selalu periksa kembali hasilnya. Kamu bertanggung jawab atas
       keputusan yang kamu ambil berdasarkan keluaran AI.
     </p>
     <p>
@@ -561,7 +561,7 @@
     <h2 class="text-lg font-semibold text-foreground">12. Keadaan Kahar</h2>
     <p class="font-semibold italic">
       Ringkasan: Kami tidak bertanggung jawab jika Layanan terganggu karena
-      hal-hal di luar kendali Kami — bencana alam, perang, pemadaman internet,
+      hal-hal di luar kendali Kami: bencana alam, perang, pemadaman internet,
       serangan siber, dan sebagainya.
     </p>
     <p>
@@ -607,7 +607,7 @@
   <section id="ketentuan-umum">
     <h2 class="text-lg font-semibold text-foreground">13. Ketentuan Umum</h2>
     <p class="font-semibold italic">
-      Ringkasan: Beberapa aturan standar — jika satu bagian Ketentuan ini tidak
+      Ringkasan: Beberapa aturan standar: jika satu bagian Ketentuan ini tidak
       berlaku, sisanya tetap berlaku. Ketentuan ini adalah keseluruhan
       perjanjian di antara kita.
     </p>
@@ -775,7 +775,7 @@
   <section id="kontak">
     <h2 class="text-lg font-semibold text-foreground">18. Kontak</h2>
     <p class="font-semibold italic">
-      Ringkasan: Ada pertanyaan? Hubungi kami — kami siap membantu.
+      Ringkasan: Ada pertanyaan? Hubungi kami. Kami siap membantu.
     </p>
     <p>
       Jika kamu memiliki pertanyaan, keluhan, atau masukan mengenai Ketentuan
