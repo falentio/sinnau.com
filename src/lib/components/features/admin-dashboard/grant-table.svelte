@@ -80,7 +80,7 @@
               {truncate(grant.grantedBy)}
             </button>
           {:else}
-            —
+            -
           {/if}
         </Table.Cell>
         <Table.Cell class="text-nowrap">

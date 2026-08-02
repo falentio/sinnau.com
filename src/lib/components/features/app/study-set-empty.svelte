@@ -22,7 +22,7 @@
     <EmptyTitle>Belum ada modul belajar</EmptyTitle>
     <EmptyDescription>
       Kamu belum punya modul belajar. Buat sendiri atau biarkan AI yang
-      menyusunnya — tinggal kasih topik.
+      menyusunnya, tinggal kasih topik.
     </EmptyDescription>
   </EmptyHeader>
   <EmptyContent>

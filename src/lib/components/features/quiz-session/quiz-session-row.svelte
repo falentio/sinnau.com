@@ -22,7 +22,7 @@
   const score = $derived(
     session.score !== null && session.totalQuestions
       ? `Skor ${session.score}`
-      : "—"
+      : "-"
   );
 </script>
 
@@ -39,7 +39,7 @@
     {sessionStatusLabel(session.status)}
   </span>
   <span class="flex-1 truncate text-sm text-foreground">
-    {session.lastQuestionText ?? "—"}
+    {session.lastQuestionText ?? "-"}
   </span>
   <span class="text-xs text-muted-foreground">
     {formatSessionTimestamp(session.createdAt.getTime())}

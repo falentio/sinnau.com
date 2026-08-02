@@ -125,7 +125,7 @@
               {app.instagramHandle}
             </a>
           {:else}
-            —
+            -
           {/if}
         </Table.Cell>
         <Table.Cell class="max-w-32 truncate font-mono text-xs">
@@ -142,7 +142,7 @@
               {app.tiktokHandle}
             </a>
           {:else}
-            —
+            -
           {/if}
         </Table.Cell>
         <Table.Cell class="max-w-32 truncate font-mono text-xs">
@@ -156,7 +156,7 @@
               {app.youtubeHandle}
             </a>
           {:else}
-            —
+            -
           {/if}
         </Table.Cell>
         <Table.Cell>
@@ -186,7 +186,7 @@
               </Button>
             </div>
           {:else}
-            <span class="text-xs text-muted-foreground">—</span>
+            <span class="text-xs text-muted-foreground">-</span>
           {/if}
         </Table.Cell>
       </Table.Row>
