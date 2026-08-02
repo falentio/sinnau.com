@@ -48,7 +48,7 @@
           class="mt-5 max-w-[34ch] text-[13px] leading-relaxed text-[var(--landing-muted)]"
         >
           Belajar tanpa takut lupa. Unggah PDF, kami ubah jadi flashcard dan
-          kuis pintar yang mengulang di waktu yang tepat — biar ilmunya
+          kuis pintar yang mengulang di waktu yang tepat, biar ilmunya
           benar-benar lekat.
         </p>
         <div class="mt-6">

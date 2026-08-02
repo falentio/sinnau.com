@@ -5,11 +5,11 @@
 
   const faqs = [
     {
-      a: "Daftar, lalu unggah PDF catatan atau slide pertama Anda. AI membuat flashcard dan soal kuis untuk Anda. Dalam dua menit, Anda sudah bisa mulai sesi pertama — tanpa bikin kartu manual.",
+      a: "Daftar, lalu unggah PDF catatan atau slide pertama Anda. AI membuat flashcard dan soal kuis untuk Anda. Dalam dua menit, Anda sudah bisa mulai sesi pertama, tanpa bikin kartu manual.",
       q: "Bagaimana cara mulai pakai sinnau?",
     },
     {
-      a: "Gratis. Langsung dapat tiga modul lengkap — tanpa kartu kredit.",
+      a: "Gratis. Langsung dapat tiga modul lengkap, tanpa kartu kredit.",
       q: "Apakah sinnau gratis?",
     },
     {
@@ -17,11 +17,11 @@
       q: "Berapa lama satu modul selesai dibuat?",
     },
     {
-      a: "Iya. Setiap kartu dijadwalkan ulang tepat sebelum Anda mulai lupa — pakai algoritma yang sama dengan Anki.",
+      a: "Iya. Setiap kartu dijadwalkan ulang tepat sebelum Anda mulai lupa, pakai algoritma yang sama dengan Anki.",
       q: "Apakah metode sinnau benar-benar membantu saya ingat materi?",
     },
     {
-      a: "Kalau ada yang kurang pas, Anda bisa edit, hapus, atau tambah kartu sendiri kapan saja. Hasil AI adalah draf awal — Anda yang menyempurnakan.",
+      a: "Kalau ada yang kurang pas, Anda bisa edit, hapus, atau tambah kartu sendiri kapan saja. Hasil AI adalah draf awal. Anda yang menyempurnakan.",
       q: "Bagaimana kalau kartu dari AI tidak sesuai?",
     },
     {

@@ -17,14 +17,14 @@
       <h2
         class="font-display text-[28px] leading-[1.06] tracking-[-0.03em] text-[var(--landing-bg)] sm:text-[38px] text-balance"
       >
-        Belajar lebih pintar, bukan lebih keras<br />— langsung dari PDF Anda.
+        Belajar lebih pintar, bukan lebih keras<br />langsung dari PDF Anda.
       </h2>
 
       <p
         class="mt-5 text-[14px] leading-relaxed text-[color-mix(in_oklch,var(--landing-bg)_60%,transparent)] text-pretty sm:text-[15px]"
       >
-        Cukup unggah PDF. Kami buatkan flashcard dan kuisnya — tanpa setup,
-        tanpa kartu manual.
+        Cukup unggah PDF. Kami buatkan flashcard dan kuisnya, tanpa setup, tanpa
+        kartu manual.
       </p>
 
       <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -41,8 +41,8 @@
       <p
         class="mt-4 text-[12px] text-[color-mix(in_oklch,var(--landing-bg)_40%,transparent)]"
       >
-        Coba 3 modul pertama gratis — tanpa kartu kredit. Batalkan kapan saja.
-        Mulai dalam 2 menit — langsung bisa dipakai.
+        Coba 3 modul pertama gratis, tanpa kartu kredit. Batalkan kapan saja.
+        Mulai dalam 2 menit, langsung bisa dipakai.
       </p>
     </div>
   </div>

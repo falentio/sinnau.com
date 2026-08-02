@@ -83,7 +83,7 @@
       href="/login/"
       class="inline-flex items-center gap-1.5 text-[14px] font-medium text-[var(--landing-accent)] hover:underline"
     >
-      Sudah tahu cara belajarmu? Mulai gratis — siap pakai dalam 2 menit. &rarr;
+      Sudah tahu cara belajarmu? Mulai gratis, siap pakai dalam 2 menit. &rarr;
     </a>
   </div>
 </section>

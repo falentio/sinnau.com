@@ -57,7 +57,7 @@
         </div>
 
         <p class="mt-6 text-[12px] text-[var(--landing-muted)]">
-          Algoritma yang sama digunakan oleh jutaan pelajar di seluruh dunia —
+          Algoritma yang sama digunakan oleh jutaan pelajar di seluruh dunia,
           dari mahasiswa kedokteran hingga pembelajar bahasa.
         </p>
       </div>
