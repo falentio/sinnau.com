@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dev } from "$app/environment";
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
@@ -16,6 +17,11 @@
   import QrisDisplay from "$lib/components/features/subs/qris-display.svelte";
   import StatusBanner from "$lib/components/features/subs/status-banner.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
+  import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+  } from "$lib/components/ui/alert";
   import Button from "$lib/components/ui/button/button.svelte";
   import { client } from "$lib/orpc";
   import type { GetOrder } from "$lib/schemas/plan";
@@ -31,6 +37,10 @@
   // svelte-ignore state_referenced_locally
   let order = $state<GetOrder>(data.order);
   let orderId = $derived($page.params.orderId);
+  const forceBlurred = $derived(
+    dev && $page.url.searchParams.get("blurred") !== null
+  );
+  const isExpiredView = $derived(order.status === "EXPIRED" || forceBlurred);
   let isVerifying = $state(false);
   let isPolling = $state(false);
   let isRetrying = $state(false);
@@ -182,8 +192,12 @@
       Selesaikan pembayaran
     </h1>
     <p class="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-      Scan QR code di bawah dengan aplikasi bank atau e-wallet favoritmu.
-      Pembayaran terverifikasi otomatis.
+      {#if isExpiredView}
+        QR ini sudah kedaluwarsa. Buat pesanan baru untuk mendapatkan QR baru.
+      {:else}
+        Scan QR code di bawah dengan aplikasi bank atau e-wallet favoritmu.
+        Pembayaran terverifikasi otomatis.
+      {/if}
     </p>
   </header>
 
@@ -209,7 +223,18 @@
         <QrisDisplay
           qrUrl={order.qrUrl}
           alt={`QRIS untuk ${PLAN_NAME[order.planKey]} ${order.durationMonths} bulan`}
+          blurred={isExpiredView}
         />
+
+        {#if isExpiredView}
+          <Alert class="w-full text-left">
+            <AlertTitle>Pesanan kedaluwarsa</AlertTitle>
+            <AlertDescription>
+              QR ini sudah tidak berlaku. Buat pesanan baru untuk mendapatkan QR
+              baru.
+            </AlertDescription>
+          </Alert>
+        {/if}
       {:else if order.status === "PENDING"}
         <div
           class="flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-6 py-8 text-center"
@@ -220,7 +245,11 @@
         </div>
       {/if}
 
-      {#if order.expiresAt && order.status === "PENDING"}
+      {#if isExpiredView}
+        <Button href="/subs/plans" size="sm" class="rounded-full">
+          Buat pesanan baru
+        </Button>
+      {:else if order.expiresAt && order.status === "PENDING"}
         <ExpiryCountdown expiresAt={order.expiresAt} />
       {/if}
     </section>

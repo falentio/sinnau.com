@@ -1,6 +1,9 @@
 <script lang="ts">
-  let { qrUrl, alt = "QRIS pembayaran" }: { qrUrl: string; alt?: string } =
-    $props();
+  let {
+    qrUrl,
+    alt = "QRIS pembayaran",
+    blurred = false,
+  }: { qrUrl: string; alt?: string; blurred?: boolean } = $props();
 </script>
 
 <div
@@ -17,14 +20,23 @@
         {alt}
         loading="lazy"
         class="size-full object-contain p-3"
+        class:pointer-events-none={blurred}
+        class:select-none={blurred}
+        class:blur-lg={blurred}
+        aria-hidden={blurred}
       />
     </div>
 
     <div
       class="mt-4 flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
     >
-      <span class="size-1 rounded-full bg-emerald-500"></span>
-      QRIS · scan untuk bayar
+      {#if blurred}
+        <span class="size-1 rounded-full bg-amber-500"></span>
+        QR tidak aktif
+      {:else}
+        <span class="size-1 rounded-full bg-emerald-500"></span>
+        QRIS · scan untuk bayar
+      {/if}
     </div>
   </div>
 </div>

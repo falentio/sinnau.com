@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ depends, url }) => {
     // TODO: refactor getAiLimit to return null instead of throwing NO_ACTIVE_PLAN,
     // then remove this catch so unexpected errors propagate to the error boundary
     client.plan.getAiLimit().catch(() => null),
-    client.plan.listOrders({ excludeStatuses: ["PENDING"], page }),
+    client.plan.listOrders({ page }),
   ]);
 
   return {

@@ -183,7 +183,7 @@
         Pesanan
       </h2>
       <p class="text-sm text-muted-foreground">
-        Pesanan yang sudah selesai: aktif, kedaluwarsa, atau dibatalkan.
+        Pesanan yang menunggu pembayaran, aktif, kedaluwarsa, atau dibatalkan.
       </p>
       {#if orderCountLabel}
         <p

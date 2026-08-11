@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { ArrowRight01Icon } from "$lib/components/features/icons";
   import { PlanStatusBadge, formatIdr } from "$lib/components/features/plan";
   import { PLAN_KEYS } from "$lib/schemas/plan.constant";
+  import { HugeiconsIcon } from "@hugeicons/svelte";
 
   type OrderStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
   interface Order {
@@ -25,11 +27,12 @@
   const sku = $derived(
     `${order.planKey.toLowerCase()}-${order.durationMonths}m`
   );
+  const isLinkable = $derived(
+    order.status === "PENDING" || order.status === "EXPIRED"
+  );
 </script>
 
-<div
-  class="flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3.5 last:border-b-0 md:gap-4 md:px-6 md:py-4"
->
+{#snippet rowContent()}
   <div
     class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.04] font-heading text-xs font-semibold tabular-nums text-foreground/80"
   >
@@ -65,5 +68,26 @@
     >
       {formatIdr(order.grossAmount)}
     </span>
+    {#if isLinkable}
+      <HugeiconsIcon
+        icon={ArrowRight01Icon}
+        class="size-4 text-muted-foreground/50 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:text-muted-foreground"
+      />
+    {/if}
   </div>
-</div>
+{/snippet}
+
+{#if isLinkable}
+  <a
+    href={`/subs/checkout/${order.id}`}
+    class="group flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3.5 transition-colors last:border-b-0 hover:bg-muted/40 md:gap-4 md:px-6 md:py-4"
+  >
+    {@render rowContent()}
+  </a>
+{:else}
+  <div
+    class="flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3.5 last:border-b-0 md:gap-4 md:px-6 md:py-4"
+  >
+    {@render rowContent()}
+  </div>
+{/if}
