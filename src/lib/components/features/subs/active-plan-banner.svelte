@@ -1,15 +1,14 @@
 <script lang="ts">
   import { ArrowRight01Icon, CrownIcon } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
-  import { PLAN_NAME_FALLBACK } from "$lib/schemas/plan.constant";
+  import {
+    PLAN_KEYS,
+    PLAN_NAME,
+    PLAN_NAME_FALLBACK,
+  } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
-  type PlanKey = "LITE" | "PLUS" | "PREMIUM";
-  const planName: Record<PlanKey, string> = {
-    LITE: "Lite",
-    PLUS: "Plus",
-    PREMIUM: "Premium",
-  };
+  type PlanKey = (typeof PLAN_KEYS)[number];
 
   let {
     plan,
@@ -21,7 +20,7 @@
     weekly: number;
   } = $props();
 
-  const planLabel = $derived(planName[plan] ?? PLAN_NAME_FALLBACK);
+  const planLabel = $derived(PLAN_NAME[plan] ?? PLAN_NAME_FALLBACK);
   const monthly = $derived(daily * 10);
 </script>
 

@@ -8,7 +8,10 @@
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import Faq from "$lib/features/landing-page/faq.svelte";
   import { client } from "$lib/orpc";
-  import { PLAN_TIER_RANK as tierRank } from "$lib/schemas/plan.constant";
+  import {
+    PLAN_KEYS,
+    PLAN_TIER_RANK as tierRank,
+  } from "$lib/schemas/plan.constant";
   import { getErrorMessage } from "$lib/utils/error-messages";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
@@ -28,7 +31,7 @@
   let checkoutError = $state<string | null>(null);
 
   const activePlanKey = $derived(data.activePlan?.planKey ?? null);
-  const isDowngrade = (planKey: "LITE" | "PLUS" | "PREMIUM") => {
+  const isDowngrade = (planKey: (typeof PLAN_KEYS)[number]) => {
     if (!activePlanKey) {
       return false;
     }
@@ -36,7 +39,7 @@
   };
 
   const handleCheckout = async (
-    planKey: "LITE" | "PLUS" | "PREMIUM",
+    planKey: (typeof PLAN_KEYS)[number],
     durationMonths: 1 | 6 | 12
   ) => {
     checkoutError = null;

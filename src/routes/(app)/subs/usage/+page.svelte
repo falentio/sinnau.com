@@ -10,6 +10,7 @@
   import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import {
+    PLAN_KEYS,
     PLAN_MONTHLY_PRICE,
     PLAN_NAME,
     PLAN_NAME_FALLBACK,
@@ -18,7 +19,7 @@
 
   import type { PageData } from "./$types";
 
-  type PlanKey = "LITE" | "PLUS" | "PREMIUM";
+  type PlanKey = (typeof PLAN_KEYS)[number];
   const planName: Record<PlanKey, string> = PLAN_NAME;
   const planPrice: Record<PlanKey, number> = PLAN_MONTHLY_PRICE;
 

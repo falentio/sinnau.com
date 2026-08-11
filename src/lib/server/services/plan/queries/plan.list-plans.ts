@@ -5,4 +5,4 @@ import { planService } from "../index";
 
 export const planListPlans = publicProcedure
   .output(listPlansOutputSchema)
-  .handler(() => planService.listPlans());
+  .handler(({ context }) => planService.listPlans(context.user));

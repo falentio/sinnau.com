@@ -1,4 +1,9 @@
-export const PLAN_KEYS = ["LITE", "PLUS", "PREMIUM"] as const;
+export const PLAN_KEYS = ["LITE", "PLUS", "PREMIUM", "TEST"] as const;
+
+// Plans only shown in the public catalog when the caller is an admin
+export const PLAN_ADMIN_ONLY_KEYS: readonly (typeof PLAN_KEYS)[number][] = [
+  "TEST",
+];
 export const PLAN_DURATIONS = [1, 6, 12] as const;
 export const PLAN_PAGE_LIMIT = 20;
 
@@ -28,6 +33,7 @@ export const PLAN_MONTHLY_PRICE: Record<(typeof PLAN_KEYS)[number], number> = {
   LITE: 30_000,
   PLUS: 50_000,
   PREMIUM: 100_000,
+  TEST: 100,
 };
 
 // Monthly AI generate limit per tier
@@ -35,6 +41,7 @@ export const PLAN_MONTHLY_LIMIT: Record<(typeof PLAN_KEYS)[number], number> = {
   LITE: 120_000,
   PLUS: 240_000,
   PREMIUM: 720_000,
+  TEST: 1000,
 };
 
 // Months the user actually pays for, per purchased duration
@@ -52,12 +59,14 @@ export const PLAN_TIER_RANK: Record<(typeof PLAN_KEYS)[number], number> = {
   LITE: 1,
   PLUS: 2,
   PREMIUM: 3,
+  TEST: 0,
 };
 
 export const PLAN_NAME: Record<(typeof PLAN_KEYS)[number], string> = {
   LITE: "Lite",
   PLUS: "Plus",
   PREMIUM: "Premium",
+  TEST: "Test",
 };
 export const PLAN_NAME_FALLBACK = "Tidak Diketahui";
 
@@ -76,6 +85,9 @@ export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
     "Semua keuntungan Lite",
     "Batas generate 6× lebih besar",
     "Prioritas dukungan pelanggan",
+  ],
+  TEST: [
+    `Batas generate hingga ${PLAN_MONTHLY_LIMIT.TEST / PLAN_UNIT_DISPLAY_DIVISOR} modul per bulan`,
   ],
 };
 

@@ -5,6 +5,7 @@
   import { Separator } from "$lib/components/ui/separator/index.js";
   import {
     PLAN_DAILY_DIVISOR,
+    PLAN_KEYS,
     PLAN_MONTHLY_LIMIT,
     PLAN_NAME_FALLBACK,
     PLAN_UNIT_DISPLAY_DIVISOR,
@@ -12,7 +13,7 @@
   } from "$lib/schemas/plan.constant";
   import { HugeiconsIcon } from "@hugeicons/svelte";
 
-  type PlanKey = "LITE" | "PLUS" | "PREMIUM";
+  type PlanKey = (typeof PLAN_KEYS)[number];
   const planMeta: Record<
     PlanKey,
     { name: string; benefits: string[]; monthly: number }
@@ -44,6 +45,11 @@
       ],
       monthly: PLAN_MONTHLY_LIMIT.PREMIUM,
       name: "Premium",
+    },
+    TEST: {
+      benefits: ["Batas generate hingga 1 modul per bulan"],
+      monthly: PLAN_MONTHLY_LIMIT.TEST,
+      name: "Test",
     },
   };
   const planMetaFallback: {

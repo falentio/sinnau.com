@@ -16,7 +16,7 @@ Plan owns user entitlements for AI-gated features.
 
 Plan is responsible for:
 
-- defining hardcoded paid tiers (LITE, PLUS, PREMIUM) and their prices/benefits
+- defining hardcoded paid tiers (LITE, PLUS, PREMIUM) and their prices/benefits, plus an admin-only TEST tier
 - creating and tracking purchase orders
 - initiating QRIS payments through the existing Midtrans client
 - applying plan lifecycle rules on successful payment
@@ -37,7 +37,7 @@ Plan is not responsible for:
 interface UserPlan {
   id: string; // usp_*
   userId: string; // → user.id
-  planKey: "LITE" | "PLUS" | "PREMIUM";
+  planKey: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   startedAt: Date;
   expiresAt: Date;
   createdAt: Date;
@@ -47,7 +47,7 @@ interface UserPlan {
 interface Order {
   id: string; // ord_*
   userId: string; // → user.id
-  planKey: "LITE" | "PLUS" | "PREMIUM";
+  planKey: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   durationMonths: 1 | 6 | 12;
   sku: string; // e.g. "lite-1m", "plus-6m", "premium-12m"
   grossAmount: number; // IDR, whole rupiah
@@ -61,7 +61,7 @@ interface Order {
 interface AdminGrant {
   id: string; // agr_*
   userId: string; // → user.id
-  planKey: "LITE" | "PLUS" | "PREMIUM";
+  planKey: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   durationMonths: number; // 1-24
   startedAt: Date;
   expiresAt: Date;
@@ -94,6 +94,9 @@ No database table. Plans are hardcoded constants in `src/lib/schemas/plan.consta
 | LITE    | 30,000              | 120                    | unlimited quiz attempts, FSRS flashcard session, weak chapter spot analysis |
 | PLUS    | 50,000              | 240                    | all LITE benefits, 2x generate limit                                        |
 | PREMIUM | 100,000             | 720                    | all LITE benefits, 6x generate limit                                        |
+| TEST    | 100                 | 1                      | 1 generate per month; admin-only visibility                                 |
+
+TEST is listed in `PLAN_ADMIN_ONLY_KEYS`: the public `listPlans` catalog omits it unless the caller's role is `admin`. It ranks below LITE in `PLAN_TIER_RANK`, so it is treated as a downgrade relative to every paid tier. Checkout is not restricted — any authenticated caller may create an order for it (e.g. for payment-flow testing).
 
 ### Duration pricing
 
@@ -108,6 +111,7 @@ Example gross amounts:
 | LITE    | 30,000  | 120,000  | 210,000   |
 | PLUS    | 50,000  | 200,000  | 350,000   |
 | PREMIUM | 100,000 | 400,000  | 700,000   |
+| TEST    | 100     | 400      | 700       |
 
 ## Field Rules
 
@@ -171,7 +175,7 @@ midtrans.on("webhook:received", (body) => planService.handleWebhook(body));
 
 ```typescript
 interface CheckoutInput {
-  planKey: "LITE" | "PLUS" | "PREMIUM";
+  planKey: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   durationMonths: 1 | 6 | 12;
 }
 
@@ -215,7 +219,7 @@ interface HandleWebhookInput {
 
 ```typescript
 interface ListPlansOutput {
-  key: "LITE" | "PLUS" | "PREMIUM";
+  key: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   name: string;
   benefits: string[];
   monthlyPrice: number;
@@ -230,6 +234,7 @@ interface ListPlansOutput {
 
 - Public query.
 - Returns the hardcoded catalog with computed discounted prices.
+- Omits any plan key in `PLAN_ADMIN_ONLY_KEYS` (currently `TEST`) unless the caller is authenticated with role `admin`.
 
 ### ListOrders
 
@@ -261,7 +266,7 @@ interface GetAiLimitPlanForUserInput {
 }
 
 interface AiLimitPlan {
-  planKey: "LITE" | "PLUS" | "PREMIUM";
+  planKey: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   daily: number;
   weekly: number;
   expiresAt: Date;
@@ -298,7 +303,7 @@ See "Entities → AdminGrant" and "Persistence → admin_grant" above for the fu
 ```typescript
 interface GrantPlanInput {
   userId: string;
-  planKey: "LITE" | "PLUS" | "PREMIUM";
+  planKey: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   durationMonths: number; // 1-24
   note?: string; // optional, max 500 chars
 }
@@ -316,7 +321,7 @@ interface GrantPlanInput {
 interface ListGrantsInput {
   userId?: string;
   grantedBy?: string;
-  planKey?: "LITE" | "PLUS" | "PREMIUM";
+  planKey?: "LITE" | "PLUS" | "PREMIUM" | "TEST";
   page?: number; // default 1
 }
 ```
@@ -379,7 +384,7 @@ export const lookupAiLimitPlan = (userId: string) =>
 
 - `checkout`, `listOrders`, `getOrder`, and `getAiLimitPlanForUser` require authentication.
 - `admin.grantPlan`, `admin.listGrants`, `admin.listOrders`, and `admin.acceptPayment` require `adminProcedure` (role-gated).
-- `listPlans` is public.
+- `listPlans` is public; admin-only plan keys are filtered out for non-admin callers.
 - `handleWebhook` is server-side only; signature verification is performed by `MidtransClient` before the event reaches the plan domain.
 
 ## Persistence

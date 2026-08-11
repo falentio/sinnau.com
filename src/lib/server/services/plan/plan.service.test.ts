@@ -427,11 +427,11 @@ describe.concurrent("PlanService unit tests", () => {
   });
 
   describe("listPlans", () => {
-    it("returns the full hardcoded catalog with discounted prices", async ({
+    it("returns the public hardcoded catalog with discounted prices", async ({
       expect,
     }) => {
       const { service } = setupService();
-      const plans = service.listPlans();
+      const plans = service.listPlans(null);
       expect(plans).toEqual([
         {
           benefits: [
@@ -488,6 +488,44 @@ describe.concurrent("PlanService unit tests", () => {
           name: "Premium",
         },
       ]);
+    });
+
+    it("excludes admin-only plans from anonymous callers", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+      const plans = service.listPlans(null);
+      expect(plans.map((plan) => plan.key)).not.toContain("TEST");
+    });
+
+    it("excludes admin-only plans from non-admin callers", async ({
+      expect,
+    }) => {
+      const { service } = setupService();
+      const plans = service.listPlans({ role: "user" });
+      expect(plans.map((plan) => plan.key)).not.toContain("TEST");
+    });
+
+    it("includes admin-only plans for admin callers", async ({ expect }) => {
+      const { service } = setupService();
+      const plans = service.listPlans({ role: "admin" });
+      expect(plans.map((plan) => plan.key)).toEqual([
+        "LITE",
+        "PLUS",
+        "PREMIUM",
+        "TEST",
+      ]);
+      expect(plans.find((plan) => plan.key === "TEST")).toEqual({
+        benefits: ["Batas generate hingga 1 modul per bulan"],
+        durations: [
+          { discountLabel: "Harga penuh", grossAmount: 100, months: 1 },
+          { discountLabel: "Bayar 4 bulan", grossAmount: 400, months: 6 },
+          { discountLabel: "Bayar 7 bulan", grossAmount: 700, months: 12 },
+        ],
+        key: "TEST",
+        monthlyPrice: 100,
+        name: "Test",
+      });
     });
   });
 

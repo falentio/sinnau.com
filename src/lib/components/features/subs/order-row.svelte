@@ -1,10 +1,11 @@
 <script lang="ts">
   import { PlanStatusBadge, formatIdr } from "$lib/components/features/plan";
+  import { PLAN_KEYS } from "$lib/schemas/plan.constant";
 
   type OrderStatus = "PENDING" | "PAID" | "EXPIRED" | "CANCELLED";
   interface Order {
     id: string;
-    planKey: "LITE" | "PLUS" | "PREMIUM";
+    planKey: (typeof PLAN_KEYS)[number];
     planName: string;
     durationMonths: 1 | 6 | 12;
     grossAmount: number;

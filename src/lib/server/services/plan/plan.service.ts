@@ -19,6 +19,7 @@ import {
   PLAN_DURATIONS,
   PLAN_ID_PREFIX,
   PLAN_KEYS,
+  PLAN_ADMIN_ONLY_KEYS,
   PLAN_MONTHLY_LIMIT,
   PLAN_MONTHLY_PRICE,
   PLAN_NAME,
@@ -477,7 +478,14 @@ export class PlanService {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  listPlans(): {
+  listPlans(
+    user:
+      | {
+          role?: string | null;
+        }
+      | null
+      | undefined
+  ): {
     benefits: string[];
     durations: {
       discountLabel: string;
@@ -488,7 +496,9 @@ export class PlanService {
     monthlyPrice: number;
     name: string;
   }[] {
-    return PLAN_KEYS.map((key) => ({
+    return PLAN_KEYS.filter(
+      (key) => !PLAN_ADMIN_ONLY_KEYS.includes(key) || user?.role === "admin"
+    ).map((key) => ({
       benefits: PLAN_BENEFITS[key],
       durations: PLAN_DURATIONS.map((months) => ({
         discountLabel: discountLabel(months),
