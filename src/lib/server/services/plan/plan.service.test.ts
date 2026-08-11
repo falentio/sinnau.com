@@ -502,13 +502,13 @@ describe.concurrent("PlanService unit tests", () => {
       expect,
     }) => {
       const { service } = setupService();
-      const plans = service.listPlans({ role: "user" });
+      const plans = service.listPlans("user");
       expect(plans.map((plan) => plan.key)).not.toContain("TEST");
     });
 
     it("includes admin-only plans for admin callers", async ({ expect }) => {
       const { service } = setupService();
-      const plans = service.listPlans({ role: "admin" });
+      const plans = service.listPlans("admin");
       expect(plans.map((plan) => plan.key)).toEqual([
         "LITE",
         "PLUS",

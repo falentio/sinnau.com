@@ -72,6 +72,7 @@ export const createMockGuard = (): MockedPlanGuard => ({
   assertOrderVisibleByIdOrNotFound:
     vi.fn<PlanGuard["assertOrderVisibleByIdOrNotFound"]>(),
   assertUserExistsOrNotFound: vi.fn<PlanGuard["assertUserExistsOrNotFound"]>(),
+  canSeeAdminOnlyPlans: vi.fn<PlanGuard["canSeeAdminOnlyPlans"]>(),
   requireAdmin: vi.fn<PlanGuard["requireAdmin"]>(),
   requireOwner: vi.fn<PlanGuard["requireOwner"]>(),
 });

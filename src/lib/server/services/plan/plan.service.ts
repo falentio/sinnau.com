@@ -477,15 +477,7 @@ export class PlanService {
     return action.url;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  listPlans(
-    user:
-      | {
-          role?: string | null;
-        }
-      | null
-      | undefined
-  ): {
+  listPlans(role: string | null | undefined): {
     benefits: string[];
     durations: {
       discountLabel: string;
@@ -496,8 +488,9 @@ export class PlanService {
     monthlyPrice: number;
     name: string;
   }[] {
+    const isAdmin = this.guard.canSeeAdminOnlyPlans(role);
     return PLAN_KEYS.filter(
-      (key) => !PLAN_ADMIN_ONLY_KEYS.includes(key) || user?.role === "admin"
+      (key) => !PLAN_ADMIN_ONLY_KEYS.includes(key) || isAdmin
     ).map((key) => ({
       benefits: PLAN_BENEFITS[key],
       durations: PLAN_DURATIONS.map((months) => ({

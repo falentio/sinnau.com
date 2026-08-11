@@ -234,7 +234,7 @@ interface ListPlansOutput {
 
 - Public query.
 - Returns the hardcoded catalog with computed discounted prices.
-- Omits any plan key in `PLAN_ADMIN_ONLY_KEYS` (currently `TEST`) unless the caller is authenticated with role `admin`.
+- Omits any plan key in `PLAN_ADMIN_ONLY_KEYS` (currently `TEST`) unless the caller's role is `admin`. The role check lives in `PlanGuard.canSeeAdminOnlyPlans`; the query passes `context.user?.role` through the service.
 
 ### ListOrders
 

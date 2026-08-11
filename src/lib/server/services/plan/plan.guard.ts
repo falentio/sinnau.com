@@ -33,6 +33,11 @@ export class PlanGuard {
     return adminId;
   }
 
+  // oxlint-disable-next-line class-methods-use-this
+  canSeeAdminOnlyPlans(role: string | null | undefined): boolean {
+    return role === "admin";
+  }
+
   async assertUserExistsOrNotFound(userId: string): Promise<AuthUser> {
     // AuthUser resolves to `any` because auth-schema.ts is ignored by oxlint
     // oxlint-disable-next-line typescript/no-unsafe-assignment

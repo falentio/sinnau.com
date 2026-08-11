@@ -135,6 +135,25 @@ describe.concurrent("PlanGuard unit", () => {
     });
   });
 
+  describe("canSeeAdminOnlyPlans", () => {
+    it("returns true for the admin role", async ({ expect }) => {
+      const { guard } = setupGuard();
+      expect(guard.canSeeAdminOnlyPlans("admin")).toBe(true);
+    });
+
+    it("returns false for non-admin roles", async ({ expect }) => {
+      const { guard } = setupGuard();
+      expect(guard.canSeeAdminOnlyPlans("user")).toBe(false);
+    });
+
+    it("returns false for anonymous callers", async ({ expect }) => {
+      const { guard } = setupGuard();
+      expect(guard.canSeeAdminOnlyPlans(null)).toBe(false);
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- parameter is required, so omitting it is a compile error; exercises the undefined-role path distinct from null
+      expect(guard.canSeeAdminOnlyPlans(undefined)).toBe(false);
+    });
+  });
+
   describe("assertUserExistsOrNotFound", () => {
     it("returns the user row when the id resolves", async ({ expect }) => {
       const { guard, userRepo } = setupGuard();
