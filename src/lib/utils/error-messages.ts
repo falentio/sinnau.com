@@ -33,8 +33,6 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
     "Gagal memverifikasi kata sandi. Coba lagi sebentar.",
   "Internal Server Error": "Terjadi kesalahan. Coba lagi sebentar.",
   "Invalid email or password": "Email atau kata sandi salah.",
-  "Session is not fresh. Please sign in again.":
-    "Sesi sudah kedaluwarsa. Silakan masuk kembali.",
   "Too many requests. Please try again later.":
     "Terlalu banyak percobaan. Coba lagi sebentar.",
   "User not found": "Akun tidak ditemukan.",

@@ -2,7 +2,6 @@ import { dash } from "@better-auth/infra";
 import { betterAuth } from "better-auth";
 import type { BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { createAuthMiddleware, APIError } from "better-auth/api";
 import { admin, lastLoginMethod } from "better-auth/plugins";
 import Database from "better-sqlite3";
 
@@ -17,61 +16,6 @@ export const config = {
     autoSignIn: true,
     enabled: true,
     requireEmailVerification: false,
-  },
-  hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      if (ctx.path === "/sign-out") {
-        const token = await ctx.getSignedCookie(
-          ctx.context.authCookies.sessionToken.name,
-          ctx.context.secret
-        );
-        if (typeof token !== "string") {
-          return;
-        }
-
-        const freshAge =
-          (ctx.context as { sessionConfig?: { freshAge?: number } })
-            .sessionConfig?.freshAge ?? 0;
-        if (!freshAge) {
-          return;
-        }
-
-        const session = await ctx.context.internalAdapter.findSession(token);
-        if (!session?.session) {
-          return;
-        }
-
-        const createdAt = new Date(session.session.createdAt).getTime();
-        if (Date.now() - createdAt >= freshAge * 1000) {
-          throw new APIError("FORBIDDEN", {
-            message: "Session is not fresh. Please sign in again.",
-          });
-        }
-        return;
-      }
-
-      if (ctx.path !== "/sign-up/email") {
-        return;
-      }
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ctx.body is any from BetterAuth types not resolvable by oxlint
-      const body = (ctx.body ?? {}) as {
-        confirmPassword?: unknown;
-        password?: unknown;
-      };
-      if (
-        typeof body.confirmPassword !== "string" ||
-        body.confirmPassword.length === 0
-      ) {
-        throw new APIError("BAD_REQUEST", {
-          message: "Konfirmasi kata sandi wajib diisi.",
-        });
-      }
-      if (body.password !== body.confirmPassword) {
-        throw new APIError("BAD_REQUEST", {
-          message: "Konfirmasi kata sandi tidak cocok.",
-        });
-      }
-    }),
   },
   plugins: [
     admin(),
@@ -96,9 +40,6 @@ export const config = {
     window: 60,
   },
   secret: "dasdsa",
-  session: {
-    freshAge: 60 * 5,
-  },
   user: {
     additionalFields: {
       affiliatedBy: {
