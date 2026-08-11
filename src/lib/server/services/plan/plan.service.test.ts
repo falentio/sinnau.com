@@ -35,6 +35,7 @@ class MockPlanGuard extends PlanGuard {
   assertUserExistsOrNotFound = vi.fn<PlanGuard["assertUserExistsOrNotFound"]>();
   assertOrderVisibleByIdOrNotFound =
     vi.fn<PlanGuard["assertOrderVisibleByIdOrNotFound"]>();
+  canSeeAdminOnlyPlans = vi.fn<PlanGuard["canSeeAdminOnlyPlans"]>();
 
   constructor() {
     super(createMockRepository(), createMockUserRepository());
@@ -103,6 +104,7 @@ const setupService = (midtrans = createMockMidtrans()) => {
     }
     return id;
   });
+  guard.canSeeAdminOnlyPlans.mockImplementation((role) => role === "admin");
   // oxlint-disable-next-line eslint/arrow-body-style -- block body needed for disable-next-line comment
   guard.assertUserExistsOrNotFound.mockImplementation(async (id) => {
     if (id === "missing-user") {
@@ -493,22 +495,25 @@ describe.concurrent("PlanService unit tests", () => {
     it("excludes admin-only plans from anonymous callers", async ({
       expect,
     }) => {
-      const { service } = setupService();
+      const { guard, service } = setupService();
       const plans = service.listPlans(null);
+      expect(guard.canSeeAdminOnlyPlans).toHaveBeenCalledWith(null);
       expect(plans.map((plan) => plan.key)).not.toContain("TEST");
     });
 
     it("excludes admin-only plans from non-admin callers", async ({
       expect,
     }) => {
-      const { service } = setupService();
+      const { guard, service } = setupService();
       const plans = service.listPlans("user");
+      expect(guard.canSeeAdminOnlyPlans).toHaveBeenCalledWith("user");
       expect(plans.map((plan) => plan.key)).not.toContain("TEST");
     });
 
     it("includes admin-only plans for admin callers", async ({ expect }) => {
-      const { service } = setupService();
+      const { guard, service } = setupService();
       const plans = service.listPlans("admin");
+      expect(guard.canSeeAdminOnlyPlans).toHaveBeenCalledWith("admin");
       expect(plans.map((plan) => plan.key)).toEqual([
         "LITE",
         "PLUS",
