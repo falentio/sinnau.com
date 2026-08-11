@@ -501,6 +501,16 @@ describe.concurrent("PlanService unit tests", () => {
       expect(plans.map((plan) => plan.key)).not.toContain("TEST");
     });
 
+    it("follows the guard's visibility verdict over the raw role", async ({
+      expect,
+    }) => {
+      const { guard, service } = setupService();
+      guard.canSeeAdminOnlyPlans.mockReturnValue(true);
+      const plans = service.listPlans(null);
+      expect(guard.canSeeAdminOnlyPlans).toHaveBeenCalledWith(null);
+      expect(plans.map((plan) => plan.key)).toContain("TEST");
+    });
+
     it("excludes admin-only plans from non-admin callers", async ({
       expect,
     }) => {
