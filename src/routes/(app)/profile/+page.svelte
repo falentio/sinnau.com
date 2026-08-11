@@ -3,9 +3,11 @@
     GithubIcon,
     GoogleIcon,
     LockPasswordIcon,
+    Logout01Icon,
   } from "$lib/components/features/icons";
   import ProfileNameForm from "$lib/components/features/profile/profile-name-form.svelte";
   import ProfilePasswordForm from "$lib/components/features/profile/profile-password-form.svelte";
+  import SignOutDialog from "$lib/components/features/profile/sign-out-dialog.svelte";
   import UserAvatar from "$lib/components/features/users/user-avatar.svelte";
   import SeoHead from "$lib/components/seo-head.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
@@ -26,6 +28,7 @@
 
   let accounts = $state<LinkedAccount[] | null>(null);
   let pendingProvider = $state<string | null>(null);
+  let signOutOpen = $state(false);
 
   const loadAccounts = async () => {
     const { data: listed } = await authClient.listAccounts();
@@ -169,4 +172,20 @@
       </p>
     {/if}
   </section>
+
+  <section class="mt-8 flex flex-col gap-4 border-t border-border/60 pt-8">
+    <h2 class="text-sm font-semibold text-destructive">Zona berbahaya</h2>
+
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-sm text-muted-foreground">
+        Keluar dari akun kamu di perangkat ini.
+      </p>
+      <Button variant="destructive" onclick={() => (signOutOpen = true)}>
+        <HugeiconsIcon icon={Logout01Icon} />
+        Keluar
+      </Button>
+    </div>
+  </section>
 </div>
+
+<SignOutDialog bind:open={signOutOpen} />
