@@ -11,7 +11,7 @@
     selectedDuration,
     variant = "default",
     disabled = false,
-    disabledLabel = "Kamu sudah di paket ini",
+    disabledLabel = "Tidak tersedia",
     href,
     ctaLabel = "Aktifkan paket ini",
     onselect,
