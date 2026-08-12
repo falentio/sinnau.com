@@ -11,6 +11,7 @@
     selectedDuration,
     variant = "default",
     disabled = false,
+    disabledLabel = "Kamu sudah di paket ini",
     href,
     ctaLabel = "Aktifkan paket ini",
     onselect,
@@ -19,6 +20,7 @@
     selectedDuration: 1 | 6 | 12;
     variant?: "default" | "featured";
     disabled?: boolean;
+    disabledLabel?: string;
     href?: string;
     ctaLabel?: string;
     onselect?: (planKey: PlanCatalogItem["key"], months: 1 | 6 | 12) => void;
@@ -192,7 +194,7 @@
       <span
         class="rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
       >
-        Kamu sudah di paket ini
+        {disabledLabel}
       </span>
     </div>
   {/if}

@@ -10,18 +10,9 @@
 
   type PlanKey = (typeof PLAN_KEYS)[number];
 
-  let {
-    plan,
-    daily,
-    weekly,
-  }: {
-    plan: PlanKey;
-    daily: number;
-    weekly: number;
-  } = $props();
+  let { plan }: { plan: PlanKey } = $props();
 
   const planLabel = $derived(PLAN_NAME[plan] ?? PLAN_NAME_FALLBACK);
-  const monthly = $derived(daily * 10);
 </script>
 
 <aside
@@ -53,13 +44,6 @@
         >
           {planLabel}
         </h2>
-        <p class="text-sm text-muted-foreground">
-          Kuota bulanan: {monthly} kali
-          <span class="mx-1.5 text-foreground/20">·</span>
-          <span class="tabular-nums">{daily}/hari</span>
-          <span class="mx-1 text-foreground/20">·</span>
-          <span class="tabular-nums">{weekly}/minggu</span>
-        </p>
       </div>
     </div>
 

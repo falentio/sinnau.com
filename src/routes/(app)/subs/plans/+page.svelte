@@ -31,6 +31,10 @@
   let checkoutError = $state<string | null>(null);
 
   const activePlanKey = $derived(data.activePlan?.planKey ?? null);
+  const hasActivePlan = $derived(data.activePlan !== null);
+  const ctaLabel = $derived(
+    hasActivePlan ? "Perpanjang paket ini" : "Aktifkan paket ini"
+  );
   const isDowngrade = (planKey: (typeof PLAN_KEYS)[number]) => {
     if (!activePlanKey) {
       return false;
@@ -109,11 +113,7 @@
 
   {#if data.activePlan}
     <div class="pb-8 md:pb-10">
-      <ActivePlanBanner
-        plan={data.activePlan.planKey}
-        daily={data.activePlan.daily}
-        weekly={data.activePlan.weekly}
-      />
+      <ActivePlanBanner plan={data.activePlan.planKey} />
     </div>
   {/if}
 
@@ -147,6 +147,8 @@
         {selectedDuration}
         variant={i === 1 ? "featured" : "default"}
         disabled={isDowngrade(plan.key)}
+        disabledLabel="Paket aktifmu lebih tinggi"
+        {ctaLabel}
         onselect={handleCheckout}
       />
     {/each}
