@@ -23,5 +23,5 @@
     height="24"
     class="size-6 rounded-[8px]"
   />
-  <span class="text-[var(--landing-fg)]">2sinnau</span>
+  <span class="text-[var(--landing-fg)]">sinnau</span>
 </a>
