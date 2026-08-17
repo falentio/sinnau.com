@@ -82,7 +82,11 @@ export const env = {
     return required("BETTER_AUTH_SECRET");
   },
   get BETTER_AUTH_URL() {
-    return required("BETTER_AUTH_URL");
+    const allowedHosts = required("BETTER_AUTH_URL")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return { allowedHosts };
   },
   get DB_FILE_NAME() {
     return read("DB_FILE_NAME") ?? ".data/data.db";
