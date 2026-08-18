@@ -74,17 +74,10 @@ export const env = {
   get AXIOM_URL() {
     return read("AXIOM_URL") ?? "https://api.axiom.co";
   },
-  get BETTER_AUTH_API_KEY() {
-    return read("BETTER_AUTH_API_KEY");
-  },
-  get BETTER_AUTH_SECRET() {
-    if (building) {
-      return "danksndkasndnasndkk";
-    }
-    return required("BETTER_AUTH_SECRET");
-  },
-  get BETTER_AUTH_URL() {
-    const value = building ? "localhost" : required("BETTER_AUTH_URL");
+  get BETTER_AUTH_ALLOWED_HOSTS() {
+    const value = building
+      ? "localhost"
+      : required("BETTER_AUTH_ALLOWED_HOSTS");
     const protocol = dev ? undefined : ("https" as const);
     logger.info("Better Auth Configuration", { allowedHosts: value });
     return {
@@ -94,6 +87,15 @@ export const env = {
         .filter(Boolean),
       protocol,
     };
+  },
+  get BETTER_AUTH_API_KEY() {
+    return read("BETTER_AUTH_API_KEY");
+  },
+  get BETTER_AUTH_SECRET() {
+    if (building) {
+      return "danksndkasndnasndkk";
+    }
+    return required("BETTER_AUTH_SECRET");
   },
   get DB_FILE_NAME() {
     return read("DB_FILE_NAME") ?? ".data/data.db";

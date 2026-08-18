@@ -30,7 +30,7 @@ COPY . .
 # client.ts. Provide harmless placeholders at build time only — real values
 # are injected at `docker run -e` and never enter the final image.
 ENV BETTER_AUTH_SECRET=build-time-placeholder \
-    BETTER_AUTH_URL=http://localhost:11085 \
+    BETTER_AUTH_ALLOWED_HOSTS=localhost:11085 \
     DB_FILE_NAME=/tmp/build-analyse.db
 
 RUN pnpm run build

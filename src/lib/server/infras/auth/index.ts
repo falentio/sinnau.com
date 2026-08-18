@@ -21,7 +21,7 @@ const getBaseUrl = (): BetterAuthOptions["baseURL"] => {
       ],
     };
   }
-  return env.BETTER_AUTH_URL;
+  return env.BETTER_AUTH_ALLOWED_HOSTS;
 };
 
 const socialProviders: BetterAuthOptions["socialProviders"] = {};

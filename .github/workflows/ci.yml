@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BETTER_AUTH_SECRET: ci-placeholder
-      BETTER_AUTH_URL: http://localhost:11085
+      BETTER_AUTH_ALLOWED_HOSTS: localhost:11085
       DB_FILE_NAME: /tmp/ci.db
     steps:
       - uses: actions/checkout@v6

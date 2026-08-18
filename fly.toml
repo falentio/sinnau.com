@@ -10,7 +10,7 @@ primary_region = 'sin'
 strategy = 'immediate'
 
 [env]
-BETTER_AUTH_URL = 'https://sinnau.com'
+BETTER_AUTH_ALLOWED_HOSTS = 'sinnau.com'
 BODY_SIZE_LIMIT = '50M'
 ENVIRONMENT = 'production'
 NODE_ENV = 'production'

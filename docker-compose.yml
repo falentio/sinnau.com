@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     environment:
-      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:11085}
+      - BETTER_AUTH_ALLOWED_HOSTS=${BETTER_AUTH_ALLOWED_HOSTS:-localhost:11085}
       - DB_FILE_NAME=/app/data/data.db
     volumes:
       - sinnau_data:/app/data
