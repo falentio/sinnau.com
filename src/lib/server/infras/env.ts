@@ -1,5 +1,6 @@
 import { building, dev } from "$app/env";
 import { env as privateEnv } from "$env/dynamic/private";
+import { getLogger } from "@logtape/logtape";
 
 const read = (key: string): string | undefined => {
   const value = privateEnv[key];
@@ -19,6 +20,7 @@ const required = (key: string): string => {
   }
   return value;
 };
+const logger = getLogger(["sinnau.com", "env"]);
 
 export const env = {
   get AI_APIKEY() {
@@ -84,6 +86,7 @@ export const env = {
   get BETTER_AUTH_URL() {
     const value = building ? "localhost" : required("BETTER_AUTH_URL");
     const protocol = dev ? undefined : "https";
+    logger.info("Better Auth Configuration", { allowedHosts: value });
     return {
       allowedHosts: value
         .split(",")
