@@ -1,4 +1,4 @@
-import { building } from "$app/env";
+import { building, dev } from "$app/env";
 import { env as privateEnv } from "$env/dynamic/private";
 
 const read = (key: string): string | undefined => {
@@ -83,11 +83,13 @@ export const env = {
   },
   get BETTER_AUTH_URL() {
     const value = building ? "localhost" : required("BETTER_AUTH_URL");
+    const protocol = dev ? undefined : "https";
     return {
       allowedHosts: value
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
+      protocol,
     };
   },
   get DB_FILE_NAME() {
