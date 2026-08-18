@@ -85,7 +85,7 @@ export const env = {
   },
   get BETTER_AUTH_URL() {
     const value = building ? "localhost" : required("BETTER_AUTH_URL");
-    const protocol = dev ? undefined : "https";
+    const protocol = dev ? undefined : ("https" as const);
     logger.info("Better Auth Configuration", { allowedHosts: value });
     return {
       allowedHosts: value
