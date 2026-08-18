@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
   import {
-    AiChat02Icon,
     Book03Icon,
     Cards01Icon,
     CrownIcon,
@@ -10,11 +9,13 @@
     PieChartIcon,
     Quiz01Icon,
     Search02Icon,
+    Share01Icon,
   } from "$lib/components/features/icons";
   import UserAvatar from "$lib/components/features/users/user-avatar.svelte";
   import * as Sidebar from "$lib/components/ui/sidebar/index.js";
   import { getUser } from "$lib/hooks/auth.svelte";
   import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { toast } from "svelte-sonner";
 
   const user = getUser;
 
@@ -166,9 +167,20 @@
               </Sidebar.MenuSub>
             </Sidebar.MenuItem>
             <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                <HugeiconsIcon icon={AiChat02Icon} />
-                <span>Tanya AI</span>
+              <Sidebar.MenuButton
+                onclick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      `${page.url.origin}/study/${studySetId}`
+                    );
+                    toast.success("Tautan disalin");
+                  } catch {
+                    toast.error("Gagal menyalin");
+                  }
+                }}
+              >
+                <HugeiconsIcon icon={Share01Icon} />
+                <span>Bagikan</span>
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
           </Sidebar.Menu>

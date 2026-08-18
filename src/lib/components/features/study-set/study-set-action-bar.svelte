@@ -2,14 +2,15 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import {
-    AiChat02Icon,
     Book03Icon,
     Cards01Icon,
     Quiz01Icon,
+    Share01Icon,
   } from "$lib/components/features/icons";
   import Button from "$lib/components/ui/button/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { HugeiconsIcon } from "@hugeicons/svelte";
+  import { toast } from "svelte-sonner";
 
   const studySetId = $derived(page.params.studySetId ?? "");
 
@@ -85,10 +86,20 @@
     <Button
       variant="ghost"
       class="flex h-auto min-w-[3.5rem] flex-col gap-0.5 rounded-full px-3 py-2 text-[10px] font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.96]"
-      aria-label="Tanya AI"
+      aria-label="Bagikan"
+      onclick={async () => {
+        try {
+          await navigator.clipboard.writeText(
+            `${page.url.origin}/study/${studySetId}`
+          );
+          toast.success("Tautan disalin");
+        } catch {
+          toast.error("Gagal menyalin");
+        }
+      }}
     >
-      <HugeiconsIcon icon={AiChat02Icon} class="size-5" strokeWidth={1.5} />
-      Tanya AI
+      <HugeiconsIcon icon={Share01Icon} class="size-5" strokeWidth={1.5} />
+      Bagikan
     </Button>
   </nav>
 </div>
