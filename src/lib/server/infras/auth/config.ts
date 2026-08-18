@@ -11,6 +11,7 @@ export const config = {
       ipAddressHeaders: ["cf-connecting-ip"],
     },
   },
+  baseURL: "http://localhost",
   database: drizzleAdapter(new Database(":memory:"), { provider: "sqlite" }),
   emailAndPassword: {
     autoSignIn: true,
