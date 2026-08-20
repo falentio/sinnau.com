@@ -238,7 +238,8 @@ Commissions can drift from reality: an order may be paid without a commission be
 | `reconcileCommissions` | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
 | `backfillCommissions`  | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
 | `setReferrer`          | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
-| `listPendingPayouts`   | `requireAdmin` | `adminProcedure`      | `FORBIDDEN`                            |
+| `listPendingPayouts`   | `requireAdmin` | `adminProcedure`      | `UNAUTHORIZED`, `FORBIDDEN`            |
+| `listPayouts`          | `requireAdmin` | `adminProcedure`      | `UNAUTHORIZED`, `FORBIDDEN`            |
 | `submitPayoutAccount`  | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `AFFILIATE_NO_PROFILE` |
 | `getMyPayoutAccount`   | `requireUser`  | `authorizedProcedure` | `UNAUTHORIZED`, `NOT_FOUND`            |
 
@@ -426,6 +427,18 @@ listPendingPayouts({ page?, limit? }) → PendingPayoutsList
 - Pagination includes `total` based on distinct affiliates with pending commissions.
 - Errors: `UNAUTHORIZED`, `FORBIDDEN`.
 
+### listPayouts
+
+```
+listPayouts({ page?, limit? }) → { data: AffiliatePayoutWithSlug[], pagination }
+```
+
+- Admin-only.
+- Lists completed payouts ordered by `createdAt` descending, left-joined to `affiliate_profile` for `slug` (fallback `"unknown"` if profile missing).
+- Defaults: `page = 1`, `limit = 10`. `limit` range: 1–100.
+- Pagination includes `total` distinct payouts.
+- Errors: `UNAUTHORIZED`, `FORBIDDEN`.
+
 ### reconcileCommissions
 
 ```
@@ -558,6 +571,9 @@ Valibot schemas in `src/lib/schemas/affiliate.ts`:
 | `resolveAffiliateSlugInputSchema`           | `{ slug }`                                                                                                             |
 | `getAffiliateDashboardInputSchema`          | `{}` (no input)                                                                                                        |
 | `listPendingPayoutsInputSchema`             | `{ page?, limit? }` with integer constraints                                                                           |
+| `listAffiliatePayoutsInputSchema`           | `{ page?, limit? }` with integer constraints                                                                           |
+| `affiliatePayoutWithSlugSchema`             | `{ affiliateUserId, amount, createdAt, id, method, note, processedByAdminId, reference, slug }`                        |
+| `listAffiliatePayoutsOutputSchema`          | `{ data: AffiliatePayoutWithSlug[], pagination }`                                                                      |
 | `reconcileAffiliateCommissionsInputSchema`  | `{ affiliateUserId? }`                                                                                                 |
 | `reconcileAffiliateCommissionsOutputSchema` | `{ invalid: InvalidCommission[], missing: MissingCommission[] }`                                                       |
 | `backfillAffiliateCommissionsInputSchema`   | `{ affiliateUserId? }`                                                                                                 |
@@ -621,11 +637,11 @@ Constants in `src/lib/schemas/affiliate.constant.ts`:
 
 Three test files, mirroring the service's three layers:
 
-- **`affiliate.service.test.ts`** — Unit tests against `new AffiliateService(mockRepo, mockGuard)`. Covers every branch and error path for: `apply` (creates application, already-approved guard, pending-application guard, unauthorized), `acceptApplication` (accepts and creates profile, not-found, not-pending, slug conflict, unauthorized), `rejectApplication` (rejects pending, not-found, not-pending, unauthorized), `getMyApplication` (found, not found, unauthorized), `listApplications` (admin flow, status filter + pagination forwarding, unauthorized), `resolveSlug` (found, not found, sanitization), `recordConversion` (found affiliate, no affiliate, self-referral, duplicate transaction, insert failure), `recordPayout` (atomic payout, reconciliation guard blocks on discrepancy, no pending balance, note forwarding, unauthorized), `reconcileCommissions` (reports missing + invalid, admin-only), `backfillCommissions` (maps missing→inserts and invalid→voids, admin-only), `setReferrer` (set referrer, clear referrer, self-referral, referrer-not-found, user-not-found, unauthorized), `getDashboardSummary` (found, unauthorized), `listPendingPayouts` (admin flow, custom pagination, unauthorized), `submitPayoutAccount` (creates account, normalizes bankName for GOPAY, passes bankName for BANK, no-profile guard, unauthorized), `getMyPayoutAccount` (found, not found, unauthorized).
+- **`affiliate.service.test.ts`** — Unit tests against `new AffiliateService(mockRepo, mockGuard)`. Covers every branch and error path for: `apply` (creates application, already-approved guard, pending-application guard, unauthorized), `acceptApplication` (accepts and creates profile, not-found, not-pending, slug conflict, unauthorized), `rejectApplication` (rejects pending, not-found, not-pending, unauthorized), `getMyApplication` (found, not found, unauthorized), `listApplications` (admin flow, status filter + pagination forwarding, unauthorized), `resolveSlug` (found, not found, sanitization), `recordConversion` (found affiliate, no affiliate, self-referral, duplicate transaction, insert failure), `recordPayout` (atomic payout, reconciliation guard blocks on discrepancy, no pending balance, note forwarding, unauthorized), `reconcileCommissions` (reports missing + invalid, admin-only), `backfillCommissions` (maps missing→inserts and invalid→voids, admin-only), `setReferrer` (set referrer, clear referrer, self-referral, referrer-not-found, user-not-found, unauthorized), `getDashboardSummary` (found, unauthorized), `listPendingPayouts` (admin flow, custom pagination, unauthorized), `listPayouts` (admin flow, custom pagination, unauthorized), `submitPayoutAccount` (creates account, normalizes bankName for GOPAY, passes bankName for BANK, no-profile guard, unauthorized), `getMyPayoutAccount` (found, not found, unauthorized).
 
 - **`affiliate.guard.test.ts`** — Unit tests against `new AffiliateGuard(mockRepo, mockUserRepo)`. Tests: `requireUser` (valid, null, undefined, empty string), `requireAdmin` (admin role, non-admin role, user not found, null userId).
 
-- **`affiliate.repository.drizzle.test.ts`** — Integration tests against an in-memory SQLite DB via `AffiliateTestEnv`. Tests: `insertApplication` (persistence, multiple applications per user), `findApplicationById` (found, not found), `findPendingApplicationByUserId` (found, no pending, no applications), `findLatestApplicationByUserId` (returns most recent, no applications), `updateApplicationStatus` (updates status + reviewer info, nonexistent returns null), `listApplications` (all, filtered by status, pagination, empty), `insertProfile` (persistence, duplicate userId returns null, duplicate slug returns null), `findProfileByUserId`, `findProfileBySlug`, `insertConversion` (persistence, duplicate transactionId returns null), `findConversionByTransactionId`, `getDashboardSummary` (earnings breakdown, zero values, null profile), `listPendingPayouts` (grouped results, unknown slug fallback, excluded paid affiliates, pagination, payout account enrichment present/absent), `createPayoutForAffiliate` (atomic sum+insert+mark, returns null on no pending), `findMissingCommissions` (paid orders without a commission, skips self-referral), `findInvalidCommissions` (pending commissions whose order is no longer paid), `backfillCommissions` (inserts missing + voids invalid, idempotent), `findAffiliatedByUserId`, `findUserById`, `updateUserAffiliatedBy` (set, clear, missing user), `findPayoutAccountByUserId` (found, not found), `upsertPayoutAccount` (insert new, update existing), and schema constraints (foreign key rejection, cascade on user deletion).
+- **`affiliate.repository.drizzle.test.ts`** — Integration tests against an in-memory SQLite DB via `AffiliateTestEnv`. Tests: `insertApplication` (persistence, multiple applications per user), `findApplicationById` (found, not found), `findPendingApplicationByUserId` (found, no pending, no applications), `findLatestApplicationByUserId` (returns most recent, no applications), `updateApplicationStatus` (updates status + reviewer info, nonexistent returns null), `listApplications` (all, filtered by status, pagination, empty), `insertProfile` (persistence, duplicate userId returns null, duplicate slug returns null), `findProfileByUserId`, `findProfileBySlug`, `insertConversion` (persistence, duplicate transactionId returns null), `findConversionByTransactionId`, `getDashboardSummary` (earnings breakdown, zero values, null profile), `listPendingPayouts` (grouped results, unknown slug fallback, excluded paid affiliates, pagination, payout account enrichment present/absent), `listPayouts` (ordered by createdAt desc, unknown slug fallback, pagination, empty), `createPayoutForAffiliate` (atomic sum+insert+mark, returns null on no pending), `findMissingCommissions` (paid orders without a commission, skips self-referral), `findInvalidCommissions` (pending commissions whose order is no longer paid), `backfillCommissions` (inserts missing + voids invalid, idempotent), `findAffiliatedByUserId`, `findUserById`, `updateUserAffiliatedBy` (set, clear, missing user), `findPayoutAccountByUserId` (found, not found), `upsertPayoutAccount` (insert new, update existing), and schema constraints (foreign key rejection, cascade on user deletion).
 
 ### Repository methods not yet wired to a service command
 

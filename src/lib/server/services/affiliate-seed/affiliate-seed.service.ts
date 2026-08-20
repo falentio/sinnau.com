@@ -2,10 +2,8 @@ import type {
   SeedAffiliatePendingPayoutsInput,
   SeedAffiliatePendingPayoutsOutput,
 } from "$lib/schemas/affiliate";
-import {
-  AFFILIATE_COMMISSION_RATE,
-  AFFILIATE_SEED_PENDING_DEFAULT_COUNT,
-} from "$lib/schemas/affiliate.constant";
+import { AFFILIATE_SEED_PENDING_DEFAULT_COUNT } from "$lib/schemas/affiliate-seed.constant";
+import { AFFILIATE_COMMISSION_RATE } from "$lib/schemas/affiliate.constant";
 import { getLogger } from "@logtape/logtape";
 import { ORPCError } from "@orpc/server";
 

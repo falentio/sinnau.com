@@ -18,6 +18,13 @@
 
   import type { PageData } from "./$types";
 
+  // Admin table dialogs use direct client.orpc calls with Dialog + Input
+  // per existing admin pattern (orders, grants). formsnap/superforms is for
+  // user-facing forms (affiliate apply, payout account) per src/routes/AGENTS.md
+  // and src/lib/components/features/affiliate/create-*.svelte.ts.
+  // Keeping manual handling here avoids speculative superform abstraction for a
+  // simple 2-field admin action and a dev-only seed panel.
+
   let { data }: { data: PageData } = $props();
 
   let payoutDialogOpen = $state(false);
@@ -99,6 +106,18 @@
       minimumFractionDigits: 0,
       style: "currency",
     }).format(amount);
+
+  const getWhatsappLink = (whatsappNumber: string): string =>
+    `https://wa.me/${whatsappNumber.replaceAll(/[^0-9]/gu, "")}`;
+
+  const getPayoutAccountSummary = (
+    account: PendingPayout["payoutAccount"]
+  ): string => {
+    if (!account) {
+      return "";
+    }
+    return `${account.accountHolderName} (${account.bankName ?? account.method})`;
+  };
 </script>
 
 <div class="container mx-auto p-6">
@@ -196,8 +215,7 @@
             </Table.Cell>
             <Table.Cell class="max-w-48 truncate text-xs text-muted-foreground">
               {#if payout.payoutAccount}
-                {payout.payoutAccount.accountHolderName} ({payout.payoutAccount
-                  .bankName ?? payout.payoutAccount.method})
+                {getPayoutAccountSummary(payout.payoutAccount)}
               {:else}
                 <span class="italic">No account</span>
               {/if}
@@ -296,7 +314,9 @@
               >
               <span class="text-muted-foreground">WhatsApp</span>
               <a
-                href={`https://wa.me/${selectedPayout.payoutAccount.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                href={getWhatsappLink(
+                  selectedPayout.payoutAccount.whatsappNumber
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="truncate text-xs text-primary underline-offset-4 hover:underline"

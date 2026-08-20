@@ -55,6 +55,19 @@ const isUniqueConstraintError = (error: unknown): boolean => {
   return code === "SQLITE_CONSTRAINT_UNIQUE";
 };
 
+const calcOffset = (page: number, limit: number): number => (page - 1) * limit;
+
+const calcPagination = (
+  total: number,
+  page: number,
+  limit: number
+): { limit: number; page: number; total: number; totalPages: number } => ({
+  limit,
+  page,
+  total,
+  totalPages: Math.max(1, Math.ceil(total / limit)),
+});
+
 export class AffiliateDrizzleRepository implements AffiliateRepository {
   private readonly dbInstance: DB;
 
@@ -186,7 +199,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     limit: number
   ) {
     try {
-      const offset = (page - 1) * limit;
+      const offset = calcOffset(page, limit);
       const whereClause =
         status === undefined
           ? undefined
@@ -200,7 +213,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         .where(whereClause);
 
       const total = countRow?.total ?? 0;
-      const totalPages = Math.max(1, Math.ceil(total / limit));
 
       const rows = await this.dbInstance
         .select()
@@ -212,12 +224,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
       return {
         data: rows,
-        pagination: {
-          limit,
-          page,
-          total,
-          totalPages,
-        },
+        pagination: calcPagination(total, page, limit),
       };
     } catch (error) {
       if (error instanceof ORPCError) {
@@ -394,7 +401,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
   async listPendingPayouts(page: number, limit: number) {
     try {
-      const offset = (page - 1) * limit;
+      const offset = calcOffset(page, limit);
 
       const [countRow] = await this.dbInstance
         .select({
@@ -404,7 +411,6 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
         .where(eq(affiliateCommission.status, "PENDING"));
 
       const totalAffiliates = countRow?.total ?? 0;
-      const totalPages = Math.max(1, Math.ceil(totalAffiliates / limit));
 
       const rows = await this.dbInstance
         .select({
@@ -454,12 +460,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
       return {
         data,
-        pagination: {
-          limit,
-          page,
-          total: totalAffiliates,
-          totalPages,
-        },
+        pagination: calcPagination(totalAffiliates, page, limit),
       };
     } catch (error) {
       if (error instanceof ORPCError) {
@@ -473,13 +474,12 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
   async listPayouts(page: number, limit: number) {
     try {
-      const offset = (page - 1) * limit;
+      const offset = calcOffset(page, limit);
 
       const [countRow] = await this.dbInstance
         .select({ total: count(affiliatePayout.id) })
         .from(affiliatePayout);
       const total = countRow?.total ?? 0;
-      const totalPages = Math.max(1, Math.ceil(total / limit));
 
       const rows = await this.dbInstance
         .select({
@@ -516,7 +516,7 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
 
       return {
         data,
-        pagination: { limit, page, total, totalPages },
+        pagination: calcPagination(total, page, limit),
       };
     } catch (error) {
       if (error instanceof ORPCError) {

@@ -9,6 +9,7 @@ import { affiliateSeedService } from "../index";
 const ERRORS = {
   AFFILIATE_NO_PROFILE: { message: "Affiliate profile not found" },
   FORBIDDEN: { message: "Dev only" },
+  UNAUTHORIZED: { message: "Authentication is required" },
 } as const;
 
 export const affiliateSeedPending = adminProcedure
