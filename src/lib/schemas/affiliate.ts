@@ -18,6 +18,8 @@ import {
   AFFILIATE_PAYOUT_ACCOUNT_ID_PREFIX,
   AFFILIATE_PAYOUT_ID_PREFIX,
   AFFILIATE_PAYOUT_METHODS,
+  AFFILIATE_SEED_PENDING_MAX_COUNT,
+  AFFILIATE_SEED_PENDING_MIN_COUNT,
   AFFILIATE_SUBSCRIPTION_EVENT_ID_PREFIX,
   AFFILIATE_TEXT_FIELD_MAX_LENGTH,
   AFFILIATE_WHATSAPP_MAX_LENGTH,
@@ -243,6 +245,24 @@ export const getMyAffiliateProfileInputSchema = v.object({});
 export const getMyAffiliateApplicationInputSchema = v.object({});
 
 export const getMyPayoutAccountInputSchema = v.object({});
+
+export const seedAffiliatePendingPayoutsInputSchema = v.object({
+  affiliateUserId: boundedIdSchema,
+  count: v.optional(
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(AFFILIATE_SEED_PENDING_MIN_COUNT),
+      v.maxValue(AFFILIATE_SEED_PENDING_MAX_COUNT)
+    )
+  ),
+});
+
+export const seedAffiliatePendingPayoutsOutputSchema = v.object({
+  affiliateUserId: v.string(),
+  commissionIds: v.array(v.string()),
+  created: v.number(),
+});
 
 // --------------------
 // Output schemas
@@ -558,3 +578,11 @@ export type AffiliatePayoutAccount = v.InferOutput<
 >;
 
 export type PayoutAccountInfo = v.InferOutput<typeof payoutAccountInfoSchema>;
+
+export type SeedAffiliatePendingPayoutsInput = v.InferOutput<
+  typeof seedAffiliatePendingPayoutsInputSchema
+>;
+
+export type SeedAffiliatePendingPayoutsOutput = v.InferOutput<
+  typeof seedAffiliatePendingPayoutsOutputSchema
+>;
