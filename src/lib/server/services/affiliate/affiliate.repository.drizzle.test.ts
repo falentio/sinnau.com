@@ -399,6 +399,133 @@ describe.concurrent("AffiliateDrizzleRepository", () => {
     });
   });
 
+  describe.concurrent("listPayouts", () => {
+    it("returns payouts ordered by createdAt descending", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const admin = env.seedUser({ name: "Admin" });
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertProfile(referrer, "slug-history", "R");
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-history-1",
+      });
+      const first = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: "BANK",
+        note: "first",
+        processedByAdminId: admin,
+        reference: "REF-1",
+      });
+      expect(first).not.toBeNull();
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 50_000,
+        purchaseAmount: 200_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-history-2",
+      });
+      const second = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: null,
+        note: null,
+        processedByAdminId: admin,
+        reference: null,
+      });
+      expect(second).not.toBeNull();
+
+      const result = await env.repo.listPayouts(1, 10);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]?.id).toBe(second?.id);
+      expect(result.data[1]?.id).toBe(first?.id);
+      expect(result.data[0]?.amount).toBe(50_000);
+      expect(result.data[0]?.slug).toBe("slug-history");
+      expect(result.pagination.total).toBe(2);
+      expect(result.pagination.totalPages).toBe(1);
+    });
+
+    it("falls back to 'unknown' slug when profile is missing", async ({
+      expect,
+    }) => {
+      await using env = new AffiliateTestEnv();
+      const referrer = env.seedReferrer();
+      const admin = env.seedUser({ name: "Admin" });
+      const purchaser = env.seedPurchaser();
+      await env.repo.insertConversion({
+        affiliateUserId: referrer,
+        commissionAmount: 30_000,
+        purchaseAmount: 100_000,
+        purchaserUserId: purchaser,
+        transactionId: "txn-history-no-profile",
+      });
+      const payout = await env.repo.createPayoutForAffiliate({
+        affiliateUserId: referrer,
+        method: null,
+        note: null,
+        processedByAdminId: admin,
+        reference: null,
+      });
+      expect(payout).not.toBeNull();
+
+      const result = await env.repo.listPayouts(1, 10);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]?.slug).toBe("unknown");
+      expect(result.data[0]?.affiliateUserId).toBe(referrer);
+    });
+
+    it("paginates results", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+      const admin = env.seedUser({ name: "Admin" });
+      const purchaser = env.seedPurchaser();
+      for (let i = 0; i < 3; i += 1) {
+        const ref = env.seedUser({ name: `Ref P ${i}` });
+        await env.repo.insertProfile(ref, `slug-p-${i}`, `R${i}`);
+        await env.repo.insertConversion({
+          affiliateUserId: ref,
+          commissionAmount: 10_000 + i * 1000,
+          purchaseAmount: 100_000,
+          purchaserUserId: purchaser,
+          transactionId: `txn-payout-page-${i}`,
+        });
+        const payout = await env.repo.createPayoutForAffiliate({
+          affiliateUserId: ref,
+          method: null,
+          note: null,
+          processedByAdminId: admin,
+          reference: null,
+        });
+        expect(payout).not.toBeNull();
+      }
+
+      const page1 = await env.repo.listPayouts(1, 2);
+      expect(page1.data).toHaveLength(2);
+      expect(page1.pagination.page).toBe(1);
+      expect(page1.pagination.total).toBe(3);
+      expect(page1.pagination.totalPages).toBe(2);
+
+      const page2 = await env.repo.listPayouts(2, 2);
+      expect(page2.data).toHaveLength(1);
+      expect(page2.pagination.page).toBe(2);
+    });
+
+    it("returns empty when no payouts exist", async ({ expect }) => {
+      await using env = new AffiliateTestEnv();
+
+      const result = await env.repo.listPayouts(1, 10);
+
+      expect(result.data).toHaveLength(0);
+      expect(result.pagination.total).toBe(0);
+      expect(result.pagination.totalPages).toBe(1);
+    });
+  });
+
   describe.concurrent("createPayoutForAffiliate", () => {
     it("creates a payout for the full pending balance and marks those commissions PAID", async ({
       expect,

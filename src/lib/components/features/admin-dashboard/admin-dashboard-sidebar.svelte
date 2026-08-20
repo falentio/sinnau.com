@@ -92,6 +92,30 @@
               {/snippet}
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton
+              data-active={isActive("/-11-/affiliate/payouts")}
+            >
+              {#snippet child({ props })}
+                <a href="/-11-/affiliate/payouts" {...props}>
+                  <HugeiconsIcon icon={Wallet01Icon} />
+                  <span>Payouts</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton
+              data-active={isActive("/-11-/affiliate/history")}
+            >
+              {#snippet child({ props })}
+                <a href="/-11-/affiliate/history" {...props}>
+                  <HugeiconsIcon icon={Dollar01Icon} />
+                  <span>Payout History</span>
+                </a>
+              {/snippet}
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
         </Sidebar.Menu>
       </Sidebar.GroupContent>
     </Sidebar.Group>

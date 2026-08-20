@@ -46,6 +46,7 @@
       toast.success("Payout recorded");
       payoutDialogOpen = false;
       await invalidate("affiliate:payouts");
+      await invalidate("affiliate:history");
     } catch (error) {
       if (error instanceof ORPCError) {
         toast.error(getErrorMessage(error));
@@ -67,11 +68,19 @@
 </script>
 
 <div class="container mx-auto p-6">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold">Affiliate Payouts</h1>
-    <p class="text-muted-foreground mt-1 text-sm">
-      Manage pending affiliate payouts and view payout history.
-    </p>
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Affiliate Payouts</h1>
+      <p class="text-muted-foreground mt-1 text-sm">
+        Manage pending affiliate payouts awaiting completion.
+      </p>
+    </div>
+    <a
+      href="/-11-/affiliate/history"
+      class="text-sm font-medium text-primary underline-offset-4 hover:underline"
+    >
+      View payout history
+    </a>
   </div>
 
   {#if data.payouts.length === 0}

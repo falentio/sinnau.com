@@ -1232,6 +1232,56 @@ describe.concurrent("affiliate service", () => {
     });
   });
 
+  describe.concurrent("listPayouts", () => {
+    it("returns payout history list for admin", async ({ expect }) => {
+      const { repo, service } = setupService();
+      const list = {
+        data: [
+          {
+            affiliateUserId: "user-1",
+            amount: 80_000,
+            createdAt: new Date(),
+            id: "afp_abc",
+            method: "BANK",
+            note: null,
+            processedByAdminId: "admin-1",
+            reference: "REF-1",
+            slug: "test-slug",
+          },
+        ],
+        pagination: { limit: 10, page: 1, total: 1, totalPages: 1 },
+      };
+      repo.listPayouts.mockResolvedValue(list);
+
+      const result = await service.listPayouts({}, "admin-1");
+
+      expect(result).toEqual(list);
+      expect(repo.listPayouts).toHaveBeenCalledWith(1, 10);
+    });
+
+    it("forwards custom page and limit to repo", async ({ expect }) => {
+      const { repo, service } = setupService();
+      repo.listPayouts.mockResolvedValue({
+        data: [],
+        pagination: { limit: 5, page: 2, total: 0, totalPages: 1 },
+      });
+
+      await service.listPayouts({ limit: 5, page: 2 }, "admin-1");
+
+      expect(repo.listPayouts).toHaveBeenCalledWith(2, 5);
+    });
+
+    it("throws UNAUTHORIZED when adminId is null", async ({ expect }) => {
+      const { guard, service } = setupService();
+      guard.requireAdmin.mockImplementation(throwUnauthorized);
+
+      const err = await captureError(service.listPayouts({}, null));
+
+      expect(err).toBeInstanceOf(ORPCError);
+      expect(err).toMatchObject({ code: "UNAUTHORIZED" });
+    });
+  });
+
   describe.concurrent("getMyPayoutAccount", () => {
     it("returns the payout account when it exists", async ({ expect }) => {
       const { repo, service } = setupService();

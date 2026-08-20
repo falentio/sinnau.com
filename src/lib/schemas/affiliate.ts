@@ -226,6 +226,13 @@ export const listPendingPayoutsInputSchema = v.object({
   page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
 });
 
+export const listAffiliatePayoutsInputSchema = v.object({
+  limit: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100))
+  ),
+  page: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
+});
+
 export const setAffiliateReferrerInputSchema = v.object({
   referredUserId: boundedIdSchema,
   referrerUserId: v.nullable(boundedIdSchema),
@@ -355,6 +362,28 @@ export const pendingPayoutsListSchema = v.object({
   }),
 });
 
+export const affiliatePayoutWithSlugSchema = v.object({
+  affiliateUserId: v.string(),
+  amount: v.number(),
+  createdAt: v.date(),
+  id: affiliatePayoutIdSchema,
+  method: v.nullable(v.string()),
+  note: v.nullable(v.string()),
+  processedByAdminId: v.string(),
+  reference: v.nullable(v.string()),
+  slug: v.string(),
+});
+
+export const listAffiliatePayoutsOutputSchema = v.object({
+  data: v.array(affiliatePayoutWithSlugSchema),
+  pagination: v.object({
+    limit: v.number(),
+    page: v.number(),
+    total: v.number(),
+    totalPages: v.number(),
+  }),
+});
+
 export const resolveAffiliateSlugOutputSchema = v.object({
   userId: v.string(),
 });
@@ -443,6 +472,18 @@ export type AffiliateDashboardSummary = v.InferOutput<
 export type PendingPayout = v.InferOutput<typeof pendingPayoutSchema>;
 
 export type PendingPayoutsList = v.InferOutput<typeof pendingPayoutsListSchema>;
+
+export type AffiliatePayoutWithSlug = v.InferOutput<
+  typeof affiliatePayoutWithSlugSchema
+>;
+
+export type ListAffiliatePayoutsInput = v.InferOutput<
+  typeof listAffiliatePayoutsInputSchema
+>;
+
+export type ListAffiliatePayoutsOutput = v.InferOutput<
+  typeof listAffiliatePayoutsOutputSchema
+>;
 
 export type ResolveAffiliateSlugOutput = v.InferOutput<
   typeof resolveAffiliateSlugOutputSchema

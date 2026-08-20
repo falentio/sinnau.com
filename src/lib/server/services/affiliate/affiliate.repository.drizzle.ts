@@ -471,6 +471,63 @@ export class AffiliateDrizzleRepository implements AffiliateRepository {
     }
   }
 
+  async listPayouts(page: number, limit: number) {
+    try {
+      const offset = (page - 1) * limit;
+
+      const [countRow] = await this.dbInstance
+        .select({ total: count(affiliatePayout.id) })
+        .from(affiliatePayout);
+      const total = countRow?.total ?? 0;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+
+      const rows = await this.dbInstance
+        .select({
+          affiliateUserId: affiliatePayout.affiliateUserId,
+          amount: affiliatePayout.amount,
+          createdAt: affiliatePayout.createdAt,
+          id: affiliatePayout.id,
+          method: affiliatePayout.method,
+          note: affiliatePayout.note,
+          processedByAdminId: affiliatePayout.processedByAdminId,
+          reference: affiliatePayout.reference,
+          slug: affiliateProfile.slug,
+        })
+        .from(affiliatePayout)
+        .leftJoin(
+          affiliateProfile,
+          eq(affiliatePayout.affiliateUserId, affiliateProfile.userId)
+        )
+        .orderBy(desc(affiliatePayout.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const data = rows.map((row) => ({
+        affiliateUserId: row.affiliateUserId,
+        amount: row.amount,
+        createdAt: row.createdAt,
+        id: row.id,
+        method: row.method,
+        note: row.note,
+        processedByAdminId: row.processedByAdminId,
+        reference: row.reference,
+        slug: row.slug ?? "unknown",
+      }));
+
+      return {
+        data,
+        pagination: { limit, page, total, totalPages },
+      };
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Internal server error",
+      });
+    }
+  }
+
   async createPayoutForAffiliate(
     input: CreatePayoutForAffiliateInput
   ): Promise<AffiliatePayout | null> {

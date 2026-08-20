@@ -9,6 +9,8 @@ import type {
   BackfillAffiliateCommissionsOutput,
   ListAffiliateApplicationsInput,
   ListAffiliateApplicationsOutput,
+  ListAffiliatePayoutsInput,
+  ListAffiliatePayoutsOutput,
   ListPendingPayoutsInput,
   PendingPayoutsList,
   ReconcileAffiliateCommissionsInput,
@@ -383,6 +385,14 @@ export class AffiliateService {
       input.page ?? 1,
       input.limit ?? 10
     );
+  }
+
+  async listPayouts(
+    input: ListAffiliatePayoutsInput,
+    adminUserId: string | null | undefined
+  ): Promise<ListAffiliatePayoutsOutput> {
+    await this.guard.requireAdmin(adminUserId);
+    return await this.repo.listPayouts(input.page ?? 1, input.limit ?? 10);
   }
 
   async getMyPayoutAccount(

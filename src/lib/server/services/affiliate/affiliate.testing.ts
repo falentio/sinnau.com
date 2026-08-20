@@ -57,6 +57,7 @@ export const createMockRepository = (): MockedAffiliateRepository => ({
   insertConversion: vi.fn<AffiliateRepository["insertConversion"]>(),
   insertProfile: vi.fn<AffiliateRepository["insertProfile"]>(),
   listApplications: vi.fn<AffiliateRepository["listApplications"]>(),
+  listPayouts: vi.fn<AffiliateRepository["listPayouts"]>(),
   listPendingPayouts: vi.fn<AffiliateRepository["listPendingPayouts"]>(),
   updateApplicationStatus:
     vi.fn<AffiliateRepository["updateApplicationStatus"]>(),

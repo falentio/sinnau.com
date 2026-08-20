@@ -11,6 +11,7 @@ import { affiliateGetMyApplication } from "./queries/affiliate.get-my-applicatio
 import { affiliateGetMyPayoutAccount } from "./queries/affiliate.get-my-payout-account";
 import { affiliateGetMyProfile } from "./queries/affiliate.get-my-profile";
 import { affiliateListApplications } from "./queries/affiliate.list-applications";
+import { affiliateListPayouts } from "./queries/affiliate.list-payouts";
 import { affiliateListPendingPayouts } from "./queries/affiliate.list-pending-payouts";
 import { affiliateReconcileCommissions } from "./queries/affiliate.reconcile-commissions";
 import { affiliateResolveSlug } from "./queries/affiliate.resolve-slug";
@@ -20,6 +21,7 @@ export const affiliateRouter = {
     acceptApplication: affiliateAcceptApplication,
     backfillCommissions: affiliateBackfillCommissions,
     listApplications: affiliateListApplications,
+    listPayouts: affiliateListPayouts,
     listPendingPayouts: affiliateListPendingPayouts,
     reconcileCommissions: affiliateReconcileCommissions,
     recordConversion: affiliateRecordConversion,

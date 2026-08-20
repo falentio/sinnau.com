@@ -1,6 +1,7 @@
 import type {
   InvalidCommission,
   ListAffiliateApplicationsOutput,
+  ListAffiliatePayoutsOutput,
   PendingPayout,
   PendingPayoutsList,
 } from "$lib/schemas/affiliate";
@@ -125,6 +126,8 @@ export interface AffiliateRepository {
   getDashboardSummary(userId: string): Promise<AffiliateDashboardRawSummary>;
 
   listPendingPayouts(page: number, limit: number): Promise<PendingPayoutsList>;
+
+  listPayouts(page: number, limit: number): Promise<ListAffiliatePayoutsOutput>;
 
   createPayoutForAffiliate(
     input: CreatePayoutForAffiliateInput
