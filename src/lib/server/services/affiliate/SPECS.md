@@ -589,7 +589,7 @@ Constants in `src/lib/schemas/affiliate.constant.ts`:
 | `AFFILIATE_ACCOUNT_HOLDER_MAX_LENGTH`    | `255`                                 |
 | `AFFILIATE_WHATSAPP_MIN_LENGTH`          | `8`                                   |
 | `AFFILIATE_WHATSAPP_MAX_LENGTH`          | `20`                                  |
-| `AFFILIATE_COMMISSION_RATE`              | `0.25`                                |
+| `AFFILIATE_COMMISSION_RATE`              | `0.35`                                |
 | `AFFILIATE_MINIMUM_PAYOUT_AMOUNT`        | `50000`                               |
 | `AFFILIATE_COMMISSION_STATUSES`          | `["PENDING", "PAID", "VOID"]`         |
 | `AFFILIATE_APPLICATION_STATUSES`         | `["PENDING", "ACCEPTED", "REJECTED"]` |

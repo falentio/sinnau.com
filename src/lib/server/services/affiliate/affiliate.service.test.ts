@@ -840,7 +840,7 @@ describe.concurrent("affiliate service", () => {
         missing: [
           {
             affiliateUserId: "user-1",
-            expectedCommissionAmount: 25_000,
+            expectedCommissionAmount: 35_000,
             purchaseAmount: 100_000,
             purchaserUserId: "buyer-1",
             transactionId: "txn-miss",
@@ -908,7 +908,7 @@ describe.concurrent("affiliate service", () => {
         [
           {
             affiliateUserId: "user-1",
-            commissionAmount: 25_000,
+            commissionAmount: 35_000,
             purchaseAmount: 100_000,
             purchaserUserId: "buyer-1",
             transactionId: "txn-miss",
@@ -1102,7 +1102,7 @@ describe.concurrent("affiliate service", () => {
   });
 
   describe.concurrent("handlePaymentSuccess", () => {
-    it("inserts conversion with 25% commission on happy path", async ({
+    it("inserts conversion with 35% commission on happy path", async ({
       expect,
     }) => {
       const { repo, service } = setupService();
@@ -1110,7 +1110,7 @@ describe.concurrent("affiliate service", () => {
       repo.findConversionByTransactionId.mockResolvedValue(null);
       repo.insertConversion.mockResolvedValue({
         affiliateUserId: "referrer-1",
-        commissionAmount: 25_000,
+        commissionAmount: 35_000,
         createdAt: new Date(),
         id: "afc_abc",
         payoutId: null,
@@ -1128,7 +1128,7 @@ describe.concurrent("affiliate service", () => {
 
       expect(repo.insertConversion).toHaveBeenCalledWith({
         affiliateUserId: "referrer-1",
-        commissionAmount: 25_000,
+        commissionAmount: 35_000,
         purchaseAmount: 100_000,
         purchaserUserId: "buyer-1",
         transactionId: "txn-1",
