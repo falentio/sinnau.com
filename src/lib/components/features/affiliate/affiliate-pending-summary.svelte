@@ -28,9 +28,21 @@
 
   let submittedHandles = $derived(
     [
-      { icon: InstagramIcon, value: application.instagramHandle },
-      { icon: TiktokIcon, value: application.tiktokHandle },
-      { icon: YoutubeIcon, value: application.youtubeHandle },
+      {
+        icon: InstagramIcon,
+        platform: "instagram",
+        value: application.instagramHandle,
+      },
+      {
+        icon: TiktokIcon,
+        platform: "tiktok",
+        value: application.tiktokHandle,
+      },
+      {
+        icon: YoutubeIcon,
+        platform: "youtube",
+        value: application.youtubeHandle,
+      },
     ].filter((handle) => handle.value)
   );
 </script>
@@ -55,7 +67,7 @@
           Akun yang kamu daftarkan
         </p>
         <div class="mt-2 flex flex-wrap gap-2">
-          {#each submittedHandles as handle (handle.value)}
+          {#each submittedHandles as handle (handle.platform)}
             <span
               class="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs text-foreground"
             >
