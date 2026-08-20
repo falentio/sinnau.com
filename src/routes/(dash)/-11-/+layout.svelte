@@ -13,6 +13,12 @@
   <AdminDashboardSidebar />
 
   <Sidebar.Inset class="overflow-hidden">
+    <header
+      class="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:hidden"
+    >
+      <Sidebar.Trigger />
+      <span class="truncate font-medium">Admin</span>
+    </header>
     <ScrollArea class="flex max-h-svh flex-col md:max-h-[calc(100svh-1rem)]">
       <main
         class="group/app relative flex min-h-svh max-w-screen flex-1 flex-col bg-background md:min-h-[calc(100vh-1rem)]"
