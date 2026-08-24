@@ -23,7 +23,7 @@
     <div class="flex justify-center gap-2 md:justify-start">
       <a href={resolve("/")} class="flex items-center gap-2 font-medium">
         <img
-          src="/icon.png"
+          src="/favicon.jpg"
           alt=""
           aria-hidden="true"
           width="24"
@@ -46,7 +46,7 @@
     <div class="absolute inset-0 flex items-center justify-center p-12">
       <div class="max-w-md space-y-4 text-center">
         <img
-          src="/icon.png"
+          src="/favicon.jpg"
           alt=""
           aria-hidden="true"
           width="64"

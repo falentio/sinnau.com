@@ -1,7 +1,7 @@
 <script lang="ts" module>
   export const SITE_CONFIG = {
     defaultDescription: "Belajar yang melekat.",
-    defaultOgImage: "/icon.png",
+    defaultOgImage: "/favicon.jpg",
     locale: "id_ID",
     ogType: "website",
     robots: "index, follow",

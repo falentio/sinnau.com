@@ -20,7 +20,7 @@
   <Sidebar.Header>
     <a href="/-11-/" class="flex items-center gap-2 px-2 py-1.5 font-medium">
       <img
-        src="/icon.png"
+        src="/favicon.jpg"
         alt=""
         aria-hidden="true"
         width="24"

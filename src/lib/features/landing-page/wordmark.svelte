@@ -16,7 +16,7 @@
   aria-label="sinnau, beranda"
 >
   <img
-    src="/icon.png"
+    src="/favicon.jpg"
     alt=""
     aria-hidden="true"
     width="24"
