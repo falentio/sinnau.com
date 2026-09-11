@@ -101,7 +101,7 @@ export const createOrderFixture = (overrides: Partial<Order> = {}): Order => ({
   createdAt: new Date(),
   durationMonths: 1,
   expiresAt: null,
-  grossAmount: 30_000,
+  grossAmount: 15_000,
   id: generateId(ORDER_ID_PREFIX),
   planKey: "LITE",
   sku: "lite-1m",
@@ -114,7 +114,7 @@ export const createOrderFixture = (overrides: Partial<Order> = {}): Order => ({
 export const createPaymentFixture = (
   overrides: Partial<Payment> = {}
 ): Payment => ({
-  amount: 30_000,
+  amount: 15_000,
   createdAt: new Date(),
   gateway: "midtrans",
   gatewayOrderId: generateId(ORDER_ID_PREFIX),
@@ -222,7 +222,7 @@ export class PlanTestEnv implements AsyncDisposable {
       createdAt: new Date(),
       durationMonths: 1,
       expiresAt: null,
-      grossAmount: 30_000,
+      grossAmount: 15_000,
       id: generateId(ORDER_ID_PREFIX),
       planKey: "LITE",
       sku: "lite-1m",
@@ -235,7 +235,7 @@ export class PlanTestEnv implements AsyncDisposable {
 
   async seedPayment(overrides: Partial<Payment> = {}): Promise<Payment> {
     return await this.repo.insertPayment({
-      amount: 30_000,
+      amount: 15_000,
       createdAt: new Date(),
       gateway: "midtrans",
       gatewayOrderId: generateId(ORDER_ID_PREFIX),

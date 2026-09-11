@@ -1,9 +1,4 @@
 import type { GrantPlanInput, ListGrantsInput } from "$lib/schemas/plan";
-import {
-  PLAN_DAILY_DIVISOR,
-  PLAN_MONTHLY_LIMIT,
-  PLAN_WEEKLY_DIVISOR,
-} from "$lib/schemas/plan.constant";
 import { ORPCError } from "@orpc/server";
 import { describe, it, vi } from "vitest";
 
@@ -214,7 +209,7 @@ describe.concurrent("PlanService unit tests", () => {
 
       expect(result.currency).toBe("IDR");
       expect(result.paymentType).toBe("QRIS");
-      expect(result.grossAmount).toBe(30_000);
+      expect(result.grossAmount).toBe(15_000);
       expect(result.paymentData.qrString).toBe("QRCODE");
       expect(result.paymentData.actions).toEqual([
         { method: "GET", name: "generate-qr-code", url: "https://qr" },
@@ -223,7 +218,7 @@ describe.concurrent("PlanService unit tests", () => {
 
       const insertedOrder = repo.insertOrder.mock.calls[0]?.[0];
       expect(insertedOrder).toMatchObject({
-        grossAmount: 30_000,
+        grossAmount: 15_000,
         planKey: "LITE",
         sku: "lite-1m",
         status: "PENDING",
@@ -231,7 +226,7 @@ describe.concurrent("PlanService unit tests", () => {
 
       const insertedPayment = repo.insertPayment.mock.calls[0]?.[0];
       expect(insertedPayment).toMatchObject({
-        amount: 30_000,
+        amount: 15_000,
         gateway: "midtrans",
         gatewayOrderId: result.orderId,
         orderId: result.orderId,
@@ -246,7 +241,7 @@ describe.concurrent("PlanService unit tests", () => {
           unit: "minute",
         },
         payment_type: "qris",
-        transaction_details: { gross_amount: 30_000, order_id: result.orderId },
+        transaction_details: { gross_amount: 15_000, order_id: result.orderId },
       });
       expect(repo.updatePayment).toHaveBeenCalledWith(
         expect.any(String),
@@ -262,7 +257,7 @@ describe.concurrent("PlanService unit tests", () => {
         { durationMonths: 6, planKey: "PLUS" },
         "user-1"
       );
-      expect(result.grossAmount).toBe(200_000);
+      expect(result.grossAmount).toBe(120_000);
       expect(repo.insertOrder.mock.calls[0]?.[0].sku).toBe("plus-6m");
     });
 
@@ -296,7 +291,7 @@ describe.concurrent("PlanService unit tests", () => {
         { durationMonths: 1, planKey: "PREMIUM" },
         "user-1"
       );
-      expect(result.grossAmount).toBe(100_000);
+      expect(result.grossAmount).toBe(60_000);
       expect(repo.insertOrder).toHaveBeenCalledWith(
         expect.objectContaining({ planKey: "PREMIUM", status: "PENDING" })
       );
@@ -313,7 +308,7 @@ describe.concurrent("PlanService unit tests", () => {
         { durationMonths: 1, planKey: "PREMIUM" },
         "user-1"
       );
-      expect(result.grossAmount).toBe(100_000);
+      expect(result.grossAmount).toBe(60_000);
       expect(repo.insertOrder).toHaveBeenCalledWith(
         expect.objectContaining({ planKey: "PREMIUM", userId: "user-1" })
       );
@@ -325,7 +320,7 @@ describe.concurrent("PlanService unit tests", () => {
         { durationMonths: 12, planKey: "PREMIUM" },
         "user-1"
       );
-      expect(result.grossAmount).toBe(700_000);
+      expect(result.grossAmount).toBe(420_000);
       expect(repo.insertOrder.mock.calls[0]?.[0].sku).toBe("premium-12m");
     });
 
@@ -437,10 +432,28 @@ describe.concurrent("PlanService unit tests", () => {
       expect(plans).toEqual([
         {
           benefits: [
-            "Batas generate hingga 120 modul per bulan",
+            "Batas generate hingga 50 modul per bulan",
             "Quiz tanpa batas",
             "Sesi flashcard dengan FSRS",
             "Analisis kelemahan per bab",
+          ],
+          durations: [
+            { discountLabel: "Harga penuh", grossAmount: 15_000, months: 1 },
+            { discountLabel: "Bayar 4 bulan", grossAmount: 60_000, months: 6 },
+            {
+              discountLabel: "Bayar 7 bulan",
+              grossAmount: 105_000,
+              months: 12,
+            },
+          ],
+          key: "LITE",
+          monthlyPrice: 15_000,
+          name: "Lite",
+        },
+        {
+          benefits: [
+            "Semua keuntungan Lite",
+            "Generate 2× lebih banyak dibanding Lite",
           ],
           durations: [
             { discountLabel: "Harga penuh", grossAmount: 30_000, months: 1 },
@@ -451,42 +464,27 @@ describe.concurrent("PlanService unit tests", () => {
               months: 12,
             },
           ],
-          key: "LITE",
-          monthlyPrice: 30_000,
-          name: "Lite",
-        },
-        {
-          benefits: ["Semua keuntungan Lite", "Batas generate 2× lebih besar"],
-          durations: [
-            { discountLabel: "Harga penuh", grossAmount: 50_000, months: 1 },
-            { discountLabel: "Bayar 4 bulan", grossAmount: 200_000, months: 6 },
-            {
-              discountLabel: "Bayar 7 bulan",
-              grossAmount: 350_000,
-              months: 12,
-            },
-          ],
           key: "PLUS",
-          monthlyPrice: 50_000,
+          monthlyPrice: 30_000,
           name: "Plus",
         },
         {
           benefits: [
             "Semua keuntungan Lite",
-            "Batas generate 6× lebih besar",
+            "Generate 6× lebih banyak dibanding Lite",
             "Prioritas dukungan pelanggan",
           ],
           durations: [
-            { discountLabel: "Harga penuh", grossAmount: 100_000, months: 1 },
-            { discountLabel: "Bayar 4 bulan", grossAmount: 400_000, months: 6 },
+            { discountLabel: "Harga penuh", grossAmount: 60_000, months: 1 },
+            { discountLabel: "Bayar 4 bulan", grossAmount: 240_000, months: 6 },
             {
               discountLabel: "Bayar 7 bulan",
-              grossAmount: 700_000,
+              grossAmount: 420_000,
               months: 12,
             },
           ],
           key: "PREMIUM",
-          monthlyPrice: 100_000,
+          monthlyPrice: 60_000,
           name: "Premium",
         },
       ]);
@@ -578,10 +576,26 @@ describe.concurrent("PlanService unit tests", () => {
       );
       const lite = await service.getAiLimitPlanForUser("user-1");
       expect(lite).toEqual({
-        daily: Math.ceil(PLAN_MONTHLY_LIMIT.LITE / PLAN_DAILY_DIVISOR),
+        daily: 5000,
         expiresAt: liteExpiresAt,
         planKey: "LITE",
-        weekly: Math.ceil(PLAN_MONTHLY_LIMIT.LITE / PLAN_WEEKLY_DIVISOR),
+        weekly: 12_500,
+      });
+
+      const plusExpiresAt = new Date("2026-05-01T00:00:00.000Z");
+      repo.findActiveUserPlan.mockResolvedValue(
+        createUserPlanFixture({
+          expiresAt: plusExpiresAt,
+          planKey: "PLUS",
+          userId: "user-1",
+        })
+      );
+      const plus = await service.getAiLimitPlanForUser("user-1");
+      expect(plus).toEqual({
+        daily: 10_000,
+        expiresAt: plusExpiresAt,
+        planKey: "PLUS",
+        weekly: 25_000,
       });
 
       const premiumExpiresAt = new Date("2026-07-15T00:00:00.000Z");
@@ -594,10 +608,10 @@ describe.concurrent("PlanService unit tests", () => {
       );
       const premium = await service.getAiLimitPlanForUser("user-1");
       expect(premium).toEqual({
-        daily: Math.ceil(PLAN_MONTHLY_LIMIT.PREMIUM / PLAN_DAILY_DIVISOR),
+        daily: 30_000,
         expiresAt: premiumExpiresAt,
         planKey: "PREMIUM",
-        weekly: Math.ceil(PLAN_MONTHLY_LIMIT.PREMIUM / PLAN_WEEKLY_DIVISOR),
+        weekly: 75_000,
       });
     });
   });

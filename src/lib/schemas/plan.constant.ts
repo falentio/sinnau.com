@@ -30,17 +30,17 @@ export const PAYMENT_GATEWAYS = ["midtrans"] as const;
 
 // Monthly price per tier (IDR, whole rupiah)
 export const PLAN_MONTHLY_PRICE: Record<(typeof PLAN_KEYS)[number], number> = {
-  LITE: 30_000,
-  PLUS: 50_000,
-  PREMIUM: 100_000,
+  LITE: 15_000,
+  PLUS: 30_000,
+  PREMIUM: 60_000,
   TEST: 100,
 };
 
-// Monthly AI generate limit per tier
+// Monthly AI credit limit per tier
 export const PLAN_MONTHLY_LIMIT: Record<(typeof PLAN_KEYS)[number], number> = {
-  LITE: 120_000,
-  PLUS: 240_000,
-  PREMIUM: 720_000,
+  LITE: 50_000,
+  PLUS: 100_000,
+  PREMIUM: 300_000,
   TEST: 1000,
 };
 
@@ -70,7 +70,7 @@ export const PLAN_NAME: Record<(typeof PLAN_KEYS)[number], string> = {
 };
 export const PLAN_NAME_FALLBACK = "Tidak Diketahui";
 
-// Divide internal unit counts for user-facing display (e.g. 120_000 → "120 modul")
+// Divide internal unit counts for user-facing display (e.g. 50_000 → "50 modul")
 export const PLAN_UNIT_DISPLAY_DIVISOR = 1000;
 
 export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
@@ -80,10 +80,10 @@ export const PLAN_BENEFITS: Record<(typeof PLAN_KEYS)[number], string[]> = {
     "Sesi flashcard dengan FSRS",
     "Analisis kelemahan per bab",
   ],
-  PLUS: ["Semua keuntungan Lite", "Batas generate 2× lebih besar"],
+  PLUS: ["Semua keuntungan Lite", "Generate 2× lebih banyak dibanding Lite"],
   PREMIUM: [
     "Semua keuntungan Lite",
-    "Batas generate 6× lebih besar",
+    "Generate 6× lebih banyak dibanding Lite",
     "Prioritas dukungan pelanggan",
   ],
   TEST: [

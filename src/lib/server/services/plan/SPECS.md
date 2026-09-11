@@ -89,12 +89,12 @@ interface Payment {
 
 No database table. Plans are hardcoded constants in `src/lib/schemas/plan.constant.ts`.
 
-| Plan    | Monthly Price (IDR) | Monthly Generate Limit | Benefits                                                                    |
-| ------- | ------------------- | ---------------------- | --------------------------------------------------------------------------- |
-| LITE    | 30,000              | 120                    | unlimited quiz attempts, FSRS flashcard session, weak chapter spot analysis |
-| PLUS    | 50,000              | 240                    | all LITE benefits, 2x generate limit                                        |
-| PREMIUM | 100,000             | 720                    | all LITE benefits, 6x generate limit                                        |
-| TEST    | 100                 | 1                      | 1 generate per month; admin-only visibility                                 |
+| Plan    | Monthly Price (IDR) | Monthly AI Credits | Benefits                                                                    |
+| ------- | ------------------- | ------------------ | --------------------------------------------------------------------------- |
+| LITE    | 15,000              | 50,000             | unlimited quiz attempts, FSRS flashcard session, weak chapter spot analysis |
+| PLUS    | 30,000              | 100,000            | all LITE benefits, 2x generate limit                                        |
+| PREMIUM | 60,000              | 300,000            | all LITE benefits, 6x generate limit                                        |
+| TEST    | 100                 | 1,000              | 1 generate per month; admin-only visibility                                 |
 
 TEST is listed in `PLAN_ADMIN_ONLY_KEYS`: the public `listPlans` catalog omits it unless the caller's role is `admin`. It ranks below LITE in `PLAN_TIER_RANK`, so it is treated as a downgrade relative to every paid tier. Checkout is not restricted — any authenticated caller may create an order for it (e.g. for payment-flow testing).
 
@@ -108,9 +108,9 @@ Example gross amounts:
 
 | Plan    | 1 month | 6 months | 12 months |
 | ------- | ------- | -------- | --------- |
-| LITE    | 30,000  | 120,000  | 210,000   |
-| PLUS    | 50,000  | 200,000  | 350,000   |
-| PREMIUM | 100,000 | 400,000  | 700,000   |
+| LITE    | 15,000  | 60,000   | 105,000   |
+| PLUS    | 30,000  | 120,000  | 210,000   |
+| PREMIUM | 60,000  | 240,000  | 420,000   |
 | TEST    | 100     | 400      | 700       |
 
 ## Field Rules
@@ -284,11 +284,12 @@ interface AiLimitPlan {
 
 Resulting limits:
 
-| Plan    | Monthly | Daily | Weekly |
-| ------- | ------- | ----- | ------ |
-| LITE    | 120     | 12    | 30     |
-| PLUS    | 240     | 24    | 60     |
-| PREMIUM | 720     | 72    | 180    |
+| Plan    | Monthly | Daily  | Weekly |
+| ------- | ------- | ------ | ------ |
+| LITE    | 50,000  | 5,000  | 12,500 |
+| PLUS    | 100,000 | 10,000 | 25,000 |
+| PREMIUM | 300,000 | 30,000 | 75,000 |
+| TEST    | 1,000   | 100    | 250    |
 
 ## Admin
 
