@@ -1,16 +1,21 @@
 <script lang="ts">
-  import { invalidate } from "$app/navigation";
   import { AnalyticsEvent, track } from "$lib/analytics/events";
   import FlashcardRatingRow from "$lib/components/features/flashcard-session/flashcard-rating-row.svelte";
   import FlashcardReviewCard from "$lib/components/features/flashcard-session/flashcard-review-card.svelte";
   import ReviewCompleteSummary from "$lib/components/features/flashcard-session/review-complete-summary.svelte";
   import ReviewEmpty from "$lib/components/features/flashcard-session/review-empty.svelte";
+  import { ReviewSessionState } from "$lib/components/features/flashcard-session/review-session-state.svelte";
+  import type {
+    ReviewSessionClient,
+    ReviewSessionOutcome,
+  } from "$lib/components/features/flashcard-session/review-session-state.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { client } from "$lib/orpc";
   import type { FlashcardQueueItem } from "$lib/schemas/flashcard-session";
   import type { FlashcardSessionRating } from "$lib/schemas/flashcard-session.constant";
   import { getErrorMessage } from "$lib/utils/error-messages";
   import { tsfsStateFromDb } from "$lib/utils/fsrs-compat";
+  import { untrack } from "svelte";
   import { toast } from "svelte-sonner";
   import { Rating, fsrs } from "ts-fsrs";
   import type { CardInput, Grade } from "ts-fsrs";
@@ -35,19 +40,18 @@
 
   const computeFsrs = fsrs();
 
-  let currentIndex = $state(0);
-  let revealedIndex = $state(-1);
-  let submittingFor = $state<string | null>(null);
-  let submittedRatings = $state<FlashcardSessionRating[]>([]);
+  const reviewClient = {
+    getQueue: (input) => client.flashcardSession.queue.get(input),
+    submitReview: (input) => client.flashcardSession.review.submit(input),
+  } satisfies ReviewSessionClient;
 
-  const cards = $derived<FlashcardQueueItem[]>(data.cards);
-  const total = $derived(cards.length);
-  const currentCard = $derived<FlashcardQueueItem | null>(
-    total > 0 ? (cards[currentIndex] ?? null) : null
-  );
-  const isComplete = $derived(currentIndex >= total && total > 0);
-  const revealed = $derived(
-    currentCard !== null && revealedIndex === currentIndex
+  const reviewSession = new ReviewSessionState(
+    reviewClient,
+    untrack(() => ({
+      initialCards: data.cards,
+      sessionId: data.session.id,
+      studySetId: data.session.studySetId,
+    }))
   );
 
   const studySetId = $derived(data.session.studySetId);
@@ -59,25 +63,25 @@
 
   let hasTrackedStart = false;
   $effect(() => {
-    if (total === 0 || hasTrackedStart) {
+    if (reviewSession.total === 0 || hasTrackedStart) {
       return;
     }
     hasTrackedStart = true;
     track(AnalyticsEvent.FLASHCARD_SESSION_STARTED, {
       session_id: sessionId,
       study_set_id: studySetId,
-      total_cards: total,
+      total_cards: reviewSession.total,
     });
   });
 
   $effect(() => {
-    if (isComplete) {
+    if (reviewSession.phase === "complete") {
       const distribution: Record<string, number> = {};
-      for (const r of submittedRatings) {
+      for (const r of reviewSession.submittedRatings) {
         distribution[r] = (distribution[r] ?? 0) + 1;
       }
       track(AnalyticsEvent.FLASHCARD_SESSION_COMPLETED, {
-        cards_reviewed: submittedRatings.length,
+        cards_reviewed: reviewSession.submittedRatings.length,
         rating_distribution: distribution,
         session_id: sessionId,
         study_set_id: studySetId,
@@ -125,77 +129,103 @@
   };
 
   const intervalsForCurrent = $derived(
-    currentCard ? computeIntervalsFor(currentCard) : DEFAULT_INTERVALS
+    reviewSession.currentCard
+      ? computeIntervalsFor(reviewSession.currentCard)
+      : DEFAULT_INTERVALS
   );
 
-  const handleReveal = () => {
-    if (currentCard) {
-      revealedIndex = currentIndex;
+  const handleOutcome = (outcome: ReviewSessionOutcome) => {
+    switch (outcome.kind) {
+      case "batch-loaded": {
+        toast.info(
+          `Kamu punya ${outcome.count} kartu untuk di-review kembali`,
+          {
+            description:
+              "Kartu akan di-review kembali hingga hanya tersisa kartu besok",
+            position: "top-right",
+          }
+        );
+        return;
+      }
+      case "error": {
+        toast.error(getErrorMessage(outcome.error));
+        return;
+      }
+      case "refresh-error": {
+        toast.error("Gagal memeriksa kartu berikutnya");
+        break;
+      }
+      default: {
+        break;
+      }
     }
   };
 
   const handleRate = async (rating: FlashcardSessionRating) => {
-    if (!currentCard || submittingFor !== null) {
-      return;
-    }
-    const { flashcardId } = currentCard;
-    submittingFor = flashcardId;
-    try {
-      await client.flashcardSession.review.submit({
-        flashcardId,
-        rating,
-        sessionId,
-      });
-      submittedRatings = [...submittedRatings, rating];
-      await invalidate(`flashcard-session:queue:${studySetId}`);
-      currentIndex += 1;
-    } catch (error) {
-      toast.error(getErrorMessage(error));
-    } finally {
-      submittingFor = null;
-    }
+    handleOutcome(await reviewSession.rate(rating));
   };
 
-  const handleSkip = () => {
-    if (currentIndex < total - 1) {
-      currentIndex += 1;
-    } else {
-      currentIndex = total;
-    }
+  const handleRetryQueue = async () => {
+    handleOutcome(await reviewSession.retryQueue());
   };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      currentIndex -= 1;
-    }
-  };
+  const handleReveal = () => reviewSession.reveal();
+  const handleSkip = () => reviewSession.skip();
+  const handlePrev = () => reviewSession.prev();
 </script>
 
-{#if total === 0}
+{#if reviewSession.total === 0}
   <ReviewEmpty {studySetId} />
-{:else if isComplete}
+{:else if reviewSession.phase === "complete"}
   <ReviewCompleteSummary
-    ratings={submittedRatings}
+    ratings={reviewSession.submittedRatings}
     {resultsHref}
     {hubHref}
     {studySetId}
   />
-{:else if currentCard}
+{:else if reviewSession.currentCard}
   <div class="flex flex-col gap-6">
     <FlashcardReviewCard
-      card={currentCard}
-      {currentIndex}
-      totalCount={total}
-      {revealed}
+      card={reviewSession.currentCard}
+      currentIndex={reviewSession.currentIndex}
+      totalCount={reviewSession.total}
+      revealed={reviewSession.revealed}
       onReveal={handleReveal}
     />
 
-    {#if revealed}
+    {#if reviewSession.revealed}
       <FlashcardRatingRow
-        disabled={submittingFor !== null}
+        disabled={reviewSession.phase !== "reviewing"}
         intervals={intervalsForCurrent}
         onRate={handleRate}
       />
+    {/if}
+
+    {#if reviewSession.phase === "submitting"}
+      <div
+        class="rounded-2xl border border-border bg-card px-5 py-6 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+      >
+        <p class="text-sm text-muted-foreground">Menyimpan review...</p>
+      </div>
+    {:else if reviewSession.phase === "refreshing"}
+      <div
+        class="rounded-2xl border border-border bg-card px-5 py-6 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+      >
+        <p class="text-sm text-muted-foreground">
+          Memeriksa kartu berikutnya...
+        </p>
+      </div>
+    {:else if reviewSession.phase === "refresh-failed"}
+      <div
+        class="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card px-5 py-6 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+      >
+        <p class="text-sm text-muted-foreground">
+          Gagal memeriksa kartu berikutnya.
+        </p>
+        <Button variant="outline" size="sm" onclick={handleRetryQueue}>
+          Coba lagi
+        </Button>
+      </div>
     {/if}
 
     <nav class="flex items-center justify-between">
@@ -203,14 +233,20 @@
         variant="ghost"
         size="sm"
         onclick={handlePrev}
-        disabled={currentIndex === 0}
+        disabled={reviewSession.currentIndex === 0 ||
+          reviewSession.phase !== "reviewing"}
       >
         Sebelumnya
       </Button>
       <span class="text-xs tabular-nums text-muted-foreground">
-        {currentIndex + 1} dari {total}
+        {reviewSession.currentIndex + 1} dari {reviewSession.total}
       </span>
-      <Button variant="ghost" size="sm" onclick={handleSkip}>Lewati</Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onclick={handleSkip}
+        disabled={reviewSession.phase !== "reviewing"}>Lewati</Button
+      >
     </nav>
   </div>
 {/if}
