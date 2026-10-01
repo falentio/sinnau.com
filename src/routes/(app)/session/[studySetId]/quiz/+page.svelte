@@ -70,6 +70,21 @@
   {/if}
 </div>
 
+{#if showNewSessionButton}
+  <div
+    class="sticky bottom-0 z-40 -mx-6 mt-6 border-t bg-background/95 px-6 py-3 backdrop-blur md:hidden"
+  >
+    <Button size="lg" class="w-full" onclick={() => (newSessionOpen = true)}>
+      <HugeiconsIcon
+        icon={Add01Icon}
+        data-icon="inline-start"
+        aria-hidden="true"
+      />
+      Buat sesi baru
+    </Button>
+  </div>
+{/if}
+
 <NewSessionDialog
   bind:open={newSessionOpen}
   chapters={data.chapters}
